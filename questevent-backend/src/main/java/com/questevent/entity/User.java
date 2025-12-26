@@ -9,10 +9,11 @@ import java.util.List;
 @Entity
 @Table(name = "users")
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name="user_id")
-    private Long UserId;
+    @Column(name="user_id", nullable = false)
+    private Long userId;
 
     @Column(nullable = false)
     private String name;
@@ -21,15 +22,17 @@ public class User {
     private String email;
 
     @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "wallet_id", referencedColumnName = "id")
+    @JoinColumn(name = "wallet_id", referencedColumnName = "walletId")
     private Wallet wallet;
 
+    @Column(nullable = false)
     private String department;
+
+    @Column(nullable = false)
     private String gender;
 
     @Column(nullable = false)
-    private String role = "USER";
-
+    private String role;
 
     @ManyToMany
     @JoinTable(
@@ -39,18 +42,13 @@ public class User {
     )
     private List<Program> programs = new ArrayList<>();
 
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "activity")
     private List<ActivityParticipation> activitiesParticipated = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user")
-    private List<ProgramParticipation> programParticipations = new ArrayList<>();
+    @OneToMany(mappedBy = "program")
+    private List<ProgramParticipation> programsParticipated = new ArrayList<>();
 
+    @Column(name = "is_organizer", nullable = false)
+    private boolean isOrganizer;
 
-    @OneToMany(mappedBy = "judgeUser", cascade = CascadeType.ALL)
-    private List<ActivityJudge> assignedJudge = new ArrayList<>();
-
-    // Recording action history (PARTICIPATION_HISTORY table)
-    @OneToMany(mappedBy = "user")
-    private List<ActivityParticipation> participationHistory = new ArrayList<>();
 }
