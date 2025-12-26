@@ -14,8 +14,8 @@ public class Wallet {
     @Id
     @GeneratedValue
     @UuidGenerator
-    @Column(name = "id", updatable = false, nullable = false)
-    private UUID id;
+    @Column(name = "wallet_id", updatable = false, nullable = false)
+    private UUID walletId;
 
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false, unique = true)
