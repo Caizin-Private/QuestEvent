@@ -31,7 +31,7 @@ public class Activity {
     private Integer activityDuration;
 
     @Column(name = "rulebook", columnDefinition = "TEXT")
-    private String acitivityRulebook;
+    private String activityRulebook;
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String activityDescription;

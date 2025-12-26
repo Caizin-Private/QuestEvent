@@ -1,10 +1,12 @@
 package com.questevent.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
 import org.apache.catalina.User;
 
 import java.time.LocalDateTime;
 
+@Data
 @Entity
 @Table(
   name = "program_registrations",

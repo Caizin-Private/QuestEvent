@@ -6,9 +6,9 @@ import org.springframework.data.annotation.Id;
  
  
 @Entity
-@Table(name = "activity_participation")
+@Table(name = "activity_registrations")
 @Data
-public class ActivityParticipation {
+public class ActivityRegistration {
  
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
