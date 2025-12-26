@@ -14,8 +14,7 @@ public class ActivityParticipation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private long id;
- 
- 
+
     @ManyToMany
     @JoinColumn(
             name = "activity_id",
@@ -29,8 +28,7 @@ public class ActivityParticipation {
             foreignKey = @ForeignKey(name = "user_id")
     )
     private User user_id;
- 
- 
+
     @Column(name = "earned_gems")
     private Integer earned_gems;
  

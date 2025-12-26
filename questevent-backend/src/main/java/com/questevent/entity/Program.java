@@ -41,16 +41,11 @@ public class Program {
     @Column(name = "endDate")
     private LocalDateTime endDate;
 
-
     @Column(nullable = false)
     private Integer registrationFee;
 
     @Enumerated(EnumType.STRING)
     private ProgramStatus status = ProgramStatus.DRAFT;
-
-
-
-
 
 }
 

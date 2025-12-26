@@ -36,8 +36,6 @@ public class Activity {
     @Column(name = "description", columnDefinition = "TEXT")
     private String activityDescription;
 
-
-
     @Column(name = "reward_gems")
     private Integer reward_gems;
 

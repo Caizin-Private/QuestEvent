@@ -46,7 +46,7 @@ public class User {
     private List<ActivityParticipation> activitiesParticipated = new ArrayList<>();
 
     @OneToMany(mappedBy = "program")
-    private List<ProgramParticipation> programsParticipated = new ArrayList<>();
+    private List<ProgramRegistration> programsRegistered = new ArrayList<>();
 
     @Column(name = "is_organizer", nullable = false)
     private boolean isOrganizer;
