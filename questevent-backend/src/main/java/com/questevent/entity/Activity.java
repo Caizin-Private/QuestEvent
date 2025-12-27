@@ -1,7 +1,7 @@
 package com.questevent.entity;
 import jakarta.persistence.*;
 import lombok.Data;
-import org.springframework.data.annotation.Id;
+import jakarta.persistence.Id;
 
 import java.time.LocalDateTime;
 
@@ -36,10 +36,14 @@ public class Activity {
     @Column(name = "description", columnDefinition = "TEXT")
     private String activityDescription;
 
-    @Column(name = "reward_gems")
-    private Integer reward_gems;
+    @Column(name = "reward_gems",nullable = false)
+    private Integer rewardGems;
 
-    @Column(name = "creationTime")
-    private LocalDateTime activityCreatedAt;
+    @Column(name = "created_at",updatable = false)
+    private LocalDateTime createdAt;
 
+    @PrePersist
+    public void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 }

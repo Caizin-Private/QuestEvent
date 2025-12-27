@@ -2,11 +2,12 @@ package com.questevent.entity;
  
 import jakarta.persistence.*;
 import lombok.Data;
-import org.springframework.data.annotation.Id;
+import jakarta.persistence.Id;
  
  
 @Entity
-@Table(name = "activity_registrations")
+@Table(name = "activity_registrations",
+uniqueConstraints = @UniqueConstraint(columnNames = {"activity_id","user_id"}))
 @Data
 public class ActivityRegistration {
  
@@ -14,28 +15,27 @@ public class ActivityRegistration {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private long id;
- 
- 
-    @ManyToMany
+
+    @ManyToOne
     @JoinColumn(
             name = "activity_id",
             foreignKey = @ForeignKey(name = "activity_id")
     )
-    private Activity activity_id;
- 
-    @OneToMany
+    private Activity activityId;
+
+    @ManyToOne
     @JoinColumn(
             name = "user_id",
             foreignKey = @ForeignKey(name = "user_id")
     )
-    private User user_id;
+    private User userId;
  
  
     @Column(name = "earned_gems")
-    private Integer earned_gems;
+    private Integer earnedGems;
  
     @Column(name = "submission_url")
-    private String submission_url;
+    private String submissionUrl;
  
 }
  
