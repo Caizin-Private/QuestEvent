@@ -17,11 +17,7 @@ public class Program {
     private Long programId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-            name = "user_id",
-            nullable = false,
-            foreignKey = @ForeignKey(name = "user_id")
-    )
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @Column(nullable = false)
@@ -37,7 +33,6 @@ public class Program {
 
     @Column(name = "endDate")
     private LocalDateTime endDate;
-
 
     @Column(nullable = false)
     private Integer registrationFee;

@@ -18,7 +18,6 @@ public class ProgramRegistration {
     @Column(name = "program_registration_id")
     private Long programRegistrationId;
 
-    // many registrations → one program
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "program_id",
@@ -27,7 +26,6 @@ public class ProgramRegistration {
     )
     private Program program;
 
-    // many registrations → one user
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "user_id",

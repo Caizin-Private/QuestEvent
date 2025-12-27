@@ -33,23 +33,13 @@ public class User {
     @Column(nullable = false)
     private String role;
 
-    @ManyToMany
-    @JoinTable(
-            name = "user_programs",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "program_id")
-    )
-    private List<Program> programs = new ArrayList<>();
+    @OneToMany(mappedBy = "user")
+    private List<Program> hostedPrograms = new ArrayList<>();
 
-    // User → ActivityRegistration (1 → many)
     @OneToMany(mappedBy = "user")
     private List<ActivityRegistration> activityRegistrations = new ArrayList<>();
 
-    // User → ProgramRegistration (1 → many)
     @OneToMany(mappedBy = "user")
     private List<ProgramRegistration> programRegistrations = new ArrayList<>();
-
-    @Column(name = "is_organizer", nullable = false)
-    private boolean isOrganizer;
 
 }
