@@ -21,8 +21,7 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "wallet_id", referencedColumnName = "walletId")
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Wallet wallet;
 
     @Column(nullable = false)
@@ -42,11 +41,13 @@ public class User {
     )
     private List<Program> programs = new ArrayList<>();
 
-    @OneToMany(mappedBy = "activity")
-    private List<ActivityRegistration> activitiesRegistration = new ArrayList<>();
+    // User → ActivityRegistration (1 → many)
+    @OneToMany(mappedBy = "user")
+    private List<ActivityRegistration> activityRegistrations = new ArrayList<>();
 
-    @OneToMany(mappedBy = "program")
-    private List<ProgramRegistration> programsRegistration = new ArrayList<>();
+    // User → ProgramRegistration (1 → many)
+    @OneToMany(mappedBy = "user")
+    private List<ProgramRegistration> programRegistrations = new ArrayList<>();
 
     @Column(name = "is_organizer", nullable = false)
     private boolean isOrganizer;

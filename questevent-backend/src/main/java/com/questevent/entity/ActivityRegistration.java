@@ -21,14 +21,14 @@ public class ActivityRegistration {
             name = "activity_id",
             foreignKey = @ForeignKey(name = "activity_id")
     )
-    private Activity activityId;
+    private Activity activity;
 
     @ManyToOne
     @JoinColumn(
             name = "user_id",
             foreignKey = @ForeignKey(name = "user_id")
     )
-    private User userId;
+    private User user;
  
  
     @Column(name = "earned_gems")

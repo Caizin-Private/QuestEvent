@@ -4,8 +4,6 @@ import com.questevent.enums.Department;
 import com.questevent.enums.ProgramStatus;
 import jakarta.persistence.*;
 import lombok.Data;
-import org.apache.catalina.User;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDateTime;
 
@@ -18,7 +16,6 @@ public class Program {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long programId;
 
-    @Column(nullable = false)
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "user_id",
@@ -47,10 +44,5 @@ public class Program {
 
     @Enumerated(EnumType.STRING)
     private ProgramStatus status = ProgramStatus.DRAFT;
-
-
-
-
-
 }
 
