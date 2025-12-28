@@ -23,7 +23,6 @@ public class Activity {
     )
     private Program program;
 
-
     @Column(name = "name", nullable = false, length = 200)
     private String activityName;
 
