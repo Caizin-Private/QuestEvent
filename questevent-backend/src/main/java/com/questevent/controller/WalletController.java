@@ -1,5 +1,6 @@
 package com.questevent.controller;
 
+import com.questevent.dto.WalletBalanceDto;
 import com.questevent.service.WalletService;
 import org.springframework.web.bind.annotation.*;
 
