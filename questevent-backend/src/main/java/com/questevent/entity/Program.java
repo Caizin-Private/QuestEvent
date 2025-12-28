@@ -1,5 +1,6 @@
 package com.questevent.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.questevent.enums.Department;
 import com.questevent.enums.ProgramStatus;
 import jakarta.persistence.*;
@@ -18,6 +19,7 @@ public class Program {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore
     private User user;
 
     @Column(nullable = false)
