@@ -1,11 +1,8 @@
-package com.questevent.repository;
+package com.questevent.service;
 
-import com.questevent.entity.Program;
-import com.questevent.entity.ProgramRegistration;
-import com.questevent.entity.User;
+import com.questevent.entity.*;
 import com.questevent.enums.ProgramStatus;
-import com.questevent.service.RegistrationService;
-import com.questevent.service.WalletService;
+import com.questevent.repository.*;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -65,8 +62,38 @@ public class RegistrationServiceImpl implements RegistrationService {
         programRegistrationRepository.save(registration);
     }
 
-    @Override
     public void registerForActivity(Long activityId, Long userId) {
 
+        Activity activity = activityRepository.findById(activityId)
+                .orElseThrow(() -> new RuntimeException("Activity not found"));
+
+        Long programId = activity.getProgram().getProgramId();
+
+        boolean programRegistered =
+                programRegistrationRepository
+                        .existsByProgram_IdAndUser_Id(programId, userId);
+
+        if (!programRegistered) {
+            throw new RuntimeException("User must register for program first");
+        }
+
+        boolean alreadyRegistered =
+                activityRegistrationRepository
+                        .existsByActivity_IdAndUser_Id(activityId, userId);
+
+        if (alreadyRegistered) {
+            throw new RuntimeException("User already registered for this activity");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        ActivityRegistration registration = new ActivityRegistration();
+        registration.setActivity(activity);
+        registration.setUser(user);
+        registration.setEarnedGems(0);
+
+        activityRegistrationRepository.save(registration);
     }
+
 }
