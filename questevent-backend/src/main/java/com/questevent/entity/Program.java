@@ -41,7 +41,7 @@ public class Program {
     private Integer registrationFee;
 
     @Enumerated(EnumType.STRING)
-    private ProgramStatus status = ProgramStatus.DRAFT;
+    private ProgramStatus status;
 
     @OneToMany(mappedBy = "program", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProgramWallet> programWallets;

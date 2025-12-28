@@ -37,8 +37,5 @@ public class ProgramRegistration {
     @Column(name = "registered_at", updatable = false)
     private LocalDateTime registeredAt = LocalDateTime.now();
 
-    @PrePersist
-    public void onRegister() {
-        this.registeredAt = LocalDateTime.now();
-    }
+
 }
