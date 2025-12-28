@@ -3,3 +3,7 @@ spring:
     url: jdbc:postgresql://nozomi.proxy.rlwy.net:24684/railway
     username: postgres
     password: PfrEGYINXOsMmzLIrjLVUMJJAQuhZxHo
+  jpa:
+    hibernate:
+      ddl-auto: update
+q
