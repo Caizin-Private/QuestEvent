@@ -9,20 +9,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/test")
-public class TestController {
+@RequestMapping("/users")
+public class UserController {
 
     private final UserService userService;
     private final WalletService walletService;
 
-    public TestController(UserService userService,
+    public UserController(UserService userService,
                           WalletService walletService) {
         this.userService = userService;
         this.walletService = walletService;
     }
 
-    @PostMapping("/createUserAndWallet")
-    public String createUserAndWallet(@RequestBody User user) {
+    @PostMapping
+    public String createUserWithWallet(@RequestBody User user) {
 
         User savedUser = userService.createTestUser(user);
 
