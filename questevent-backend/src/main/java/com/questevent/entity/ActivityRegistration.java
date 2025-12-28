@@ -29,8 +29,7 @@ public class ActivityRegistration {
             foreignKey = @ForeignKey(name = "user_id")
     )
     private User user;
- 
- 
+
     @Column(name = "earned_gems")
     private Integer earnedGems;
  

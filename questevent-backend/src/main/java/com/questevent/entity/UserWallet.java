@@ -9,7 +9,7 @@ import java.util.UUID;
 @Data
 @Entity
 @Table(name = "wallets")
-public class Wallet {
+public class UserWallet {
 
     @Id
     @GeneratedValue
@@ -20,9 +20,6 @@ public class Wallet {
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
-
-    @Column(name="coins")
-    private int coins;
 
     @Column(name="gems")
     private int gems;

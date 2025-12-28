@@ -1,6 +1,5 @@
 package com.questevent.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.util.ArrayList;
@@ -23,7 +22,7 @@ public class User {
     private String email;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Wallet wallet;
+    private UserWallet wallet;
 
     @Column(nullable = false)
     private String department;
@@ -35,12 +34,15 @@ public class User {
     private String role;
 
     @OneToMany(mappedBy = "user")
-    private List<Program> hostedPrograms = new ArrayList<>();
+    private List<Program> hostedPrograms;
 
     @OneToMany(mappedBy = "user")
-    private List<ActivityRegistration> activityRegistrations = new ArrayList<>();
+    private List<ActivityRegistration> activityRegistrations;
 
     @OneToMany(mappedBy = "user")
-    private List<ProgramRegistration> programRegistrations = new ArrayList<>();
+    private List<ProgramRegistration> programRegistrations;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<ProgramWallet> programWallets;
 
 }

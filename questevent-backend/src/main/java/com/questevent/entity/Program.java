@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Data
@@ -41,5 +42,8 @@ public class Program {
 
     @Enumerated(EnumType.STRING)
     private ProgramStatus status = ProgramStatus.DRAFT;
+
+    @OneToMany(mappedBy = "program", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProgramWallet> programWallets;
 }
 
