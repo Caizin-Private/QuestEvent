@@ -28,6 +28,7 @@ public class ActivitySubmission {
             nullable = false,
             foreignKey = @ForeignKey(name = "fk_submission_activity")
     )
+
     private Activity activity;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
