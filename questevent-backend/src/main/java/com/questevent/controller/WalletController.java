@@ -15,7 +15,7 @@ public class WalletController {
     }
 
     @GetMapping
-    public WalletBalanceDto getWallet(@PathVariable Long userId) {
+    public WalletBalanceDto getWalletBalance(@PathVariable Long userId) {
         return walletService.getWalletBalance(userId);
     }
 }

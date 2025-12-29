@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/test/program-wallet")
+@RequestMapping("/program-wallet")
 public class ProgramWalletController {
 
     private final ProgramWalletService programWalletService;
@@ -18,7 +18,7 @@ public class ProgramWalletController {
         this.programWalletService = programWalletService;
     }
 
-    @PostMapping("/create")
+    @PostMapping
     public ProgramWallet createProgramWallet(
             @RequestBody ProgramWalletCreateRequest request
     ) {
