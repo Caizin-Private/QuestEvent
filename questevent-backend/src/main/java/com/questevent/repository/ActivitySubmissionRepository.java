@@ -10,22 +10,9 @@ import java.util.List;
 public interface ActivitySubmissionRepository
         extends JpaRepository<ActivitySubmission, Long> {
 
-    /**
-     * Fetch all submissions of a user (history)
-     */
-    List<ActivitySubmission> findByUserUserId(Long userId);
 
-    /**
-     * Fetch all submissions for an activity (judge view)
-     */
-    List<ActivitySubmission> findByActivityActivityId(Long activityId);
+    boolean existsByActivityRegistrationId(Long activityRegistrationId);
 
-    /**
-     * Fetch submissions of a user for a specific activity
-     * (used to show attempt history)
-     */
-    List<ActivitySubmission> findByActivityActivityIdAndUserUserId(
-            Long activityId,
-            Long userId
-    );
+
+
 }
