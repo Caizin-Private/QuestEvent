@@ -2,6 +2,7 @@ package com.questevent.controller;
 
 import com.questevent.service.SubmissionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -11,15 +12,14 @@ public class SubmissionController {
 
     private final SubmissionService submissionService;
 
-    /**
-     * User submits an activity
-     */
     @PostMapping
-    public void submitActivity(
+    public ResponseEntity<String> submitActivity(
             @RequestParam Long activityId,
             @RequestParam Long userId,
             @RequestParam String submissionUrl
     ) {
         submissionService.submitActivity(activityId, userId, submissionUrl);
+        return ResponseEntity.ok("Submission successful");
     }
+
 }
