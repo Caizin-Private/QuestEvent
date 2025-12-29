@@ -39,7 +39,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 
         boolean alreadyRegistered =
                 programRegistrationRepository
-                        .existsByProgram_IdAndUser_Id(programId, userId);
+                        .existsByProgram_ProgramIdAndUser_UserId(programId, userId);
 
         if (alreadyRegistered) {
             throw new RuntimeException("User already registered for this program");
@@ -71,7 +71,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 
         boolean programRegistered =
                 programRegistrationRepository
-                        .existsByProgram_IdAndUser_Id(programId, userId);
+                        .existsByProgram_ProgramIdAndUser_UserId(programId, userId);
 
         if (!programRegistered) {
             throw new RuntimeException("User must register for program first");
@@ -79,7 +79,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 
         boolean alreadyRegistered =
                 activityRegistrationRepository
-                        .existsByActivity_IdAndUser_Id(activityId, userId);
+                        .existsByActivity_ActivityIdAndUser_UserId(activityId, userId);
 
         if (alreadyRegistered) {
             throw new RuntimeException("User already registered for this activity");
