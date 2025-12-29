@@ -1,6 +1,7 @@
 package com.questevent.service;
 
 import com.questevent.entity.Activity;
+import com.questevent.entity.ActivityRegistration;
 import com.questevent.entity.ActivitySubmission;
 import com.questevent.entity.User;
 import com.questevent.repository.ActivityRegistrationRepository;
@@ -22,25 +23,13 @@ public class SubmissionServiceImpl implements SubmissionService {
     @Override
     public void submitActivity(Long activityId, Long userId, String submissionUrl) {
 
-        // 1️⃣ Eligibility check
-        boolean registered = registrationRepository
-                .existsByActivity_ActivityIdAndUser_UserId(activityId, userId);
 
-        if (!registered) {
-            throw new RuntimeException("User is not registered for this activity");
-        }
+        ActivityRegistration registration = registrationRepository
+                .existsByActivity_ActivityIdAndUser_UserId(activityId, userId)
+                .orElseThrow(() -> new RuntimeException("User is not registered"));
 
-        // 2️⃣ Load entities
-        Activity activity = activityRepository.findById(activityId)
-                .orElseThrow(() -> new RuntimeException("Activity not found"));
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        // 3️⃣ Create submission
         ActivitySubmission submission = new ActivitySubmission();
-        submission.setActivity(activity);
-        submission.setUser(user);
+        submission.setActivityRegistration(registration);
         submission.setSubmissionUrl(submissionUrl);
 
         submissionRepository.save(submission);
