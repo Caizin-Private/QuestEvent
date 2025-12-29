@@ -32,7 +32,7 @@ public class ActivityRegistration {
 
     @Column(name = "earned_gems")
     private Integer earnedGems;
- 
+
     @Column(name = "submission_url")
     private String submissionUrl;
  
