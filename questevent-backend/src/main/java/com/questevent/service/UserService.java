@@ -1,13 +1,10 @@
 package com.questevent.service;
 
-import com.questevent.dto.UserResponseDto;
 import com.questevent.entity.User;
 import com.questevent.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
-import static org.springframework.http.HttpStatus.NOT_FOUND;
+import java.util.List;
 
 @Service
 public class UserService {
@@ -18,24 +15,54 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    @Transactional
-    public User createTestUser(User user) {
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
+    }
+
+    public User addUser(User user) {
+        if(user.getWallet() != null) {
+            user.getWallet().setUser(user);
+        }
         return userRepository.save(user);
     }
 
-    public UserResponseDto getUser(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "User not found"));
+    public User updateUser(Long id, User updatedUser) {
 
-        UserResponseDto dto = new UserResponseDto();
-        dto.setUserId(user.getUserId());
-        dto.setName(user.getName());
-        dto.setEmail(user.getEmail());
-        dto.setDepartment(user.getDepartment());
-        dto.setGender(user.getGender());
-        dto.setRole(user.getRole());
+        User user = getUserById(id);
 
-        return dto;
+        user.setName(updatedUser.getName());
+        user.setEmail(updatedUser.getEmail());
+        user.setDepartment(updatedUser.getDepartment());
+        user.setGender(updatedUser.getGender());
+        user.setRole(updatedUser.getRole());
+
+        if(updatedUser.getWallet() != null) {
+            updatedUser.getWallet().setUser(user);
+            user.setWallet(updatedUser.getWallet());
+        }
+
+
+        if(updatedUser.getHostedPrograms() != null)
+            user.setHostedPrograms(updatedUser.getHostedPrograms());
+
+        if(updatedUser.getActivityRegistrations() != null)
+            user.setActivityRegistrations(updatedUser.getActivityRegistrations());
+
+        if(updatedUser.getProgramRegistrations() != null)
+            user.setProgramRegistrations(updatedUser.getProgramRegistrations());
+
+        if(updatedUser.getProgramWallets() != null)
+            user.setProgramWallets(updatedUser.getProgramWallets());
+
+        return userRepository.save(user);
     }
 
+    public void deleteUser(Long id) {
+        userRepository.deleteById(id);
+    }
 }

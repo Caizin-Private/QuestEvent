@@ -1,37 +1,43 @@
 package com.questevent.controller;
-
-import com.questevent.dto.UserResponseDto;
 import com.questevent.entity.User;
 import com.questevent.service.UserService;
-import com.questevent.service.WalletService;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/users")
 public class UserController {
 
     private final UserService userService;
-    private final WalletService walletService;
 
-    public UserController(UserService userService,
-                          WalletService walletService) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.walletService = walletService;
     }
 
-    @PostMapping
-    public String createUserWithWallet(@RequestBody User user) {
-
-        User savedUser = userService.createTestUser(user);
-
-        walletService.createWalletForUser(savedUser);
-
-        return "User created with userId = " + savedUser.getUserId()
-                + " and wallet created successfully";
+    @PostMapping("/create")
+    public User createUser(@RequestBody User user) {
+        return userService.addUser(user);
     }
 
-    @GetMapping("/{userId}")
-    public UserResponseDto getUser(@PathVariable Long userId) {
-        return userService.getUser(userId);
+    @GetMapping("/all")
+    public List<User> getAllUsers() {
+        return userService.getAllUsers();
+    }
+
+    @GetMapping("/{id}")
+    public User getUser(@PathVariable Long id) {
+        return userService.getUserById(id);
+    }
+
+    @PutMapping("/{id}")
+    public User updateUser(@PathVariable Long id, @RequestBody User user) {
+        return userService.updateUser(id, user);
+    }
+
+    @DeleteMapping("/{id}")
+    public String deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return "User deleted successfully";
     }
 }

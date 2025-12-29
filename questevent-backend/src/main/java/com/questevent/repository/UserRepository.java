@@ -1,9 +1,8 @@
 package com.questevent.repository;
 
-import com.questevent.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
-
-
+import com.questevent.entity.User;
 
 public interface UserRepository extends JpaRepository<User, Long> {
+    User findByEmail(String email);
 }
