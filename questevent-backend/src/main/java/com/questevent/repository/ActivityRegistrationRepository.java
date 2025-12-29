@@ -6,8 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ActivityRegistrationRepository
         extends JpaRepository<ActivityRegistration, Long> {
 
-    boolean existsByActivity_ActivityIdAndUser_UserId(
-            Long activityId,
-            Long userId
-    );
+    boolean existsByActivity_ActivityIdAndUser_UserId(Long activityId, Long userId);
+
 }
+
