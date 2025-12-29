@@ -2,7 +2,6 @@ package com.questevent.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -21,9 +20,8 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "wallet_id", referencedColumnName = "walletId")
-    private Wallet wallet;
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private UserWallet wallet;
 
     @Column(nullable = false)
     private String department;
@@ -34,21 +32,16 @@ public class User {
     @Column(nullable = false)
     private String role;
 
-    @ManyToMany
-    @JoinTable(
-            name = "user_programs",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "program_id")
-    )
-    private List<Program> programs = new ArrayList<>();
+    @OneToMany(mappedBy = "user")
+    private List<Program> hostedPrograms;
 
-    @OneToMany(mappedBy = "activity")
-    private List<ActivityRegistration> activitiesRegistration = new ArrayList<>();
+    @OneToMany(mappedBy = "user")
+    private List<ActivityRegistration> activityRegistrations;
 
-    @OneToMany(mappedBy = "program")
-    private List<ProgramRegistration> programsRegistration = new ArrayList<>();
+    @OneToMany(mappedBy = "user")
+    private List<ProgramRegistration> programRegistrations;
 
-    @Column(name = "is_organizer", nullable = false)
-    private boolean isOrganizer;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<ProgramWallet> programWallets;
 
 }

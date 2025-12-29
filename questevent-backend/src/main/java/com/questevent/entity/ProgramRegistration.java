@@ -2,7 +2,6 @@ package com.questevent.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import org.apache.catalina.User;
 
 import java.time.LocalDateTime;
 
@@ -14,13 +13,29 @@ import java.time.LocalDateTime;
 )
 public class ProgramRegistration {
 
-    @Id @GeneratedValue
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "program_registration_id")
     private Long programRegistrationId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "program_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "program_id")
+    )
     private Program program;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "user_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "user_id")
+    )
     private User user;
 
+    @Column(name = "registered_at", updatable = false)
     private LocalDateTime registeredAt = LocalDateTime.now();
+
+
 }

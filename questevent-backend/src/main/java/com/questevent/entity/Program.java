@@ -1,13 +1,13 @@
 package com.questevent.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.questevent.enums.Department;
 import com.questevent.enums.ProgramStatus;
 import jakarta.persistence.*;
 import lombok.Data;
-import org.apache.catalina.User;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Data
@@ -18,13 +18,9 @@ public class Program {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long programId;
 
-    @Column(nullable = false)
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-            name = "user_id",
-            nullable = false,
-            foreignKey = @ForeignKey(name = "user_id")
-    )
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore
     private User user;
 
     @Column(nullable = false)
@@ -41,16 +37,13 @@ public class Program {
     @Column(name = "endDate")
     private LocalDateTime endDate;
 
-
     @Column(nullable = false)
     private Integer registrationFee;
 
     @Enumerated(EnumType.STRING)
-    private ProgramStatus status = ProgramStatus.DRAFT;
+    private ProgramStatus status;
 
-
-
-
-
+    @OneToMany(mappedBy = "program", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProgramWallet> programWallets;
 }
 
