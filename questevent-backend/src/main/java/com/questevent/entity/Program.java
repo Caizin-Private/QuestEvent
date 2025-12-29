@@ -28,8 +28,9 @@ public class Program {
 
     private String programDescription;
 
-    @Column(name = "department")
-    private Department dept;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "department", nullable = false)
+    private Department department;
 
     @Column(name = "startDate")
     private LocalDateTime startDate;
