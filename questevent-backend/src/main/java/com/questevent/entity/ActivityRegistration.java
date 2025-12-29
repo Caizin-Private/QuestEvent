@@ -14,7 +14,7 @@ public class ActivityRegistration {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private long id;
+    private long activityRegistrationId;
 
     @ManyToOne
     @JoinColumn(
