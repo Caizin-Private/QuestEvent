@@ -4,7 +4,7 @@ import com.questevent.dto.WalletBalanceDto;
 import com.questevent.entity.User;
 import com.questevent.entity.UserWallet;
 import com.questevent.repository.UserRepository;
-import com.questevent.repository.WalletRepository;
+import com.questevent.repository.UserWalletRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -14,18 +14,18 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 @Service
 public class WalletService {
 
-    private final WalletRepository walletRepository;
+    private final UserWalletRepository userWalletRepository;
     private final UserRepository userRepository;
 
-    public WalletService(WalletRepository walletRepository , UserRepository userRepository) {
-        this.walletRepository = walletRepository;
+    public WalletService(UserWalletRepository userWalletRepository, UserRepository userRepository) {
+        this.userWalletRepository = userWalletRepository;
         this.userRepository = userRepository;
     }
 
     @Transactional
     public void createWalletForUser(User user) {
 
-        walletRepository.findByUserUserId(user.getUserId())
+        userWalletRepository.findByUserUserId(user.getUserId())
                 .ifPresent(w -> {
                     throw new RuntimeException("Wallet already exists for user");
                 });
@@ -34,7 +34,7 @@ public class WalletService {
         userWallet.setUser(user);
         userWallet.setGems(0);
 
-        walletRepository.save(userWallet);
+        userWalletRepository.save(userWallet);
     }
 
     public WalletBalanceDto getWalletBalance(Long userId) {

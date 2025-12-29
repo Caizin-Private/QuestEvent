@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface WalletRepository extends JpaRepository<UserWallet, UUID> {
+public interface UserWalletRepository extends JpaRepository<UserWallet, UUID> {
     Optional<UserWallet> findByUserUserId(Long userId);
 
     @Query("""

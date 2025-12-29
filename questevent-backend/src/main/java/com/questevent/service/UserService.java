@@ -10,9 +10,11 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final WalletService walletService;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, WalletService walletService) {
         this.userRepository = userRepository;
+        this.walletService = walletService;
     }
 
     public List<User> getAllUsers() {
@@ -27,6 +29,7 @@ public class UserService {
     public User addUser(User user) {
         if(user.getWallet() != null) {
             user.getWallet().setUser(user);
+            walletService.createWalletForUser(user);
         }
         return userRepository.save(user);
     }
@@ -45,7 +48,6 @@ public class UserService {
             updatedUser.getWallet().setUser(user);
             user.setWallet(updatedUser.getWallet());
         }
-
 
         if(updatedUser.getHostedPrograms() != null)
             user.setHostedPrograms(updatedUser.getHostedPrograms());
