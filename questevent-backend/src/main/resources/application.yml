@@ -6,3 +6,21 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+    show-sql: true
+
+  security:
+    oauth2:
+      client:
+        registration:
+          azure:
+            client-id: 12b1e09e-023f-430b-bf15-13d1223afb90
+            client-secret: vTP8Q~NrldQ5k_7IOQgzCkt.LQDNXgMfJPQysa7b
+            scope:
+              - openid
+              - profile
+              - email
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            client-name: Azure AD
+        provider:
+          azure:
+            issuer-uri: https://login.microsoftonline.com/f54f468f-415b-4a86-a7cf-c9495812c590/v2.0
