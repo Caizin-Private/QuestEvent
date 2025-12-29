@@ -11,4 +11,8 @@ import java.util.UUID;
 public interface ProgramWalletRepository extends JpaRepository<ProgramWallet, UUID> {
 
     Optional<ProgramWallet> findByUserAndProgram(User user, Program program);
+    Optional<ProgramWallet> findByUserUserIdAndProgramProgramId(
+            Long userId,
+            Long programId
+    );
 }

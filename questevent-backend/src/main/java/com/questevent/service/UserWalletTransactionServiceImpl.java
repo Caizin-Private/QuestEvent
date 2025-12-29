@@ -5,7 +5,7 @@ import com.questevent.entity.UserWallet;
 import com.questevent.repository.UserWalletRepository;
 import org.springframework.transaction.annotation.Transactional;
 
-public class UserWalletTransactionServiceImpl implements TransactionService{
+public class UserWalletTransactionServiceImpl implements UserWalletTransactionService {
 
     private final UserWalletRepository userWalletRepository;
 
