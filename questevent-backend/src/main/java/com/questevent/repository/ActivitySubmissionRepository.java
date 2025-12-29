@@ -13,7 +13,7 @@ public interface ActivitySubmissionRepository
 
     boolean existsByActivityRegistration_ActivityRegistrationId(Long activityRegistrationId);
 
-
-
+    List<ActivitySubmission>
+    findByActivityRegistrationActivityActivityId(Long activityId);
 
 }
