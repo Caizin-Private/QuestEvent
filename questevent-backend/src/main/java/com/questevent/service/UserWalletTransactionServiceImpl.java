@@ -15,24 +15,6 @@ public class UserWalletTransactionServiceImpl implements TransactionService{
 
     @Override
     @Transactional
-    public void debitGems(User user, int amount) {
-        if (amount <= 0) {
-            throw new IllegalArgumentException("Amount must be greater than zero");
-        }
-
-        UserWallet wallet = userWalletRepository.findByUserUserId(user.getUserId())
-                .orElseThrow(() -> new RuntimeException("Wallet not found"));
-
-        if (wallet.getGems() < amount) {
-            throw new RuntimeException("Insufficient gems");
-        }
-
-        wallet.setGems(wallet.getGems() - amount);
-        userWalletRepository.save(wallet);
-    }
-
-    @Override
-    @Transactional
     public void creditGems(User user, int amount) {
 
         if (amount <= 0) {
