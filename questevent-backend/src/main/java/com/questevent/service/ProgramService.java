@@ -3,6 +3,7 @@ package com.questevent.service;
 import com.questevent.entity.Program;
 import com.questevent.entity.User;
 import com.questevent.repository.ProgramRepository;
+import com.questevent.repository.ProgramWalletRepository;
 import com.questevent.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,17 +15,21 @@ public class ProgramService {
 
     private final ProgramRepository programRepository;
     private final UserRepository userRepository;
+    private final ProgramWalletService programWalletService;
 
     @Autowired
-    public ProgramService(ProgramRepository programRepository, UserRepository userRepository) {
+    public ProgramService(ProgramRepository programRepository, UserRepository userRepository, ProgramWalletService programWalletService) {
         this.programRepository = programRepository;
         this.userRepository = userRepository;
+        this.programWalletService = programWalletService;
     }
 
     public Program createProgram(Long userId, Program program) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         program.setUser(user);
+        programWalletService.createWallet(userId, program.getProgramId());
+
         return programRepository.save(program);
     }
 }
