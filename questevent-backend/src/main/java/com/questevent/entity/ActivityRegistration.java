@@ -1,5 +1,6 @@
 package com.questevent.entity;
  
+import com.questevent.enums.CompletionStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 import jakarta.persistence.Id;
@@ -29,6 +30,9 @@ public class ActivityRegistration {
             foreignKey = @ForeignKey(name = "user_id")
     )
     private User user;
+
+    @Column(name = "is_completed", nullable = false)
+    private CompletionStatus completionStatus;
 
  
 }

@@ -45,4 +45,7 @@ public class Activity {
     public void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
+
+    @Column(name = "is_compulsory", nullable = false)
+    private Boolean isCompulsory;
 }
