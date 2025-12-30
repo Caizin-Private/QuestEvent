@@ -17,7 +17,7 @@ public class ActivitySubmission {
     private Long submissionId;
 
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "activity_registration_id",
             nullable = false,
