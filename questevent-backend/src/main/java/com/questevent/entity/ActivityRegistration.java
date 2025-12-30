@@ -31,7 +31,8 @@ public class ActivityRegistration {
     )
     private User user;
 
-    @Column(name = "is_completed", nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "completion_status", nullable = false)
     private CompletionStatus completionStatus;
 
  
