@@ -1,6 +1,5 @@
 package com.questevent.controller;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.questevent.dto.ProgramRequestDTO;
 import com.questevent.dto.ProgramResponseDTO;
 import com.questevent.entity.Program;
@@ -43,15 +42,12 @@ public class ProgramController {
     @GetMapping
     public ResponseEntity<List<ProgramResponseDTO>> getAllProgramsByUserId(@PathVariable Long userId) {
         List<Program> programs =programService.getProgramsByUserId(userId);
-        // Map list of entities to list of DTOs
         List<ProgramResponseDTO> response = programs.stream()
                 .map(this::convertToResponseDTO)
                 .toList();
         return ResponseEntity.ok(response);
     }
 
-    // 2. GET /programs -> Get every program in the system (requires a separate mapping)
-// Note: You can place this in the same controller or a more general one
     @GetMapping("/all")
     public ResponseEntity<List<ProgramResponseDTO>> getAllPrograms() {
         List<Program> programs = programService.getAllPrograms();
@@ -70,7 +66,6 @@ public class ProgramController {
         return ResponseEntity.noContent().build();
     }
 
-    // Simple helper to map Entity to DTO
     private ProgramResponseDTO convertToResponseDTO(Program program) {
         ProgramResponseDTO response = new ProgramResponseDTO();
         response.setProgramId(program.getProgramId());
