@@ -1,7 +1,9 @@
 package com.questevent.controller;
 
+import com.questevent.dto.ActivitySubmissionRequestDto;
 import com.questevent.service.SubmissionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,12 +16,16 @@ public class SubmissionController {
 
     @PostMapping
     public ResponseEntity<String> submitActivity(
-            @RequestParam Long activityId,
-            @RequestParam Long userId,
-            @RequestParam String submissionUrl
+            @RequestBody ActivitySubmissionRequestDto request
     ) {
-        submissionService.submitActivity(activityId, userId, submissionUrl);
-        return ResponseEntity.ok("Submission successful");
-    }
+        submissionService.submitActivity(
+                request.getActivityId(),
+                request.getUserId(),
+                request.getSubmissionUrl()
+        );
 
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body("Submission successful");
+    }
 }
