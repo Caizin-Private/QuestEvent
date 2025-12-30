@@ -4,6 +4,7 @@ import lombok.Data;
 import jakarta.persistence.Id;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "activities")
@@ -48,4 +49,7 @@ public class Activity {
 
     @Column(name = "is_compulsory", nullable = false)
     private Boolean isCompulsory;
+
+    @OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ActivityRegistration> registrations;
 }
