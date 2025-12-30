@@ -4,6 +4,7 @@ import com.questevent.dto.ProgramRequestDTO;
 import com.questevent.entity.Program;
 import com.questevent.entity.User;
 import com.questevent.repository.ProgramRepository;
+import com.questevent.repository.ProgramWalletRepository;
 import com.questevent.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
