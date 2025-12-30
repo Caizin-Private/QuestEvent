@@ -15,10 +15,7 @@ public class JudgeController {
 
     private final JudgeService judgeService;
 
-    /**
-     * Fetch all submissions for a given activity
-     * Used by Judge Dashboard
-     */
+
 
     @GetMapping("/submissions/{activityId}")
     public ResponseEntity<List<ActivitySubmissionDto>> getSubmissionsForActivity(
@@ -41,9 +38,7 @@ public class JudgeController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Review a submission and award gems
-     */
+
 
     @PostMapping("/review/{submissionId}")
     public ResponseEntity<String> reviewSubmission(
