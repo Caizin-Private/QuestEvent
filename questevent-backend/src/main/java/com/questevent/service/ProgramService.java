@@ -15,14 +15,12 @@ public class ProgramService {
 
     private final ProgramRepository programRepository;
     private final UserRepository userRepository;
-    private final ProgramWalletRepository programWalletRepository;
     private final ProgramWalletService programWalletService;
 
     @Autowired
-    public ProgramService(ProgramRepository programRepository, UserRepository userRepository, ProgramWalletRepository programWalletRepository, ProgramWalletService programWalletService) {
+    public ProgramService(ProgramRepository programRepository, UserRepository userRepository, ProgramWalletService programWalletService) {
         this.programRepository = programRepository;
         this.userRepository = userRepository;
-        this.programWalletRepository = programWalletRepository;
         this.programWalletService = programWalletService;
     }
 
