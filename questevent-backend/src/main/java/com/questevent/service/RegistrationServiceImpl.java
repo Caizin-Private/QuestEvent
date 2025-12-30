@@ -91,7 +91,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         ActivityRegistration registration = new ActivityRegistration();
         registration.setActivity(activity);
         registration.setUser(user);
-        registration.setEarnedGems(0);
+
 
         activityRegistrationRepository.save(registration);
     }
