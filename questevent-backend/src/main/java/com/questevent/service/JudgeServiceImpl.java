@@ -1,9 +1,6 @@
 package com.questevent.service;
 
-import com.questevent.entity.ActivityRegistration;
-import com.questevent.entity.ActivitySubmission;
-import com.questevent.entity.Program;
-import com.questevent.entity.User;
+import com.questevent.entity.*;
 import com.questevent.repository.ActivitySubmissionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -44,8 +41,14 @@ public class JudgeServiceImpl implements JudgeService {
         }
 
         ActivityRegistration registration = submission.getActivityRegistration();
+        Activity activity = registration.getActivity();
+        int maxReward = activity.getRewardGems();
         User user = registration.getUser();
         Program program = registration.getActivity().getProgram();
+
+        if(awardedGems > maxReward){
+            throw new IllegalArgumentException("Awarded gems cannot exceed activity reward gems");
+        }
 
         submission.setAwardedGems(awardedGems);
         submission.setReviewedAt(LocalDateTime.now());
