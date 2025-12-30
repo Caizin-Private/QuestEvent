@@ -3,8 +3,11 @@ package com.questevent.service;
 import com.questevent.entity.User;
 import com.questevent.entity.UserWallet;
 import com.questevent.repository.UserWalletRepository;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+
+@Service
 public class UserWalletTransactionServiceImpl implements UserWalletTransactionService {
 
     private final UserWalletRepository userWalletRepository;
