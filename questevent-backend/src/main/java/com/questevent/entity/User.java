@@ -1,5 +1,6 @@
 package com.questevent.entity;
 
+import com.questevent.enums.Department;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.util.List;
@@ -23,8 +24,9 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private UserWallet wallet;
 
-    @Column(nullable = false)
-    private String department;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "department", nullable = false)
+    private Department department;
 
     @Column(nullable = false)
     private String gender;
