@@ -13,7 +13,7 @@ public class ActivityRegistration {
  
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
+    @Column(name = "activity_registration_id")
     private long activityRegistrationId;
 
     @ManyToOne
@@ -30,11 +30,6 @@ public class ActivityRegistration {
     )
     private User user;
 
-    @Column(name = "earned_gems")
-    private Integer earnedGems;
-
-    @Column(name = "submission_url")
-    private String submissionUrl;
  
 }
  
