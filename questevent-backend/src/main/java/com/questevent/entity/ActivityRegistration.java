@@ -1,5 +1,6 @@
 package com.questevent.entity;
  
+import com.questevent.enums.CompletionStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 import jakarta.persistence.Id;
@@ -13,7 +14,7 @@ public class ActivityRegistration {
  
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
+    @Column(name = "activity_registration_id")
     private long activityRegistrationId;
 
     @ManyToOne
@@ -30,11 +31,9 @@ public class ActivityRegistration {
     )
     private User user;
 
-    @Column(name = "earned_gems")
-    private Integer earnedGems;
+    @Column(name = "is_completed", nullable = false)
+    private CompletionStatus completionStatus;
 
-    @Column(name = "submission_url")
-    private String submissionUrl;
  
 }
  
