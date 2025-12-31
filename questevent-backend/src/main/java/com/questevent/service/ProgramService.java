@@ -35,7 +35,6 @@ public class ProgramService {
         mapDtoToEntity(dto, program);
         program.setUser(user);
 
-        programWalletService.createWallet(userId, program.getProgramId());
         return programRepository.save(program);
     }
 
