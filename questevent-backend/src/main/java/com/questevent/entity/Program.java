@@ -46,5 +46,11 @@ public class Program {
 
     @OneToMany(mappedBy = "program", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProgramWallet> programWallets;
+
+    @OneToMany(mappedBy = "program", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Activity> activities;
+
+    @OneToMany(mappedBy = "program", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProgramRegistration> programRegistrations;
 }
 
