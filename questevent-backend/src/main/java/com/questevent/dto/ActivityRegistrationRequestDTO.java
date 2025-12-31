@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-class ActivityRegistrationRequestDTO {
+public class ActivityRegistrationRequestDTO {
     private Long activityId;
     private Long userId;
     private CompletionStatus completionStatus;

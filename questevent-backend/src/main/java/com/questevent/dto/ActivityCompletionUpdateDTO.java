@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-class ActivityCompletionUpdateDTO {
+public class ActivityCompletionUpdateDTO {
     private CompletionStatus completionStatus;
 }

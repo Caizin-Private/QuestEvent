@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-class ActivityRegistrationResponseDTO {
+public class ActivityRegistrationResponseDTO {
     private Long activityRegistrationId;
     private Long activityId;
     private String activityName;
