@@ -8,5 +8,5 @@ public interface JudgeService {
 
     List<ActivitySubmission> getSubmissionsForActivity(Long activityId);
 
-    void reviewSubmission(Long submissionId, Integer awardedGems);
+    void reviewSubmission(Long submissionId);
 }

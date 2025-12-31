@@ -38,14 +38,12 @@ public class JudgeController {
         return ResponseEntity.ok(response);
     }
 
-
-
     @PostMapping("/review/{submissionId}")
     public ResponseEntity<String> reviewSubmission(
-            @PathVariable Long submissionId,
-            @RequestParam Integer awardedGems
-    ){
-        judgeService.reviewSubmission(submissionId, awardedGems);
+            @PathVariable Long submissionId
+    ) {
+        judgeService.reviewSubmission(submissionId);
         return ResponseEntity.ok("Submission reviewed successfully");
     }
+
 }

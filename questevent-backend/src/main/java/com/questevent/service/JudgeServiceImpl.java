@@ -1,6 +1,7 @@
 package com.questevent.service;
 
 import com.questevent.entity.*;
+import com.questevent.enums.CompletionStatus;
 import com.questevent.repository.ActivitySubmissionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,38 +26,35 @@ public class JudgeServiceImpl implements JudgeService {
 
     @Override
     @Transactional
-    public void reviewSubmission(Long submissionId, Integer awardedGems) {
-        ActivitySubmission submission = submissionRepository
-                .findById(submissionId)
-                .orElseThrow(() ->
-                        new RuntimeException("Submission not found"));
+    public void reviewSubmission(Long submissionId) {
+        ActivitySubmission submission = submissionRepository.findById(submissionId)
+                .orElseThrow(() -> new RuntimeException("Submission not found"));
 
         if (submission.getReviewedAt() != null) {
             throw new RuntimeException("Submission already reviewed");
         }
 
-
-        if (awardedGems == null || awardedGems <= 0) {
-            throw new IllegalArgumentException("Awarded gems must be greater than zero");
-        }
-
         ActivityRegistration registration = submission.getActivityRegistration();
-        Activity activity = registration.getActivity();
-        int maxReward = activity.getRewardGems();
-        User user = registration.getUser();
-        Program program = registration.getActivity().getProgram();
 
-        if(awardedGems > maxReward){
-            throw new IllegalArgumentException("Awarded gems cannot exceed activity reward gems");
+        Activity activity = registration.getActivity();
+        int rewardGems = activity.getRewardGems();
+
+        if (rewardGems <= 0) {
+            throw new RuntimeException("Invalid reward configuration");
         }
 
-        submission.setAwardedGems(awardedGems);
+        submission.setAwardedGems(rewardGems);
         submission.setReviewedAt(LocalDateTime.now());
+
+        registration.setCompletionStatus(CompletionStatus.COMPLETED);
+
         submissionRepository.save(submission);
 
 
-        userWalletTransactionService.creditGems(user, awardedGems);
+        User user = registration.getUser();
+        Program program = activity.getProgram();
 
-        programWalletTransactionService.creditGems(user, program, awardedGems);
+        userWalletTransactionService.creditGems(user, rewardGems);
+        programWalletTransactionService.creditGems(user, program, rewardGems);
     }
 }
