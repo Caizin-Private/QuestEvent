@@ -39,7 +39,7 @@ public class ProgramWalletController {
     public List<ProgramWalletBalanceDto> getUserProgramWalletBalances(
             @PathVariable Long userId
     ) {
-        return programWalletService.getUserProgramWalletBalance(userId);
+        return programWalletService.getUserProgramWalletBalances(userId);
     }
 
     @GetMapping("/{programWalletId}")

@@ -57,7 +57,7 @@ public class ProgramWalletService {
         return programWalletRepository.save(programWallet);
     }
 
-    public List<ProgramWalletBalanceDto> getUserProgramWalletBalance(Long userId) {
+    public List<ProgramWalletBalanceDto> getUserProgramWalletBalances(Long userId) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(
