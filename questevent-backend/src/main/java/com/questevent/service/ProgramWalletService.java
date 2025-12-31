@@ -97,7 +97,7 @@ public class ProgramWalletService {
     }
 
     @Transactional
-    public void settleProgramWallet(Long programId) {
+    public void programWalletSettlement(Long programId) {
 
         Program program = programRepository.findById(programId)
                 .orElseThrow(() -> new RuntimeException("Program not found"));
@@ -109,10 +109,10 @@ public class ProgramWalletService {
         List<ProgramWallet> wallets =
                 programWalletRepository.findByProgramProgramId(programId);
 
-        for (ProgramWallet pw : wallets) {
+        for (ProgramWallet programWallet : wallets) {
 
-            UserWallet userWallet = pw.getUser().getWallet();
-            userWallet.setGems(userWallet.getGems() + pw.getGems());
+            UserWallet userWallet = programWallet.getUser().getWallet();
+            userWallet.setGems(userWallet.getGems() + programWallet.getGems());
 
         }
 
