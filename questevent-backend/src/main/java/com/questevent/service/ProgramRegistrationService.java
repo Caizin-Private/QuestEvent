@@ -24,30 +24,28 @@ public class ProgramRegistrationService {
     private final ProgramRegistrationRepository programRegistrationRepository;
     private final ProgramRepository programRepository;
     private final UserRepository userRepository;
+    private final ProgramWalletService programWalletService;
 
     @Transactional
     public ProgramRegistrationResponseDTO registerParticipantForProgram(ProgramRegistrationRequestDTO request) {
-        // Check if user exists
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + request.getUserId()));
 
-        // Check if program exists
         Program program = programRepository.findById(request.getProgramId())
                 .orElseThrow(() -> new RuntimeException("Program not found with id: " + request.getProgramId()));
 
-        // Check if already registered
         if (programRegistrationRepository.existsByProgram_ProgramIdAndUser_UserId(
                 request.getProgramId(), request.getUserId())) {
             throw new RuntimeException("User already registered for this program");
         }
 
-        // Create registration
         ProgramRegistration registration = new ProgramRegistration();
         registration.setProgram(program);
         registration.setUser(user);
         registration.setRegisteredAt(LocalDateTime.now());
 
         ProgramRegistration savedRegistration = programRegistrationRepository.save(registration);
+        programWalletService.createWallet(user.getUserId(), program.getProgramId());
 
         return mapToResponseDTO(savedRegistration);
     }
