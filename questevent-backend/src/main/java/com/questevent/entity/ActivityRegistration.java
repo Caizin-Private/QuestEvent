@@ -1,11 +1,14 @@
 package com.questevent.entity;
  
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.questevent.enums.CompletionStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 import jakarta.persistence.Id;
- 
- 
+
+import java.util.List;
+
+
 @Entity
 @Table(name = "activity_registrations",
 uniqueConstraints = @UniqueConstraint(columnNames = {"activity_id","user_id"}))
@@ -29,11 +32,15 @@ public class ActivityRegistration {
             name = "user_id",
             foreignKey = @ForeignKey(name = "user_id")
     )
+    @JsonIgnore
     private User user;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "completion_status", nullable = false)
     private CompletionStatus completionStatus;
+
+    @OneToOne(mappedBy = "activityRegistration", cascade = CascadeType.ALL, orphanRemoval = true)
+    private ActivitySubmission activitySubmission;
 
  
 }

@@ -1,5 +1,6 @@
 package com.questevent.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.UuidGenerator;
@@ -18,6 +19,7 @@ public class UserWallet {
     private UUID walletId;
 
     @OneToOne
+    @JsonIgnore
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 

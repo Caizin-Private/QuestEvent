@@ -1,5 +1,6 @@
 package com.questevent.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.questevent.enums.Department;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -34,13 +35,13 @@ public class User {
     @Column(nullable = false)
     private String role;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user",cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Program> hostedPrograms;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user",cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ActivityRegistration> activityRegistrations;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user",cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProgramRegistration> programRegistrations;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
