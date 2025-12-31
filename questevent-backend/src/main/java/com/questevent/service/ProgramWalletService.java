@@ -6,6 +6,7 @@ import com.questevent.entity.Program;
 import com.questevent.entity.ProgramWallet;
 import com.questevent.entity.User;
 import com.questevent.entity.UserWallet;
+import com.questevent.enums.ProgramStatus;
 import com.questevent.repository.ProgramRepository;
 import com.questevent.repository.ProgramWalletRepository;
 import com.questevent.repository.UserRepository;
@@ -93,6 +94,29 @@ public class ProgramWalletService {
         dto.setGems(wallet.getGems());
 
         return dto;
+    }
+
+    @Transactional
+    public void settleProgramWallet(Long programId) {
+
+        Program program = programRepository.findById(programId)
+                .orElseThrow(() -> new RuntimeException("Program not found"));
+
+        if (program.getStatus() == ProgramStatus.SETTLED) {
+            throw new IllegalStateException("Program already settled");
+        }
+
+        List<ProgramWallet> wallets =
+                programWalletRepository.findByProgramProgramId(programId);
+
+        for (ProgramWallet pw : wallets) {
+
+            UserWallet userWallet = pw.getUser().getWallet();
+            userWallet.setGems(userWallet.getGems() + pw.getGems());
+
+        }
+
+        program.setStatus(ProgramStatus.SETTLED);
     }
 
 }
