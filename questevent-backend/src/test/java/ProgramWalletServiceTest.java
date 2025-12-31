@@ -1,0 +1,108 @@
+import com.questevent.entity.Program;
+import com.questevent.entity.ProgramWallet;
+import com.questevent.entity.User;
+import com.questevent.repository.ProgramRepository;
+import com.questevent.repository.ProgramWalletRepository;
+import com.questevent.repository.UserRepository;
+import com.questevent.service.ProgramWalletService;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+public class ProgramWalletServiceTest {
+
+    @Mock
+    private ProgramWalletRepository programWalletRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private ProgramRepository programRepository;
+
+    @InjectMocks
+    private ProgramWalletService programWalletService;
+
+    @Test
+    void createWallet_shouldCreateWallet() {
+        User user = new User();
+        user.setUserId(1L);
+
+        Program program = new Program();
+        program.setProgramId(10L);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(programRepository.findById(10L)).thenReturn(Optional.of(program));
+        when(programWalletRepository.findByUserAndProgram(user, program))
+                .thenReturn(Optional.empty());
+        when(programWalletRepository.save(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        ProgramWallet wallet =
+                programWalletService.createWallet(1L, 10L);
+
+        assertNotNull(wallet);
+        assertEquals(0, wallet.getGems());
+        assertEquals(user, wallet.getUser());
+        assertEquals(program, wallet.getProgram());
+    }
+
+    @Test
+    void createWallet_shouldFail_whenUserNotFound() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
+                () -> programWalletService.createWallet(1L, 10L)
+        );
+
+        assertEquals("User not found", ex.getMessage());
+    }
+
+    @Test
+    void createWallet_shouldFail_whenProgramNotFound() {
+        User user = new User();
+        user.setUserId(1L);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(programRepository.findById(10L)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
+                () -> programWalletService.createWallet(1L, 10L)
+        );
+
+        assertEquals("Program not found", ex.getMessage());
+    }
+
+    @Test
+    void createWallet_shouldFail_whenWalletAlreadyExists() {
+        User user = new User();
+        user.setUserId(1L);
+
+        Program program = new Program();
+        program.setProgramId(10L);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(programRepository.findById(10L)).thenReturn(Optional.of(program));
+        when(programWalletRepository.findByUserAndProgram(user, program))
+                .thenReturn(Optional.of(new ProgramWallet()));
+
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
+                () -> programWalletService.createWallet(1L, 10L)
+        );
+
+        assertEquals("ProgramWallet already exists", ex.getMessage());
+        verify(programWalletRepository, never()).save(any());
+    }
+}
