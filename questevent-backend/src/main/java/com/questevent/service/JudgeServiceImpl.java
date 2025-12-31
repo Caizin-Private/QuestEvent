@@ -50,6 +50,16 @@ public class JudgeServiceImpl implements JudgeService {
 
         submissionRepository.save(submission);
 
+        User user = registration.getUser();
+        Program program = activity.getProgram();
+
+        programWalletTransactionService.creditGems(
+                user,
+                program,
+                rewardGems
+        );
+
+
 
     }
 }
