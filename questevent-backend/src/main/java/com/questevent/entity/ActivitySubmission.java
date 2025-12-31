@@ -23,7 +23,6 @@ public class ActivitySubmission {
             nullable = false,
             foreignKey = @ForeignKey(name = "fk_submission_registration")
     )
-
     private ActivityRegistration activityRegistration;
     @Column(name = "submission_url", nullable = false)
     private String submissionUrl;

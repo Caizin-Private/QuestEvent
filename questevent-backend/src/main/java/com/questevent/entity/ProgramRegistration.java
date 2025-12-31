@@ -1,5 +1,6 @@
 package com.questevent.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -32,6 +33,7 @@ public class ProgramRegistration {
             nullable = false,
             foreignKey = @ForeignKey(name = "user_id")
     )
+    @JsonIgnore
     private User user;
 
     @Column(name = "registered_at", updatable = false)
