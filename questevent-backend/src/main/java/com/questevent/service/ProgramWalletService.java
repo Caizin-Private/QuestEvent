@@ -1,7 +1,6 @@
 package com.questevent.service;
 
 import com.questevent.dto.ProgramWalletBalanceDto;
-import com.questevent.dto.WalletBalanceDto;
 import com.questevent.entity.Program;
 import com.questevent.entity.ProgramWallet;
 import com.questevent.entity.User;

@@ -4,7 +4,7 @@ import lombok.Data;
 import java.util.UUID;
 
 @Data
-public class WalletBalanceDto {
+public class UserWalletBalanceDto {
     private UUID walletId;
     private int gems;
 }
