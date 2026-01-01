@@ -14,7 +14,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     private final ActivityRepository activityRepository;
     private final ProgramRegistrationRepository programRegistrationRepository;
     private final ActivityRegistrationRepository activityRegistrationRepository;
-    private final WalletService walletService;
+    private final UserWalletService userWalletService;
     private final UserRepository userRepository;
 
     public RegistrationServiceImpl(
@@ -22,14 +22,14 @@ public class RegistrationServiceImpl implements RegistrationService {
             ActivityRepository activityRepository,
             ProgramRegistrationRepository programRegistrationRepository,
             ActivityRegistrationRepository activityRegistrationRepository,
-            WalletService walletService,
+            UserWalletService userWalletService,
             UserRepository userRepository
     ) {
         this.programRepository = programRepository;
         this.activityRepository = activityRepository;
         this.programRegistrationRepository = programRegistrationRepository;
         this.activityRegistrationRepository = activityRegistrationRepository;
-        this.walletService = walletService;
+        this.userWalletService = userWalletService;
         this.userRepository = userRepository;
 
     }
