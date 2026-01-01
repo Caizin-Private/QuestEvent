@@ -1,3 +1,5 @@
+package com.questevent.service;
+
 import com.questevent.dto.ProgramWalletBalanceDto;
 import com.questevent.entity.Program;
 import com.questevent.entity.ProgramWallet;
@@ -5,7 +7,6 @@ import com.questevent.entity.User;
 import com.questevent.repository.ProgramRepository;
 import com.questevent.repository.ProgramWalletRepository;
 import com.questevent.repository.UserRepository;
-import com.questevent.service.ProgramWalletService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
