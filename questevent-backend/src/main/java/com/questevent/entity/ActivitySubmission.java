@@ -1,4 +1,5 @@
 package com.questevent.entity;
+import com.questevent.enums.ReviewStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.Getter;
@@ -24,6 +25,11 @@ public class ActivitySubmission {
             foreignKey = @ForeignKey(name = "fk_submission_registration")
     )
     private ActivityRegistration activityRegistration;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "review_status", nullable = false)
+    private ReviewStatus reviewStatus = ReviewStatus.PENDING;
+
     @Column(name = "submission_url", nullable = false)
     private String submissionUrl;
     @Column(name = "submitted_at", nullable = false, updatable = false)
