@@ -18,7 +18,7 @@ public class ProgramRegistrationController {
 
     private final ProgramRegistrationService programRegistrationService;
 
-    @PostMapping("/register")
+    @PostMapping
     public ResponseEntity<ProgramRegistrationResponseDTO> registerParticipant(
             @RequestBody ProgramRegistrationRequestDTO request) {
         try {
@@ -48,7 +48,7 @@ public class ProgramRegistrationController {
         }
     }
 
-    @GetMapping("/program/{programId}")
+    @GetMapping("/programs/{programId}")
     public ResponseEntity<List<ProgramRegistrationDTO>> getRegistrationsByProgram(
             @PathVariable Long programId) {
         List<ProgramRegistrationDTO> registrations = 
@@ -56,7 +56,7 @@ public class ProgramRegistrationController {
         return ResponseEntity.ok(registrations);
     }
 
-    @GetMapping("/user/{userId}")
+    @GetMapping("/users/{userId}")
     public ResponseEntity<List<ProgramRegistrationDTO>> getRegistrationsByUser(
             @PathVariable Long userId) {
         List<ProgramRegistrationDTO> registrations = 
@@ -64,7 +64,7 @@ public class ProgramRegistrationController {
         return ResponseEntity.ok(registrations);
     }
 
-    @GetMapping("/program/{programId}/count")
+    @GetMapping("/programs/{programId}/count")
     public ResponseEntity<Long> getParticipantCount(@PathVariable Long programId) {
         long count = programRegistrationService.getParticipantCountForProgram(programId);
         return ResponseEntity.ok(count);
