@@ -9,5 +9,8 @@ public interface ProgramWalletTransactionService {
     void creditGems(User user, Program program, int amount);
 
     @Transactional
-    void settleExpiredProgramWallets();
+    void autoSettleExpiredProgramWallets();
+
+    @Transactional
+    void manuallySettleExpiredProgramWallets(Long programId);
 }

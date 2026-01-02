@@ -21,6 +21,6 @@ public class ProgramWalletScheduler {
     // for programs whose endDate has passed
     @Scheduled(cron = "0 1 0 * * ?")
     public void autoSettleProgramWallets() {
-        transactionService.settleExpiredProgramWallets();
+        transactionService.autoSettleExpiredProgramWallets();
     }
 }

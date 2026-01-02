@@ -49,7 +49,7 @@ public class ProgramWalletTransactionServiceImpl implements ProgramWalletTransac
 
     @Transactional
     @Override
-    public void settleExpiredProgramWallets() {
+    public void autoSettleExpiredProgramWallets() {
 
         List<Program> completedPrograms =
                 programRepository.findByStatusAndEndDateBefore(
@@ -80,5 +80,30 @@ public class ProgramWalletTransactionServiceImpl implements ProgramWalletTransac
 
             program.setStatus(ProgramStatus.SETTLED);
         }
+    }
+
+    @Transactional
+    @Override
+    public void manuallySettleExpiredProgramWallets(Long programId) {
+
+        Program program = programRepository.findById(programId)
+                .orElseThrow(() -> new RuntimeException("Program not found"));
+
+        if (program.getStatus() == ProgramStatus.SETTLED) {
+            throw new IllegalStateException("Program already settled");
+        }
+
+        List<ProgramWallet> wallets =
+                programWalletRepository.findByProgramProgramId(programId);
+
+        for (ProgramWallet programWallet : wallets) {
+
+            UserWallet userWallet = programWallet.getUser().getWallet();
+            userWallet.setGems(userWallet.getGems() + programWallet.getGems());
+            programWallet.setGems(0);
+
+        }
+
+        program.setStatus(ProgramStatus.SETTLED);
     }
 }

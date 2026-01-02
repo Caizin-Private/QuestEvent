@@ -5,6 +5,7 @@ import com.questevent.dto.ProgramResponseDTO;
 import com.questevent.entity.Program;
 import com.questevent.service.ProgramService;
 import com.questevent.service.ProgramWalletService;
+import com.questevent.service.ProgramWalletTransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,11 +18,14 @@ import java.util.List;
 public class ProgramController {
 
     private final ProgramService programService;
+    private final ProgramWalletTransactionService programWalletTransactionService;
     private final ProgramWalletService programWalletService;
 
+
     @Autowired
-    public ProgramController(ProgramService programService, ProgramWalletService programWalletService) {
+    public ProgramController(ProgramService programService, ProgramWalletTransactionService programWalletTransactionService, ProgramWalletService programWalletService) {
         this.programService = programService;
+        this.programWalletTransactionService = programWalletTransactionService;
         this.programWalletService = programWalletService;
     }
 
@@ -87,7 +91,7 @@ public class ProgramController {
     public ResponseEntity<String> settleProgram(
             @PathVariable Long programId
     ) {
-        programWalletService.programWalletSettlement(programId);
+        programWalletTransactionService.manuallySettleExpiredProgramWallets(programId);
         return ResponseEntity.ok("Program settled successfully");
     }
 }
