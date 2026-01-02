@@ -43,9 +43,6 @@ public class RbacService {
         this.submissionRepository = submissionRepository;
     }
 
-    /* =========================================================
-       🔐 Resolve authenticated User (OAuth2 OR UserPrincipal)
-       ========================================================= */
     private User currentUser(Authentication authentication) {
 
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -77,9 +74,6 @@ public class RbacService {
         return null;
     }
 
-    /* =========================================================
-       🏢 Platform-level access
-       ========================================================= */
     public boolean isPlatformOwner(Authentication authentication) {
         User user = currentUser(authentication);
         return user != null && user.getRole() == Role.OWNER;
@@ -97,9 +91,6 @@ public class RbacService {
         return user.getUserId().equals(userId);
     }
 
-    /* =========================================================
-       📦 Program management (CREATE / UPDATE / DELETE)
-       ========================================================= */
     public boolean canManageProgram(Authentication authentication, Long programId) {
 
         User user = currentUser(authentication);
@@ -108,12 +99,10 @@ public class RbacService {
         Program program = programRepository.findById(programId).orElse(null);
         if (program == null) return false;
 
-        // 🔥 OWNER → full access
         if (user.getRole() == Role.OWNER) {
             return true;
         }
 
-        // ✅ Creator can manage their own program (KEY FIX)
         if (program.getUser().getUserId().equals(user.getUserId())) {
             return true;
         }
@@ -121,16 +110,10 @@ public class RbacService {
         return false;
     }
 
-    /* =========================================================
-       👀 Program view
-       ========================================================= */
     public boolean canViewProgram(Authentication authentication, Long programId) {
         return currentUser(authentication) != null;
     }
 
-    /* =========================================================
-       ⚖️ Submission verification (JUDGE / OWNER)
-       ========================================================= */
     public boolean canAccessActivityRegistration(Authentication authentication, Long registrationId) {
         User user = currentUser(authentication);
         if (user == null) return false;
@@ -208,9 +191,6 @@ public class RbacService {
         return false;
     }
 
-    /* =========================================================
-       💰 Wallet access
-       ========================================================= */
     public boolean canAccessUserWallet(Authentication authentication, Long userId) {
 
         User user = currentUser(authentication);

@@ -26,7 +26,7 @@ public class ProgramController {
         this.programWalletService = programWalletService;
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@rbac.canAccessUserProfile(authentication, #userId)")
     @PostMapping
     public ResponseEntity<ProgramResponseDTO> createProgram(
             @PathVariable Long userId,
@@ -45,7 +45,7 @@ public class ProgramController {
         return ResponseEntity.ok(convertToResponseDTO(updated));
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@rbac.canAccessUserProfile(authentication, #userId)")
     @GetMapping
     public ResponseEntity<List<ProgramResponseDTO>> getAllProgramsByUserId(@PathVariable Long userId) {
         List<Program> programs =programService.getProgramsByUserId(userId);
@@ -89,6 +89,7 @@ public class ProgramController {
         return response;
     }
 
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @PostMapping("/{programId}/settleProgramWallets")
     public ResponseEntity<String> settleProgram(
             @PathVariable Long programId

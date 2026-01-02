@@ -27,7 +27,7 @@ public class ActivityController {
         return ResponseEntity.status(HttpStatus.CREATED).body(convertToResponseDTO(activity));
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@rbac.canViewProgram(authentication, #programId)")
     @GetMapping
     public ResponseEntity<List<ActivityResponseDTO>> getActivities(@PathVariable Long programId) {
         return ResponseEntity.ok(activityService.getActivitiesByProgramId(programId)

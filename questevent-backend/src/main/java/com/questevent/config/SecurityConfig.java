@@ -25,7 +25,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers( "/access-denied", "/oauth2/**", "/login/**", "/login", "/logout-success").permitAll()
+                        .requestMatchers( "/", "/access-denied", "/oauth2/**", "/login/**", "/login", "/logout-success").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth -> oauth
@@ -34,7 +34,17 @@ public class SecurityConfig {
                 .addFilterAfter(jwtAuthFilter,
                         OAuth2LoginAuthenticationFilter.class
                 )
-
+                .headers(headers -> headers
+                        .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'"))
+                        .frameOptions(frame -> frame.deny())
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .maxAgeInSeconds(31536000)
+                        )
+                )
+                .sessionManagement(session -> session
+                        .maximumSessions(1)
+                        .maxSessionsPreventsLogin(false)
+                )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/logout-success")
@@ -42,7 +52,6 @@ public class SecurityConfig {
                         .clearAuthentication(true)
                         .deleteCookies("JSESSIONID")
                 );
-
         return http.build();
     }
 }
