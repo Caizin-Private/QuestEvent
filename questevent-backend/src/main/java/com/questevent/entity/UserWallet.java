@@ -23,7 +23,7 @@ public class UserWallet {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    @Column(name="gems")
+    @Column(name="gems",nullable = false)
     private int gems;
 
 }
