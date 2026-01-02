@@ -1,6 +1,6 @@
 package com.questevent.service;
 
-import com.questevent.dto.UserWalletBalanceDto;
+import com.questevent.dto.UserWalletBalanceDTO;
 import com.questevent.entity.User;
 import com.questevent.entity.UserWallet;
 import com.questevent.repository.UserRepository;
@@ -73,7 +73,7 @@ class UserWalletServiceTest {
         when(userRepository.findById(1L))
                 .thenReturn(Optional.of(user));
 
-        UserWalletBalanceDto dto = userWalletService.getWalletBalance(1L);
+        UserWalletBalanceDTO dto = userWalletService.getWalletBalance(1L);
 
         assertNotNull(dto);
         assertEquals(walletId, dto.getWalletId());

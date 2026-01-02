@@ -1,6 +1,6 @@
 package com.questevent.service;
 
-import com.questevent.dto.UserWalletBalanceDto;
+import com.questevent.dto.UserWalletBalanceDTO;
 import com.questevent.entity.User;
 import com.questevent.entity.UserWallet;
 import com.questevent.repository.UserRepository;
@@ -37,7 +37,7 @@ public class UserWalletService {
         userWalletRepository.save(userWallet);
     }
 
-    public UserWalletBalanceDto getWalletBalance(Long userId) {
+    public UserWalletBalanceDTO getWalletBalance(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "User not found"));
 
@@ -46,7 +46,7 @@ public class UserWalletService {
             throw new ResponseStatusException(NOT_FOUND, "Wallet not found");
         }
 
-        UserWalletBalanceDto dto = new UserWalletBalanceDto();
+        UserWalletBalanceDTO dto = new UserWalletBalanceDTO();
         dto.setWalletId(wallet.getWalletId());
         dto.setGems(wallet.getGems());
 

@@ -1,6 +1,6 @@
 package com.questevent.controller;
 
-import com.questevent.dto.UserWalletBalanceDto;
+import com.questevent.dto.UserWalletBalanceDTO;
 import com.questevent.service.UserWalletService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,7 +39,7 @@ class UserWalletControllerTest {
     void getUserWalletBalance_success() throws Exception {
         UUID walletId = UUID.randomUUID();
 
-        UserWalletBalanceDto dto = new UserWalletBalanceDto();
+        UserWalletBalanceDTO dto = new UserWalletBalanceDTO();
         dto.setWalletId(walletId);
         dto.setGems(150);
 

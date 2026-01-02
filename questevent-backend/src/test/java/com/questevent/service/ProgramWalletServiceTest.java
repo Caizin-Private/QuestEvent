@@ -1,6 +1,6 @@
 package com.questevent.service;
 
-import com.questevent.dto.ProgramWalletBalanceDto;
+import com.questevent.dto.ProgramWalletBalanceDTO;
 import com.questevent.entity.Program;
 import com.questevent.entity.ProgramWallet;
 import com.questevent.entity.User;
@@ -125,7 +125,7 @@ public class ProgramWalletServiceTest {
         when(programWalletRepository.findByUser(user))
                 .thenReturn(List.of(wallet));
 
-        List<ProgramWalletBalanceDto> balances =
+        List<ProgramWalletBalanceDTO> balances =
                 programWalletService.getUserProgramWalletBalances(1L);
 
         assertEquals(1, balances.size());
@@ -172,7 +172,7 @@ public class ProgramWalletServiceTest {
         when(programWalletRepository.findById(walletId))
                 .thenReturn(Optional.of(wallet));
 
-        ProgramWalletBalanceDto dto =
+        ProgramWalletBalanceDTO dto =
                 programWalletService.getWalletBalanceByWalletId(walletId);
 
         assertEquals(walletId, dto.getProgramWalletId());

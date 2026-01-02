@@ -1,6 +1,6 @@
 package com.questevent.controller;
 
-import com.questevent.dto.UserWalletBalanceDto;
+import com.questevent.dto.UserWalletBalanceDTO;
 import com.questevent.service.UserWalletService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -27,7 +27,7 @@ public class UserWalletController {
             @ApiResponse(responseCode = "200", description = "User Wallet balance retrieved successfully"),
             @ApiResponse(responseCode = "404", description = "User or wallet not found")
     })
-    public ResponseEntity<UserWalletBalanceDto> getUserWalletBalance(
+    public ResponseEntity<UserWalletBalanceDTO> getUserWalletBalance(
             @Parameter(description = "User ID", required = true) @PathVariable Long userId) {
         return ResponseEntity.ok(walletService.getWalletBalance(userId));
     }
