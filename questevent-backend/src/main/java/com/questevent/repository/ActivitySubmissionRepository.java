@@ -1,6 +1,7 @@
 package com.questevent.repository;
 
 import com.questevent.entity.ActivitySubmission;
+import com.questevent.enums.CompletionStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -15,5 +16,8 @@ public interface ActivitySubmissionRepository
 
     List<ActivitySubmission>
     findByActivityRegistrationActivityActivityId(Long activityId);
+
+    List<ActivitySubmission>
+    findByActivityRegistrationCompletionStatus(CompletionStatus status);
 
 }

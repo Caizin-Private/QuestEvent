@@ -32,6 +32,18 @@ public class JudgeServiceImpl implements JudgeService {
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<JudgeSubmissionDto> getPendingSubmissions() {
+
+        return submissionRepository
+                .findByActivityRegistrationCompletionStatus(
+                        CompletionStatus.NOT_COMPLETED
+                )
+                .stream()
+                .map(this::mapToJudgeSubmissionDto)
+                .toList();
+    }
 
     @Override
     @Transactional

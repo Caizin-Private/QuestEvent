@@ -8,6 +8,6 @@ import java.util.List;
 public interface JudgeService {
 
     List<JudgeSubmissionDto> getSubmissionsForActivity(Long activityId);
-
+    List<JudgeSubmissionDto> getPendingSubmissions();
     void reviewSubmission(Long submissionId, Long judgeId);
 }

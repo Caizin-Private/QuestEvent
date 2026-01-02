@@ -16,9 +16,18 @@ public class JudgeController {
 
     private final JudgeService judgeService;
 
+    /**
+     * Get all submissions which are not reviewed yet
+     */
+    @GetMapping("/submissions/pending")
+    public ResponseEntity<List<JudgeSubmissionDto>> getPendingSubmissions() {
+        return ResponseEntity.ok(
+                judgeService.getPendingSubmissions()
+        );
+    }
 
 
-    @GetMapping("/submissions/{activityId}")
+    @GetMapping("/submissions/activity/{activityId}")
     public ResponseEntity<List<JudgeSubmissionDto>> getSubmissionsForActivity(
             @PathVariable Long activityId
     ) {
