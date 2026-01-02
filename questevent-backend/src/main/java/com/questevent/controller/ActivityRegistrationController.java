@@ -20,7 +20,7 @@ public class ActivityRegistrationController {
 
     private final ActivityRegistrationService activityRegistrationService;
 
-    @PostMapping("/register")
+    @PostMapping
     public ResponseEntity<ActivityRegistrationResponseDTO> registerParticipant(
             @RequestBody ActivityRegistrationRequestDTO request) {
         try {
@@ -50,7 +50,7 @@ public class ActivityRegistrationController {
         }
     }
 
-    @GetMapping("/activity/{activityId}")
+    @GetMapping("/activities/{activityId}")
     public ResponseEntity<List<ActivityRegistrationDTO>> getRegistrationsByActivity(
             @PathVariable Long activityId) {
         List<ActivityRegistrationDTO> registrations =
@@ -58,7 +58,7 @@ public class ActivityRegistrationController {
         return ResponseEntity.ok(registrations);
     }
 
-    @GetMapping("/user/{userId}")
+    @GetMapping("/users/{userId}")
     public ResponseEntity<List<ActivityRegistrationDTO>> getRegistrationsByUser(
             @PathVariable Long userId) {
         List<ActivityRegistrationDTO> registrations =
@@ -66,7 +66,7 @@ public class ActivityRegistrationController {
         return ResponseEntity.ok(registrations);
     }
 
-    @GetMapping("/activity/{activityId}/status/{status}")
+    @GetMapping("/activities/{activityId}/status/{status}")
     public ResponseEntity<List<ActivityRegistrationDTO>> getRegistrationsByActivityAndStatus(
             @PathVariable Long activityId,
             @PathVariable CompletionStatus status) {
@@ -75,7 +75,7 @@ public class ActivityRegistrationController {
         return ResponseEntity.ok(registrations);
     }
 
-    @GetMapping("/user/{userId}/status/{status}")
+    @GetMapping("/users/{userId}/status/{status}")
     public ResponseEntity<List<ActivityRegistrationDTO>> getRegistrationsByUserAndStatus(
             @PathVariable Long userId,
             @PathVariable CompletionStatus status) {
@@ -84,7 +84,7 @@ public class ActivityRegistrationController {
         return ResponseEntity.ok(registrations);
     }
 
-    @PatchMapping("/{id}/completion-status")
+    @PatchMapping("/{id}/status")
     public ResponseEntity<ActivityRegistrationDTO> updateCompletionStatus(
             @PathVariable Long id,
             @RequestBody ActivityCompletionUpdateDTO updateDTO) {
@@ -97,7 +97,7 @@ public class ActivityRegistrationController {
         }
     }
 
-    @GetMapping("/activity/{activityId}/count")
+    @GetMapping("/activities/{activityId}/count")
     public ResponseEntity<Long> getParticipantCount(@PathVariable Long activityId) {
         long count = activityRegistrationService.getParticipantCountForActivity(activityId);
         return ResponseEntity.ok(count);

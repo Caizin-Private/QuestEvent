@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/users/{userId}/programs")
+@RequestMapping("/api/programs")
 public class ProgramController {
 
     private final ProgramService programService;
@@ -51,7 +51,7 @@ public class ProgramController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/all")
+    @GetMapping("/{programId}")
     public ResponseEntity<List<ProgramResponseDTO>> getAllPrograms() {
         List<Program> programs = programService.getAllPrograms();
         List<ProgramResponseDTO> response = programs.stream()
@@ -83,7 +83,7 @@ public class ProgramController {
         return response;
     }
 
-    @PostMapping("/{programId}/settleProgramWallets")
+    @PostMapping("/{programId}/settle")
     public ResponseEntity<String> settleProgram(
             @PathVariable Long programId
     ) {
