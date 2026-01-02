@@ -2,6 +2,7 @@ package com.questevent.service;
 
 import com.questevent.entity.*;
 import com.questevent.enums.CompletionStatus;
+import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,7 +16,7 @@ import java.util.List;
 public class JudgeServiceImpl implements JudgeService {
 
     private final ActivitySubmissionRepository submissionRepository;
-    private final UserWalletTransactionService userWalletTransactionService;
+    private final ActivityRegistrationRepository registrationRepository;
     private final ProgramWalletTransactionService programWalletTransactionService;
 
     @Override
@@ -34,9 +35,11 @@ public class JudgeServiceImpl implements JudgeService {
             throw new RuntimeException("Submission already reviewed");
         }
 
-        ActivityRegistration registration = submission.getActivityRegistration();
 
+
+        ActivityRegistration registration = submission.getActivityRegistration();
         Activity activity = registration.getActivity();
+
         int rewardGems = activity.getRewardGems();
 
         if (rewardGems <= 0) {
@@ -45,10 +48,11 @@ public class JudgeServiceImpl implements JudgeService {
 
         submission.setAwardedGems(rewardGems);
         submission.setReviewedAt(LocalDateTime.now());
+        submissionRepository.save(submission);
 
         registration.setCompletionStatus(CompletionStatus.COMPLETED);
+        registrationRepository.save(registration);
 
-        submissionRepository.save(submission);
 
         User user = registration.getUser();
         Program program = activity.getProgram();
@@ -58,8 +62,6 @@ public class JudgeServiceImpl implements JudgeService {
                 program,
                 rewardGems
         );
-
-
 
     }
 }
