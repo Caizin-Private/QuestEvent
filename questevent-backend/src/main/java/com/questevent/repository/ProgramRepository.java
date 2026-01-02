@@ -8,10 +8,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ProgramRepository extends JpaRepository<Program, Long> {
+
     List<Program> findByUser_UserId(Long userId);
 
-    List<Program> findByStatusAndEndDateBefore(
-            ProgramStatus status,
-            LocalDateTime now
-    );
+    List<Program> findByStatusAndEndDateBefore(ProgramStatus status, LocalDateTime now);
 }
