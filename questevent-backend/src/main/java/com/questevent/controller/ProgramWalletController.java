@@ -4,14 +4,21 @@ import com.questevent.dto.ProgramWalletBalanceDto;
 import com.questevent.dto.ProgramWalletCreateRequest;
 import com.questevent.entity.ProgramWallet;
 import com.questevent.service.ProgramWalletService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/program-wallets")
+@RequestMapping("/api/program-wallets")
+@Tag(name = "Program Wallets", description = "Program wallet management APIs")
 public class ProgramWalletController {
 
     private final ProgramWalletService programWalletService;
@@ -21,10 +28,13 @@ public class ProgramWalletController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public ProgramWalletBalanceDto createProgramWallet(
-            @RequestBody ProgramWalletCreateRequest request
-    ) {
+    @Operation(summary = "Create program wallet", description = "Creates a new program wallet for a user and program")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Wallet created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input or wallet already exists")
+    })
+    public ResponseEntity<ProgramWalletBalanceDto> createProgramWallet(
+            @RequestBody ProgramWalletCreateRequest request) {
         ProgramWallet wallet = programWalletService.createWallet(
                 request.getUserId(),
                 request.getProgramId()
@@ -33,19 +43,25 @@ public class ProgramWalletController {
         ProgramWalletBalanceDto dto = new ProgramWalletBalanceDto();
         dto.setProgramWalletId(wallet.getProgramWalletId());
         dto.setGems(wallet.getGems());
-        return dto;
+        return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
-    @GetMapping("/user/{userId}")
-    public List<ProgramWalletBalanceDto> getUserProgramWalletBalances(
-            @PathVariable Long userId
-    ) {
-        return programWalletService.getUserProgramWalletBalances(userId);
+
+    @GetMapping("/users/{userId}")
+    @Operation(summary = "Get user program wallets", description = "Retrieves all program wallets for a specific user")
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved wallets")
+    public ResponseEntity<List<ProgramWalletBalanceDto>> getUserProgramWalletBalances(
+            @Parameter(description = "User ID", required = true) @PathVariable Long userId) {
+        return ResponseEntity.ok(programWalletService.getUserProgramWalletBalances(userId));
     }
 
     @GetMapping("/{programWalletId}")
-    public ProgramWalletBalanceDto getProgramWalletBalance(
-            @PathVariable UUID programWalletId
-    ) {
-        return programWalletService.getWalletBalanceByWalletId(programWalletId);
+    @Operation(summary = "Get program wallet balance", description = "Retrieves the balance of a specific program wallet")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Wallet found"),
+            @ApiResponse(responseCode = "404", description = "Wallet not found")
+    })
+    public ResponseEntity<ProgramWalletBalanceDto> getProgramWalletBalance(
+            @Parameter(description = "Program Wallet ID (UUID)", required = true) @PathVariable UUID programWalletId) {
+        return ResponseEntity.ok(programWalletService.getWalletBalanceByWalletId(programWalletId));
     }
 }

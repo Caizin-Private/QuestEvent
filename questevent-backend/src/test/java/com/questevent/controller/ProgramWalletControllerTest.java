@@ -39,7 +39,7 @@ class ProgramWalletControllerTest {
                 .thenReturn(wallet);
 
         ProgramWalletBalanceDto response =
-                programWalletController.createProgramWallet(request);
+                programWalletController.createProgramWallet(request).getBody();
 
         assertNotNull(response);
         assertEquals(wallet.getProgramWalletId(), response.getProgramWalletId());
@@ -56,7 +56,7 @@ class ProgramWalletControllerTest {
                 .thenReturn(List.of(dto));
 
         List<ProgramWalletBalanceDto> result =
-                programWalletController.getUserProgramWalletBalances(1L);
+                programWalletController.getUserProgramWalletBalances(1L).getBody();
 
         assertEquals(1, result.size());
         assertEquals(200, result.get(0).getGems());
@@ -74,7 +74,7 @@ class ProgramWalletControllerTest {
                 .thenReturn(dto);
 
         ProgramWalletBalanceDto result =
-                programWalletController.getProgramWalletBalance(walletId);
+                programWalletController.getProgramWalletBalance(walletId).getBody();
 
         assertEquals(walletId, result.getProgramWalletId());
         assertEquals(150, result.getGems());
