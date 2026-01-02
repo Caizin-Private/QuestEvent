@@ -1,6 +1,6 @@
 package com.questevent.service;
 
-import com.questevent.dto.ProgramWalletBalanceDto;
+import com.questevent.dto.ProgramWalletBalanceDTO;
 import com.questevent.entity.Program;
 import com.questevent.entity.ProgramWallet;
 import com.questevent.entity.User;
@@ -56,7 +56,7 @@ public class ProgramWalletService {
         return programWalletRepository.save(programWallet);
     }
 
-    public List<ProgramWalletBalanceDto> getUserProgramWalletBalances(Long userId) {
+    public List<ProgramWalletBalanceDTO> getUserProgramWalletBalances(Long userId) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -73,7 +73,7 @@ public class ProgramWalletService {
         }
 
         return wallets.stream().map(wallet -> {
-            ProgramWalletBalanceDto dto = new ProgramWalletBalanceDto();
+            ProgramWalletBalanceDTO dto = new ProgramWalletBalanceDTO();
             dto.setProgramWalletId(wallet.getProgramWalletId());
             dto.setGems(wallet.getGems());
             return dto;
@@ -81,14 +81,14 @@ public class ProgramWalletService {
     }
 
 
-    public ProgramWalletBalanceDto getWalletBalanceByWalletId(UUID walletId) {
+    public ProgramWalletBalanceDTO getWalletBalanceByWalletId(UUID walletId) {
 
         ProgramWallet wallet = programWalletRepository.findById(walletId)
                 .orElseThrow(() -> new ResponseStatusException(
                         NOT_FOUND, "Program wallet not found"
                 ));
 
-        ProgramWalletBalanceDto dto = new ProgramWalletBalanceDto();
+        ProgramWalletBalanceDTO dto = new ProgramWalletBalanceDTO();
         dto.setProgramWalletId(wallet.getProgramWalletId());
         dto.setGems(wallet.getGems());
 

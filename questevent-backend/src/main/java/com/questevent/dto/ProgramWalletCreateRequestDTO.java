@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProgramWalletCreateRequest {
+public class ProgramWalletCreateRequestDTO {
 
     private Long userId;
     private Long programId;

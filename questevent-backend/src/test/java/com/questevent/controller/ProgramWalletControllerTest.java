@@ -1,7 +1,7 @@
 package com.questevent.controller;
 
-import com.questevent.dto.ProgramWalletBalanceDto;
-import com.questevent.dto.ProgramWalletCreateRequest;
+import com.questevent.dto.ProgramWalletBalanceDTO;
+import com.questevent.dto.ProgramWalletCreateRequestDTO;
 import com.questevent.entity.ProgramWallet;
 import com.questevent.service.ProgramWalletService;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ class ProgramWalletControllerTest {
 
     @Test
     void createProgramWallet_shouldReturnWalletBalanceDto() {
-        ProgramWalletCreateRequest request = new ProgramWalletCreateRequest();
+        ProgramWalletCreateRequestDTO request = new ProgramWalletCreateRequestDTO();
         request.setUserId(1L);
         request.setProgramId(10L);
 
@@ -38,8 +38,8 @@ class ProgramWalletControllerTest {
         when(programWalletService.createWallet(1L, 10L))
                 .thenReturn(wallet);
 
-        ProgramWalletBalanceDto response =
-                programWalletController.createProgramWallet(request);
+        ProgramWalletBalanceDTO response =
+                programWalletController.createProgramWallet(request).getBody();
 
         assertNotNull(response);
         assertEquals(wallet.getProgramWalletId(), response.getProgramWalletId());
@@ -48,15 +48,15 @@ class ProgramWalletControllerTest {
 
     @Test
     void getUserProgramWalletBalances_shouldReturnList() {
-        ProgramWalletBalanceDto dto = new ProgramWalletBalanceDto();
+        ProgramWalletBalanceDTO dto = new ProgramWalletBalanceDTO();
         dto.setProgramWalletId(UUID.randomUUID());
         dto.setGems(200);
 
         when(programWalletService.getUserProgramWalletBalances(1L))
                 .thenReturn(List.of(dto));
 
-        List<ProgramWalletBalanceDto> result =
-                programWalletController.getUserProgramWalletBalances(1L);
+        List<ProgramWalletBalanceDTO> result =
+                programWalletController.getUserProgramWalletBalances(1L).getBody();
 
         assertEquals(1, result.size());
         assertEquals(200, result.get(0).getGems());
@@ -66,15 +66,15 @@ class ProgramWalletControllerTest {
     void getProgramWalletBalance_shouldReturnWallet() {
         UUID walletId = UUID.randomUUID();
 
-        ProgramWalletBalanceDto dto = new ProgramWalletBalanceDto();
+        ProgramWalletBalanceDTO dto = new ProgramWalletBalanceDTO();
         dto.setProgramWalletId(walletId);
         dto.setGems(150);
 
         when(programWalletService.getWalletBalanceByWalletId(walletId))
                 .thenReturn(dto);
 
-        ProgramWalletBalanceDto result =
-                programWalletController.getProgramWalletBalance(walletId);
+        ProgramWalletBalanceDTO result =
+                programWalletController.getProgramWalletBalance(walletId).getBody();
 
         assertEquals(walletId, result.getProgramWalletId());
         assertEquals(150, result.getGems());

@@ -1,6 +1,6 @@
 package com.questevent.controller;
 
-import com.questevent.dto.UserWalletBalanceDto;
+import com.questevent.dto.UserWalletBalanceDTO;
 import com.questevent.service.UserWalletService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,17 +36,17 @@ class UserWalletControllerTest {
     }
 
     @Test
-    void getWalletBalance_success() throws Exception {
+    void getUserWalletBalance_success() throws Exception {
         UUID walletId = UUID.randomUUID();
 
-        UserWalletBalanceDto dto = new UserWalletBalanceDto();
+        UserWalletBalanceDTO dto = new UserWalletBalanceDTO();
         dto.setWalletId(walletId);
         dto.setGems(150);
 
         when(userWalletService.getWalletBalance(1L))
                 .thenReturn(dto);
 
-        mockMvc.perform(get("/users/{userId}/wallet", 1L)
+        mockMvc.perform(get("/api/users/{userId}/wallet", 1L)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.walletId").value(walletId.toString()))
@@ -54,26 +54,26 @@ class UserWalletControllerTest {
     }
 
     @Test
-    void getWalletBalance_userNotFound() throws Exception {
+    void getUserWalletBalance_userNotFound() throws Exception {
         when(userWalletService.getWalletBalance(1L))
                 .thenThrow(new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "User not found"
                 ));
 
-        mockMvc.perform(get("/users/{userId}/wallet", 1L))
+        mockMvc.perform(get("/api/users/{userId}/wallet", 1L))
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    void getWalletBalance_walletNotFound() throws Exception {
+    void getUserWalletBalance_walletNotFound() throws Exception {
         when(userWalletService.getWalletBalance(1L))
                 .thenThrow(new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Wallet not found"
                 ));
 
-        mockMvc.perform(get("/users/{userId}/wallet", 1L))
+        mockMvc.perform(get("/api/users/{userId}/wallet", 1L))
                 .andExpect(status().isNotFound());
     }
 }
