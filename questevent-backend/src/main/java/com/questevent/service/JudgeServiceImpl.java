@@ -1,6 +1,6 @@
 package com.questevent.service;
 
-import com.questevent.dto.JudgeSubmissionDto;
+import com.questevent.dto.JudgeSubmissionDTO;
 import com.questevent.entity.*;
 import com.questevent.enums.CompletionStatus;
 import com.questevent.repository.ActivityRegistrationRepository;
@@ -23,7 +23,7 @@ public class JudgeServiceImpl implements JudgeService {
     private final ProgramWalletTransactionService programWalletTransactionService;
 
     @Override
-    public List<JudgeSubmissionDto> getSubmissionsForActivity(Long activityId) {
+    public List<JudgeSubmissionDTO> getSubmissionsForActivity(Long activityId) {
 
         return submissionRepository
                 .findByActivityRegistrationActivityActivityId(activityId)
@@ -34,7 +34,7 @@ public class JudgeServiceImpl implements JudgeService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<JudgeSubmissionDto> getPendingSubmissions() {
+    public List<JudgeSubmissionDTO> getPendingSubmissions() {
 
         return submissionRepository
                 .findByActivityRegistrationCompletionStatus(
@@ -67,17 +67,17 @@ public class JudgeServiceImpl implements JudgeService {
             throw new RuntimeException("Invalid reward configuration");
         }
 
-        // Update submission
+
         submission.setReviewedBy(judge);
         submission.setAwardedGems(rewardGems);
         submission.setReviewedAt(LocalDateTime.now());
         submissionRepository.save(submission);
 
-        // Update registration
+
         registration.setCompletionStatus(CompletionStatus.COMPLETED);
         registrationRepository.save(registration);
 
-        // Credit program wallet
+
         User user = registration.getUser();
         Program program = activity.getProgram();
 
@@ -86,10 +86,10 @@ public class JudgeServiceImpl implements JudgeService {
     }
 
 
-    private JudgeSubmissionDto mapToJudgeSubmissionDto(ActivitySubmission submission) {
+    private JudgeSubmissionDTO mapToJudgeSubmissionDto(ActivitySubmission submission) {
         ActivityRegistration registration = submission.getActivityRegistration();
 
-        return new JudgeSubmissionDto(
+        return new JudgeSubmissionDTO(
                 submission.getSubmissionId(),
                 registration.getActivity().getActivityId(),
                 registration.getActivity().getActivityName(),

@@ -3,7 +3,7 @@ package com.questevent.dto;
 import lombok.Data;
 
 @Data
-public class LeaderboardDto {
+public class LeaderboardDTO {
     private Long userId;
     private String userName;
     private int gems;
