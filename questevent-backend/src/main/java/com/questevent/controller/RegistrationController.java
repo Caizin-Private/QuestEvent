@@ -4,7 +4,7 @@ import com.questevent.service.RegistrationService;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/registrations")
+@RequestMapping("/api/registrations")
 public class RegistrationController {
 
     private final RegistrationService registrationService;
@@ -13,14 +13,14 @@ public class RegistrationController {
         this.registrationService = registrationService;
     }
 
-    @PostMapping("/program/{programId}")
+    @PostMapping("/programs/{programId}")
     public void registerForProgram(
             @PathVariable Long programId,Long userId
     ) {
         registrationService.registerForProgram(programId, userId);
     }
 
-    @PostMapping("/activity/{activityId}")
+    @PostMapping("/activities/{activityId}")
     public void registerForActivity(
             @PathVariable Long activityId,Long userId
     ) {
