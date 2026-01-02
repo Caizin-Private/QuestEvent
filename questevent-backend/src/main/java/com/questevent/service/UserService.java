@@ -1,7 +1,9 @@
 package com.questevent.service;
 
+import com.questevent.dto.UserResponseDto;
 import com.questevent.entity.User;
 import com.questevent.repository.UserRepository;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -66,5 +68,22 @@ public class UserService {
 
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
+    }
+
+    public List<SimpleGrantedAuthority> getAuthorities(User user) {
+        return List.of(
+                new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
+        );
+    }
+
+    public UserResponseDto convertToDto(User user) {
+        UserResponseDto userDto = new UserResponseDto();
+        userDto.setUserId(user.getUserId());
+        userDto.setName(user.getName());
+        userDto.setEmail(user.getEmail());
+        userDto.setDepartment(user.getDepartment());
+        userDto.setGender(user.getGender());
+        userDto.setRole(user.getRole());
+        return userDto;
     }
 }
