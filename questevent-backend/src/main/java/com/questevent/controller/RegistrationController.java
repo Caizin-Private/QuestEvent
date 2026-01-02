@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,6 +22,7 @@ public class RegistrationController {
         this.registrationService = registrationService;
     }
 
+    @PreAuthorize("@rbac.canRegisterForProgram(authentication, #programId, #userId)")
     @PostMapping("/programs/{programId}")
     @Operation(summary = "Register for program", description = "Registers a user for a program using query parameter")
     @ApiResponses(value = {
@@ -34,6 +36,7 @@ public class RegistrationController {
         return ResponseEntity.status(HttpStatus.CREATED).body("Successfully registered for program");
     }
 
+    @PreAuthorize("@rbac.canRegisterForActivity(authentication, #activityId, #userId)")
     @PostMapping("/activities/{activityId}")
     @Operation(summary = "Register for activity", description = "Registers a user for an activity using query parameter")
     @ApiResponses(value = {

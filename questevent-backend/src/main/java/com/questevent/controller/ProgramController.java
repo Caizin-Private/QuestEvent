@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,6 +34,7 @@ public class ProgramController {
         this.programWalletTransactionService = programWalletTransactionService;
     }
 
+    @PreAuthorize("@rbac.canAccessUserProfile(authentication, #dto.hostUserId)")
     @PostMapping
     @Operation(summary = "Create a new program", description = "Creates a new program with the provided details")
     @ApiResponses(value = {
@@ -45,6 +47,7 @@ public class ProgramController {
         return ResponseEntity.status(HttpStatus.CREATED).body(convertToResponseDTO(created));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping
     @Operation(summary = "Get all programs", description = "Retrieves a list of all programs")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved list of programs")
@@ -56,6 +59,7 @@ public class ProgramController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/{programId}")
     @Operation(summary = "Get program by ID", description = "Retrieves a specific program by its ID")
     @ApiResponses(value = {
@@ -68,6 +72,7 @@ public class ProgramController {
         return ResponseEntity.ok(convertToResponseDTO(program));
     }
 
+    @PreAuthorize("@rbac.canAccessUserProfile(authentication, #userId)")
     @GetMapping("/users/{userId}")
     @Operation(summary = "Get programs by user ID", description = "Retrieves all programs hosted by a specific user")
     @ApiResponses(value = {
@@ -83,6 +88,7 @@ public class ProgramController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @PutMapping("/{programId}")
     @Operation(summary = "Update program", description = "Updates an existing program's information")
     @ApiResponses(value = {
@@ -97,6 +103,20 @@ public class ProgramController {
         return ResponseEntity.ok(convertToResponseDTO(updated));
     }
 
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
+    @PostMapping("/{programId}/settle")
+    @Operation(summary = "Settle program wallets", description = "Settles all program wallets for a specific program")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Program wallets settled successfully"),
+            @ApiResponse(responseCode = "404", description = "Program not found")
+    })
+    public ResponseEntity<String> settleProgram(
+            @Parameter(description = "Program ID", required = true) @PathVariable Long programId) {
+        programWalletTransactionService.manuallySettleExpiredProgramWallets(programId);
+        return ResponseEntity.ok("Program settled successfully");
+    }
+
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @DeleteMapping("/{programId}")
     @Operation(summary = "Delete program", description = "Deletes a program from the system")
     @ApiResponses(value = {
@@ -123,17 +143,5 @@ public class ProgramController {
         response.setStatus(program.getStatus());
         response.setHostUserId(program.getUser().getUserId());
         return response;
-    }
-
-    @PostMapping("/{programId}/settle")
-    @Operation(summary = "Settle program wallets", description = "Settles all program wallets for a specific program")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Program wallets settled successfully"),
-            @ApiResponse(responseCode = "404", description = "Program not found")
-    })
-    public ResponseEntity<String> settleProgram(
-            @Parameter(description = "Program ID", required = true) @PathVariable Long programId) {
-        programWalletTransactionService.manuallySettleExpiredProgramWallets(programId);
-        return ResponseEntity.ok("Program settled successfully");
     }
 }

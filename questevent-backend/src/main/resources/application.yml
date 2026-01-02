@@ -1,11 +1,37 @@
 spring:
   datasource:
-    url: jdbc:postgresql://nozomi.proxy.rlwy.net:24684/railway
+    url: jdbc:postgresql://localhost:5432/caizin_auth
     username: postgres
-    password: PfrEGYINXOsMmzLIrjLVUMJJAQuhZxHo
+    password: postgres
   jpa:
     hibernate:
       ddl-auto: update
+    show-sql: true
+
+  security:
+    oauth2:
+      client:
+        registration:
+          azure:
+            client-id: 8dfa7db6-153c-4137-91c7-4262f361c8c6
+            client-secret: -yY8Q~AIhV2MN-wsdkxzWvciLQC0hG8LRH5flaID
+            scope:
+              - openid
+              - profile
+              - email
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            client-name: Azure AD
+        provider:
+          azure:
+            issuer-uri: https://login.microsoftonline.com/f7b92ef4-239a-49ad-aff6-679ec33dea08/v2.0
+
+      resourceserver:
+        jwt:
+          issuer-uri: https://login.microsoftonline.com/f7b92ef4-239a-49ad-aff6-679ec33dea08/v2.0
+server:
+  servlet:
+    session:
+      persistent: false
 
 springdoc:
   api-docs:

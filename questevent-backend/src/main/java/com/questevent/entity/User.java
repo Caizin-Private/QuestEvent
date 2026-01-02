@@ -2,6 +2,7 @@ package com.questevent.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.questevent.enums.Department;
+import com.questevent.enums.Role;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.util.List;
@@ -32,8 +33,9 @@ public class User {
     @Column(nullable = false)
     private String gender;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String role;
+    private Role role;
 
     @OneToMany(mappedBy = "user",cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Program> hostedPrograms;

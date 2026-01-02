@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,6 +28,7 @@ public class ProgramWalletController {
         this.programWalletService = programWalletService;
     }
 
+    @PreAuthorize("@rbac.canManageProgram(authentication, #request.programId)")
     @PostMapping
     @Operation(summary = "Create program wallet", description = "Creates a new program wallet for a user and program")
     @ApiResponses(value = {
@@ -46,6 +48,7 @@ public class ProgramWalletController {
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
 
+    @PreAuthorize("@rbac.canAccessUserWallet(authentication, #userId)")
     @GetMapping("/users/{userId}")
     @Operation(summary = "Get user program wallets", description = "Retrieves all program wallets for a specific user")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved wallets")
@@ -54,6 +57,7 @@ public class ProgramWalletController {
         return ResponseEntity.ok(programWalletService.getUserProgramWalletBalances(userId));
     }
 
+    @PreAuthorize("@rbac.canAccessProgramWallet(authentication, #programWalletId)")
     @GetMapping("/{programWalletId}")
     @Operation(summary = "Get program wallet balance", description = "Retrieves the balance of a specific program wallet")
     @ApiResponses(value = {
