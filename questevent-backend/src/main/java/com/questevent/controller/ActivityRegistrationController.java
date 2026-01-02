@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +27,7 @@ public class ActivityRegistrationController {
 
     private final ActivityRegistrationService activityRegistrationService;
 
+    @PreAuthorize("@rbac.canRegisterForActivity(authentication, #request.activityId, #request.userId)")
     @PostMapping
     @Operation(summary = "Register participant for activity", description = "Registers a user for a specific activity")
     @ApiResponses(value = {
@@ -43,6 +45,7 @@ public class ActivityRegistrationController {
         }
     }
 
+    @PreAuthorize("hasAnyRole('OWNER', 'HOST', 'JUDGE')")
     @GetMapping
     @Operation(summary = "Get all activity registrations", description = "Retrieves all activity registrations")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
@@ -52,6 +55,7 @@ public class ActivityRegistrationController {
         return ResponseEntity.ok(registrations);
     }
 
+    @PreAuthorize("@rbac.canAccessActivityRegistration(authentication, #id)")
     @GetMapping("/{id}")
     @Operation(summary = "Get registration by ID", description = "Retrieves a specific activity registration by ID")
     @ApiResponses(value = {
@@ -69,6 +73,7 @@ public class ActivityRegistrationController {
         }
     }
 
+    @PreAuthorize("@rbac.canManageProgram(authentication, #activityId)")
     @GetMapping("/activities/{activityId}")
     @Operation(summary = "Get registrations by activity", description = "Retrieves all registrations for a specific activity")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
@@ -79,6 +84,7 @@ public class ActivityRegistrationController {
         return ResponseEntity.ok(registrations);
     }
 
+    @PreAuthorize("@rbac.canAccessUserProfile(authentication, #userId)")
     @GetMapping("/users/{userId}")
     @Operation(summary = "Get registrations by user", description = "Retrieves all activity registrations for a specific user")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
@@ -89,6 +95,7 @@ public class ActivityRegistrationController {
         return ResponseEntity.ok(registrations);
     }
 
+    @PreAuthorize("@rbac.canManageProgram(authentication, #activityId)")
     @GetMapping("/activities/{activityId}/status/{status}")
     @Operation(summary = "Get registrations by activity and status", description = "Retrieves registrations for an activity filtered by completion status")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
@@ -100,6 +107,7 @@ public class ActivityRegistrationController {
         return ResponseEntity.ok(registrations);
     }
 
+    @PreAuthorize("@rbac.canAccessUserProfile(authentication, #userId)")
     @GetMapping("/users/{userId}/status/{status}")
     @Operation(summary = "Get registrations by user and status", description = "Retrieves activity registrations for a user filtered by completion status")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
@@ -111,6 +119,7 @@ public class ActivityRegistrationController {
         return ResponseEntity.ok(registrations);
     }
 
+    @PreAuthorize("@rbac.canManageProgram(authentication, #id)")
     @PatchMapping("/{id}/status")
     @Operation(summary = "Update completion status", description = "Updates the completion status of an activity registration")
     @ApiResponses(value = {
@@ -129,6 +138,7 @@ public class ActivityRegistrationController {
         }
     }
 
+    @PreAuthorize("@rbac.canManageProgram(authentication, #activityId)")
     @GetMapping("/activities/{activityId}/count")
     @Operation(summary = "Get participant count", description = "Gets the total number of participants registered for an activity")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved count")
@@ -138,6 +148,7 @@ public class ActivityRegistrationController {
         return ResponseEntity.ok(count);
     }
 
+    @PreAuthorize("@rbac.canAccessActivityRegistration(authentication, #id)")
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete registration", description = "Deletes an activity registration")
     @ApiResponses(value = {

@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class ActivityController {
     @Autowired
     private ActivityService activityService;
 
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @PostMapping
     @Operation(summary = "Create a new activity", description = "Creates a new activity for a specific program")
     @ApiResponses(value = {
@@ -38,6 +40,7 @@ public class ActivityController {
         return ResponseEntity.status(HttpStatus.CREATED).body(convertToResponseDTO(activity));
     }
 
+    @PreAuthorize("@rbac.canViewProgram(authentication, #programId)")
     @GetMapping
     @Operation(summary = "Get all activities for a program", description = "Retrieves all activities associated with a specific program")
     @ApiResponses(value = {
@@ -50,6 +53,7 @@ public class ActivityController {
                 .stream().map(this::convertToResponseDTO).toList());
     }
 
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @PutMapping("/{activityId}")
     @Operation(summary = "Update activity", description = "Updates an existing activity's information")
     @ApiResponses(value = {
@@ -64,6 +68,7 @@ public class ActivityController {
         return ResponseEntity.ok(convertToResponseDTO(updated));
     }
 
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @DeleteMapping("/{activityId}")
     @Operation(summary = "Delete activity", description = "Deletes an activity from a program")
     @ApiResponses(value = {

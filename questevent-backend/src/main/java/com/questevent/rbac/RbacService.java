@@ -12,10 +12,13 @@ import com.questevent.repository.ActivityRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
 import com.questevent.repository.ProgramRepository;
 import com.questevent.repository.ProgramRegistrationRepository;
+import com.questevent.repository.ProgramWalletRepository;
 import com.questevent.repository.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 @Component("rbac")
 public class RbacService {
@@ -26,6 +29,7 @@ public class RbacService {
     private final ProgramRegistrationRepository programRegistrationRepository;
     private final ActivityRegistrationRepository activityRegistrationRepository;
     private final ActivitySubmissionRepository submissionRepository;
+    private final ProgramWalletRepository programWalletRepository;
 
     public RbacService(
             UserRepository userRepository,
@@ -33,7 +37,8 @@ public class RbacService {
             ActivityRepository activityRepository,
             ProgramRegistrationRepository programRegistrationRepository,
             ActivityRegistrationRepository activityRegistrationRepository,
-            ActivitySubmissionRepository submissionRepository
+            ActivitySubmissionRepository submissionRepository,
+            ProgramWalletRepository programWalletRepository
     ) {
         this.userRepository = userRepository;
         this.programRepository = programRepository;
@@ -41,6 +46,7 @@ public class RbacService {
         this.programRegistrationRepository = programRegistrationRepository;
         this.activityRegistrationRepository = activityRegistrationRepository;
         this.submissionRepository = submissionRepository;
+        this.programWalletRepository = programWalletRepository;
     }
 
     private User currentUser(Authentication authentication) {
@@ -198,6 +204,19 @@ public class RbacService {
 
         return user.getRole() == Role.OWNER ||
                 user.getUserId().equals(userId);
+    }
+
+    public boolean canAccessProgramWallet(Authentication authentication, UUID programWalletId) {
+        User user = currentUser(authentication);
+        if (user == null) return false;
+
+        if (user.getRole() == Role.OWNER) {
+            return true;
+        }
+
+        return programWalletRepository.findById(programWalletId)
+                .map(wallet -> wallet.getUser().getUserId().equals(user.getUserId()))
+                .orElse(false);
     }
 
     public boolean canRegisterForProgram(
