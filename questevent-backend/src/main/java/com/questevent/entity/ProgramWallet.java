@@ -1,6 +1,7 @@
 package com.questevent.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.questevent.enums.ProgramStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.UuidGenerator;
@@ -38,4 +39,7 @@ public class ProgramWallet {
 
     @Column(name = "gems", nullable = false)
     private int gems;
+
+    @Enumerated(EnumType.STRING)
+    private ProgramStatus status;
 }
