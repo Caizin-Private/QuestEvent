@@ -25,14 +25,12 @@ public class ProgramController {
 
     private final ProgramService programService;
     private final ProgramWalletTransactionService programWalletTransactionService;
-    private final ProgramWalletService programWalletService;
 
 
     @Autowired
-    public ProgramController(ProgramService programService, ProgramWalletTransactionService programWalletTransactionService, ProgramWalletService programWalletService) {
+    public ProgramController(ProgramService programService, ProgramWalletTransactionService programWalletTransactionService) {
         this.programService = programService;
         this.programWalletTransactionService = programWalletTransactionService;
-        this.programWalletService = programWalletService;
     }
 
     @PostMapping
@@ -135,7 +133,7 @@ public class ProgramController {
     })
     public ResponseEntity<String> settleProgram(
             @Parameter(description = "Program ID", required = true) @PathVariable Long programId) {
-        programWalletService.programWalletSettlement(programId);
+        programWalletTransactionService.manuallySettleExpiredProgramWallets(programId);
         return ResponseEntity.ok("Program settled successfully");
     }
 }
