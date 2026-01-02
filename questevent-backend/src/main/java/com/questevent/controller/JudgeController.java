@@ -1,6 +1,7 @@
 package com.questevent.controller;
 
 import com.questevent.dto.ActivitySubmissionDto;
+import com.questevent.dto.JudgeSubmissionDto;
 import com.questevent.service.JudgeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,31 +19,21 @@ public class JudgeController {
 
 
     @GetMapping("/submissions/{activityId}")
-    public ResponseEntity<List<ActivitySubmissionDto>> getSubmissionsForActivity(
+    public ResponseEntity<List<JudgeSubmissionDto>> getSubmissionsForActivity(
             @PathVariable Long activityId
     ) {
-        List<ActivitySubmissionDto> response =
+        return ResponseEntity.ok(
                 judgeService.getSubmissionsForActivity(activityId)
-                        .stream()
-                        .map(submission -> new ActivitySubmissionDto(
-                                submission.getSubmissionId(),
-                                submission.getActivityRegistration().getActivity().getActivityId(),
-                                submission.getActivityRegistration().getUser().getUserId(),
-                                submission.getSubmissionUrl(),
-                                submission.getAwardedGems(),
-                                submission.getSubmittedAt(),
-                                submission.getReviewedAt()
-                        ))
-                        .toList();
-
-        return ResponseEntity.ok(response);
+        );
     }
+
 
     @PostMapping("/review/{submissionId}")
     public ResponseEntity<String> reviewSubmission(
-            @PathVariable Long submissionId
+            @PathVariable Long submissionId,
+            @RequestParam Long judgeId
     ) {
-        judgeService.reviewSubmission(submissionId);
+        judgeService.reviewSubmission(submissionId, judgeId);
         return ResponseEntity.ok("Submission reviewed successfully");
     }
 

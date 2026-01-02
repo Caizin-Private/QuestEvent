@@ -5,7 +5,6 @@ import com.questevent.entity.ActivitySubmission;
 import com.questevent.enums.CompletionStatus;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
-import com.questevent.service.SubmissionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -28,8 +27,6 @@ public class SubmissionServiceImpl implements SubmissionService {
         if (registration.getCompletionStatus() == CompletionStatus.COMPLETED) {
             throw new RuntimeException("Activity already completed. Submission not allowed.");
         }
-
-
 
         boolean alreadySubmitted = submissionRepository
                 .existsByActivityRegistration_ActivityRegistrationId(

@@ -1,9 +1,7 @@
 package com.questevent.entity;
-import com.questevent.enums.ReviewStatus;
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+
 import java.time.LocalDateTime;
 
 @Data
@@ -26,9 +24,13 @@ public class ActivitySubmission {
     )
     private ActivityRegistration activityRegistration;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "review_status", nullable = false)
-    private ReviewStatus reviewStatus = ReviewStatus.PENDING;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "reviewed_by",
+            foreignKey = @ForeignKey(name = "fk_submission_judge")
+    )
+    private Judge reviewedBy;
+
 
     @Column(name = "submission_url", nullable = false)
     private String submissionUrl;

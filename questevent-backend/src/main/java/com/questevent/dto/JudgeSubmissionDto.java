@@ -1,0 +1,16 @@
+package com.questevent.dto;
+
+import java.time.LocalDateTime;
+
+public record JudgeSubmissionDto(
+        Long submissionId,
+        Long activityId,
+        String activityName,
+        Long userId,
+        String userName,
+        String submissionUrl,
+        Integer awardedGems,
+        LocalDateTime submittedAt,
+        LocalDateTime reviewedAt
+) {
+}

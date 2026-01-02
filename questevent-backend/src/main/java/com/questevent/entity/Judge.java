@@ -1,9 +1,13 @@
 package com.questevent.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
 
 import java.util.List;
 
+@Entity
+@Table(name = "judges")
+@Data
 public class Judge {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
