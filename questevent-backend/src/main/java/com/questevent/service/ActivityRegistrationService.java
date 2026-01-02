@@ -28,21 +28,17 @@ public class ActivityRegistrationService {
 
     @Transactional
     public ActivityRegistrationResponseDTO registerParticipantForActivity(ActivityRegistrationRequestDTO request) {
-        // Check if user exists
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + request.getUserId()));
 
-        // Check if activity exists
         Activity activity = activityRepository.findById(request.getActivityId())
                 .orElseThrow(() -> new RuntimeException("Activity not found with id: " + request.getActivityId()));
 
-        // Check if already registered
         if (activityRegistrationRepository.existsByActivity_ActivityIdAndUser_UserId(
                 request.getActivityId(), request.getUserId())) {
             throw new RuntimeException("User already registered for this activity");
         }
 
-        // Create registration
         ActivityRegistration registration = new ActivityRegistration();
         registration.setActivity(activity);
         registration.setUser(user);
