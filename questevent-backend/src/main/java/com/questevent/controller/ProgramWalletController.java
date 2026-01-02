@@ -5,6 +5,7 @@ import com.questevent.dto.ProgramWalletCreateRequest;
 import com.questevent.entity.ProgramWallet;
 import com.questevent.service.ProgramWalletService;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,7 @@ public class ProgramWalletController {
         this.programWalletService = programWalletService;
     }
 
+    @PreAuthorize("@rbac.canManageProgram(authentication, #request.programId)")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ProgramWalletBalanceDto createProgramWallet(
@@ -35,6 +37,8 @@ public class ProgramWalletController {
         dto.setGems(wallet.getGems());
         return dto;
     }
+
+    @PreAuthorize("@rbac.canAccessUserWallet(authentication, #userId)")
     @GetMapping("/user/{userId}")
     public List<ProgramWalletBalanceDto> getUserProgramWalletBalances(
             @PathVariable Long userId
@@ -42,6 +46,7 @@ public class ProgramWalletController {
         return programWalletService.getUserProgramWalletBalances(userId);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/{programWalletId}")
     public ProgramWalletBalanceDto getProgramWalletBalance(
             @PathVariable UUID programWalletId

@@ -4,6 +4,7 @@ import com.questevent.dto.ActivitySubmissionDto;
 import com.questevent.service.JudgeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,6 +18,7 @@ public class JudgeController {
 
 
 
+    @PreAuthorize("hasAnyRole('OWNER', 'JUDGE')")
     @GetMapping("/submissions/{activityId}")
     public ResponseEntity<List<ActivitySubmissionDto>> getSubmissionsForActivity(
             @PathVariable Long activityId
@@ -38,6 +40,7 @@ public class JudgeController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("@rbac.canVerifySubmission(authentication, #submissionId)")
     @PostMapping("/review/{submissionId}")
     public ResponseEntity<String> reviewSubmission(
             @PathVariable Long submissionId

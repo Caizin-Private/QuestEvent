@@ -7,6 +7,7 @@ import com.questevent.service.ProgramRegistrationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +19,7 @@ public class ProgramRegistrationController {
 
     private final ProgramRegistrationService programRegistrationService;
 
+    @PreAuthorize("@rbac.canRegisterForProgram(authentication, #request.programId, #request.userId)")
     @PostMapping("/register")
     public ResponseEntity<ProgramRegistrationResponseDTO> registerParticipant(
             @RequestBody ProgramRegistrationRequestDTO request) {
@@ -30,6 +32,7 @@ public class ProgramRegistrationController {
         }
     }
 
+    @PreAuthorize("hasAnyRole('OWNER', 'JUDGE')")
     @GetMapping
     public ResponseEntity<List<ProgramRegistrationDTO>> getAllRegistrations() {
         List<ProgramRegistrationDTO> registrations = 
@@ -37,6 +40,7 @@ public class ProgramRegistrationController {
         return ResponseEntity.ok(registrations);
     }
 
+    @PreAuthorize("@rbac.canAccessProgramRegistration(authentication, #id)")
     @GetMapping("/{id}")
     public ResponseEntity<ProgramRegistrationDTO> getRegistrationById(@PathVariable Long id) {
         try {
@@ -48,6 +52,7 @@ public class ProgramRegistrationController {
         }
     }
 
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @GetMapping("/program/{programId}")
     public ResponseEntity<List<ProgramRegistrationDTO>> getRegistrationsByProgram(
             @PathVariable Long programId) {
@@ -56,6 +61,7 @@ public class ProgramRegistrationController {
         return ResponseEntity.ok(registrations);
     }
 
+    @PreAuthorize("@rbac.canAccessUserProfile(authentication, #userId)")
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<ProgramRegistrationDTO>> getRegistrationsByUser(
             @PathVariable Long userId) {
@@ -64,12 +70,14 @@ public class ProgramRegistrationController {
         return ResponseEntity.ok(registrations);
     }
 
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @GetMapping("/program/{programId}/count")
     public ResponseEntity<Long> getParticipantCount(@PathVariable Long programId) {
         long count = programRegistrationService.getParticipantCountForProgram(programId);
         return ResponseEntity.ok(count);
     }
 
+    @PreAuthorize("@rbac.canAccessProgramRegistration(authentication, #id)")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteRegistration(@PathVariable Long id) {
         try {

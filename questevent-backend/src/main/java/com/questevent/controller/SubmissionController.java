@@ -5,6 +5,7 @@ import com.questevent.service.SubmissionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,6 +15,7 @@ public class SubmissionController {
 
     private final SubmissionService submissionService;
 
+    @PreAuthorize("@rbac.canSubmitActivity(authentication, #request.activityId, #request.userId)")
     @PostMapping
     public ResponseEntity<String> submitActivity(
             @RequestBody ActivitySubmissionRequestDto request

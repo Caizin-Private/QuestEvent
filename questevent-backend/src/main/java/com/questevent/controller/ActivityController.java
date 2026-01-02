@@ -7,6 +7,7 @@ import com.questevent.service.ActivityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +19,7 @@ public class ActivityController {
     @Autowired
     private ActivityService activityService;
 
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @PostMapping
     public ResponseEntity<ActivityResponseDTO> createActivity(
             @PathVariable Long programId, @RequestBody ActivityRequestDTO dto) {
@@ -25,12 +27,14 @@ public class ActivityController {
         return ResponseEntity.status(HttpStatus.CREATED).body(convertToResponseDTO(activity));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping
     public ResponseEntity<List<ActivityResponseDTO>> getActivities(@PathVariable Long programId) {
         return ResponseEntity.ok(activityService.getActivitiesByProgramId(programId)
                 .stream().map(this::convertToResponseDTO).toList());
     }
 
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @PutMapping("/{activityId}")
     public ResponseEntity<ActivityResponseDTO> updateActivity(
             @PathVariable Long programId, 
@@ -40,6 +44,7 @@ public class ActivityController {
         return ResponseEntity.ok(convertToResponseDTO(updated));
     }
 
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @DeleteMapping("/{activityId}")
     public ResponseEntity<Void> deleteActivity(@PathVariable Long programId, @PathVariable Long activityId) {
         activityService.deleteActivity(programId, activityId);

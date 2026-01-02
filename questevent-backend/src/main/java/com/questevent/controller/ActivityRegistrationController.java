@@ -9,6 +9,7 @@ import com.questevent.service.ActivityRegistrationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,7 @@ public class ActivityRegistrationController {
 
     private final ActivityRegistrationService activityRegistrationService;
 
+    @PreAuthorize("@rbac.canRegisterForActivity(authentication, #request.activityId, #request.userId)")
     @PostMapping("/register")
     public ResponseEntity<ActivityRegistrationResponseDTO> registerParticipant(
             @RequestBody ActivityRegistrationRequestDTO request) {
@@ -32,6 +34,7 @@ public class ActivityRegistrationController {
         }
     }
 
+    @PreAuthorize("hasAnyRole('OWNER', 'JUDGE')")
     @GetMapping
     public ResponseEntity<List<ActivityRegistrationDTO>> getAllRegistrations() {
         List<ActivityRegistrationDTO> registrations =
@@ -39,6 +42,7 @@ public class ActivityRegistrationController {
         return ResponseEntity.ok(registrations);
     }
 
+    @PreAuthorize("@rbac.canAccessActivityRegistration(authentication, #id)")
     @GetMapping("/{id}")
     public ResponseEntity<ActivityRegistrationDTO> getRegistrationById(@PathVariable Long id) {
         try {
@@ -50,6 +54,7 @@ public class ActivityRegistrationController {
         }
     }
 
+    @PreAuthorize("@rbac.canManageProgram(authentication, #activityId)")
     @GetMapping("/activity/{activityId}")
     public ResponseEntity<List<ActivityRegistrationDTO>> getRegistrationsByActivity(
             @PathVariable Long activityId) {
@@ -58,6 +63,7 @@ public class ActivityRegistrationController {
         return ResponseEntity.ok(registrations);
     }
 
+    @PreAuthorize("@rbac.canAccessUserProfile(authentication, #userId)")
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<ActivityRegistrationDTO>> getRegistrationsByUser(
             @PathVariable Long userId) {
@@ -66,6 +72,7 @@ public class ActivityRegistrationController {
         return ResponseEntity.ok(registrations);
     }
 
+    @PreAuthorize("@rbac.canManageProgram(authentication, #activityId)")
     @GetMapping("/activity/{activityId}/status/{status}")
     public ResponseEntity<List<ActivityRegistrationDTO>> getRegistrationsByActivityAndStatus(
             @PathVariable Long activityId,
@@ -75,6 +82,7 @@ public class ActivityRegistrationController {
         return ResponseEntity.ok(registrations);
     }
 
+    @PreAuthorize("@rbac.canAccessUserProfile(authentication, #userId)")
     @GetMapping("/user/{userId}/status/{status}")
     public ResponseEntity<List<ActivityRegistrationDTO>> getRegistrationsByUserAndStatus(
             @PathVariable Long userId,
@@ -84,6 +92,7 @@ public class ActivityRegistrationController {
         return ResponseEntity.ok(registrations);
     }
 
+    @PreAuthorize("@rbac.canManageProgram(authentication, #id)")
     @PatchMapping("/{id}/completion-status")
     public ResponseEntity<ActivityRegistrationDTO> updateCompletionStatus(
             @PathVariable Long id,
@@ -97,12 +106,14 @@ public class ActivityRegistrationController {
         }
     }
 
+    @PreAuthorize("@rbac.canManageProgram(authentication, #activityId)")
     @GetMapping("/activity/{activityId}/count")
     public ResponseEntity<Long> getParticipantCount(@PathVariable Long activityId) {
         long count = activityRegistrationService.getParticipantCountForActivity(activityId);
         return ResponseEntity.ok(count);
     }
 
+    @PreAuthorize("@rbac.canAccessActivityRegistration(authentication, #id)")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteRegistration(@PathVariable Long id) {
         try {

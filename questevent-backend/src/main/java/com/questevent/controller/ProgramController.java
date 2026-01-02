@@ -8,6 +8,7 @@ import com.questevent.service.ProgramWalletService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public class ProgramController {
         this.programWalletService = programWalletService;
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping
     public ResponseEntity<ProgramResponseDTO> createProgram(
             @PathVariable Long userId,
@@ -33,6 +35,7 @@ public class ProgramController {
         return ResponseEntity.status(HttpStatus.CREATED).body(convertToResponseDTO(created));
     }
 
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @PutMapping("/{programId}")
     public ResponseEntity<ProgramResponseDTO> updateProgram(
             @PathVariable Long userId,
@@ -42,6 +45,7 @@ public class ProgramController {
         return ResponseEntity.ok(convertToResponseDTO(updated));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping
     public ResponseEntity<List<ProgramResponseDTO>> getAllProgramsByUserId(@PathVariable Long userId) {
         List<Program> programs =programService.getProgramsByUserId(userId);
@@ -51,6 +55,7 @@ public class ProgramController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/all")
     public ResponseEntity<List<ProgramResponseDTO>> getAllPrograms() {
         List<Program> programs = programService.getAllPrograms();
@@ -60,6 +65,7 @@ public class ProgramController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @DeleteMapping("/{programId}")
     public ResponseEntity<Void> deleteProgram(
             @PathVariable Long userId,
