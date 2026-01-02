@@ -27,11 +27,11 @@ public class UserService {
     }
 
     public User addUser(User user) {
-        if(user.getWallet() != null) {
-            user.getWallet().setUser(user);
-            userWalletService.createWalletForUser(user);
-        }
-        return userRepository.save(user);
+
+        userRepository.save(user);
+        userWalletService.createWalletForUser(user);
+        return user;
+
     }
 
     public User updateUser(Long id, User updatedUser) {
