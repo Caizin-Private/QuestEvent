@@ -3,6 +3,7 @@ package com.questevent.service;
 import com.questevent.dto.JudgeSubmissionDTO;
 import com.questevent.entity.*;
 import com.questevent.enums.CompletionStatus;
+import com.questevent.enums.ReviewStatus;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
 import com.questevent.repository.JudgeRepository;
@@ -23,6 +24,7 @@ public class JudgeServiceImpl implements JudgeService {
     private final ProgramWalletTransactionService programWalletTransactionService;
 
     @Override
+    @Transactional(readOnly = true)
     public List<JudgeSubmissionDTO> getSubmissionsForActivity(Long activityId) {
 
         return submissionRepository
@@ -37,9 +39,7 @@ public class JudgeServiceImpl implements JudgeService {
     public List<JudgeSubmissionDTO> getPendingSubmissions() {
 
         return submissionRepository
-                .findByActivityRegistrationCompletionStatus(
-                        CompletionStatus.NOT_COMPLETED
-                )
+                .findByReviewStatus(ReviewStatus.PENDING)
                 .stream()
                 .map(this::mapToJudgeSubmissionDto)
                 .toList();
@@ -52,7 +52,7 @@ public class JudgeServiceImpl implements JudgeService {
         ActivitySubmission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new RuntimeException("Submission not found"));
 
-        if (submission.getReviewedAt() != null) {
+        if (submission.getReviewStatus() != ReviewStatus.PENDING) {
             throw new RuntimeException("Submission already reviewed");
         }
 
@@ -69,6 +69,7 @@ public class JudgeServiceImpl implements JudgeService {
 
 
         submission.setReviewedBy(judge);
+        submission.setReviewStatus(ReviewStatus.APPROVED);
         submission.setAwardedGems(rewardGems);
         submission.setReviewedAt(LocalDateTime.now());
         submissionRepository.save(submission);
@@ -78,15 +79,15 @@ public class JudgeServiceImpl implements JudgeService {
         registrationRepository.save(registration);
 
 
-        User user = registration.getUser();
-        Program program = activity.getProgram();
-
-        programWalletTransactionService.creditGems(user, program, rewardGems);
-
+        programWalletTransactionService.creditGems(
+                registration.getUser(),
+                activity.getProgram(),
+                rewardGems
+        );
     }
 
-
     private JudgeSubmissionDTO mapToJudgeSubmissionDto(ActivitySubmission submission) {
+
         ActivityRegistration registration = submission.getActivityRegistration();
 
         return new JudgeSubmissionDTO(
@@ -98,8 +99,9 @@ public class JudgeServiceImpl implements JudgeService {
                 submission.getSubmissionUrl(),
                 submission.getAwardedGems(),
                 submission.getSubmittedAt(),
-                submission.getReviewedAt()
+                submission.getReviewedAt(),
+                submission.getReviewStatus()
         );
     }
-
 }
+

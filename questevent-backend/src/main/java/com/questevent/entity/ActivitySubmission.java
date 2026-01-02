@@ -1,4 +1,5 @@
 package com.questevent.entity;
+import com.questevent.enums.ReviewStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -31,6 +32,10 @@ public class ActivitySubmission {
     )
     private Judge reviewedBy;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "review_status", nullable = false)
+    private ReviewStatus reviewStatus = ReviewStatus.PENDING;
+
 
     @Column(name = "submission_url", nullable = false)
     private String submissionUrl;
@@ -43,6 +48,7 @@ public class ActivitySubmission {
     @PrePersist
     protected void onSubmit() {
         this.submittedAt = LocalDateTime.now();
+        this.reviewStatus = ReviewStatus.PENDING;
     }
 
 }

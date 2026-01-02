@@ -41,6 +41,7 @@ public class SubmissionServiceImpl implements SubmissionService {
         ActivitySubmission submission = new ActivitySubmission();
         submission.setActivityRegistration(registration);
         submission.setSubmissionUrl(submissionUrl);
+        registration.setCompletionStatus(CompletionStatus.COMPLETED);
 
         submissionRepository.save(submission);
     }
