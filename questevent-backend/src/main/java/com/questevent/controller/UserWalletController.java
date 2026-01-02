@@ -2,20 +2,33 @@ package com.questevent.controller;
 
 import com.questevent.dto.UserWalletBalanceDto;
 import com.questevent.service.UserWalletService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/users/{userId}/wallet")
+@RequestMapping("/api/users/{userId}/wallet")
+@Tag(name = "User Wallets", description = "User wallet management APIs")
 public class UserWalletController {
 
-    private final UserWalletService userWalletService;
+    private final UserWalletService walletService;
 
-    public UserWalletController(UserWalletService userWalletService) {
-        this.userWalletService = userWalletService;
+    public UserWalletController(UserWalletService walletService) {
+        this.walletService = walletService;
     }
 
     @GetMapping
-    public UserWalletBalanceDto getWalletBalance(@PathVariable Long userId) {
-        return userWalletService.getWalletBalance(userId);
+    @Operation(summary = "Get user wallet balance", description = "Retrieves the user wallet balance for a specific user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User Wallet balance retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "User or wallet not found")
+    })
+    public ResponseEntity<UserWalletBalanceDto> getUserWalletBalance(
+            @Parameter(description = "User ID", required = true) @PathVariable Long userId) {
+        return ResponseEntity.ok(walletService.getWalletBalance(userId));
     }
 }
