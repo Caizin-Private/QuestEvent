@@ -1,8 +1,9 @@
+package com.questevent.service;
+
 import com.questevent.entity.Program;
 import com.questevent.entity.ProgramWallet;
 import com.questevent.entity.User;
 import com.questevent.repository.ProgramWalletRepository;
-import com.questevent.service.ProgramWalletTransactionServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
