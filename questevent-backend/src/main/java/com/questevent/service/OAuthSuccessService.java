@@ -3,11 +3,10 @@ package com.questevent.service;
 import com.questevent.entity.User;
 import com.questevent.enums.Department;
 import com.questevent.enums.Role;
-import com.questevent.repository.AllowedUserRepository;
 import com.questevent.repository.UserRepository;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -21,7 +20,6 @@ import java.io.IOException;
 public class OAuthSuccessService extends SavedRequestAwareAuthenticationSuccessHandler {
 
     private final UserRepository userRepository;
-    private final AllowedUserRepository allowedUserRepository;
 
     @Override
     public void onAuthenticationSuccess(
@@ -31,16 +29,11 @@ public class OAuthSuccessService extends SavedRequestAwareAuthenticationSuccessH
     ) throws IOException {
 
         OAuth2User oauthUser = (OAuth2User) authentication.getPrincipal();
+        HttpSession session = request.getSession();
 
         String email = resolveEmail(oauthUser);
 
-        // 1️⃣ Allowed user check
-        if (email == null || allowedUserRepository.findByEmail(email).isEmpty()) {
-            response.sendRedirect("/access-denied");
-            return;
-        }
-
-        // 2️⃣ Create user if first login
+        // 1️⃣ Create user if first login (allow any OAuth2 user)
         User user = userRepository.findByEmail(email).orElseGet(() -> {
             User u = new User();
             u.setEmail(email);
@@ -51,11 +44,14 @@ public class OAuthSuccessService extends SavedRequestAwareAuthenticationSuccessH
             return userRepository.save(u);
         });
 
-        // 3️⃣ Let Spring decide where to redirect
-        try {
-            super.onAuthenticationSuccess(request, response, authentication);
-        } catch (ServletException e) {
-            throw new RuntimeException(e);
+        // 2️⃣ Set userId in session for AuthController
+        session.setAttribute("userId", user.getUserId());
+
+        // 3️⃣ Redirect based on profile completion
+        if (user.getDepartment() == Department.GENERAL && "GENDER".equals(user.getGender())) {
+            response.sendRedirect("/complete-profile");
+        } else {
+            response.sendRedirect("/home");
         }
     }
 
