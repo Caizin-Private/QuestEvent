@@ -2,7 +2,7 @@ package com.questevent.dto;
 
 import java.time.LocalDateTime;
 
-public record ActivitySubmissionDTO(
+public record ActivitySubmissionDto(
         Long submissionId,
         Long activityId,
         Long userId,

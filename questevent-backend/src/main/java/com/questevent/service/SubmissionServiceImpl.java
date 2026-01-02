@@ -2,9 +2,9 @@ package com.questevent.service;
 
 import com.questevent.entity.ActivityRegistration;
 import com.questevent.entity.ActivitySubmission;
-import com.questevent.enums.CompletionStatus;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
+import com.questevent.service.SubmissionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,14 +19,25 @@ public class SubmissionServiceImpl implements SubmissionService {
     public void submitActivity(Long activityId, Long userId, String submissionUrl) {
 
 
-        ActivityRegistration registration = registrationRepository
-                .findByActivityActivityIdAndUserUserId(activityId, userId)
-                .orElseThrow(() ->
-                        new RuntimeException("User is not registered for this activity"));
+        boolean isRegistered = registrationRepository
+                .existsByActivity_ActivityIdAndUser_UserId(activityId, userId);
 
-        if (registration.getCompletionStatus() == CompletionStatus.COMPLETED) {
-            throw new RuntimeException("Activity already completed. Submission not allowed.");
+        if (!isRegistered) {
+            throw new RuntimeException("User is not registered for this activity");
         }
+
+
+        ActivityRegistration registration = registrationRepository
+                .findAll()
+                .stream()
+                .filter(r ->
+                        r.getActivity().getActivityId().equals(activityId) &&
+                                r.getUser().getUserId().equals(userId)
+                )
+                .findFirst()
+                .orElseThrow(() ->
+                        new RuntimeException("Registration record not found"));
+
 
         boolean alreadySubmitted = submissionRepository
                 .existsByActivityRegistration_ActivityRegistrationId(

@@ -1,6 +1,6 @@
 package com.questevent.service;
 
-import com.questevent.dto.LeaderboardDTO;
+import com.questevent.dto.LeaderboardDto;
 import com.questevent.repository.UserWalletRepository;
 import org.springframework.stereotype.Service;
 
@@ -15,11 +15,11 @@ public class LeaderboardService {
         this.userWalletRepository = userWalletRepository;
     }
 
-    public List<LeaderboardDTO> getGlobalLeaderboard() {
+    public List<LeaderboardDto> getGlobalLeaderboard() {
         return userWalletRepository.findGlobalLeaderboard()
                 .stream()
                 .map(wallet -> {
-                    LeaderboardDTO dto = new LeaderboardDTO();
+                    LeaderboardDto dto = new LeaderboardDto();
                     dto.setUserId(wallet.getUser().getUserId());
                     dto.setUserName(wallet.getUser().getName());
                     dto.setGems(wallet.getGems());

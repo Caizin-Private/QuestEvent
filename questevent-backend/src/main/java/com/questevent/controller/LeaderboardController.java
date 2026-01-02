@@ -1,6 +1,6 @@
 package com.questevent.controller;
 
-import com.questevent.dto.LeaderboardDTO;
+import com.questevent.dto.LeaderboardDto;
 import com.questevent.service.LeaderboardService;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,7 +17,7 @@ public class LeaderboardController {
     }
 
     @GetMapping("/global")
-    public List<LeaderboardDTO> globalLeaderboard() {
+    public List<LeaderboardDto> globalLeaderboard() {
         return leaderboardService.getGlobalLeaderboard();
     }
 }
