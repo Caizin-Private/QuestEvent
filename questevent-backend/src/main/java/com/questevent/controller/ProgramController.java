@@ -34,7 +34,7 @@ public class ProgramController {
         this.programWalletTransactionService = programWalletTransactionService;
     }
 
-    @PreAuthorize("@rbac.canAccessUserProfile(authentication, #userId)")
+    @PreAuthorize("@rbac.canAccessUserProfile(authentication, #dto.hostUserId)")
     @PostMapping
     @Operation(summary = "Create a new program", description = "Creates a new program with the provided details")
     @ApiResponses(value = {
@@ -59,7 +59,7 @@ public class ProgramController {
         return ResponseEntity.ok(response);
     }
 
-    @PreAuthorize("@rbac.canAccessUserProfile(authentication, #userId)")
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/{programId}")
     @Operation(summary = "Get program by ID", description = "Retrieves a specific program by its ID")
     @ApiResponses(value = {

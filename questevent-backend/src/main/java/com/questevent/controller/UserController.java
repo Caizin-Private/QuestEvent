@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class UserController {
         this.userService = userService;
     }
 
+    @PreAuthorize("hasRole('OWNER')")
     @PostMapping
     @Operation(summary = "Create a new user", description = "Creates a new user in the system")
     @ApiResponses(value = {
@@ -34,6 +36,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.addUser(user));
     }
 
+    @PreAuthorize("hasRole('OWNER')")
     @GetMapping
     @Operation(summary = "Get all users", description = "Retrieves a list of all users")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved list of users")
@@ -41,6 +44,7 @@ public class UserController {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
+    @PreAuthorize("@rbac.canAccessUserProfile(authentication, #id)")
     @GetMapping("/{id}")
     @Operation(summary = "Get user by ID", description = "Retrieves a specific user by their ID")
     @ApiResponses(value = {
@@ -52,6 +56,7 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
+    @PreAuthorize("@rbac.canAccessUserProfile(authentication, #id)")
     @PutMapping("/{id}")
     @Operation(summary = "Update user", description = "Updates an existing user's information")
     @ApiResponses(value = {
@@ -64,6 +69,7 @@ public class UserController {
         return ResponseEntity.ok(userService.updateUser(id, user));
     }
 
+    @PreAuthorize("hasRole('OWNER')")
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete user", description = "Deletes a user from the system")
     @ApiResponses(value = {

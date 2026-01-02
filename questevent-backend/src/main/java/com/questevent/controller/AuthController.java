@@ -4,6 +4,7 @@ import com.questevent.entity.User;
 import com.questevent.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.stereotype.Controller;
@@ -33,6 +34,7 @@ public class AuthController {
         """.formatted(userId);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/complete-profile")
     @ResponseBody
     public Map<String, Object> getProfile(HttpServletRequest request) {
@@ -55,7 +57,7 @@ public class AuthController {
     @ResponseBody
     public String logoutSuccess() {
         return """
-            <h2>Logged out successfully ✅</h2>
+            <h2>Logged out successfully </h2>
             <a href="/login">Login again</a>
         """;
     }
