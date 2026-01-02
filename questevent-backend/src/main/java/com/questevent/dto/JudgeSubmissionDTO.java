@@ -1,5 +1,7 @@
 package com.questevent.dto;
 
+import com.questevent.enums.ReviewStatus;
+
 import java.time.LocalDateTime;
 
 public record JudgeSubmissionDTO(
@@ -11,6 +13,7 @@ public record JudgeSubmissionDTO(
         String submissionUrl,
         Integer awardedGems,
         LocalDateTime submittedAt,
-        LocalDateTime reviewedAt
+        LocalDateTime reviewedAt,
+        ReviewStatus reviewStatus
 ) {
 }

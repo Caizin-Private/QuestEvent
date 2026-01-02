@@ -62,25 +62,18 @@ public class JudgeController {
             summary = "Review an activity submission",
             description = "Allows a judge to review a submission, award gems, and mark the activity as completed"
     )
-    @ApiResponses(value = {
+    @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Submission reviewed successfully"),
             @ApiResponse(responseCode = "400", description = "Submission already reviewed or invalid request"),
             @ApiResponse(responseCode = "404", description = "Submission or judge not found")
     })
     public ResponseEntity<String> reviewSubmission(
-            @Parameter(
-                    description = "Submission ID to be reviewed",
-                    required = true
-            )
             @PathVariable Long submissionId,
 
-            @Parameter(
-                    description = "Judge ID who is reviewing the submission",
-                    required = true
-            )
             @RequestParam Long judgeId
     ) {
         judgeService.reviewSubmission(submissionId, judgeId);
         return ResponseEntity.ok("Submission reviewed successfully");
     }
+
 }
