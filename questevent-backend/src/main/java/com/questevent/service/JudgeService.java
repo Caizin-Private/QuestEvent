@@ -1,12 +1,12 @@
 package com.questevent.service;
 
-import com.questevent.entity.ActivitySubmission;
+import com.questevent.dto.JudgeSubmissionDTO;
 
 import java.util.List;
 
 public interface JudgeService {
 
-    List<ActivitySubmission> getSubmissionsForActivity(Long activityId);
-
-    void reviewSubmission(Long submissionId);
+    List<JudgeSubmissionDTO> getSubmissionsForActivity(Long activityId);
+    List<JudgeSubmissionDTO> getPendingSubmissions();
+    void reviewSubmission(Long submissionId, Long judgeId);
 }

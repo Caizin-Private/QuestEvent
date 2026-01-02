@@ -1,8 +1,7 @@
 package com.questevent.entity;
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+
 import java.time.LocalDateTime;
 
 @Data
@@ -24,6 +23,15 @@ public class ActivitySubmission {
             foreignKey = @ForeignKey(name = "fk_submission_registration")
     )
     private ActivityRegistration activityRegistration;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "reviewed_by",
+            foreignKey = @ForeignKey(name = "fk_submission_judge")
+    )
+    private Judge reviewedBy;
+
+
     @Column(name = "submission_url", nullable = false)
     private String submissionUrl;
     @Column(name = "submitted_at", nullable = false, updatable = false)
