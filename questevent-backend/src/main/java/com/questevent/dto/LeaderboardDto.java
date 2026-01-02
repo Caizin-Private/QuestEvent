@@ -1,10 +1,9 @@
 package com.questevent.dto;
 
-import lombok.Data;
-
-@Data
-public class LeaderboardDto {
-    private Long userId;
-    private String userName;
-    private int gems;
-}
+public record LeaderboardDto(
+        Long userId,
+        String userName,
+        Long participationCount,
+        Long gems,
+        Double score
+) {}
