@@ -72,6 +72,11 @@ public class ProgramService {
         return programRepository.findByUser_UserId(userId);
     }
 
+    public Program getProgramById(Long programId) {
+        return programRepository.findById(programId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Program not found"));
+    }
+
 
     public List<Program> getAllPrograms() {
         return programRepository.findAll();
