@@ -1,6 +1,6 @@
 package com.questevent.controller;
 
-import com.questevent.dto.LeaderboardDto;
+import com.questevent.dto.LeaderboardDTO;
 import com.questevent.service.LeaderboardService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -33,7 +33,7 @@ public class LeaderboardController {
             @ApiResponse(responseCode = "200", description = "Global leaderboard fetched successfully"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public List<LeaderboardDto> globalLeaderboard() {
+    public List<LeaderboardDTO> globalLeaderboard() {
         return leaderboardService.getGlobalLeaderboard();
     }
 
@@ -48,7 +48,7 @@ public class LeaderboardController {
             @ApiResponse(responseCode = "404", description = "Program not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public List<LeaderboardDto> programLeaderboard(
+    public List<LeaderboardDTO> programLeaderboard(
             @Parameter(
                     description = "Program ID for which leaderboard is required",
                     required = true,

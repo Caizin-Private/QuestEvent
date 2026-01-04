@@ -1,30 +1,24 @@
 package com.questevent.service;
 
 import com.questevent.dto.LeaderboardDTO;
+import com.questevent.repository.LeaderboardRepository;
 import com.questevent.repository.UserWalletRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class LeaderboardService {
 
-    private final UserWalletRepository userWalletRepository;
-
-    public LeaderboardService(UserWalletRepository userWalletRepository) {
-        this.userWalletRepository = userWalletRepository;
-    }
+    private final LeaderboardRepository leaderboardRepository;
 
     public List<LeaderboardDTO> getGlobalLeaderboard() {
-        return userWalletRepository.findGlobalLeaderboard()
-                .stream()
-                .map(wallet -> {
-                    LeaderboardDTO dto = new LeaderboardDTO();
-                    dto.setUserId(wallet.getUser().getUserId());
-                    dto.setUserName(wallet.getUser().getName());
-                    dto.setGems(wallet.getGems());
-                    return dto;
-                })
-                .toList();
+        return leaderboardRepository.getGlobalLeaderboard();
+    }
+
+    public List<LeaderboardDTO> getProgramLeaderboard(Long programId) {
+        return leaderboardRepository.getProgramLeaderboard(programId);
     }
 }
