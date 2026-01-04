@@ -4,6 +4,6 @@ public record LeaderboardDTO(
         Long userId,
         String userName,
         Long participationCount,
-        Long gems,
+        Integer gems,
         Double score
 ) {}
