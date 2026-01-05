@@ -22,7 +22,7 @@ public class JudgeController {
 
     private final JudgeService judgeService;
 
-    @PreAuthorize("hasAnyRole('OWNER', 'JUDGE')")
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/submissions/pending")
     @Operation(
             summary = "Get all pending submissions",
@@ -38,7 +38,7 @@ public class JudgeController {
         );
     }
 
-    @PreAuthorize("hasAnyRole('OWNER', 'JUDGE')")
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/submissions/activity/{activityId}")
     @Operation(
             summary = "Get submissions for a specific activity",
@@ -60,7 +60,7 @@ public class JudgeController {
         );
     }
 
-    @PreAuthorize("@rbac.canVerifySubmission(authentication, #submissionId)")
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/review/{submissionId}")
     @Operation(
             summary = "Review an activity submission",
