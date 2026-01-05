@@ -14,8 +14,9 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '25'
           distribution: 'temurin'
+          cache: maven
 
       - name: Build and test
         run: mvn clean verify
