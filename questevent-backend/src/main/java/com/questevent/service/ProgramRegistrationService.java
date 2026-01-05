@@ -91,6 +91,14 @@ public class ProgramRegistrationService {
         return programRegistrationRepository.countByProgramProgramId(programId);
     }
 
+    @Transactional
+    public void deleteRegistrationByProgramAndUser(Long programId, Long userId) {
+        ProgramRegistration registration = programRegistrationRepository
+                .findByProgramProgramIdAndUserUserId(programId, userId)
+                .orElseThrow(() -> new RuntimeException("Registration not found for program id: " + programId + " and user id: " + userId));
+        programRegistrationRepository.delete(registration);
+    }
+
     private ProgramRegistrationDTO mapToDTO(ProgramRegistration registration) {
         return new ProgramRegistrationDTO(
                 registration.getProgramRegistrationId(),
