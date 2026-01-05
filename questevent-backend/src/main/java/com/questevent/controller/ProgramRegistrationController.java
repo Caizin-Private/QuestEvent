@@ -67,7 +67,7 @@ public class ProgramRegistrationController {
         }
     }
 
-    @PreAuthorize("hasAnyRole('OWNER', 'JUDGE')")
+    @PreAuthorize("isAuthenticated()")
     @GetMapping
     @Operation(summary = "Get all program registrations", description = "Retrieves all program registrations")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
