@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class ProgramRegistrationController {
 
     private final ProgramRegistrationService programRegistrationService;
 
+    @PreAuthorize("@rbac.canRegisterForProgram(authentication, #request.programId, #request.userId)")
     @PostMapping
     @Operation(summary = "Register participant for program", description = "Registers a user for a specific program")
     @ApiResponses(value = {
@@ -41,6 +43,7 @@ public class ProgramRegistrationController {
         }
     }
 
+    @PreAuthorize("hasAnyRole('OWNER', 'JUDGE')")
     @GetMapping
     @Operation(summary = "Get all program registrations", description = "Retrieves all program registrations")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
@@ -50,6 +53,7 @@ public class ProgramRegistrationController {
         return ResponseEntity.ok(registrations);
     }
 
+    @PreAuthorize("@rbac.canAccessProgramRegistration(authentication, #id)")
     @GetMapping("/{id}")
     @Operation(summary = "Get registration by ID", description = "Retrieves a specific program registration by ID")
     @ApiResponses(value = {
@@ -67,6 +71,7 @@ public class ProgramRegistrationController {
         }
     }
 
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @GetMapping("/programs/{programId}")
     @Operation(summary = "Get registrations by program", description = "Retrieves all registrations for a specific program")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
@@ -77,6 +82,7 @@ public class ProgramRegistrationController {
         return ResponseEntity.ok(registrations);
     }
 
+    @PreAuthorize("@rbac.canAccessUserProfile(authentication, #userId)")
     @GetMapping("/users/{userId}")
     @Operation(summary = "Get registrations by user", description = "Retrieves all program registrations for a specific user")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
@@ -87,6 +93,7 @@ public class ProgramRegistrationController {
         return ResponseEntity.ok(registrations);
     }
 
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @GetMapping("/programs/{programId}/count")
     @Operation(summary = "Get participant count", description = "Gets the total number of participants registered for a program")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved count")
@@ -96,6 +103,7 @@ public class ProgramRegistrationController {
         return ResponseEntity.ok(count);
     }
 
+    @PreAuthorize("@rbac.canAccessProgramRegistration(authentication, #id)")
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete registration", description = "Deletes a program registration")
     @ApiResponses(value = {

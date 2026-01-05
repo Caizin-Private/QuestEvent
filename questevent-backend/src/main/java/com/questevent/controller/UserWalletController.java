@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,10 +22,12 @@ public class UserWalletController {
         this.walletService = walletService;
     }
 
+    @PreAuthorize("@rbac.canAccessUserWallet(authentication, #userId)")
     @GetMapping
-    @Operation(summary = "Get user wallet balance", description = "Retrieves the user wallet balance for a specific user")
+    @Operation(summary = "Get user wallet balance", description = "Retrieves user wallet balance for a specific user")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User Wallet balance retrieved successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
             @ApiResponse(responseCode = "404", description = "User or wallet not found")
     })
     public ResponseEntity<UserWalletBalanceDTO> getUserWalletBalance(
