@@ -71,7 +71,7 @@ public class ActivityRegistrationController {
         }
     }
 
-    @PreAuthorize("hasAnyRole('OWNER', 'HOST', 'JUDGE')")
+    @PreAuthorize("isAuthenticated()")
     @GetMapping
     @Operation(summary = "Get all activity registrations", description = "Retrieves all activity registrations")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")

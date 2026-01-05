@@ -103,7 +103,7 @@ public class ProgramController {
         return ResponseEntity.ok(convertToResponseDTO(updated));
     }
 
-    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/{programId}/settle")
     @Operation(summary = "Settle program wallets", description = "Settles all program wallets for a specific program")
     @ApiResponses(value = {
