@@ -27,7 +27,7 @@ public class ProgramRegistrationController {
 
     @PreAuthorize("@rbac.canRegisterForProgram(authentication, #request.programId, #request.userId)")
     @PostMapping
-    @Operation(summary = "Register participant for program", description = "Registers a user for a specific program")
+    @Operation(summary = "Register participant for program", description = "Registers a user for a specific program (self-registration)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Registration successful"),
             @ApiResponse(responseCode = "400", description = "Invalid input or user already registered")
@@ -35,6 +35,30 @@ public class ProgramRegistrationController {
     public ResponseEntity<ProgramRegistrationResponseDTO> registerParticipant(
             @RequestBody ProgramRegistrationRequestDTO request) {
         try {
+            ProgramRegistrationResponseDTO response =
+                    programRegistrationService.registerParticipantForProgram(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
+    @PostMapping("/programs/{programId}/participants")
+    @Operation(summary = "Add participant to program (Host only)", description = "Allows program host to register a user for their program")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Registration successful"),
+            @ApiResponse(responseCode = "400", description = "Invalid input or user already registered"),
+            @ApiResponse(responseCode = "403", description = "Permission denied - only program host can add participants"),
+            @ApiResponse(responseCode = "404", description = "Program or user not found")
+    })
+    public ResponseEntity<ProgramRegistrationResponseDTO> addParticipantByHost(
+            @Parameter(description = "Program ID", required = true) @PathVariable Long programId,
+            @Parameter(description = "User ID to register", required = true) @RequestParam Long userId) {
+        try {
+            ProgramRegistrationRequestDTO request = new ProgramRegistrationRequestDTO();
+            request.setProgramId(programId);
+            request.setUserId(userId);
             ProgramRegistrationResponseDTO response =
                     programRegistrationService.registerParticipantForProgram(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
