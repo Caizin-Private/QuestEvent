@@ -20,3 +20,4 @@ jobs:
 
       - name: Build and test
         run: mvn clean verify
+        working-directory: questevent-backend
