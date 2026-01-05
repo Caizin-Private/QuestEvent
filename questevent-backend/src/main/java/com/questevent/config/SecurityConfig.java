@@ -18,14 +18,18 @@ public class SecurityConfig {
 
     private final OAuthSuccessService successHandler;
     private final JwtAuthFilter jwtAuthFilter;
+    private final CorsConfig corsConfig;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
+                .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers( "/", "/access-denied", "/oauth2/**", "/login/**", "/login", "/logout-success").permitAll()
+                        .requestMatchers( "/", "/access-denied", "/oauth2/**", "/login/**", "/login", "/logout-success",
+                                "/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**",
+                                "/api/auth").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth -> oauth
