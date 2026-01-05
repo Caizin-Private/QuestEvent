@@ -149,10 +149,31 @@ class ActivityRegistrationServiceTest {
 
     @Test
     void getAllRegistrations_success() {
+        Activity activity1 = new Activity();
+        activity1.setActivityId(1L);
+        activity1.setActivityName("Activity 1");
+        User user1 = new User();
+        user1.setUserId(1L);
+        user1.setName("User 1");
+
+        Activity activity2 = new Activity();
+        activity2.setActivityId(2L);
+        activity2.setActivityName("Activity 2");
+        User user2 = new User();
+        user2.setUserId(2L);
+        user2.setName("User 2");
+
         ActivityRegistration reg1 = new ActivityRegistration();
         reg1.setActivityRegistrationId(1L);
+        reg1.setActivity(activity1);
+        reg1.setUser(user1);
+        reg1.setCompletionStatus(CompletionStatus.NOT_COMPLETED);
+
         ActivityRegistration reg2 = new ActivityRegistration();
         reg2.setActivityRegistrationId(2L);
+        reg2.setActivity(activity2);
+        reg2.setUser(user2);
+        reg2.setCompletionStatus(CompletionStatus.COMPLETED);
 
         when(activityRegistrationRepository.findAll()).thenReturn(List.of(reg1, reg2));
 
@@ -205,8 +226,18 @@ class ActivityRegistrationServiceTest {
     @Test
     void getRegistrationsByActivityId_success() {
         Long activityId = 1L;
+        Activity activity = new Activity();
+        activity.setActivityId(activityId);
+        activity.setActivityName("Test Activity");
+        User user = new User();
+        user.setUserId(1L);
+        user.setName("Test User");
+
         ActivityRegistration reg = new ActivityRegistration();
         reg.setActivityRegistrationId(1L);
+        reg.setActivity(activity);
+        reg.setUser(user);
+        reg.setCompletionStatus(CompletionStatus.NOT_COMPLETED);
 
         when(activityRegistrationRepository.findByActivityActivityId(activityId))
                 .thenReturn(List.of(reg));
@@ -220,8 +251,18 @@ class ActivityRegistrationServiceTest {
     @Test
     void getRegistrationsByUserId_success() {
         Long userId = 1L;
+        Activity activity = new Activity();
+        activity.setActivityId(1L);
+        activity.setActivityName("Test Activity");
+        User user = new User();
+        user.setUserId(userId);
+        user.setName("Test User");
+
         ActivityRegistration reg = new ActivityRegistration();
         reg.setActivityRegistrationId(1L);
+        reg.setActivity(activity);
+        reg.setUser(user);
+        reg.setCompletionStatus(CompletionStatus.NOT_COMPLETED);
 
         when(activityRegistrationRepository.findByUserUserId(userId))
                 .thenReturn(List.of(reg));
@@ -236,8 +277,18 @@ class ActivityRegistrationServiceTest {
     void getRegistrationsByActivityIdAndStatus_success() {
         Long activityId = 1L;
         CompletionStatus status = CompletionStatus.COMPLETED;
+        Activity activity = new Activity();
+        activity.setActivityId(activityId);
+        activity.setActivityName("Test Activity");
+        User user = new User();
+        user.setUserId(1L);
+        user.setName("Test User");
+
         ActivityRegistration reg = new ActivityRegistration();
         reg.setActivityRegistrationId(1L);
+        reg.setActivity(activity);
+        reg.setUser(user);
+        reg.setCompletionStatus(status);
 
         when(activityRegistrationRepository.findByActivityActivityIdAndCompletionStatus(activityId, status))
                 .thenReturn(List.of(reg));
@@ -253,8 +304,18 @@ class ActivityRegistrationServiceTest {
     void getRegistrationsByUserIdAndStatus_success() {
         Long userId = 1L;
         CompletionStatus status = CompletionStatus.NOT_COMPLETED;
+        Activity activity = new Activity();
+        activity.setActivityId(1L);
+        activity.setActivityName("Test Activity");
+        User user = new User();
+        user.setUserId(userId);
+        user.setName("Test User");
+
         ActivityRegistration reg = new ActivityRegistration();
         reg.setActivityRegistrationId(1L);
+        reg.setActivity(activity);
+        reg.setUser(user);
+        reg.setCompletionStatus(status);
 
         when(activityRegistrationRepository.findByUserUserIdAndCompletionStatus(userId, status))
                 .thenReturn(List.of(reg));

@@ -5,6 +5,7 @@ import com.questevent.dto.ProgramRegistrationRequestDTO;
 import com.questevent.dto.ProgramRegistrationResponseDTO;
 import com.questevent.entity.Program;
 import com.questevent.entity.ProgramRegistration;
+import com.questevent.entity.ProgramWallet;
 import com.questevent.entity.User;
 import com.questevent.repository.ProgramRegistrationRepository;
 import com.questevent.repository.ProgramRepository;
@@ -73,7 +74,9 @@ class ProgramRegistrationServiceTest {
                 .thenReturn(false);
         when(programRegistrationRepository.save(any(ProgramRegistration.class)))
                 .thenReturn(savedRegistration);
-        doNothing().when(programWalletService).createWallet(1L, 1L);
+
+        ProgramWallet programWallet = new ProgramWallet();
+        when(programWalletService.createWallet(1L, 1L)).thenReturn(programWallet);
 
         ProgramRegistrationResponseDTO result = programRegistrationService.registerParticipantForProgram(request);
 
@@ -154,10 +157,31 @@ class ProgramRegistrationServiceTest {
 
     @Test
     void getAllRegistrations_success() {
+        Program program1 = new Program();
+        program1.setProgramId(1L);
+        program1.setProgramTitle("Program 1");
+        User user1 = new User();
+        user1.setUserId(1L);
+        user1.setName("User 1");
+
+        Program program2 = new Program();
+        program2.setProgramId(2L);
+        program2.setProgramTitle("Program 2");
+        User user2 = new User();
+        user2.setUserId(2L);
+        user2.setName("User 2");
+
         ProgramRegistration reg1 = new ProgramRegistration();
         reg1.setProgramRegistrationId(1L);
+        reg1.setProgram(program1);
+        reg1.setUser(user1);
+        reg1.setRegisteredAt(LocalDateTime.now());
+
         ProgramRegistration reg2 = new ProgramRegistration();
         reg2.setProgramRegistrationId(2L);
+        reg2.setProgram(program2);
+        reg2.setUser(user2);
+        reg2.setRegisteredAt(LocalDateTime.now());
 
         when(programRegistrationRepository.findAll()).thenReturn(List.of(reg1, reg2));
 
@@ -210,8 +234,18 @@ class ProgramRegistrationServiceTest {
     @Test
     void getRegistrationsByProgramId_success() {
         Long programId = 1L;
+        Program program = new Program();
+        program.setProgramId(programId);
+        program.setProgramTitle("Test Program");
+        User user = new User();
+        user.setUserId(1L);
+        user.setName("Test User");
+
         ProgramRegistration reg = new ProgramRegistration();
         reg.setProgramRegistrationId(1L);
+        reg.setProgram(program);
+        reg.setUser(user);
+        reg.setRegisteredAt(LocalDateTime.now());
 
         when(programRegistrationRepository.findByProgramProgramId(programId))
                 .thenReturn(List.of(reg));
@@ -225,8 +259,18 @@ class ProgramRegistrationServiceTest {
     @Test
     void getRegistrationsByUserId_success() {
         Long userId = 1L;
+        Program program = new Program();
+        program.setProgramId(1L);
+        program.setProgramTitle("Test Program");
+        User user = new User();
+        user.setUserId(userId);
+        user.setName("Test User");
+
         ProgramRegistration reg = new ProgramRegistration();
         reg.setProgramRegistrationId(1L);
+        reg.setProgram(program);
+        reg.setUser(user);
+        reg.setRegisteredAt(LocalDateTime.now());
 
         when(programRegistrationRepository.findByUserUserId(userId))
                 .thenReturn(List.of(reg));
