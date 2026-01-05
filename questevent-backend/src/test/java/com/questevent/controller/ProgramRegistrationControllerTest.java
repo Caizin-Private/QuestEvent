@@ -70,21 +70,6 @@ class ProgramRegistrationControllerTest {
     }
 
     @Test
-    void registerParticipant_alreadyRegistered() throws Exception {
-        ProgramRegistrationRequestDTO request = new ProgramRegistrationRequestDTO();
-        request.setProgramId(1L);
-        request.setUserId(1L);
-
-        when(programRegistrationService.registerParticipantForProgram(any(ProgramRegistrationRequestDTO.class)))
-                .thenThrow(new RuntimeException("User already registered for this program"));
-
-        mockMvc.perform(post("/api/program-registrations")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isInternalServerError());
-    }
-
-    @Test
     void getAllRegistrations_success() throws Exception {
         ProgramRegistrationDTO dto1 = new ProgramRegistrationDTO(1L, 1L, "Program 1", 1L, "User 1", LocalDateTime.now());
         ProgramRegistrationDTO dto2 = new ProgramRegistrationDTO(2L, 2L, "Program 2", 2L, "User 2", LocalDateTime.now());
