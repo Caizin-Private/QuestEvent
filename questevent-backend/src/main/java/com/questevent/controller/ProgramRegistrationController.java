@@ -27,7 +27,7 @@ public class ProgramRegistrationController {
 
     @PreAuthorize("@rbac.canRegisterForProgram(authentication, #request.programId, #request.userId)")
     @PostMapping
-    @Operation(summary = "Register participant for program", description = "Registers a user for a specific program")
+    @Operation(summary = "Register participant for program", description = "Registers a user for a specific program (self-registration)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Registration successful"),
             @ApiResponse(responseCode = "400", description = "Invalid input or user already registered")
@@ -43,7 +43,31 @@ public class ProgramRegistrationController {
         }
     }
 
-    @PreAuthorize("hasAnyRole('OWNER', 'JUDGE')")
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
+    @PostMapping("/programs/{programId}/participants")
+    @Operation(summary = "Add participant to program (Host only)", description = "Allows program host to register a user for their program")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Registration successful"),
+            @ApiResponse(responseCode = "400", description = "Invalid input or user already registered"),
+            @ApiResponse(responseCode = "403", description = "Permission denied - only program host can add participants"),
+            @ApiResponse(responseCode = "404", description = "Program or user not found")
+    })
+    public ResponseEntity<ProgramRegistrationResponseDTO> addParticipantByHost(
+            @Parameter(description = "Program ID", required = true) @PathVariable Long programId,
+            @Parameter(description = "User ID to register", required = true) @RequestParam Long userId) {
+        try {
+            ProgramRegistrationRequestDTO request = new ProgramRegistrationRequestDTO();
+            request.setProgramId(programId);
+            request.setUserId(userId);
+            ProgramRegistrationResponseDTO response =
+                    programRegistrationService.registerParticipantForProgram(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    @PreAuthorize("isAuthenticated()")
     @GetMapping
     @Operation(summary = "Get all program registrations", description = "Retrieves all program registrations")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
@@ -114,6 +138,25 @@ public class ProgramRegistrationController {
             @Parameter(description = "Registration ID", required = true) @PathVariable Long id) {
         try {
             programRegistrationService.deleteRegistration(id);
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
+    @DeleteMapping("/programs/{programId}/participants/{userId}")
+    @Operation(summary = "Remove participant from program (Host only)", description = "Allows program host to remove a user from their program")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Participant removed successfully"),
+            @ApiResponse(responseCode = "403", description = "Permission denied - only program host can remove participants"),
+            @ApiResponse(responseCode = "404", description = "Registration not found")
+    })
+    public ResponseEntity<Void> removeParticipantByHost(
+            @Parameter(description = "Program ID", required = true) @PathVariable Long programId,
+            @Parameter(description = "User ID to remove", required = true) @PathVariable Long userId) {
+        try {
+            programRegistrationService.deleteRegistrationByProgramAndUser(programId, userId);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
