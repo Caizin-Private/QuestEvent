@@ -143,4 +143,23 @@ public class ProgramRegistrationController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
+    @DeleteMapping("/programs/{programId}/participants/{userId}")
+    @Operation(summary = "Remove participant from program (Host only)", description = "Allows program host to remove a user from their program")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Participant removed successfully"),
+            @ApiResponse(responseCode = "403", description = "Permission denied - only program host can remove participants"),
+            @ApiResponse(responseCode = "404", description = "Registration not found")
+    })
+    public ResponseEntity<Void> removeParticipantByHost(
+            @Parameter(description = "Program ID", required = true) @PathVariable Long programId,
+            @Parameter(description = "User ID to remove", required = true) @PathVariable Long userId) {
+        try {
+            programRegistrationService.deleteRegistrationByProgramAndUser(programId, userId);
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }
