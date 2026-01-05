@@ -7,8 +7,15 @@ import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "activity_submissions")
-
+@Table(
+        name = "activity_submissions",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_submission_registration",
+                        columnNames = "activity_registration_id"
+                )
+        }
+)
 public class ActivitySubmission {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
