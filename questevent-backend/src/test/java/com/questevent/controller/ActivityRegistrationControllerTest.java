@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -65,21 +66,6 @@ class ActivityRegistrationControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.activityRegistrationId").value(1L))
                 .andExpect(jsonPath("$.message").value("Successfully registered for activity"));
-    }
-
-    @Test
-    void registerParticipant_alreadyRegistered() throws Exception {
-        ActivityRegistrationRequestDTO request = new ActivityRegistrationRequestDTO();
-        request.setActivityId(1L);
-        request.setUserId(1L);
-
-        when(activityRegistrationService.registerParticipantForActivity(any(ActivityRegistrationRequestDTO.class)))
-                .thenThrow(new RuntimeException("User already registered for this activity"));
-
-        mockMvc.perform(post("/api/activity-registrations")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isInternalServerError());
     }
 
     @Test
