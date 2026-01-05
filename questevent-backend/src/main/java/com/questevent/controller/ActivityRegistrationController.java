@@ -29,7 +29,7 @@ public class ActivityRegistrationController {
 
     @PreAuthorize("@rbac.canRegisterForActivity(authentication, #request.activityId, #request.userId)")
     @PostMapping
-    @Operation(summary = "Register participant for activity", description = "Registers a user for a specific activity")
+    @Operation(summary = "Register participant for activity", description = "Registers a user for a specific activity (self-registration)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Registration successful"),
             @ApiResponse(responseCode = "400", description = "Invalid input or user already registered")
@@ -37,6 +37,32 @@ public class ActivityRegistrationController {
     public ResponseEntity<ActivityRegistrationResponseDTO> registerParticipant(
             @RequestBody ActivityRegistrationRequestDTO request) {
         try {
+            ActivityRegistrationResponseDTO response =
+                    activityRegistrationService.registerParticipantForActivity(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    @PreAuthorize("@rbac.canManageProgram(authentication, #activityId)")
+    @PostMapping("/activities/{activityId}/participants")
+    @Operation(summary = "Add participant to activity (Host only)", description = "Allows program host to register a user for an activity in their program")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Registration successful"),
+            @ApiResponse(responseCode = "400", description = "Invalid input or user already registered"),
+            @ApiResponse(responseCode = "403", description = "Permission denied - only program host can add participants"),
+            @ApiResponse(responseCode = "404", description = "Activity or user not found")
+    })
+    public ResponseEntity<ActivityRegistrationResponseDTO> addParticipantByHost(
+            @Parameter(description = "Activity ID", required = true) @PathVariable Long activityId,
+            @Parameter(description = "User ID to register", required = true) @RequestParam Long userId,
+            @Parameter(description = "Completion status", required = false) @RequestParam(required = false) CompletionStatus completionStatus) {
+        try {
+            ActivityRegistrationRequestDTO request = new ActivityRegistrationRequestDTO();
+            request.setActivityId(activityId);
+            request.setUserId(userId);
+            request.setCompletionStatus(completionStatus != null ? completionStatus : CompletionStatus.NOT_COMPLETED);
             ActivityRegistrationResponseDTO response =
                     activityRegistrationService.registerParticipantForActivity(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
