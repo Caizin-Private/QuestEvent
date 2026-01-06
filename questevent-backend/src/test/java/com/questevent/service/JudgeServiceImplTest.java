@@ -13,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -30,20 +31,17 @@ class JudgeServiceImplTest {
     private ActivityRegistrationRepository registrationRepository;
 
     @Mock
-    private JudgeRepository judgeRepository;
-
-    @Mock
     private ProgramWalletTransactionService programWalletTransactionService;
 
     @InjectMocks
     private JudgeServiceImpl judgeService;
 
-
     @Test
     void getSubmissionsForActivity_shouldReturnMappedDtos() {
         ActivitySubmission submission = mockSubmission();
 
-        when(submissionRepository.findByActivityRegistrationActivityActivityId(1L))
+        when(submissionRepository
+                .findByActivityRegistrationActivityActivityId(1L))
                 .thenReturn(List.of(submission));
 
         List<JudgeSubmissionDTO> result =
@@ -68,32 +66,29 @@ class JudgeServiceImplTest {
         assertEquals(ReviewStatus.PENDING, result.get(0).reviewStatus());
     }
 
-
     @Test
     void reviewSubmission_shouldApproveSubmissionAndCreditWallet() {
         ActivitySubmission submission = mockSubmission();
-        Judge judge = new Judge();
-        judge.setJudgeId(1L);
 
         when(submissionRepository.findById(10L))
                 .thenReturn(Optional.of(submission));
 
-        when(judgeRepository.findById(1L))
-                .thenReturn(Optional.of(judge));
+        judgeService.reviewSubmission(10L);
 
-        judgeService.reviewSubmission(10L, 1L);
+        assertEquals(ReviewStatus.APPROVED,
+                submission.getReviewStatus());
 
-        assertEquals(ReviewStatus.APPROVED, submission.getReviewStatus());
         assertEquals(CompletionStatus.COMPLETED,
                 submission.getActivityRegistration().getCompletionStatus());
 
         verify(programWalletTransactionService).creditGems(
                 submission.getActivityRegistration().getUser(),
-                submission.getActivityRegistration().getActivity().getProgram(),
+                submission.getActivityRegistration()
+                        .getActivity()
+                        .getProgram(),
                 50
         );
     }
-
 
     @Test
     void reviewSubmission_shouldThrowIfSubmissionNotFound() {
@@ -101,7 +96,7 @@ class JudgeServiceImplTest {
                 .thenReturn(Optional.empty());
 
         RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> judgeService.reviewSubmission(99L, 1L));
+                () -> judgeService.reviewSubmission(99L));
 
         assertEquals("Submission not found", ex.getMessage());
     }
@@ -115,25 +110,26 @@ class JudgeServiceImplTest {
                 .thenReturn(Optional.of(submission));
 
         RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> judgeService.reviewSubmission(10L, 1L));
+                () -> judgeService.reviewSubmission(10L));
 
         assertEquals("Submission already reviewed", ex.getMessage());
     }
 
     @Test
-    void reviewSubmission_shouldThrowIfJudgeNotFound() {
+    void reviewSubmission_shouldThrowIfJudgeNotAssignedToProgram() {
         ActivitySubmission submission = mockSubmission();
+        submission.getActivityRegistration()
+                .getActivity()
+                .getProgram()
+                .setJudge(null);
 
         when(submissionRepository.findById(10L))
                 .thenReturn(Optional.of(submission));
 
-        when(judgeRepository.findById(1L))
-                .thenReturn(Optional.empty());
-
         RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> judgeService.reviewSubmission(10L, 1L));
+                () -> judgeService.reviewSubmission(10L));
 
-        assertEquals("Judge not found", ex.getMessage());
+        assertEquals("Judge not assigned to this program", ex.getMessage());
     }
 
     @Test
@@ -146,23 +142,23 @@ class JudgeServiceImplTest {
         when(submissionRepository.findById(10L))
                 .thenReturn(Optional.of(submission));
 
-        when(judgeRepository.findById(1L))
-                .thenReturn(Optional.of(new Judge()));
-
         RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> judgeService.reviewSubmission(10L, 1L));
+                () -> judgeService.reviewSubmission(10L));
 
         assertEquals("Invalid reward configuration", ex.getMessage());
     }
-
 
     private ActivitySubmission mockSubmission() {
         User user = new User();
         user.setUserId(5L);
         user.setName("User A");
 
+        Judge judge = new Judge();
+        judge.setJudgeId(1L);
+
         Program program = new Program();
         program.setProgramId(3L);
+        program.setJudge(judge); // ✅ IMPORTANT
 
         Activity activity = new Activity();
         activity.setActivityId(1L);
@@ -179,7 +175,7 @@ class JudgeServiceImplTest {
         submission.setSubmissionId(10L);
         submission.setActivityRegistration(registration);
         submission.setSubmissionUrl("http://link");
-        submission.setSubmittedAt(LocalDateTime.now());
+        submission.setSubmittedAt(Instant.now());
         submission.setReviewStatus(ReviewStatus.PENDING);
 
         return submission;
