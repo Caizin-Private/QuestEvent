@@ -31,7 +31,6 @@ class SubmissionServiceImplTest {
     private SubmissionServiceImpl submissionService;
 
 
-
     @Test
     void submitActivity_shouldSaveSubmissionSuccessfully() {
 
@@ -58,7 +57,6 @@ class SubmissionServiceImplTest {
     }
 
 
-
     @Test
     void submitActivity_shouldThrowIfUserNotRegistered() {
 
@@ -75,7 +73,6 @@ class SubmissionServiceImplTest {
 
         assertEquals("User is not registered for this activity", ex.getMessage());
     }
-
 
 
     @Test
@@ -98,7 +95,6 @@ class SubmissionServiceImplTest {
         assertEquals("Activity already completed. Submission not allowed.",
                 ex.getMessage());
     }
-
 
 
     @Test
@@ -125,7 +121,6 @@ class SubmissionServiceImplTest {
         assertEquals("Submission already exists for this registration",
                 ex.getMessage());
     }
-
 
 
     private ActivityRegistration mockRegistration() {
