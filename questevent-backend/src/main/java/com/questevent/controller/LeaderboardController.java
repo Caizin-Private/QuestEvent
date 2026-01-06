@@ -16,7 +16,7 @@ import java.util.List;
 @RequestMapping("/api/leaderboard")
 @RequiredArgsConstructor
 @Tag(
-        name = "Leaderboard",
+        name = "Leaderboardd",
         description = "Leaderboard APIs for ranking users globally and per program"
 )
 public class LeaderboardController {
