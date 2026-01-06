@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -64,7 +65,7 @@ class ActivityControllerTest {
         activity.setRewardGems(100);
         activity.setIsCompulsory(true);
         activity.setProgram(program);
-        activity.setCreatedAt(LocalDateTime.now());
+        activity.setCreatedAt(Instant.now());
 
         when(activityService.createActivity(eq(programId), any(ActivityRequestDTO.class)))
                 .thenReturn(activity);
