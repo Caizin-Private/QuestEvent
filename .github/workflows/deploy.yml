@@ -2,9 +2,9 @@ name: Backend CI + CD
 
 on:
   push:
-    branches: [ "deployment" ]
+    branches: [ "deployement" ]
   pull_request:
-    branches: [ "deployment" ]
+    branches: [ "deployement" ]
 
 jobs:
   build:
