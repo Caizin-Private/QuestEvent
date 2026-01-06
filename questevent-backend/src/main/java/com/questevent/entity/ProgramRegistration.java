@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Data
@@ -37,7 +38,7 @@ public class ProgramRegistration {
     private User user;
 
     @Column(name = "registered_at", updatable = false)
-    private LocalDateTime registeredAt = LocalDateTime.now();
+    private Instant registeredAt = Instant.now();
 
 
 }

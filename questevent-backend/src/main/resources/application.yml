@@ -35,9 +35,6 @@ server:
     session:
       persistent: false
 
-springdoc:
-  api-docs:
-    path: /api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-    enabled: true
+jwt:
+  secret: eIRIbe+6tVbbcYtOOR/PUpK6YQQ9Psm3YIa+BnBdhG0=
+  expiration: 86400000 

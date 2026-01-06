@@ -2,6 +2,7 @@ package com.questevent.dto;
 
 import lombok.Data;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Data
@@ -13,6 +14,6 @@ public class ActivityResponseDTO {
     private String activityRulebook;
     private String activityDescription;
     private Integer rewardGems;
-    private LocalDateTime createdAt;
+    private Instant createdAt;
     private Boolean isCompulsory;
 }
