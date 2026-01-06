@@ -15,4 +15,5 @@ public class ProgramRequestDTO {
     private LocalDateTime endDate;
     private Integer registrationFee;
     private ProgramStatus status;
+    private Long judgeUserId;
 }

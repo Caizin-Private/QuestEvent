@@ -53,7 +53,7 @@ public class Program {
     @OneToMany(mappedBy = "program", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProgramRegistration> programRegistrations;
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @OneToOne(fetch = FetchType.LAZY,cascade = CascadeType.ALL, optional = false )
     @JoinColumn(
             name = "judge_id",
             unique = true,
