@@ -16,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -71,8 +72,8 @@ class ProgramRegistrationControllerTest {
 
     @Test
     void getAllRegistrations_success() throws Exception {
-        ProgramRegistrationDTO dto1 = new ProgramRegistrationDTO(1L, 1L, "Program 1", 1L, "User 1", LocalDateTime.now());
-        ProgramRegistrationDTO dto2 = new ProgramRegistrationDTO(2L, 2L, "Program 2", 2L, "User 2", LocalDateTime.now());
+        ProgramRegistrationDTO dto1 = new ProgramRegistrationDTO(1L, 1L, "Program 1", 1L, "User 1", Instant.now());
+        ProgramRegistrationDTO dto2 = new ProgramRegistrationDTO(2L, 2L, "Program 2", 2L, "User 2", Instant.now());
 
         when(programRegistrationService.getAllRegistrations())
                 .thenReturn(List.of(dto1, dto2));
@@ -87,7 +88,7 @@ class ProgramRegistrationControllerTest {
     @Test
     void getRegistrationById_success() throws Exception {
         Long id = 1L;
-        ProgramRegistrationDTO dto = new ProgramRegistrationDTO(id, 1L, "Program 1", 1L, "User 1", LocalDateTime.now());
+        ProgramRegistrationDTO dto = new ProgramRegistrationDTO(id, 1L, "Program 1", 1L, "User 1", Instant.now());
 
         when(programRegistrationService.getRegistrationById(id))
                 .thenReturn(dto);
@@ -112,7 +113,7 @@ class ProgramRegistrationControllerTest {
     @Test
     void getRegistrationsByProgram_success() throws Exception {
         Long programId = 1L;
-        ProgramRegistrationDTO dto = new ProgramRegistrationDTO(1L, programId, "Program 1", 1L, "User 1", LocalDateTime.now());
+        ProgramRegistrationDTO dto = new ProgramRegistrationDTO(1L, programId, "Program 1", 1L, "User 1", Instant.now());
 
         when(programRegistrationService.getRegistrationsByProgramId(programId))
                 .thenReturn(List.of(dto));
@@ -126,7 +127,7 @@ class ProgramRegistrationControllerTest {
     @Test
     void getRegistrationsByUser_success() throws Exception {
         Long userId = 1L;
-        ProgramRegistrationDTO dto = new ProgramRegistrationDTO(1L, 1L, "Program 1", userId, "User 1", LocalDateTime.now());
+        ProgramRegistrationDTO dto = new ProgramRegistrationDTO(1L, 1L, "Program 1", userId, "User 1", Instant.now());
 
         when(programRegistrationService.getRegistrationsByUserId(userId))
                 .thenReturn(List.of(dto));

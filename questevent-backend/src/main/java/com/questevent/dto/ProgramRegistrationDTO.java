@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Data
@@ -15,7 +16,7 @@ public class ProgramRegistrationDTO {
     private String programTitle;
     private Long userId;
     private String userName;
-    private LocalDateTime registeredAt;
+    private Instant registeredAt;
 }
 
 

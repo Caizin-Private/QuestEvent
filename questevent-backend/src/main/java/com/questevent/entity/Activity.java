@@ -3,7 +3,9 @@ import jakarta.persistence.*;
 import lombok.Data;
 import jakarta.persistence.Id;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Entity
@@ -40,11 +42,11 @@ public class Activity {
     private Integer rewardGems;
 
     @Column(name = "created_at",updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @PrePersist
     public void onCreate() {
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = Instant.now();
     }
 
     @Column(name = "is_compulsory", nullable = false)
