@@ -16,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -66,7 +67,7 @@ class ProgramRegistrationServiceTest {
         savedRegistration.setProgramRegistrationId(1L);
         savedRegistration.setProgram(program);
         savedRegistration.setUser(user);
-        savedRegistration.setRegisteredAt(LocalDateTime.now());
+        savedRegistration.setRegisteredAt(Instant.now());
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(programRepository.findById(1L)).thenReturn(Optional.of(program));
@@ -175,13 +176,13 @@ class ProgramRegistrationServiceTest {
         reg1.setProgramRegistrationId(1L);
         reg1.setProgram(program1);
         reg1.setUser(user1);
-        reg1.setRegisteredAt(LocalDateTime.now());
+        reg1.setRegisteredAt(Instant.now());
 
         ProgramRegistration reg2 = new ProgramRegistration();
         reg2.setProgramRegistrationId(2L);
         reg2.setProgram(program2);
         reg2.setUser(user2);
-        reg2.setRegisteredAt(LocalDateTime.now());
+        reg2.setRegisteredAt(Instant.now());
 
         when(programRegistrationRepository.findAll()).thenReturn(List.of(reg1, reg2));
 
@@ -207,7 +208,7 @@ class ProgramRegistrationServiceTest {
 
         registration.setProgram(program);
         registration.setUser(user);
-        registration.setRegisteredAt(LocalDateTime.now());
+        registration.setRegisteredAt(Instant.now());
 
         when(programRegistrationRepository.findById(id)).thenReturn(Optional.of(registration));
 
@@ -245,7 +246,7 @@ class ProgramRegistrationServiceTest {
         reg.setProgramRegistrationId(1L);
         reg.setProgram(program);
         reg.setUser(user);
-        reg.setRegisteredAt(LocalDateTime.now());
+        reg.setRegisteredAt(Instant.now());
 
         when(programRegistrationRepository.findByProgramProgramId(programId))
                 .thenReturn(List.of(reg));
@@ -270,7 +271,7 @@ class ProgramRegistrationServiceTest {
         reg.setProgramRegistrationId(1L);
         reg.setProgram(program);
         reg.setUser(user);
-        reg.setRegisteredAt(LocalDateTime.now());
+        reg.setRegisteredAt(Instant.now());
 
         when(programRegistrationRepository.findByUserUserId(userId))
                 .thenReturn(List.of(reg));
