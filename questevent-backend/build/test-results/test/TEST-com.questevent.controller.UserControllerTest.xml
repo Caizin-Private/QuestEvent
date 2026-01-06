@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.questevent.controller.UserControllerTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-01-06T17:05:17.071Z" hostname="C71DH6R4Y6" time="0.01">
+  <properties/>
+  <testcase name="deleteUser_success()" classname="com.questevent.controller.UserControllerTest" time="0.008"/>
+  <testcase name="updateUser_success()" classname="com.questevent.controller.UserControllerTest" time="0.001"/>
+  <testcase name="getAllUsers_success()" classname="com.questevent.controller.UserControllerTest" time="0.0"/>
+  <testcase name="createUser_success()" classname="com.questevent.controller.UserControllerTest" time="0.0"/>
+  <testcase name="getUserById_success()" classname="com.questevent.controller.UserControllerTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

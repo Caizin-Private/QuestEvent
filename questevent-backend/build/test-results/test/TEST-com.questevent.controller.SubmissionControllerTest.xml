@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.questevent.controller.SubmissionControllerTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-01-06T17:05:17.060Z" hostname="C71DH6R4Y6" time="0.01">
+  <properties/>
+  <testcase name="submitActivity_shouldThrowException_whenSubmissionAlreadyExists()" classname="com.questevent.controller.SubmissionControllerTest" time="0.008"/>
+  <testcase name="submitActivity_shouldThrowException_whenActivityAlreadyCompleted()" classname="com.questevent.controller.SubmissionControllerTest" time="0.0"/>
+  <testcase name="submitActivity_shouldThrowException_whenUserNotRegistered()" classname="com.questevent.controller.SubmissionControllerTest" time="0.0"/>
+  <testcase name="submitActivity_shouldReturnCreated_whenSubmissionIsSuccessful()" classname="com.questevent.controller.SubmissionControllerTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

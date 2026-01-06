@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.questevent.service.ProgramWalletServiceTest" tests="14" skipped="0" failures="0" errors="0" timestamp="2026-01-06T17:05:17.246Z" hostname="C71DH6R4Y6" time="0.019">
+  <properties/>
+  <testcase name="getMyProgramWallet_shouldThrowNotFound_whenWalletMissing()" classname="com.questevent.service.ProgramWalletServiceTest" time="0.013"/>
+  <testcase name="getProgramWalletsByProgramId_shouldThrowNotFound_whenEmpty()" classname="com.questevent.service.ProgramWalletServiceTest" time="0.0"/>
+  <testcase name="getProgramWalletsByProgramId_shouldReturnWallets()" classname="com.questevent.service.ProgramWalletServiceTest" time="0.001"/>
+  <testcase name="getUserProgramWalletBalances_shouldThrowNotFound_whenNoWallets()" classname="com.questevent.service.ProgramWalletServiceTest" time="0.0"/>
+  <testcase name="getWalletBalanceByWalletId_shouldThrowNotFound_whenMissing()" classname="com.questevent.service.ProgramWalletServiceTest" time="0.001"/>
+  <testcase name="createWallet_shouldFail_whenUserNotFound()" classname="com.questevent.service.ProgramWalletServiceTest" time="0.0"/>
+  <testcase name="getWalletBalanceByWalletId_shouldReturnBalance()" classname="com.questevent.service.ProgramWalletServiceTest" time="0.0"/>
+  <testcase name="getMyProgramWallet_shouldThrowNotFound_whenUserMissing()" classname="com.questevent.service.ProgramWalletServiceTest" time="0.0"/>
+  <testcase name="createWallet_shouldFail_whenWalletAlreadyExists()" classname="com.questevent.service.ProgramWalletServiceTest" time="0.001"/>
+  <testcase name="getUserProgramWalletBalances_shouldThrowNotFound_whenUserMissing()" classname="com.questevent.service.ProgramWalletServiceTest" time="0.0"/>
+  <testcase name="getMyProgramWallet_shouldReturnWallet()" classname="com.questevent.service.ProgramWalletServiceTest" time="0.0"/>
+  <testcase name="createWallet_shouldCreateWallet()" classname="com.questevent.service.ProgramWalletServiceTest" time="0.001"/>
+  <testcase name="createWallet_shouldFail_whenProgramNotFound()" classname="com.questevent.service.ProgramWalletServiceTest" time="0.0"/>
+  <testcase name="getUserProgramWalletBalances_shouldReturnBalances()" classname="com.questevent.service.ProgramWalletServiceTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

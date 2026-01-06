@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.questevent.service.ActivityServiceTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-01-06T17:05:17.137Z" hostname="C71DH6R4Y6" time="0.017">
+  <properties/>
+  <testcase name="createActivity_success()" classname="com.questevent.service.ActivityServiceTest" time="0.012"/>
+  <testcase name="updateActivity_activityNotFound()" classname="com.questevent.service.ActivityServiceTest" time="0.0"/>
+  <testcase name="deleteActivity_success()" classname="com.questevent.service.ActivityServiceTest" time="0.001"/>
+  <testcase name="createActivity_programNotFound()" classname="com.questevent.service.ActivityServiceTest" time="0.0"/>
+  <testcase name="updateActivity_success()" classname="com.questevent.service.ActivityServiceTest" time="0.0"/>
+  <testcase name="updateActivity_activityDoesNotBelongToProgram()" classname="com.questevent.service.ActivityServiceTest" time="0.001"/>
+  <testcase name="deleteActivity_mismatchBetweenProgramAndActivity()" classname="com.questevent.service.ActivityServiceTest" time="0.0"/>
+  <testcase name="deleteActivity_activityNotFound()" classname="com.questevent.service.ActivityServiceTest" time="0.001"/>
+  <testcase name="getActivitiesByProgramId_success()" classname="com.questevent.service.ActivityServiceTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

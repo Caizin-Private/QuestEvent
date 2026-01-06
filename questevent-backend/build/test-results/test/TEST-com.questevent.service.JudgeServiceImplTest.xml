@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.questevent.service.JudgeServiceImplTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-01-06T17:05:17.155Z" hostname="C71DH6R4Y6" time="0.03">
+  <properties/>
+  <testcase name="reviewSubmission_shouldApproveSubmissionAndCreditWallet()" classname="com.questevent.service.JudgeServiceImplTest" time="0.026"/>
+  <testcase name="reviewSubmission_shouldThrowIfJudgeNotFound()" classname="com.questevent.service.JudgeServiceImplTest" time="0.0"/>
+  <testcase name="reviewSubmission_shouldThrowIfAlreadyReviewed()" classname="com.questevent.service.JudgeServiceImplTest" time="0.001"/>
+  <testcase name="getSubmissionsForActivity_shouldReturnMappedDtos()" classname="com.questevent.service.JudgeServiceImplTest" time="0.0"/>
+  <testcase name="getPendingSubmissions_shouldReturnOnlyPending()" classname="com.questevent.service.JudgeServiceImplTest" time="0.0"/>
+  <testcase name="reviewSubmission_shouldThrowIfSubmissionNotFound()" classname="com.questevent.service.JudgeServiceImplTest" time="0.0"/>
+  <testcase name="reviewSubmission_shouldThrowIfInvalidRewardGems()" classname="com.questevent.service.JudgeServiceImplTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
