@@ -238,6 +238,96 @@ public class RbacService {
                 .orElse(false);
     }
 
+    public boolean canAccessMyProgramWallet(
+            Authentication authentication,
+            Long programId
+    ) {
+        User user = currentUser(authentication);
+        if (user == null) return false;
+
+        // OWNER can access everything
+        if (user.getRole() == Role.OWNER) {
+            return true;
+        }
+
+        // USER can access only their own wallet
+        return programWalletRepository
+                .findByUserUserIdAndProgramProgramId(
+                        user.getUserId(),
+                        programId
+                )
+                .isPresent();
+    }
+
+    public boolean canAccessProgramWalletsByProgram(
+            Authentication authentication,
+            Long programId
+    ) {
+        User user = currentUser(authentication);
+        if (user == null) return false;
+
+        // OWNER can access all programs
+        if (user.getRole() == Role.OWNER) {
+            return true;
+        }
+
+        if (user.getRole() != Role.HOST) {
+            return false;
+        }
+
+        Program program = programRepository.findById(programId).orElse(null);
+        if (program == null || program.getUser() == null) {
+            return false;
+        }
+
+        // HOST must own the program
+        return program.getUser().getUserId().equals(user.getUserId());
+    }
+
+    public boolean canAccessProgramWalletByUser(
+            Authentication authentication,
+            Long programId,
+            Long userId
+    ) {
+        User user = currentUser(authentication);
+        if (user == null) return false;
+
+        // OWNER can access anything
+        if (user.getRole() == Role.OWNER) {
+            return true;
+        }
+
+        // USER can access only their own wallet
+        if (user.getRole() == Role.USER) {
+            if (!user.getUserId().equals(userId)) {
+                return false;
+            }
+            return programWalletRepository
+                    .findByUserUserIdAndProgramProgramId(userId, programId)
+                    .isPresent();
+        }
+
+        // HOST can access wallets of users in their program
+        if (user.getRole() == Role.HOST) {
+
+            Program program = programRepository.findById(programId).orElse(null);
+            if (program == null || program.getUser() == null) {
+                return false;
+            }
+
+            if (!program.getUser().getUserId().equals(user.getUserId())) {
+                return false;
+            }
+
+            return programWalletRepository
+                    .findByUserUserIdAndProgramProgramId(userId, programId)
+                    .isPresent();
+        }
+
+        return false;
+    }
+
+
     public boolean canRegisterForProgram(
             Authentication authentication,
             Long programId,

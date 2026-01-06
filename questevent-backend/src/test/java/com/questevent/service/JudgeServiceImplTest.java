@@ -13,7 +13,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -180,7 +179,7 @@ class JudgeServiceImplTest {
         submission.setSubmissionId(10L);
         submission.setActivityRegistration(registration);
         submission.setSubmissionUrl("http://link");
-        submission.setSubmittedAt(Instant.now());
+        submission.setSubmittedAt(LocalDateTime.now());
         submission.setReviewStatus(ReviewStatus.PENDING);
 
         return submission;
