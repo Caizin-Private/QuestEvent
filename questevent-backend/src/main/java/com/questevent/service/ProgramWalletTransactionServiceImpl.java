@@ -15,13 +15,17 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-public class ProgramWalletTransactionServiceImpl implements ProgramWalletTransactionService {
+public class ProgramWalletTransactionServiceImpl
+        implements ProgramWalletTransactionService {
 
     private final ProgramWalletRepository programWalletRepository;
     private final ProgramRepository programRepository;
     private final UserWalletRepository userWalletRepository;
 
-    public ProgramWalletTransactionServiceImpl(ProgramWalletRepository programWalletRepository, ProgramRepository programRepository, UserWalletRepository userWalletRepository) {
+    public ProgramWalletTransactionServiceImpl(
+            ProgramWalletRepository programWalletRepository,
+            ProgramRepository programRepository,
+            UserWalletRepository userWalletRepository) {
         this.programWalletRepository = programWalletRepository;
         this.programRepository = programRepository;
         this.userWalletRepository = userWalletRepository;
@@ -30,6 +34,11 @@ public class ProgramWalletTransactionServiceImpl implements ProgramWalletTransac
     @Override
     @Transactional
     public void creditGems(User user, Program program, int amount) {
+
+        if (user == null || user.getUserId() == null ||
+                program == null || program.getProgramId() == null) {
+            throw new IllegalArgumentException("Invalid user or program");
+        }
 
         if (amount <= 0) {
             throw new IllegalArgumentException("Amount must be greater than zero");
@@ -41,14 +50,19 @@ public class ProgramWalletTransactionServiceImpl implements ProgramWalletTransac
                         program.getProgramId()
                 )
                 .orElseThrow(() ->
-                        new RuntimeException("Program wallet not found"));
+                        new IllegalStateException(
+                                "Program wallet not found for user "
+                                        + user.getUserId()
+                                        + " and program "
+                                        + program.getProgramId()
+                        )
+                );
 
         wallet.setGems(wallet.getGems() + amount);
-        programWalletRepository.save(wallet);
     }
 
-    @Transactional
     @Override
+    @Transactional
     public void autoSettleExpiredProgramWallets() {
 
         List<Program> completedPrograms =
@@ -58,20 +72,28 @@ public class ProgramWalletTransactionServiceImpl implements ProgramWalletTransac
                 );
 
         for (Program program : completedPrograms) {
+
             List<ProgramWallet> wallets =
                     programWalletRepository
                             .findByProgramProgramId(program.getProgramId());
+
             for (ProgramWallet programWallet : wallets) {
+
                 if (programWallet.getGems() == 0) {
                     continue;
                 }
+
                 UserWallet userWallet = userWalletRepository
-                                .findByUserUserId(programWallet.getUser().getUserId())
-                                .orElseThrow(() ->
-                                        new IllegalStateException(
-                                                "User wallet not found for userId "
-                                                        + programWallet.getUser().getUserId()
-                                        ));
+                        .findByUserUserId(
+                                programWallet.getUser().getUserId()
+                        )
+                        .orElseThrow(() ->
+                                new IllegalStateException(
+                                        "User wallet not found for userId "
+                                                + programWallet.getUser().getUserId()
+                                )
+                        );
+
                 userWallet.setGems(
                         userWallet.getGems() + programWallet.getGems()
                 );
@@ -82,12 +104,20 @@ public class ProgramWalletTransactionServiceImpl implements ProgramWalletTransac
         }
     }
 
-    @Transactional
     @Override
+    @Transactional
     public void manuallySettleExpiredProgramWallets(Long programId) {
 
+        if (programId == null || programId <= 0) {
+            throw new IllegalArgumentException("Invalid programId");
+        }
+
         Program program = programRepository.findById(programId)
-                .orElseThrow(() -> new RuntimeException("Program not found"));
+                .orElseThrow(() ->
+                        new IllegalStateException(
+                                "Program not found with id " + programId
+                        )
+                );
 
         if (program.getStatus() == ProgramStatus.SETTLED) {
             throw new IllegalStateException("Program already settled");
@@ -99,11 +129,21 @@ public class ProgramWalletTransactionServiceImpl implements ProgramWalletTransac
         for (ProgramWallet programWallet : wallets) {
 
             UserWallet userWallet = programWallet.getUser().getWallet();
-            userWallet.setGems(userWallet.getGems() + programWallet.getGems());
-            programWallet.setGems(0);
 
+            if (userWallet == null) {
+                throw new IllegalStateException(
+                        "User wallet not found for user "
+                                + programWallet.getUser().getUserId()
+                );
+            }
+
+            userWallet.setGems(
+                    userWallet.getGems() + programWallet.getGems()
+            );
+            programWallet.setGems(0);
         }
 
         program.setStatus(ProgramStatus.SETTLED);
     }
 }
+
