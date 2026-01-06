@@ -33,7 +33,7 @@ public class ProgramService {
 
     public Program createProgram(Long userId,Long judgeUserId, ProgramRequestDTO dto) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Creator not found"));
 
         User judgeUser = userRepository.findById(judgeUserId)
                 .orElseThrow(() -> new ResponseStatusException(
