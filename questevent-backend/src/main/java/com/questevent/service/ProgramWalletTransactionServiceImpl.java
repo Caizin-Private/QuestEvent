@@ -50,15 +50,11 @@ public class ProgramWalletTransactionServiceImpl
                         program.getProgramId()
                 )
                 .orElseThrow(() ->
-                        new IllegalStateException(
-                                "Program wallet not found for user "
-                                        + user.getUserId()
-                                        + " and program "
-                                        + program.getProgramId()
-                        )
+                        new IllegalStateException("Program wallet not found")
                 );
 
         wallet.setGems(wallet.getGems() + amount);
+        programWalletRepository.save(wallet);
     }
 
     @Override
@@ -88,19 +84,20 @@ public class ProgramWalletTransactionServiceImpl
                                 programWallet.getUser().getUserId()
                         )
                         .orElseThrow(() ->
-                                new IllegalStateException(
-                                        "User wallet not found for userId "
-                                                + programWallet.getUser().getUserId()
-                                )
+                                new IllegalStateException("User wallet not found")
                         );
 
                 userWallet.setGems(
                         userWallet.getGems() + programWallet.getGems()
                 );
                 programWallet.setGems(0);
+
+                userWalletRepository.save(userWallet);
+                programWalletRepository.save(programWallet);
             }
 
             program.setStatus(ProgramStatus.SETTLED);
+            programRepository.save(program);
         }
     }
 
@@ -114,9 +111,7 @@ public class ProgramWalletTransactionServiceImpl
 
         Program program = programRepository.findById(programId)
                 .orElseThrow(() ->
-                        new IllegalStateException(
-                                "Program not found with id " + programId
-                        )
+                        new IllegalStateException("Program not found")
                 );
 
         if (program.getStatus() == ProgramStatus.SETTLED) {
@@ -131,19 +126,19 @@ public class ProgramWalletTransactionServiceImpl
             UserWallet userWallet = programWallet.getUser().getWallet();
 
             if (userWallet == null) {
-                throw new IllegalStateException(
-                        "User wallet not found for user "
-                                + programWallet.getUser().getUserId()
-                );
+                throw new IllegalStateException("User wallet not found");
             }
 
             userWallet.setGems(
                     userWallet.getGems() + programWallet.getGems()
             );
             programWallet.setGems(0);
+
+            userWalletRepository.save(userWallet);
+            programWalletRepository.save(programWallet);
         }
 
         program.setStatus(ProgramStatus.SETTLED);
+        programRepository.save(program);
     }
 }
-
