@@ -20,12 +20,21 @@ public class UserWalletTransactionServiceImpl implements UserWalletTransactionSe
     @Transactional
     public void creditGems(User user, int amount) {
 
+        if (user == null || user.getUserId() == null) {
+            throw new IllegalArgumentException("Invalid user");
+        }
+
         if (amount <= 0) {
             throw new IllegalArgumentException("Amount must be greater than zero");
         }
 
-        UserWallet wallet = userWalletRepository.findByUserUserId(user.getUserId())
-                .orElseThrow(() -> new RuntimeException("Wallet not found"));
+        UserWallet wallet = userWalletRepository
+                .findByUserUserId(user.getUserId())
+                .orElseThrow(() ->
+                        new IllegalStateException(
+                                "Wallet not found for user " + user.getUserId()
+                        )
+                );
 
         wallet.setGems(wallet.getGems() + amount);
         userWalletRepository.save(wallet);
