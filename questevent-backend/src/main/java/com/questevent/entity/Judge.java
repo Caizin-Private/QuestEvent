@@ -23,6 +23,13 @@ public class Judge {
     )
     private User user;
 
+
+
+    @OneToOne(mappedBy = "judge")
+    private Program programs;
+
     @OneToMany(mappedBy = "reviewedBy")
     private List<ActivitySubmission> reviewedSubmissions;
+
+
 }
