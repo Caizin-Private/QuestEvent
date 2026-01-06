@@ -48,7 +48,7 @@ public class JudgeServiceImpl implements JudgeService {
 
     @Override
     @Transactional
-    public void reviewSubmission(Long submissionId, Long judgeId) {
+    public void reviewSubmission(Long submissionId) {
 
         ActivitySubmission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new RuntimeException("Submission not found"));
@@ -57,17 +57,20 @@ public class JudgeServiceImpl implements JudgeService {
             throw new RuntimeException("Submission already reviewed");
         }
 
-        Judge judge = judgeRepository.findById(judgeId)
-                .orElseThrow(() -> new RuntimeException("Judge not found"));
-
         ActivityRegistration registration = submission.getActivityRegistration();
         Activity activity = registration.getActivity();
+        Program program = activity.getProgram();
+
+        // ✅ Judge already decided at program creation
+        Judge judge = program.getJudge();
+        if (judge == null) {
+            throw new RuntimeException("Judge not assigned to this program");
+        }
 
         int rewardGems = activity.getRewardGems();
         if (rewardGems <= 0) {
             throw new RuntimeException("Invalid reward configuration");
         }
-
 
         submission.setReviewedBy(judge);
         submission.setReviewStatus(ReviewStatus.APPROVED);
@@ -75,14 +78,12 @@ public class JudgeServiceImpl implements JudgeService {
         submission.setReviewedAt(Instant.now());
         submissionRepository.save(submission);
 
-
         registration.setCompletionStatus(CompletionStatus.COMPLETED);
         registrationRepository.save(registration);
 
-
         programWalletTransactionService.creditGems(
                 registration.getUser(),
-                activity.getProgram(),
+                program,
                 rewardGems
         );
     }
