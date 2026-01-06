@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Data
@@ -16,6 +17,6 @@ public class ProgramRegistrationResponseDTO {
     private Long userId;
     private String userName;
     private String userEmail;
-    private LocalDateTime registeredAt;
+    private Instant registeredAt;
     private String message;
 }

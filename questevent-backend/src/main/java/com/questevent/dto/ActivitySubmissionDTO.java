@@ -1,5 +1,6 @@
 package com.questevent.dto;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 public record ActivitySubmissionDTO(
@@ -8,6 +9,6 @@ public record ActivitySubmissionDTO(
         Long userId,
         String submissionUrl,
         Integer awardedGems,
-        LocalDateTime submittedAt,
-        LocalDateTime reviewedAt
+        Instant submittedAt,
+        Instant reviewedAt
 ) {}

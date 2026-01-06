@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -42,7 +43,7 @@ public class ProgramRegistrationService {
         ProgramRegistration registration = new ProgramRegistration();
         registration.setProgram(program);
         registration.setUser(user);
-        registration.setRegisteredAt(LocalDateTime.now());
+        registration.setRegisteredAt(Instant.now());
 
         ProgramRegistration savedRegistration = programRegistrationRepository.save(registration);
         programWalletService.createWallet(user.getUserId(), program.getProgramId());

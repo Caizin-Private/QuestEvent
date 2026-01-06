@@ -4,6 +4,7 @@ import com.questevent.enums.ReviewStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Data
@@ -36,13 +37,13 @@ public class ActivitySubmission {
     private String submissionUrl;
 
     @Column(name = "submitted_at", nullable = false, updatable = false)
-    private LocalDateTime submittedAt;
+    private Instant submittedAt;
 
     @Column(name = "awarded_gems")
     private Integer awardedGems;
 
     @Column(name = "reviewed_at")
-    private LocalDateTime reviewedAt;
+    private Instant reviewedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
@@ -53,7 +54,7 @@ public class ActivitySubmission {
 
     @PrePersist
     protected void onSubmit() {
-        this.submittedAt = LocalDateTime.now();
+        this.submittedAt = Instant.now();
         this.reviewStatus = ReviewStatus.PENDING;
     }
 

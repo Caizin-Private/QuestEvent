@@ -6,6 +6,7 @@ import com.questevent.enums.ProgramStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -33,10 +34,10 @@ public class Program {
     private Department department;
 
     @Column(name = "startDate")
-    private LocalDateTime startDate;
+    private Instant startDate;
 
     @Column(name = "endDate")
-    private LocalDateTime endDate;
+    private Instant endDate;
 
     @Column(nullable = false)
     private Integer registrationFee;
