@@ -43,7 +43,7 @@ public class ProgramController {
             @ApiResponse(responseCode = "404", description = "Host user not found")
     })
     public ResponseEntity<ProgramResponseDTO> createProgram(@RequestBody ProgramRequestDTO dto) {
-        Program created = programService.createProgram(dto.getHostUserId(), dto);
+        Program created = programService.createProgram(dto.getHostUserId(), dto.getJudgeUserId(), dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(convertToResponseDTO(created));
     }
 

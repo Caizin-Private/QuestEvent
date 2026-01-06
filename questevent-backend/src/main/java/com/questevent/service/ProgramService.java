@@ -1,8 +1,10 @@
 package com.questevent.service;
 
 import com.questevent.dto.ProgramRequestDTO;
+import com.questevent.entity.Judge;
 import com.questevent.entity.Program;
 import com.questevent.entity.User;
+import com.questevent.repository.JudgeRepository;
 import com.questevent.repository.ProgramRepository;
 import com.questevent.repository.ProgramWalletRepository;
 import com.questevent.repository.UserRepository;
@@ -18,22 +20,48 @@ public class ProgramService {
 
     private final ProgramRepository programRepository;
     private final UserRepository userRepository;
+    private final JudgeRepository judgeRepository;
     private final ProgramWalletService programWalletService;
 
     @Autowired
-    public ProgramService(ProgramRepository programRepository, UserRepository userRepository, ProgramWalletService programWalletService) {
+    public ProgramService(ProgramRepository programRepository, UserRepository userRepository, ProgramWalletService programWalletService , JudgeRepository judgeRepository) {
         this.programRepository = programRepository;
         this.userRepository = userRepository;
         this.programWalletService = programWalletService;
+        this.judgeRepository = judgeRepository;
     }
 
-    public Program createProgram(Long userId, ProgramRequestDTO dto) {
+    public Program createProgram(Long userId,Long judgeUserId, ProgramRequestDTO dto) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        User judgeUser = userRepository.findById(judgeUserId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Judge user not found"));
+
+
+        if (user.getUserId().equals(judgeUser.getUserId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Creator cannot be the judge"
+            );
+        }
+
+
 
         Program program = new Program();
         mapDtoToEntity(dto, program);
         program.setUser(user);
+
+
+        Judge judge = judgeRepository.findByUserUserId(judgeUserId)
+                .orElseGet(() -> {
+                    Judge newJudge = new Judge();
+                    newJudge.setUser(judgeUser);
+                    return newJudge;
+                });
+
+        program.setJudge(judge);
 
         return programRepository.save(program);
     }

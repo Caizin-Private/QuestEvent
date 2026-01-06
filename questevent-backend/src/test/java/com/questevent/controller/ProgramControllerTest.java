@@ -57,15 +57,20 @@ class ProgramControllerTest {
 
     @Test
     void createProgram_success() throws Exception {
+
         ProgramRequestDTO requestDTO = new ProgramRequestDTO();
         requestDTO.setHostUserId(1L);
+        requestDTO.setJudgeUserId(2L); // ✅ REQUIRED
         requestDTO.setProgramTitle("Test Program");
         requestDTO.setDepartment(Department.IT);
         requestDTO.setRegistrationFee(100);
         requestDTO.setStatus(ProgramStatus.ACTIVE);
 
-        User user = new User();
-        user.setUserId(1L);
+        User creator = new User();
+        creator.setUserId(1L);
+
+        User judgeUser = new User();
+        judgeUser.setUserId(2L);
 
         Program program = new Program();
         program.setProgramId(1L);
@@ -73,10 +78,13 @@ class ProgramControllerTest {
         program.setDepartment(Department.IT);
         program.setRegistrationFee(100);
         program.setStatus(ProgramStatus.ACTIVE);
-        program.setUser(user);
+        program.setUser(creator);
 
-        when(programService.createProgram(eq(1L), any(ProgramRequestDTO.class)))
-                .thenReturn(program);
+        when(programService.createProgram(
+                eq(1L),
+                eq(2L),
+                any(ProgramRequestDTO.class)
+        )).thenReturn(program);
 
         mockMvc.perform(post("/api/programs")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -89,19 +97,23 @@ class ProgramControllerTest {
 
     @Test
     void createProgram_userNotFound() throws Exception {
+
         ProgramRequestDTO requestDTO = new ProgramRequestDTO();
         requestDTO.setHostUserId(999L);
+        requestDTO.setJudgeUserId(2L); // ✅ REQUIRED
         requestDTO.setProgramTitle("Test Program");
 
-        when(programService.createProgram(eq(999L), any(ProgramRequestDTO.class)))
-                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        when(programService.createProgram(
+                eq(999L),
+                eq(2L),
+                any(ProgramRequestDTO.class)
+        )).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         mockMvc.perform(post("/api/programs")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDTO)))
                 .andExpect(status().isNotFound());
     }
-
     @Test
     void getAllPrograms_success() throws Exception {
         User user = new User();
