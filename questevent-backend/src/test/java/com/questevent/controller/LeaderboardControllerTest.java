@@ -22,10 +22,7 @@ class LeaderboardControllerTest {
     @InjectMocks
     private LeaderboardController leaderboardController;
 
-    // =========================================================
-    // 🌍 GLOBAL LEADERBOARD UNIT TEST CASES
-    // =========================================================
-
+    //GLOBAL LEADERBOARD UNIT TEST CASES
     @Test
     void shouldReturnGlobalLeaderboard() {
 
@@ -71,9 +68,8 @@ class LeaderboardControllerTest {
         verify(leaderboardService).getGlobalLeaderboard();
     }
 
-    // =========================================================
+
     // 🏷 PROGRAM LEADERBOARD UNIT TEST CASES
-    // =========================================================
 
     @Test
     void shouldReturnProgramLeaderboard() {

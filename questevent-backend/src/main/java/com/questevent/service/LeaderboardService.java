@@ -15,10 +15,32 @@ public class LeaderboardService {
     private final LeaderboardRepository leaderboardRepository;
 
     public List<LeaderboardDTO> getGlobalLeaderboard() {
-        return leaderboardRepository.getGlobalLeaderboard();
+
+        List<LeaderboardDTO> leaderboard =
+                leaderboardRepository.getGlobalLeaderboard();
+
+        if (leaderboard == null || leaderboard.isEmpty()) {
+            throw new IllegalStateException("Global leaderboard is empty");
+        }
+
+        return leaderboard;
     }
 
     public List<LeaderboardDTO> getProgramLeaderboard(Long programId) {
-        return leaderboardRepository.getProgramLeaderboard(programId);
+
+        if (programId == null || programId <= 0) {
+            throw new IllegalArgumentException("Program ID must be greater than zero");
+        }
+
+        List<LeaderboardDTO> leaderboard =
+                leaderboardRepository.getProgramLeaderboard(programId);
+
+        if (leaderboard == null || leaderboard.isEmpty()) {
+            throw new IllegalStateException(
+                    "No leaderboard data found for programId: " + programId
+            );
+        }
+
+        return leaderboard;
     }
 }
