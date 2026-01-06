@@ -47,3 +47,11 @@ jobs:
       - name: Build and test
         run: mvn -U clean verify
         working-directory: questevent-backend
+
+      - name: Upload test coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-test-coverage
+          path: questevent-backend/target/site/jacoco
+
