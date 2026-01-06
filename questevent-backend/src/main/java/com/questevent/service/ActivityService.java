@@ -56,6 +56,9 @@ public class ActivityService {
         }
         activityRepository.delete(activity);
     }
+    public List<Activity> getCompulsoryActivitiesByProgramId(Long programId) {
+        return activityRepository.findByProgram_ProgramIdAndIsCompulsoryTrue(programId);
+    }
 
     private void mapDtoToEntity(ActivityRequestDTO dto, Activity activity) {
         activity.setActivityName(dto.getActivityName());

@@ -81,6 +81,19 @@ public class ActivityController {
         activityService.deleteActivity(programId, activityId);
         return ResponseEntity.noContent().build();
     }
+    @PreAuthorize("@rbac.canViewProgram(authentication, #programId)")
+    @GetMapping("/compulsory")
+    @Operation(summary = "Get compulsory activities for a program", description = "Retrieves all compulsory activities (isCompulsory=true) associated with a specific program")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved activities"),
+            @ApiResponse(responseCode = "404", description = "Program not found")
+    })
+    public ResponseEntity<List<ActivityResponseDTO>> getCompulsoryActivities(
+            @Parameter(description = "Program ID", required = true) @PathVariable Long programId) {
+        return ResponseEntity.ok(activityService.getCompulsoryActivitiesByProgramId(programId)
+                .stream().map(this::convertToResponseDTO).toList());
+    }
+
 
     private ActivityResponseDTO convertToResponseDTO(Activity activity) {
         ActivityResponseDTO response = new ActivityResponseDTO();
