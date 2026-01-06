@@ -72,11 +72,11 @@ public class JudgeController {
             @ApiResponse(responseCode = "404", description = "Submission or judge not found")
     })
     public ResponseEntity<String> reviewSubmission(
-            @PathVariable Long submissionId,
+            @PathVariable Long submissionId
 
-            @RequestParam Long judgeId
+//            @RequestParam Long judgeId //
     ) {
-        judgeService.reviewSubmission(submissionId, judgeId);
+        judgeService.reviewSubmission(submissionId);
         return ResponseEntity.ok("Submission reviewed successfully");
     }
 

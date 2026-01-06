@@ -17,4 +17,5 @@ public class ProgramRequestDTO {
     private Instant endDate;
     private Integer registrationFee;
     private ProgramStatus status;
+    private Long judgeUserId;
 }

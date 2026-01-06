@@ -5,6 +5,7 @@ import com.questevent.entity.Program;
 import com.questevent.entity.User;
 import com.questevent.enums.Department;
 import com.questevent.enums.ProgramStatus;
+import com.questevent.repository.JudgeRepository;
 import com.questevent.repository.ProgramRepository;
 import com.questevent.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +34,9 @@ class ProgramServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private JudgeRepository judgeRepository ;
+
+    @Mock
     private ProgramWalletService programWalletService;
 
     @InjectMocks
@@ -45,9 +49,15 @@ class ProgramServiceTest {
 
     @Test
     void createProgram_success() {
-        Long userId = 1L;
-        User user = new User();
-        user.setUserId(userId);
+
+        Long creatorUserId = 1L;
+        Long judgeUserId = 2L;
+
+        User creator = new User();
+        creator.setUserId(creatorUserId);
+
+        User judgeUser = new User();
+        judgeUser.setUserId(judgeUserId);
 
         ProgramRequestDTO dto = new ProgramRequestDTO();
         dto.setProgramTitle("Test Program");
@@ -55,6 +65,7 @@ class ProgramServiceTest {
         dto.setDepartment(Department.IT);
         dto.setRegistrationFee(100);
         dto.setStatus(ProgramStatus.ACTIVE);
+        dto.setJudgeUserId(judgeUserId);
 
         Program savedProgram = new Program();
         savedProgram.setProgramId(1L);
@@ -63,37 +74,47 @@ class ProgramServiceTest {
         savedProgram.setDepartment(Department.IT);
         savedProgram.setRegistrationFee(100);
         savedProgram.setStatus(ProgramStatus.ACTIVE);
-        savedProgram.setUser(user);
+        savedProgram.setUser(creator);
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findById(creatorUserId)).thenReturn(Optional.of(creator));
+        when(userRepository.findById(judgeUserId)).thenReturn(Optional.of(judgeUser));
+        when(judgeRepository.findByUserUserId(judgeUserId)).thenReturn(Optional.empty());
         when(programRepository.save(any(Program.class))).thenReturn(savedProgram);
 
-        Program result = programService.createProgram(userId, dto);
+        Program result = programService.createProgram(
+                creatorUserId,
+                judgeUserId,
+                dto
+        );
 
         assertNotNull(result);
         assertEquals("Test Program", result.getProgramTitle());
         assertEquals(Department.IT, result.getDepartment());
-        assertEquals(user, result.getUser());
+        assertEquals(creator, result.getUser());
+
         verify(programRepository, times(1)).save(any(Program.class));
     }
-
     @Test
     void createProgram_userNotFound() {
-        Long userId = 999L;
-        ProgramRequestDTO dto = new ProgramRequestDTO();
 
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+        Long creatorUserId = 999L;
+        Long judgeUserId = 2L;
+
+        ProgramRequestDTO dto = new ProgramRequestDTO();
+        dto.setJudgeUserId(judgeUserId);
+
+        when(userRepository.findById(creatorUserId)).thenReturn(Optional.empty());
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> programService.createProgram(userId, dto)
+                () -> programService.createProgram(creatorUserId, judgeUserId, dto)
         );
 
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
-        assertEquals("User not found", exception.getReason());
+        assertEquals("Creator not found", exception.getReason());
+
         verify(programRepository, never()).save(any());
     }
-
     @Test
     void updateProgram_success() {
         Long userId = 1L;

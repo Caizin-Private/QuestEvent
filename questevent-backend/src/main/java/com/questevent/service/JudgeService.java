@@ -8,5 +8,5 @@ public interface JudgeService {
 
     List<JudgeSubmissionDTO> getSubmissionsForActivity(Long activityId);
     List<JudgeSubmissionDTO> getPendingSubmissions();
-    void reviewSubmission(Long submissionId, Long judgeId );
+    void reviewSubmission(Long submissionId ); //
 }
