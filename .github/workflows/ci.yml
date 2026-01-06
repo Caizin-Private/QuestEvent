@@ -16,9 +16,7 @@ jobs:
       - name: Read Java version from pom.xml
         id: java_version
         run: |
-          JAVA_VERSION=$(xmllint --xpath \
-            "string(//*[local-name()='properties']/*[local-name()='java.version'])" \
-            questevent-backend/pom.xml)
+          JAVA_VERSION=$(grep -oPm1 "(?<=<java.version>)[^<]+" questevent-backend/pom.xml)
           echo "java=$JAVA_VERSION" >> $GITHUB_OUTPUT
 
       - name: Set up Java
