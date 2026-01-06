@@ -94,6 +94,8 @@ public class ProgramWalletService {
 
         ProgramWalletBalanceDTO dto = new ProgramWalletBalanceDTO();
         dto.setProgramWalletId(wallet.getProgramWalletId());
+        dto.setProgramId(wallet.getProgram().getProgramId());
+        dto.setUserId(wallet.getUser().getUserId());
         dto.setGems(wallet.getGems());
 
         return dto;
@@ -113,6 +115,7 @@ public class ProgramWalletService {
         return wallets.stream().map(wallet -> {
             ProgramWalletBalanceDTO dto = new ProgramWalletBalanceDTO();
             dto.setProgramWalletId(wallet.getProgramWalletId());
+            dto.setProgramId(wallet.getProgram().getProgramId());
             dto.setUserId(wallet.getUser().getUserId());
             dto.setGems(wallet.getGems());
             return dto;
@@ -152,6 +155,7 @@ public class ProgramWalletService {
 
         ProgramWalletBalanceDTO dto = new ProgramWalletBalanceDTO();
         dto.setProgramWalletId(wallet.getProgramWalletId());
+        dto.setUserId(wallet.getUser().getUserId());
         dto.setProgramId(programId);
         dto.setGems(wallet.getGems());
 

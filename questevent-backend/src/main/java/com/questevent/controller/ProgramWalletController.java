@@ -74,8 +74,7 @@ public class ProgramWalletController {
             summary = "Get my program wallet",
             description = "Returns the authenticated user's wallet for a program"
     )
-//    @PreAuthorize("@rbac.canAccessMyProgramWallet(authentication, #programId)")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@rbac.canAccessMyProgramWallet(authentication, #programId)")
     public ResponseEntity<ProgramWalletBalanceDTO> getMyProgramWallet(
             @PathVariable Long programId
     ) {
@@ -84,7 +83,7 @@ public class ProgramWalletController {
         );
     }
 
-//    @PreAuthorize("@rbac.canAccessProgramWallet(authentication, #programId)")
+//    @PreAuthorize("@rbac.canAccessProgramWalletsByProgram(authentication, #programId)")
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/program/{programId}")
     @Operation(
