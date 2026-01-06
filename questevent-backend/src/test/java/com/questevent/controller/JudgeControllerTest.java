@@ -26,7 +26,6 @@ class JudgeControllerTest {
     @InjectMocks
     private JudgeController judgeController;
 
-
     @Test
     void getPendingSubmissions_shouldReturnList() {
 
@@ -55,7 +54,6 @@ class JudgeControllerTest {
         assertEquals(ReviewStatus.PENDING, response.getBody().get(0).reviewStatus());
     }
 
-
     @Test
     void getSubmissionsForActivity_shouldReturnSubmissions() {
 
@@ -81,10 +79,10 @@ class JudgeControllerTest {
                 judgeController.getSubmissionsForActivity(activityId);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
         assertEquals(1, response.getBody().size());
         assertEquals(activityId, response.getBody().get(0).activityId());
     }
-
 
     @Test
     void getSubmissionsForActivity_shouldThrowException_whenActivityNotFound() {
@@ -102,34 +100,34 @@ class JudgeControllerTest {
         assertEquals("Activity not found", exception.getMessage());
     }
 
-
     @Test
     void reviewSubmission_shouldReturnSuccessMessage() {
 
         Long submissionId = 1L;
-        Long judgeId = 2L;
 
         doNothing().when(judgeService)
-                .reviewSubmission(submissionId, judgeId);
+                .reviewSubmission(submissionId);
 
         ResponseEntity<String> response =
-                judgeController.reviewSubmission(submissionId, judgeId);
+                judgeController.reviewSubmission(submissionId);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("Submission reviewed successfully", response.getBody());
-    }
 
+        verify(judgeService, times(1))
+                .reviewSubmission(submissionId);
+    }
 
     @Test
     void reviewSubmission_shouldThrowException_whenAlreadyReviewed() {
 
         doThrow(new RuntimeException("Submission already reviewed"))
                 .when(judgeService)
-                .reviewSubmission(1L, 1L);
+                .reviewSubmission(1L);
 
         RuntimeException exception = assertThrows(
                 RuntimeException.class,
-                () -> judgeController.reviewSubmission(1L, 1L)
+                () -> judgeController.reviewSubmission(1L)
         );
 
         assertEquals("Submission already reviewed", exception.getMessage());

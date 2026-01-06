@@ -6,7 +6,6 @@ import com.questevent.enums.CompletionStatus;
 import com.questevent.enums.ReviewStatus;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
-import com.questevent.repository.JudgeRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -30,14 +29,12 @@ class JudgeServiceImplTest {
     private ActivityRegistrationRepository registrationRepository;
 
     @Mock
-    private JudgeRepository judgeRepository;
-
-    @Mock
     private ProgramWalletTransactionService programWalletTransactionService;
 
     @InjectMocks
     private JudgeServiceImpl judgeService;
 
+    // ---------------- READ APIs ----------------
 
     @Test
     void getSubmissionsForActivity_shouldReturnMappedDtos() {
@@ -68,20 +65,16 @@ class JudgeServiceImplTest {
         assertEquals(ReviewStatus.PENDING, result.get(0).reviewStatus());
     }
 
+    // ---------------- REVIEW API ----------------
 
     @Test
     void reviewSubmission_shouldApproveSubmissionAndCreditWallet() {
         ActivitySubmission submission = mockSubmission();
-        Judge judge = new Judge();
-        judge.setJudgeId(1L);
 
         when(submissionRepository.findById(10L))
                 .thenReturn(Optional.of(submission));
 
-        when(judgeRepository.findById(1L))
-                .thenReturn(Optional.of(judge));
-
-        judgeService.reviewSubmission(10L, 1L);
+        judgeService.reviewSubmission(10L);
 
         assertEquals(ReviewStatus.APPROVED, submission.getReviewStatus());
         assertEquals(CompletionStatus.COMPLETED,
@@ -94,14 +87,13 @@ class JudgeServiceImplTest {
         );
     }
 
-
     @Test
     void reviewSubmission_shouldThrowIfSubmissionNotFound() {
         when(submissionRepository.findById(99L))
                 .thenReturn(Optional.empty());
 
         RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> judgeService.reviewSubmission(99L, 1L));
+                () -> judgeService.reviewSubmission(99L));
 
         assertEquals("Submission not found", ex.getMessage());
     }
@@ -115,25 +107,26 @@ class JudgeServiceImplTest {
                 .thenReturn(Optional.of(submission));
 
         RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> judgeService.reviewSubmission(10L, 1L));
+                () -> judgeService.reviewSubmission(10L));
 
         assertEquals("Submission already reviewed", ex.getMessage());
     }
 
     @Test
-    void reviewSubmission_shouldThrowIfJudgeNotFound() {
+    void reviewSubmission_shouldThrowIfJudgeNotAssigned() {
         ActivitySubmission submission = mockSubmission();
+        submission.getActivityRegistration()
+                .getActivity()
+                .getProgram()
+                .setJudge(null);
 
         when(submissionRepository.findById(10L))
                 .thenReturn(Optional.of(submission));
 
-        when(judgeRepository.findById(1L))
-                .thenReturn(Optional.empty());
-
         RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> judgeService.reviewSubmission(10L, 1L));
+                () -> judgeService.reviewSubmission(10L));
 
-        assertEquals("Judge not found", ex.getMessage());
+        assertEquals("Judge not assigned to this program", ex.getMessage());
     }
 
     @Test
@@ -146,23 +139,25 @@ class JudgeServiceImplTest {
         when(submissionRepository.findById(10L))
                 .thenReturn(Optional.of(submission));
 
-        when(judgeRepository.findById(1L))
-                .thenReturn(Optional.of(new Judge()));
-
         RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> judgeService.reviewSubmission(10L, 1L));
+                () -> judgeService.reviewSubmission(10L));
 
         assertEquals("Invalid reward configuration", ex.getMessage());
     }
 
+    // ---------------- MOCK GRAPH ----------------
 
     private ActivitySubmission mockSubmission() {
         User user = new User();
         user.setUserId(5L);
         user.setName("User A");
 
+        Judge judge = new Judge();
+        judge.setJudgeId(1L);
+
         Program program = new Program();
         program.setProgramId(3L);
+        program.setJudge(judge); // 🔑 CRITICAL
 
         Activity activity = new Activity();
         activity.setActivityId(1L);
