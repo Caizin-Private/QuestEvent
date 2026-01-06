@@ -21,25 +21,40 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String secret;
 
-    @Value("${jwt.expiration}")
-    private Long expiration;
+    @Value("${jwt.access-expiration}")
+    private Long accessExpiration;
+
+    @Value("${jwt.refresh-expiration}")
+    private Long refreshExpiration;
 
     private SecretKey getSigningKey() {
-        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
-        return Keys.hmacShaKeyFor(keyBytes);
+        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(UserPrincipal userPrincipal) {
+    public String generateAccessToken(UserPrincipal userPrincipal) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userPrincipal.userId());
         claims.put("email", userPrincipal.email());
         claims.put("role", userPrincipal.role().name());
-        return createToken(claims, userPrincipal.email());
+        claims.put("tokenType", "ACCESS");
+
+        return createToken(claims, userPrincipal.email(), accessExpiration);
     }
 
-    private String createToken(Map<String, Object> claims, String subject) {
+    public String generateRefreshToken(UserPrincipal userPrincipal) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("tokenType", "REFRESH");
+
+        return createToken(claims, userPrincipal.email(), refreshExpiration);
+    }
+
+    private String createToken(
+            Map<String, Object> claims,
+            String subject,
+            Long expirationMillis
+    ) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + expiration);
+        Date expiryDate = new Date(now.getTime() + expirationMillis);
 
         return Jwts.builder()
                 .claims(claims)
@@ -48,6 +63,24 @@ public class JwtService {
                 .expiration(expiryDate)
                 .signWith(getSigningKey())
                 .compact();
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            return extractExpiration(token).after(new Date());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean isRefreshToken(String token) {
+        Claims claims = extractAllClaims(token);
+        return "REFRESH".equals(claims.get("tokenType", String.class));
+    }
+
+    public boolean isAccessToken(String token) {
+        Claims claims = extractAllClaims(token);
+        return "ACCESS".equals(claims.get("tokenType", String.class));
     }
 
     public String extractUsername(String token) {
@@ -71,31 +104,19 @@ public class JwtService {
                 .getPayload();
     }
 
-    private Boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
-    }
-
-    public Boolean validateToken(String token, String username) {
-        final String extractedUsername = extractUsername(token);
-        return (extractedUsername.equals(username) && !isTokenExpired(token));
-    }
-
     public UserPrincipal extractUserPrincipal(String token) {
         Claims claims = extractAllClaims(token);
+
         Long userId = claims.get("userId", Long.class);
         String email = claims.get("email", String.class);
         String roleStr = claims.get("role", String.class);
+
+        if (userId == null || email == null || roleStr == null) {
+            throw new RuntimeException("Invalid ACCESS token: missing required claims");
+        }
+
         Role role = Role.valueOf(roleStr);
 
         return new UserPrincipal(userId, email, role);
     }
-
-    public Boolean validateToken(String token) {
-        try {
-            return !isTokenExpired(token);
-        } catch (Exception e) {
-            return false;
-        }
-    }
 }
-

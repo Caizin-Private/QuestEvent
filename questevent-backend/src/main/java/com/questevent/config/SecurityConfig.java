@@ -26,37 +26,32 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
+
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers( "/", "/access-denied", "/oauth2/**", "/login/**", "/login", "/logout-success",
-                                "/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**",
-                                "/api/auth").permitAll()
+                        .requestMatchers(
+                                "/", "/login", "/logout-success",
+                                "/oauth2/**",
+                                "/swagger-ui/**", "/v3/api-docs/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
+
                 .oauth2Login(oauth -> oauth
-                        .successHandler(successHandler) // <-- main logic executed here
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/profile", true)
+                        .successHandler(successHandler) // session + DB logic
                 )
-                .addFilterAfter(jwtAuthFilter,
-                        OAuth2LoginAuthenticationFilter.class
-                )
-                .headers(headers -> headers
-                        .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'"))
-                        .frameOptions(frame -> frame.deny())
-                        .httpStrictTransportSecurity(hsts -> hsts
-                                .maxAgeInSeconds(31536000)
-                        )
-                )
-                .sessionManagement(session -> session
-                        .maximumSessions(1)
-                        .maxSessionsPreventsLogin(false)
-                )
+
+                .addFilterAfter(jwtAuthFilter, OAuth2LoginAuthenticationFilter.class)
+
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/logout-success")
                         .invalidateHttpSession(true)
                         .clearAuthentication(true)
                         .deleteCookies("JSESSIONID")
-                        .permitAll()
                 );
+
         return http.build();
     }
 }
