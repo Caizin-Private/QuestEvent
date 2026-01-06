@@ -2,11 +2,9 @@ name: Backend CI
 
 on:
   push:
-    branches:
-      - master
+    branches: [ master ]
   pull_request:
-    branches:
-      - master
+    branches: [ master ]
 
 jobs:
   build:
@@ -15,10 +13,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Read Java version from pom.xml
+        id: java_version
+        run: |
+          JAVA_VERSION=$(mvn -q \
+            -Dexec.executable=echo \
+            -Dexec.args='${java.version}' \
+            --non-recursive \
+            org.codehaus.mojo:exec-maven-plugin:3.1.0:exec)
+          echo "java=$JAVA_VERSION"
+          echo "java=$JAVA_VERSION" >> $GITHUB_OUTPUT
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
+          java-version: ${{ steps.java_version.outputs.java }}
           distribution: 'temurin'
           cache: maven
 
