@@ -39,7 +39,6 @@ class JudgeServiceImplTest {
     private JudgeServiceImpl judgeService;
 
 
-
     @Test
     void getSubmissionsForActivity_shouldReturnMappedDtos() {
         ActivitySubmission submission = mockSubmission();
@@ -70,7 +69,6 @@ class JudgeServiceImplTest {
     }
 
 
-
     @Test
     void reviewSubmission_shouldApproveSubmissionAndCreditWallet() {
         ActivitySubmission submission = mockSubmission();
@@ -95,7 +93,6 @@ class JudgeServiceImplTest {
                 50
         );
     }
-
 
 
     @Test
@@ -157,7 +154,6 @@ class JudgeServiceImplTest {
 
         assertEquals("Invalid reward configuration", ex.getMessage());
     }
-
 
 
     private ActivitySubmission mockSubmission() {

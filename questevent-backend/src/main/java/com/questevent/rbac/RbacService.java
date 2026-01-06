@@ -16,6 +16,8 @@ import com.questevent.repository.ProgramWalletRepository;
 import com.questevent.repository.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
@@ -56,6 +58,23 @@ public class RbacService {
         }
 
         Object principal = authentication.getPrincipal();
+
+        if (authentication instanceof JwtAuthenticationToken jwtAuth) {
+
+            Jwt jwt = jwtAuth.getToken();
+
+            String email = jwt.getClaimAsString("email");
+            if (email == null) {
+                email = jwt.getClaimAsString("preferred_username");
+            }
+            if (email == null) {
+                email = jwt.getClaimAsString("upn");
+            }
+
+            if (email == null) return null;
+
+            return userRepository.findByEmail(email).orElse(null);
+        }
 
         // After JwtAuthFilter
         if (principal instanceof UserPrincipal p) {

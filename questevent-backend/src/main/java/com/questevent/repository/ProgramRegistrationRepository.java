@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 public interface ProgramRegistrationRepository extends JpaRepository<ProgramRegistration, Long> {
 
@@ -14,7 +15,7 @@ public interface ProgramRegistrationRepository extends JpaRepository<ProgramRegi
 
     List<ProgramRegistration> findByUserUserId(Long userId);
 
+    Optional<ProgramRegistration> findByProgramProgramIdAndUserUserId(Long programId, Long userId);
+
     long countByProgramProgramId(Long programId);
 }
-
-
