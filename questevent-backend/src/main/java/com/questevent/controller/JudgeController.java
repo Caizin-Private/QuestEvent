@@ -74,7 +74,7 @@ public class JudgeController {
     public ResponseEntity<String> reviewSubmission(
             @PathVariable Long submissionId
 
-//            @RequestParam Long judgeId
+//            @RequestParam Long judgeId //
     ) {
         judgeService.reviewSubmission(submissionId);
         return ResponseEntity.ok("Submission reviewed successfully");
