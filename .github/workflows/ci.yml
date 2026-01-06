@@ -16,19 +16,16 @@ jobs:
       - name: Read Java version from pom.xml
         id: java_version
         run: |
-          JAVA_VERSION=$(mvn -q \
-            -Dexec.executable=echo \
-            -Dexec.args='${java.version}' \
-            --non-recursive \
-            org.codehaus.mojo:exec-maven-plugin:3.1.0:exec)
-          echo "java=$JAVA_VERSION"
+          JAVA_VERSION=$(xmllint --xpath \
+            "string(//*[local-name()='properties']/*[local-name()='java.version'])" \
+            questevent-backend/pom.xml)
           echo "java=$JAVA_VERSION" >> $GITHUB_OUTPUT
 
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           java-version: ${{ steps.java_version.outputs.java }}
-          distribution: 'temurin'
+          distribution: temurin
           cache: maven
 
       - name: Configure Maven Central
