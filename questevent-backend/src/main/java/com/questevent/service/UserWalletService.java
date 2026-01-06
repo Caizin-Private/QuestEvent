@@ -17,7 +17,8 @@ public class UserWalletService {
     private final UserWalletRepository userWalletRepository;
     private final UserRepository userRepository;
 
-    public UserWalletService(UserWalletRepository userWalletRepository, UserRepository userRepository) {
+    public UserWalletService(UserWalletRepository userWalletRepository,
+                             UserRepository userRepository) {
         this.userWalletRepository = userWalletRepository;
         this.userRepository = userRepository;
     }
@@ -25,9 +26,15 @@ public class UserWalletService {
     @Transactional
     public void createWalletForUser(User user) {
 
+        if (user == null || user.getUserId() == null) {
+            throw new IllegalArgumentException("Invalid user");
+        }
+
         userWalletRepository.findByUserUserId(user.getUserId())
                 .ifPresent(w -> {
-                    throw new RuntimeException("Wallet already exists for user");
+                    throw new IllegalStateException(
+                            "Wallet already exists for user"
+                    );
                 });
 
         UserWallet userWallet = new UserWallet();
@@ -38,12 +45,25 @@ public class UserWalletService {
     }
 
     public UserWalletBalanceDTO getWalletBalance(Long userId) {
+
+        if (userId == null || userId <= 0) {
+            throw new IllegalArgumentException("Invalid userId");
+        }
+
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "User not found"));
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                NOT_FOUND,
+                                "User not found"
+                        )
+                );
 
         UserWallet wallet = user.getWallet();
         if (wallet == null) {
-            throw new ResponseStatusException(NOT_FOUND, "Wallet not found");
+            throw new ResponseStatusException(
+                    NOT_FOUND,
+                    "Wallet not found"
+            );
         }
 
         UserWalletBalanceDTO dto = new UserWalletBalanceDTO();
@@ -53,4 +73,3 @@ public class UserWalletService {
         return dto;
     }
 }
-
