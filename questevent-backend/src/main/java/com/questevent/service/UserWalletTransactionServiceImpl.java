@@ -6,7 +6,6 @@ import com.questevent.repository.UserWalletRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 @Service
 public class UserWalletTransactionServiceImpl implements UserWalletTransactionService {
 
@@ -31,9 +30,7 @@ public class UserWalletTransactionServiceImpl implements UserWalletTransactionSe
         UserWallet wallet = userWalletRepository
                 .findByUserUserId(user.getUserId())
                 .orElseThrow(() ->
-                        new IllegalStateException(
-                                "Wallet not found for user " + user.getUserId()
-                        )
+                        new IllegalStateException("Wallet not found")
                 );
 
         wallet.setGems(wallet.getGems() + amount);
