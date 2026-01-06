@@ -42,33 +42,27 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Get JAR file
+      - name: Read JAR filename
         id: jar
         run: |
           JAR_FILE=$(ls target/*.jar | head -n 1)
           echo "file=$(basename $JAR_FILE)" >> $GITHUB_OUTPUT
         working-directory: questevent-backend
 
-      - name: Upload JAR to S3 (Beanstalk version bundle)
+      - name: Upload JAR to S3 (Beanstalk bundle)
         run: |
           aws s3 cp target/${{ steps.jar.outputs.file }} s3://questevent-versions/${{ steps.jar.outputs.file }}
         working-directory: questevent-backend
-        env:
-          EB_APP: ${{ secrets.EB_APP_NAME }}
-          EB_ENV: ${{ secrets.EB_ENV_NAME }}
 
-      - name: Create Beanstalk App Version & Deploy
+      - name: Deploy to Beanstalk
         run: |
           VERSION_LABEL="gh-${{ github.run_id }}"
 
           aws elasticbeanstalk create-application-version \
-            --application-name "$EB_APP_NAME" \
+            --application-name "${{ secrets.EB_APP_NAME }}" \
             --version-label "$VERSION_LABEL" \
             --source-bundle S3Bucket="questevent-versions",S3Key="${{ steps.jar.outputs.file }}" || true
 
           aws elasticbeanstalk update-environment \
-            --environment-name "$EB_ENV_NAME" \
+            --environment-name "${{ secrets.EB_ENV_NAME }}" \
             --version-label "$VERSION_LABEL"
-        env:
-          EB_APP_NAME: ${{ secrets.EB_APP_NAME }}
-          EB_ENV_NAME: ${{ secrets.EB_ENV_NAME }}
