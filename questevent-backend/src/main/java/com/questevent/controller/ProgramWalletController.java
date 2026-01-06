@@ -69,21 +69,18 @@ public class ProgramWalletController {
         return ResponseEntity.ok(programWalletService.getWalletBalanceByWalletId(programWalletId));
     }
 
-    @GetMapping("/user/{userId}")
+    @GetMapping("/program/{programId}/me")
     @Operation(
-            summary = "Get all program wallets by user ID",
-            description = "Returns all program wallet balances for a user"
+            summary = "Get my program wallet",
+            description = "Returns the authenticated user's wallet for a program"
     )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Wallets retrieved successfully"),
-            @ApiResponse(responseCode = "404", description = "No wallets found for the user")
-    })
-    public ResponseEntity<List<ProgramWalletBalanceDTO>> getProgramWalletsByUserId(
-            @Parameter(description = "User ID", required = true)
-            @PathVariable Long userId
+//    @PreAuthorize("@rbac.canAccessMyProgramWallet(authentication, #programId)")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ProgramWalletBalanceDTO> getMyProgramWallet(
+            @PathVariable Long programId
     ) {
         return ResponseEntity.ok(
-                programWalletService.getProgramWalletsByUserId(userId)
+                programWalletService.getMyProgramWallet(programId)
         );
     }
 

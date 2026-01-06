@@ -1,6 +1,7 @@
 package com.questevent.service;
 
 import com.questevent.dto.ProgramWalletBalanceDTO;
+import com.questevent.dto.UserPrincipal;
 import com.questevent.entity.Program;
 import com.questevent.entity.ProgramWallet;
 import com.questevent.entity.User;
@@ -9,6 +10,9 @@ import com.questevent.enums.ProgramStatus;
 import com.questevent.repository.ProgramRepository;
 import com.questevent.repository.ProgramWalletRepository;
 import com.questevent.repository.UserRepository;
+import org.jspecify.annotations.Nullable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -113,6 +117,45 @@ public class ProgramWalletService {
             dto.setGems(wallet.getGems());
             return dto;
         }).toList();
+    }
+
+
+    public ProgramWalletBalanceDTO getMyProgramWallet(Long programId) {
+
+        @Nullable Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        User user = null;
+
+        // Reuse RBAC logic style
+        if (authentication != null && authentication.isAuthenticated()) {
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof UserPrincipal p) {
+                user = userRepository.findById(p.userId()).orElse(null);
+            }
+        }
+
+        if (user == null) {
+            throw new ResponseStatusException(NOT_FOUND, "User not found");
+        }
+
+        ProgramWallet wallet =
+                programWalletRepository
+                        .findByUserUserIdAndProgramProgramId(
+                                user.getUserId(),
+                                programId
+                        )
+                        .orElseThrow(() -> new ResponseStatusException(
+                                NOT_FOUND,
+                                "Program wallet not found"
+                        ));
+
+        ProgramWalletBalanceDTO dto = new ProgramWalletBalanceDTO();
+        dto.setProgramWalletId(wallet.getProgramWalletId());
+        dto.setProgramId(programId);
+        dto.setGems(wallet.getGems());
+
+        return dto;
     }
 
 
