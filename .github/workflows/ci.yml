@@ -22,6 +22,24 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Configure Maven Central
+        run: |
+          mkdir -p ~/.m2
+          cat > ~/.m2/settings.xml <<EOF
+          <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                    xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                                        http://maven.apache.org/xsd/settings-1.0.0.xsd">
+            <mirrors>
+              <mirror>
+                <id>central</id>
+                <mirrorOf>central</mirrorOf>
+                <url>https://repo.maven.apache.org/maven2</url>
+              </mirror>
+            </mirrors>
+          </settings>
+          EOF
+
       - name: Build and test
-        run: mvn clean verify
+        run: mvn -U clean verify
         working-directory: questevent-backend
