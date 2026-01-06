@@ -60,10 +60,6 @@ public interface LeaderboardRepository extends JpaRepository<ProgramWallet, Long
         List<LeaderboardDTO> getGlobalLeaderboard();
 
 
-
-
-
-
     //program leaderboard
     @Query("""
     SELECT new com.questevent.dto.LeaderboardDTO(
