@@ -17,51 +17,35 @@ jobs:
           java-version: 21
           cache: maven
 
-      - name: Build JAR and run tests
+      - name: Build JAR
         run: mvn -U clean verify package
         working-directory: questevent-backend
 
-      - name: Upload JaCoCo coverage artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: jacoco-test-coverage
-          path: questevent-backend/target/site/jacoco
-
-  deploy_beanstalk:
-    name: Deploy JAR to Elastic Beanstalk
+  deploy:
+    name: Deploy to Elastic Beanstalk
     needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure AWS Credentials
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Read JAR filename
-        id: jar
+      - name: Deploy JAR to Beanstalk
         run: |
-          JAR_FILE=$(ls target/*.jar | head -n 1)
-          echo "file=$(basename $JAR_FILE)" >> $GITHUB_OUTPUT
-        working-directory: questevent-backend
-
-      - name: Upload JAR to S3 (Beanstalk bundle)
-        run: |
-          aws s3 cp target/${{ steps.jar.outputs.file }} s3://questevent-versions/${{ steps.jar.outputs.file }}
-        working-directory: questevent-backend
-
-      - name: Deploy to Beanstalk
-        run: |
+          JAR_FILE=$(ls questevent-backend/target/*.jar | head -n 1)
           VERSION_LABEL="gh-${{ github.run_id }}"
+
+          aws s3 cp "$JAR_FILE" "s3://questevent-versions/$(basename $JAR_FILE)"
 
           aws elasticbeanstalk create-application-version \
             --application-name "${{ secrets.EB_APP_NAME }}" \
             --version-label "$VERSION_LABEL" \
-            --source-bundle S3Bucket="questevent-versions",S3Key="${{ steps.jar.outputs.file }}" || true
+            --source-bundle S3Bucket="questevent-versions",S3Key="$(basename $JAR_FILE)" || true
 
           aws elasticbeanstalk update-environment \
             --environment-name "${{ secrets.EB_ENV_NAME }}" \
