@@ -23,7 +23,7 @@ public class JudgeServiceImpl implements JudgeService {
     private final ActivityRegistrationRepository registrationRepository;
     private final JudgeRepository judgeRepository;
     private final ProgramWalletTransactionService programWalletTransactionService;
-
+    //
     @Override
     @Transactional(readOnly = true)
     public List<JudgeSubmissionDTO> getSubmissionsForActivity(Long activityId) {
