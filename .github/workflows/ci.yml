@@ -2,11 +2,9 @@ name: Backend CI
 
 on:
   push:
-    branches:
-      - master
+    branches: [ master ]
   pull_request:
-    branches:
-      - master
+    branches: [ master ]
 
 jobs:
   build:
@@ -15,31 +13,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Read Java version from pom.xml
+        id: java_version
+        run: |
+          JAVA_VERSION=$(grep -oPm1 "(?<=<java.version>)[^<]+" questevent-backend/pom.xml || true)
+          if [ -z "$JAVA_VERSION" ]; then
+            exit 1
+          fi
+          echo "java=$JAVA_VERSION" >> $GITHUB_OUTPUT
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          java-version: ${{ steps.java_version.outputs.java }}
+          distribution: temurin
           cache: maven
 
-      - name: Configure Maven Central
-        run: |
-          mkdir -p ~/.m2
-          cat > ~/.m2/settings.xml <<EOF
-          <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
-                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                    xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
-                                        http://maven.apache.org/xsd/settings-1.0.0.xsd">
-            <mirrors>
-              <mirror>
-                <id>central</id>
-                <mirrorOf>central</mirrorOf>
-                <url>https://repo.maven.apache.org/maven2</url>
-              </mirror>
-            </mirrors>
-          </settings>
-          EOF
+      - name: Clear Maven cache
+        run: rm -rf ~/.m2/repository
 
       - name: Build and test
         run: mvn -U clean verify
         working-directory: questevent-backend
+
+      - name: Upload test coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-test-coverage
+          path: questevent-backend/target/site/jacoco

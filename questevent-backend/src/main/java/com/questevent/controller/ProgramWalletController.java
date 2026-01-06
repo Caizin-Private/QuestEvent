@@ -83,8 +83,7 @@ public class ProgramWalletController {
         );
     }
 
-//    @PreAuthorize("@rbac.canAccessProgramWalletsByProgram(authentication, #programId)")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@rbac.canAccessProgramWalletsByProgram(authentication, #programId)")
     @GetMapping("/program/{programId}")
     @Operation(
             summary = "Get all program wallets by program ID",

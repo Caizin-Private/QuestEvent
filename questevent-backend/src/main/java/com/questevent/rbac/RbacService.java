@@ -264,15 +264,13 @@ public class RbacService {
             Long programId
     ) {
         User user = currentUser(authentication);
-        if (user == null) return false;
+        if (user == null) {
+            return false;
+        }
 
         // OWNER can access all programs
         if (user.getRole() == Role.OWNER) {
             return true;
-        }
-
-        if (user.getRole() != Role.HOST) {
-            return false;
         }
 
         Program program = programRepository.findById(programId).orElse(null);
@@ -280,53 +278,9 @@ public class RbacService {
             return false;
         }
 
-        // HOST must own the program
+        // Check if user is the host/owner of this specific program (regardless of global role)
         return program.getUser().getUserId().equals(user.getUserId());
     }
-
-    public boolean canAccessProgramWalletByUser(
-            Authentication authentication,
-            Long programId,
-            Long userId
-    ) {
-        User user = currentUser(authentication);
-        if (user == null) return false;
-
-        // OWNER can access anything
-        if (user.getRole() == Role.OWNER) {
-            return true;
-        }
-
-        // USER can access only their own wallet
-        if (user.getRole() == Role.USER) {
-            if (!user.getUserId().equals(userId)) {
-                return false;
-            }
-            return programWalletRepository
-                    .findByUserUserIdAndProgramProgramId(userId, programId)
-                    .isPresent();
-        }
-
-        // HOST can access wallets of users in their program
-        if (user.getRole() == Role.HOST) {
-
-            Program program = programRepository.findById(programId).orElse(null);
-            if (program == null || program.getUser() == null) {
-                return false;
-            }
-
-            if (!program.getUser().getUserId().equals(user.getUserId())) {
-                return false;
-            }
-
-            return programWalletRepository
-                    .findByUserUserIdAndProgramProgramId(userId, programId)
-                    .isPresent();
-        }
-
-        return false;
-    }
-
 
     public boolean canRegisterForProgram(
             Authentication authentication,
