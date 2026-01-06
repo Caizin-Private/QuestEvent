@@ -10,31 +10,88 @@ import java.util.List;
 
 public interface LeaderboardRepository extends JpaRepository<ProgramWallet, Long> {
 
-    // 🔹 Global: user + wallet + program count
+    //global leaderboard
     @Query("""
     SELECT new com.questevent.dto.LeaderboardDTO(
         u.userId,
         u.name,
-        COUNT(DISTINCT pr.program.programId),
+    
+        /* Total completed activities */
+        COUNT(DISTINCT CASE
+            WHEN ar.completionStatus = com.questevent.enums.CompletionStatus.COMPLETED
+            THEN ar.activity.activityId
+        END),
+    
+        /* Total gems */
         uw.gems,
-        (0.7 * uw.gems + 0.3 * COUNT(DISTINCT pr.program.programId))
+    
+        /* GLOBAL SCORE */
+        (
+            0.5 * (
+                (COUNT(DISTINCT CASE
+                    WHEN ar.completionStatus = com.questevent.enums.CompletionStatus.COMPLETED
+                    THEN ar.activity.activityId
+                END) * 1.0)
+                /
+                COUNT(DISTINCT ar.activity.activityId)
+                * 100
+            )
+            + 0.3 * COUNT(DISTINCT CASE
+                WHEN ar.completionStatus = com.questevent.enums.CompletionStatus.COMPLETED
+                THEN ar.activity.activityId
+            END)
+            + 0.2 * uw.gems
+        )
     )
     FROM User u
     JOIN u.wallet uw
-    LEFT JOIN u.programRegistrations pr
+    LEFT JOIN ActivityRegistration ar
+        ON ar.user.userId = u.userId
     GROUP BY u.userId, u.name, uw.gems
-    ORDER BY (0.7 * uw.gems + 0.3 * COUNT(DISTINCT pr.program.programId)) DESC
-""")
-    List<LeaderboardDTO> getGlobalLeaderboard();
+    ORDER BY
+    (
+        0.5 * (
+            (COUNT(DISTINCT CASE
+                WHEN ar.completionStatus = com.questevent.enums.CompletionStatus.COMPLETED
+                THEN ar.activity.activityId
+            END) * 1.0)
+            /
+            COUNT(DISTINCT ar.activity.activityId)
+            * 100
+        )
+        + 0.3 * COUNT(DISTINCT CASE
+            WHEN ar.completionStatus = com.questevent.enums.CompletionStatus.COMPLETED
+            THEN ar.activity.activityId
+        END)
+        + 0.2 * uw.gems
+    ) DESC
+    """)
+        List<LeaderboardDTO> getGlobalLeaderboard();
 
-    // 🔹 Program leaderboard
+
+    //program leaderboard
     @Query("""
     SELECT new com.questevent.dto.LeaderboardDTO(
         pw.user.userId,
         pw.user.name,
-        COUNT(DISTINCT ar.activityRegistrationId),
+
+        /* Completed activities in this program */
+        COUNT(DISTINCT CASE
+            WHEN ar.completionStatus = com.questevent.enums.CompletionStatus.COMPLETED
+            THEN ar.activity.activityId
+        END),
+
+        /* Program-specific gems */
         pw.gems,
-        (0.7 * pw.gems + 0.3 * COUNT(DISTINCT ar.activityRegistrationId))
+
+        /* PROGRAM SCORE (50–50) */
+        (
+            0.5 * COUNT(DISTINCT CASE
+                WHEN ar.completionStatus = com.questevent.enums.CompletionStatus.COMPLETED
+                THEN ar.activity.activityId
+            END)
+            + 0.5 * pw.gems
+        )
     )
     FROM ProgramWallet pw
     LEFT JOIN ActivityRegistration ar
@@ -42,8 +99,17 @@ public interface LeaderboardRepository extends JpaRepository<ProgramWallet, Long
         AND ar.activity.program.programId = :programId
     WHERE pw.program.programId = :programId
     GROUP BY pw.user.userId, pw.user.name, pw.gems
-    ORDER BY (0.7 * pw.gems + 0.3 * COUNT(DISTINCT ar.activityRegistrationId)) DESC
+    ORDER BY
+    (
+        0.5 * COUNT(DISTINCT CASE
+            WHEN ar.completionStatus = com.questevent.enums.CompletionStatus.COMPLETED
+            THEN ar.activity.activityId
+        END)
+        + 0.5 * pw.gems
+    ) DESC
     """)
         List<LeaderboardDTO> getProgramLeaderboard(Long programId);
-
 }
+
+
+
