@@ -59,13 +59,51 @@ public class ProgramWalletController {
 
     @PreAuthorize("@rbac.canAccessProgramWallet(authentication, #programWalletId)")
     @GetMapping("/{programWalletId}")
-    @Operation(summary = "Get program wallet balance", description = "Retrieves the balance of a specific program wallet")
+    @Operation(summary = "Get program wallet balance", description = "Retrieves the balance of a specific program wallet by wallet ID")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Wallet found"),
             @ApiResponse(responseCode = "404", description = "Wallet not found")
     })
-    public ResponseEntity<ProgramWalletBalanceDTO> getProgramWalletBalance(
+    public ResponseEntity<ProgramWalletBalanceDTO> getProgramWalletBalanceByProgramWalletId(
             @Parameter(description = "Program Wallet ID (UUID)", required = true) @PathVariable UUID programWalletId) {
         return ResponseEntity.ok(programWalletService.getWalletBalanceByWalletId(programWalletId));
+    }
+
+    @GetMapping("/user/{userId}")
+    @Operation(
+            summary = "Get all program wallets by user ID",
+            description = "Returns all program wallet balances for a user"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Wallets retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "No wallets found for the user")
+    })
+    public ResponseEntity<List<ProgramWalletBalanceDTO>> getProgramWalletsByUserId(
+            @Parameter(description = "User ID", required = true)
+            @PathVariable Long userId
+    ) {
+        return ResponseEntity.ok(
+                programWalletService.getProgramWalletsByUserId(userId)
+        );
+    }
+
+//    @PreAuthorize("@rbac.canAccessProgramWallet(authentication, #programId)")
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/program/{programId}")
+    @Operation(
+            summary = "Get all program wallets by program ID",
+            description = "Returns wallet balances of all users registered in a program"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Wallets retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "No wallets found for the program")
+    })
+    public ResponseEntity<List<ProgramWalletBalanceDTO>> getProgramWalletsByProgramId(
+            @Parameter(description = "Program ID", required = true)
+            @PathVariable Long programId
+    ) {
+        return ResponseEntity.ok(
+                programWalletService.getProgramWalletsByProgramId(programId)
+        );
     }
 }

@@ -95,4 +95,25 @@ public class ProgramWalletService {
         return dto;
     }
 
+    public List<ProgramWalletBalanceDTO> getProgramWalletsByProgramId(Long programId) {
+
+        List<ProgramWallet> wallets =
+                programWalletRepository.findByProgramProgramId(programId);
+
+        if (wallets.isEmpty()) {
+            throw new ResponseStatusException(
+                    NOT_FOUND, "No wallets found for this program"
+            );
+        }
+
+        return wallets.stream().map(wallet -> {
+            ProgramWalletBalanceDTO dto = new ProgramWalletBalanceDTO();
+            dto.setProgramWalletId(wallet.getProgramWalletId());
+            dto.setUserId(wallet.getUser().getUserId());
+            dto.setGems(wallet.getGems());
+            return dto;
+        }).toList();
+    }
+
+
 }
