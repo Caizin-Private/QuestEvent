@@ -33,7 +33,7 @@ public class UserWalletService {
         userWalletRepository.findByUserUserId(user.getUserId())
                 .ifPresent(w -> {
                     throw new IllegalStateException(
-                            "Wallet already exists for user " + user.getUserId()
+                            "Wallet already exists for user"
                     );
                 });
 
@@ -52,13 +52,17 @@ public class UserWalletService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() ->
-                        new IllegalStateException("User not found with id " + userId)
+                        new ResponseStatusException(
+                                NOT_FOUND,
+                                "User not found"
+                        )
                 );
 
         UserWallet wallet = user.getWallet();
         if (wallet == null) {
-            throw new IllegalStateException(
-                    "Wallet not found for user " + userId
+            throw new ResponseStatusException(
+                    NOT_FOUND,
+                    "Wallet not found"
             );
         }
 
@@ -69,5 +73,3 @@ public class UserWalletService {
         return dto;
     }
 }
-
-
