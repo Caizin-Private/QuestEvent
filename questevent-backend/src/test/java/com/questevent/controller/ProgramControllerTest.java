@@ -102,7 +102,6 @@ class ProgramControllerTest {
         requestDTO.setJudgeUserId(2L);
         requestDTO.setProgramTitle("Test Program");
         requestDTO.setDepartment(Department.IT);
-        requestDTO.setRegistrationFee(100);
         requestDTO.setStatus(ProgramStatus.ACTIVE);
 
         User host = new User();
@@ -112,7 +111,6 @@ class ProgramControllerTest {
         program.setProgramId(1L);
         program.setProgramTitle("Test Program");
         program.setDepartment(Department.IT);
-        program.setRegistrationFee(100);
         program.setStatus(ProgramStatus.ACTIVE);
         program.setUser(host);
 
