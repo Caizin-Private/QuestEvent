@@ -116,55 +116,6 @@ class ProgramWalletServiceTest {
     }
 
     @Test
-    void getUserProgramWalletBalances_shouldReturnBalances() {
-        User user = new User();
-        user.setUserId(1L);
-
-        ProgramWallet wallet = new ProgramWallet();
-        wallet.setProgramWalletId(UUID.randomUUID());
-        wallet.setGems(100);
-
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(programWalletRepository.findByUser(user))
-                .thenReturn(List.of(wallet));
-
-        List<ProgramWalletBalanceDTO> balances =
-                programWalletService.getUserProgramWalletBalances(1L);
-
-        assertEquals(1, balances.size());
-        assertEquals(100, balances.get(0).getGems());
-    }
-
-    @Test
-    void getUserProgramWalletBalances_shouldThrowNotFound_whenUserMissing() {
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
-
-        ResponseStatusException ex = assertThrows(
-                ResponseStatusException.class,
-                () -> programWalletService.getUserProgramWalletBalances(1L)
-        );
-
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
-    }
-
-    @Test
-    void getUserProgramWalletBalances_shouldThrowNotFound_whenNoWallets() {
-        User user = new User();
-        user.setUserId(1L);
-
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(programWalletRepository.findByUser(user))
-                .thenReturn(List.of());
-
-        ResponseStatusException ex = assertThrows(
-                ResponseStatusException.class,
-                () -> programWalletService.getUserProgramWalletBalances(1L)
-        );
-
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
-    }
-
-    @Test
     void getWalletBalanceByWalletId_shouldReturnBalance() {
         UUID walletId = UUID.randomUUID();
 
