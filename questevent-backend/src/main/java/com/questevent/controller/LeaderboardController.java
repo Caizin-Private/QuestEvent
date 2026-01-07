@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class LeaderboardController {
     private final LeaderboardService leaderboardService;
 
     // 🌍 Global leaderboard
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/global")
     @Operation(
             summary = "Get global leaderboard",
@@ -38,6 +40,7 @@ public class LeaderboardController {
     }
 
     // 🏷 Program leaderboard
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/program/{programId}")
     @Operation(
             summary = "Get program leaderboard",

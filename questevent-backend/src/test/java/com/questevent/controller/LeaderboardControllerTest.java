@@ -22,13 +22,14 @@ class LeaderboardControllerTest {
     @InjectMocks
     private LeaderboardController leaderboardController;
 
-    //GLOBAL LEADERBOARD UNIT TEST CASES
+    // 🌍 GLOBAL LEADERBOARD TEST CASES
+
     @Test
     void shouldReturnGlobalLeaderboard() {
 
         List<LeaderboardDTO> mockResponse = List.of(
-                new LeaderboardDTO(1L, "Alice", 10L, 50, 30.0),
-                new LeaderboardDTO(2L, "Bob", 8L, 40, 24.0)
+                new LeaderboardDTO(1L, "Alice", 10L, 50L, 30.0),
+                new LeaderboardDTO(2L, "Bob", 8L, 40L, 24.0)
         );
 
         when(leaderboardService.getGlobalLeaderboard())
@@ -41,6 +42,8 @@ class LeaderboardControllerTest {
         assertEquals(2, result.size());
         assertEquals("Alice", result.get(0).userName());
         assertEquals(10L, result.get(0).completedActivitiesCount());
+        assertEquals(50L, result.get(0).gems());
+        assertEquals(30.0, result.get(0).score().doubleValue());
 
         verify(leaderboardService).getGlobalLeaderboard();
     }
@@ -68,8 +71,7 @@ class LeaderboardControllerTest {
         verify(leaderboardService).getGlobalLeaderboard();
     }
 
-
-    // 🏷 PROGRAM LEADERBOARD UNIT TEST CASES
+    // 🏷 PROGRAM LEADERBOARD TEST CASES
 
     @Test
     void shouldReturnProgramLeaderboard() {
@@ -77,8 +79,8 @@ class LeaderboardControllerTest {
         Long programId = 1L;
 
         List<LeaderboardDTO> mockResponse = List.of(
-                new LeaderboardDTO(1L, "Alice", 6L, 30, 18.0),
-                new LeaderboardDTO(2L, "Bob", 4L, 20, 12.0)
+                new LeaderboardDTO(1L, "Alice", 6L, 30L, 18.0),
+                new LeaderboardDTO(2L, "Bob", 4L, 20L, 12.0)
         );
 
         when(leaderboardService.getProgramLeaderboard(programId))
@@ -91,6 +93,8 @@ class LeaderboardControllerTest {
         assertEquals(2, result.size());
         assertEquals("Bob", result.get(1).userName());
         assertEquals(4L, result.get(1).completedActivitiesCount());
+        assertEquals(20L, result.get(1).gems());
+        assertEquals(12.0, result.get(1).score().doubleValue());
 
         verify(leaderboardService).getProgramLeaderboard(programId);
     }
