@@ -16,7 +16,6 @@ public class ProgramResponseDTO {
     private Department department;
     private Instant startDate;
     private Instant endDate;
-    private Integer registrationFee;
     private ProgramStatus status;
-    private Long hostUserId; // Just return the ID of the host, not the whole object
+    private Long hostUserId;
 }

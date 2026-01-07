@@ -96,7 +96,6 @@ class ProgramServiceTest {
         dto.setProgramTitle("Test Program");
         dto.setProgramDescription("Test Description");
         dto.setDepartment(Department.IT);
-        dto.setRegistrationFee(100);
         dto.setStatus(ProgramStatus.ACTIVE);
         dto.setJudgeUserId(2L);
 
@@ -104,7 +103,6 @@ class ProgramServiceTest {
         savedProgram.setProgramId(1L);
         savedProgram.setProgramTitle("Test Program");
         savedProgram.setDepartment(Department.IT);
-        savedProgram.setRegistrationFee(100);
         savedProgram.setStatus(ProgramStatus.ACTIVE);
         savedProgram.setUser(creator);
 
@@ -158,7 +156,6 @@ class ProgramServiceTest {
 
         ProgramRequestDTO dto = new ProgramRequestDTO();
         dto.setProgramTitle("New Title");
-        dto.setRegistrationFee(200);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
         when(programRepository.findById(1L)).thenReturn(Optional.of(existingProgram));
@@ -167,7 +164,6 @@ class ProgramServiceTest {
         Program result = programService.updateProgram(1L, dto);
 
         assertEquals("New Title", result.getProgramTitle());
-        assertEquals(200, result.getRegistrationFee());
     }
 
     @Test
