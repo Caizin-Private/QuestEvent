@@ -43,6 +43,8 @@ public class ActivityRegistrationService {
                 .orElseThrow(() ->
                         new RuntimeException("Activity not found"));
 
+        validateCompulsoryActivities(activity, user.getUserId());
+
         if (activityRegistrationRepository
                 .existsByActivity_ActivityIdAndUser_UserId(
                         activity.getActivityId(), userId)) {
@@ -149,6 +151,40 @@ public class ActivityRegistrationService {
     public long getParticipantCountForActivity(Long activityId) {
         return activityRegistrationRepository.countByActivityActivityId(activityId);
     }
+
+    private void validateCompulsoryActivities(Activity activity, Long userId) {
+
+        // If activity IS compulsory → no restriction
+        if (activity.getIsCompulsory()) {
+            return;
+        }
+
+        Long programId = activity.getProgram().getProgramId();
+
+        // Get all compulsory activities of the program
+        List<Activity> compulsoryActivities =
+                activityRepository.findByProgram_ProgramIdAndIsCompulsoryTrue(programId);
+
+        for (Activity compulsory : compulsoryActivities) {
+
+            boolean completed =
+                    activityRegistrationRepository
+                            .existsByActivity_ActivityIdAndUser_UserIdAndCompletionStatus(
+                                    compulsory.getActivityId(),
+                                    userId,
+                                    CompletionStatus.COMPLETED
+                            );
+
+            if (!completed) {
+                throw new RuntimeException(
+                        "Complete compulsory activity '" +
+                                compulsory.getActivityName() +
+                                "' before registering for this activity"
+                );
+            }
+        }
+    }
+
 
 
     private ActivityRegistrationDTO mapToDTO(ActivityRegistration registration) {

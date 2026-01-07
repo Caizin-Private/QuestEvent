@@ -24,5 +24,7 @@ public interface ActivityRegistrationRepository
     List<ActivityRegistration> findByUserUserIdAndCompletionStatus(Long userId, CompletionStatus status);
 
     long countByActivityActivityId(Long activityId);
+
+    boolean existsByActivity_ActivityIdAndUser_UserIdAndCompletionStatus(Long activityId, Long userId, CompletionStatus completionStatus);
 }
 

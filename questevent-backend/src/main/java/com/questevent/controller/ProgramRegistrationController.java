@@ -26,7 +26,7 @@ public class ProgramRegistrationController {
 
     private final ProgramRegistrationService programRegistrationService;
 
-    @PreAuthorize("@rbac.canRegisterForProgram(authentication, #request.programId, #request.userId)")
+    @PreAuthorize("isAuthenticated()")
     @PostMapping
     @Operation(summary = "Register participant for program", description = "Registers a user for a specific program (self-registration)")
     @ApiResponses(value = {
