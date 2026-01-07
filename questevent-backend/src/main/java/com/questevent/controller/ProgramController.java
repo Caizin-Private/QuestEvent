@@ -96,6 +96,24 @@ public class ProgramController {
         );
     }
 
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/my-completed-registrations")
+    @Operation(
+            summary = "Get completed programs where user is registered",
+            description = "Retrieves all programs where the user has registered and program status is COMPLETED"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved programs"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
+    public ResponseEntity<List<ProgramResponseDTO>> getCompletedProgramsForUser() {
+        List<Program> programs = programService.getCompletedProgramsForUser();
+        List<ProgramResponseDTO> response = programs.stream()
+                .map(this::convertToResponseDTO)
+                .toList();
+        return ResponseEntity.ok(response);
+    }
+
     //
     @PreAuthorize("isAuthenticated() and @rbac.canManageProgram(authentication, #programId)")
     @PutMapping("/{programId}")
