@@ -4,11 +4,10 @@ import com.questevent.dto.ProgramRequestDTO;
 import com.questevent.dto.UserPrincipal;
 import com.questevent.entity.Judge;
 import com.questevent.entity.Program;
+import com.questevent.entity.ProgramRegistration;
 import com.questevent.entity.User;
-import com.questevent.repository.JudgeRepository;
-import com.questevent.repository.ProgramRepository;
-import com.questevent.repository.ProgramWalletRepository;
-import com.questevent.repository.UserRepository;
+import com.questevent.enums.ProgramStatus;
+import com.questevent.repository.*;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -28,13 +27,15 @@ public class ProgramService {
     private final UserRepository userRepository;
     private final JudgeRepository judgeRepository;
     private final ProgramWalletService programWalletService;
+    private final ProgramRegistrationRepository programRegistrationRepository;
 
     @Autowired
-    public ProgramService(ProgramRepository programRepository, UserRepository userRepository, ProgramWalletService programWalletService, JudgeRepository judgeRepository) {
+    public ProgramService(ProgramRepository programRepository, UserRepository userRepository, ProgramWalletService programWalletService, JudgeRepository judgeRepository, ProgramRegistrationRepository programRegistrationRepository) {
         this.programRepository = programRepository;
         this.userRepository = userRepository;
         this.programWalletService = programWalletService;
         this.judgeRepository = judgeRepository;
+        this.programRegistrationRepository = programRegistrationRepository;
     }
 
     public Program createProgram(ProgramRequestDTO dto) {
@@ -184,4 +185,80 @@ public class ProgramService {
 
         programRepository.delete(program);
     }
+
+    public List<Program> getCompletedProgramsForUser() {
+        User currentUser = getCurrentUser();
+        if (currentUser == null) {
+            throw new ResponseStatusException(NOT_FOUND, "User not found");
+        }
+
+        List<ProgramRegistration> registrations = programRegistrationRepository.findByUserUserId(currentUser.getUserId());
+        return registrations.stream()
+                .map(ProgramRegistration::getProgram)
+                .filter(program -> program.getStatus() == ProgramStatus.COMPLETED)
+                .toList();
+    }
+
+    private User getCurrentUser() {
+        @Nullable Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null && authentication.isAuthenticated()) {
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof UserPrincipal p) {
+                return userRepository.findById(p.userId()).orElse(null);
+            }
+        }
+
+        return null;
+    }
+
+    public List<Program> getProgramsWhereUserIsJudge() {
+        User currentUser = getCurrentUser();
+        if (currentUser == null) {
+            throw new ResponseStatusException(NOT_FOUND, "User not found");
+        }
+        return programRepository.findByJudgeUserId(currentUser.getUserId());
+    }
+
+    public List<Program> getActiveProgramsByUserDepartment() {
+        User currentUser = getCurrentUser();
+        if (currentUser == null) {
+            throw new ResponseStatusException(NOT_FOUND, "User not found");
+        }
+
+        return programRepository.findByStatusAndDepartment(ProgramStatus.ACTIVE, currentUser.getDepartment());
+    }
+
+
+    public List<Program> getDraftProgramsByHost() {
+        User currentUser = getCurrentUser();
+        if (currentUser == null) {
+            throw new ResponseStatusException(NOT_FOUND, "User not found");
+        }
+
+        return programRepository.findByStatusAndUser_UserId(ProgramStatus.DRAFT, currentUser.getUserId());
+    }
+
+    public Program changeProgramStatusToActive(Long programId) {
+        User currentUser = getCurrentUser();
+        if (currentUser == null) {
+            throw new ResponseStatusException(NOT_FOUND, "User not found");
+        }
+
+        Program program = programRepository.findById(programId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Program not found"));
+
+        if (!program.getUser().getUserId().equals(currentUser.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to change status of this program");
+        }
+
+        if (program.getStatus() != ProgramStatus.DRAFT) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Program status must be DRAFT to change to ACTIVE");
+        }
+
+        program.setStatus(ProgramStatus.ACTIVE);
+        return programRepository.save(program);
+    }
+
 }
