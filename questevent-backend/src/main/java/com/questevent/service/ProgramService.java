@@ -213,4 +213,13 @@ public class ProgramService {
 
         return null;
     }
+
+    public List<Program> getProgramsWhereUserIsJudge() {
+        User currentUser = getCurrentUser();
+        if (currentUser == null) {
+            throw new ResponseStatusException(NOT_FOUND, "User not found");
+        }
+        return programRepository.findByJudgeUserId(currentUser.getUserId());
+    }
+
 }

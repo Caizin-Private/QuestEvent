@@ -114,6 +114,24 @@ public class ProgramController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/my-judge-programs")
+    @Operation(
+            summary = "Get programs where user is assigned as judge",
+            description = "Retrieves all programs where the current user is assigned as a judge"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved programs"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
+    public ResponseEntity<List<ProgramResponseDTO>> getProgramsWhereUserIsJudge() {
+        List<Program> programs = programService.getProgramsWhereUserIsJudge();
+        List<ProgramResponseDTO> response = programs.stream()
+                .map(this::convertToResponseDTO)
+                .toList();
+        return ResponseEntity.ok(response);
+    }
+
     //
     @PreAuthorize("isAuthenticated() and @rbac.canManageProgram(authentication, #programId)")
     @PutMapping("/{programId}")
