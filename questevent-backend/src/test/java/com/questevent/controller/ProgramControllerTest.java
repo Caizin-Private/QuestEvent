@@ -4,13 +4,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.questevent.dto.ProgramRequestDTO;
-import com.questevent.dto.ProgramResponseDTO;
+import com.questevent.dto.UserPrincipal;
 import com.questevent.entity.Program;
 import com.questevent.entity.User;
 import com.questevent.enums.Department;
 import com.questevent.enums.ProgramStatus;
+import com.questevent.enums.Role;
+import com.questevent.dto.UserPrincipal;
 import com.questevent.service.ProgramService;
 import com.questevent.service.ProgramWalletTransactionService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -18,11 +21,14 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -50,27 +56,57 @@ class ProgramControllerTest {
     void setup() {
         MockitoAnnotations.openMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(programController).build();
+
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
+
+    // -------------------- SECURITY MOCK --------------------
+
+    private void mockAuthenticatedUser(Long userId) {
+        User user = new User();
+        user.setUserId(userId);
+
+        UserPrincipal principal = new UserPrincipal(
+                userId,
+                "test@questevent.com",
+                Role.USER
+        );
+
+
+        Authentication authentication =
+                new UsernamePasswordAuthenticationToken(
+                        principal,
+                        null,
+                        List.of()
+                );
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+        SecurityContextHolder.setContext(context);
+    }
+
+    // -------------------- CREATE PROGRAM --------------------
+
     @Test
     void createProgram_success() throws Exception {
+        mockAuthenticatedUser(1L);
 
         ProgramRequestDTO requestDTO = new ProgramRequestDTO();
-        requestDTO.setHostUserId(1L);
-        requestDTO.setJudgeUserId(2L); // ✅ REQUIRED
+        requestDTO.setJudgeUserId(2L);
         requestDTO.setProgramTitle("Test Program");
         requestDTO.setDepartment(Department.IT);
         requestDTO.setRegistrationFee(100);
         requestDTO.setStatus(ProgramStatus.ACTIVE);
 
-        User creator = new User();
-        creator.setUserId(1L);
-
-        User judgeUser = new User();
-        judgeUser.setUserId(2L);
+        User host = new User();
+        host.setUserId(1L);
 
         Program program = new Program();
         program.setProgramId(1L);
@@ -78,13 +114,10 @@ class ProgramControllerTest {
         program.setDepartment(Department.IT);
         program.setRegistrationFee(100);
         program.setStatus(ProgramStatus.ACTIVE);
-        program.setUser(creator);
+        program.setUser(host);
 
-        when(programService.createProgram(
-                eq(1L),
-                eq(2L),
-                any(ProgramRequestDTO.class)
-        )).thenReturn(program);
+        when(programService.createProgram(any(ProgramRequestDTO.class)))
+                .thenReturn(program);
 
         mockMvc.perform(post("/api/programs")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -97,25 +130,27 @@ class ProgramControllerTest {
 
     @Test
     void createProgram_userNotFound() throws Exception {
+        mockAuthenticatedUser(999L);
 
         ProgramRequestDTO requestDTO = new ProgramRequestDTO();
-        requestDTO.setHostUserId(999L);
-        requestDTO.setJudgeUserId(2L); // ✅ REQUIRED
+        requestDTO.setJudgeUserId(2L);
         requestDTO.setProgramTitle("Test Program");
 
-        when(programService.createProgram(
-                eq(999L),
-                eq(2L),
-                any(ProgramRequestDTO.class)
-        )).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        when(programService.createProgram(any()))
+                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         mockMvc.perform(post("/api/programs")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDTO)))
                 .andExpect(status().isNotFound());
     }
+
+    // -------------------- GET ALL PROGRAMS --------------------
+
     @Test
     void getAllPrograms_success() throws Exception {
+        mockAuthenticatedUser(1L);
+
         User user = new User();
         user.setUserId(1L);
 
@@ -139,135 +174,142 @@ class ProgramControllerTest {
                 .andExpect(jsonPath("$[1].programId").value(2L));
     }
 
+    // -------------------- GET PROGRAM BY ID --------------------
+
     @Test
     void getProgramById_success() throws Exception {
-        Long programId = 1L;
+        mockAuthenticatedUser(1L);
+
         User user = new User();
         user.setUserId(1L);
 
         Program program = new Program();
-        program.setProgramId(programId);
+        program.setProgramId(1L);
         program.setProgramTitle("Test Program");
         program.setUser(user);
 
-        when(programService.getProgramById(programId))
+        when(programService.getProgramById(1L))
                 .thenReturn(program);
 
-        mockMvc.perform(get("/api/programs/{programId}", programId))
+        mockMvc.perform(get("/api/programs/{programId}", 1L))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.programId").value(programId))
+                .andExpect(jsonPath("$.programId").value(1L))
                 .andExpect(jsonPath("$.programTitle").value("Test Program"));
     }
 
     @Test
     void getProgramById_notFound() throws Exception {
-        Long programId = 999L;
+        mockAuthenticatedUser(1L);
 
-        when(programService.getProgramById(programId))
+        when(programService.getProgramById(999L))
                 .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Program not found"));
 
-        mockMvc.perform(get("/api/programs/{programId}", programId))
+        mockMvc.perform(get("/api/programs/{programId}", 999L))
                 .andExpect(status().isNotFound());
     }
 
+    // -------------------- GET MY PROGRAMS --------------------
+
     @Test
-    void getProgramsByUserId_success() throws Exception {
-        Long userId = 1L;
+    void getMyPrograms_success() throws Exception {
+        mockAuthenticatedUser(1L);
+
         User user = new User();
-        user.setUserId(userId);
+        user.setUserId(1L);
 
         Program program = new Program();
         program.setProgramId(1L);
-        program.setProgramTitle("Program 1");
+        program.setProgramTitle("My Program");
         program.setUser(user);
 
-        when(programService.getProgramsByUserId(userId))
+        when(programService.getMyPrograms())
                 .thenReturn(List.of(program));
 
-        mockMvc.perform(get("/api/programs/users/{userId}", userId))
+        mockMvc.perform(get("/api/programs/users/ignored"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].programId").value(1L));
     }
 
+    // -------------------- UPDATE PROGRAM --------------------
+
     @Test
     void updateProgram_success() throws Exception {
-        Long programId = 1L;
+        mockAuthenticatedUser(1L);
+
         ProgramRequestDTO requestDTO = new ProgramRequestDTO();
-        requestDTO.setHostUserId(1L);
         requestDTO.setProgramTitle("Updated Program");
 
         User user = new User();
         user.setUserId(1L);
 
         Program updatedProgram = new Program();
-        updatedProgram.setProgramId(programId);
+        updatedProgram.setProgramId(1L);
         updatedProgram.setProgramTitle("Updated Program");
         updatedProgram.setUser(user);
 
-        when(programService.updateProgram(eq(1L), eq(programId), any(ProgramRequestDTO.class)))
+        when(programService.updateProgram(eq(1L), any(ProgramRequestDTO.class)))
                 .thenReturn(updatedProgram);
 
-        mockMvc.perform(put("/api/programs/{programId}", programId)
+        mockMvc.perform(put("/api/programs/{programId}", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDTO)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.programId").value(programId))
                 .andExpect(jsonPath("$.programTitle").value("Updated Program"));
     }
 
     @Test
     void updateProgram_notFound() throws Exception {
-        Long programId = 999L;
-        ProgramRequestDTO requestDTO = new ProgramRequestDTO();
-        requestDTO.setHostUserId(1L);
+        mockAuthenticatedUser(1L);
 
-        when(programService.updateProgram(eq(1L), eq(programId), any(ProgramRequestDTO.class)))
+        when(programService.updateProgram(eq(999L), any()))
                 .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Program not found"));
 
-        mockMvc.perform(put("/api/programs/{programId}", programId)
+        mockMvc.perform(put("/api/programs/{programId}", 999L)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestDTO)))
+                        .content(objectMapper.writeValueAsString(new ProgramRequestDTO())))
                 .andExpect(status().isNotFound());
     }
 
+    // -------------------- SETTLE PROGRAM --------------------
+
     @Test
     void settleProgram_success() throws Exception {
-        Long programId = 1L;
+        mockAuthenticatedUser(1L);
 
-        doNothing().when(programWalletTransactionService).manuallySettleExpiredProgramWallets(programId);
+        doNothing().when(programWalletTransactionService)
+                .manuallySettleExpiredProgramWallets(1L);
 
-        mockMvc.perform(post("/api/programs/{programId}/settle", programId))
+        mockMvc.perform(post("/api/programs/{programId}/settle", 1L))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").value("Program settled successfully"));
+                .andExpect(content().string("Program settled successfully"));
 
-        verify(programWalletTransactionService, times(1)).manuallySettleExpiredProgramWallets(programId);
+        verify(programWalletTransactionService, times(1))
+                .manuallySettleExpiredProgramWallets(1L);
     }
+
+    // -------------------- DELETE PROGRAM --------------------
 
     @Test
     void deleteProgram_success() throws Exception {
-        Long programId = 1L;
-        Long userId = 1L;
+        mockAuthenticatedUser(1L);
 
-        doNothing().when(programService).deleteProgram(userId, programId);
+        doNothing().when(programService).deleteProgram(1L);
 
-        mockMvc.perform(delete("/api/programs/{programId}", programId)
-                        .param("userId", userId.toString()))
+        mockMvc.perform(delete("/api/programs/{programId}", 1L))
                 .andExpect(status().isNoContent());
 
-        verify(programService, times(1)).deleteProgram(userId, programId);
+        verify(programService, times(1)).deleteProgram(1L);
     }
 
     @Test
     void deleteProgram_notFound() throws Exception {
-        Long programId = 999L;
-        Long userId = 1L;
+        mockAuthenticatedUser(1L);
 
         doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Program not found"))
-                .when(programService).deleteProgram(userId, programId);
+                .when(programService).deleteProgram(999L);
 
-        mockMvc.perform(delete("/api/programs/{programId}", programId)
-                        .param("userId", userId.toString()))
+        mockMvc.perform(delete("/api/programs/{programId}", 999L))
                 .andExpect(status().isNotFound());
     }
 }

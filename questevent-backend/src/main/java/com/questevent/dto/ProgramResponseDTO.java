@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 
 @Data
 public class ProgramResponseDTO {
+    private Long judgeUserId;
     private Long programId;
     private String programTitle;
     private String programDescription;
