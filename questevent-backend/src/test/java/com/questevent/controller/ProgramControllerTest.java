@@ -225,11 +225,13 @@ class ProgramControllerTest {
         when(programService.getMyPrograms())
                 .thenReturn(List.of(program));
 
-        mockMvc.perform(get("/api/programs/users/ignored"))
+        mockMvc.perform(get("/api/programs/my-programs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].programId").value(1L));
     }
+
+
 
     // -------------------- UPDATE PROGRAM --------------------
 
