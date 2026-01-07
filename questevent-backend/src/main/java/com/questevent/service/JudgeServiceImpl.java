@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 public class JudgeServiceImpl implements JudgeService {
@@ -23,7 +22,7 @@ public class JudgeServiceImpl implements JudgeService {
     private final ActivityRegistrationRepository registrationRepository;
     private final JudgeRepository judgeRepository;
     private final ProgramWalletTransactionService programWalletTransactionService;
-    //
+
     @Override
     @Transactional(readOnly = true)
     public List<JudgeSubmissionDTO> getSubmissionsForActivity(Long activityId) {
@@ -51,25 +50,27 @@ public class JudgeServiceImpl implements JudgeService {
     public void reviewSubmission(Long submissionId) {
 
         ActivitySubmission submission = submissionRepository.findById(submissionId)
-                .orElseThrow(() -> new RuntimeException("Submission not found"));
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Submission not found")
+                );
 
         if (submission.getReviewStatus() != ReviewStatus.PENDING) {
-            throw new RuntimeException("Submission already reviewed");
+            throw new IllegalStateException("Submission already reviewed");
         }
 
         ActivityRegistration registration = submission.getActivityRegistration();
         Activity activity = registration.getActivity();
         Program program = activity.getProgram();
 
-        // ✅ Judge already decided at program creation
+        // Judge assigned at program creation
         Judge judge = program.getJudge();
         if (judge == null) {
-            throw new RuntimeException("Judge not assigned to this program");
+            throw new IllegalStateException("Judge not assigned to this program");
         }
 
         int rewardGems = activity.getRewardGems();
         if (rewardGems <= 0) {
-            throw new RuntimeException("Invalid reward configuration");
+            throw new IllegalStateException("Invalid reward configuration");
         }
 
         submission.setReviewedBy(judge);
@@ -106,4 +107,3 @@ public class JudgeServiceImpl implements JudgeService {
         );
     }
 }
-
