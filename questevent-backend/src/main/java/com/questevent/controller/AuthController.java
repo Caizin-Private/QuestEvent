@@ -1,6 +1,9 @@
 package com.questevent.controller;
 
 import com.questevent.entity.User;
+import com.questevent.entity.UserWallet;
+import com.questevent.enums.Department;
+import com.questevent.repository.UserWalletRepository;
 import com.questevent.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -9,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.io.IOException;
@@ -18,6 +23,7 @@ import java.io.IOException;
 public class AuthController {
 
     private final UserRepository userRepository;
+    private final UserWalletRepository userWalletRepository;
 
     @GetMapping({"/", "/login"})
     @ResponseBody
@@ -25,11 +31,12 @@ public class AuthController {
 
         HttpSession session = request.getSession(false);
 
-        // ✅ already logged-in user
+        // already logged in → go to profile
         if (session != null && session.getAttribute("userId") != null) {
             response.sendRedirect("/profile");
             return null;
         }
+
         return """
         <!DOCTYPE html>
         <html>
@@ -44,9 +51,65 @@ public class AuthController {
                     Login with Microsoft
                 </button>
             </a>
+
         </body>
         </html>
-    """;
+        """;
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/complete-profile")
+    @ResponseBody
+    public String completeProfilePage() {
+
+        return """
+        <h2>Complete Your Profile 📝</h2>
+
+        <form method="post" action="/complete-profile">
+            <label>Department:</label><br>
+            <select name="department">
+                <option value="HR">HR</option>
+                <option value="TECH">TECH</option>
+                <option value="GENERAL">GENERAL</option>
+                <option value="GENERAL">IT</option>
+            </select><br><br>
+
+            <label>Gender:</label><br>
+            <select name="gender">
+                <option value="MALE">MALE</option>
+                <option value="FEMALE">FEMALE</option>
+            </select><br><br>
+
+            <button type="submit">Save</button>
+        </form>
+        """;
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/complete-profile")
+    public void saveProfile(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            @RequestParam Department department,
+            @RequestParam String gender
+    ) throws IOException {
+
+        Long userId = (Long) request.getSession().getAttribute("userId");
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setDepartment(department);
+        user.setGender(gender);
+        userRepository.save(user);
+        userWalletRepository.findByUserUserId(userId)
+                .orElseGet(() -> {
+                    UserWallet wallet = new UserWallet();
+                    wallet.setUser(user);
+                    wallet.setGems(0);
+                    return userWalletRepository.save(wallet);
+                });
+
+        response.sendRedirect("/profile");
     }
 
     @PreAuthorize("isAuthenticated()")
