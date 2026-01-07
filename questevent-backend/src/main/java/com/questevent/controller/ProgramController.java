@@ -225,9 +225,9 @@ public class ProgramController {
             @ApiResponse(responseCode = "403", description = "Permission denied"),
             @ApiResponse(responseCode = "404", description = "Program or user not found")
     })
-    public ResponseEntity<ProgramResponseDTO> changeProgramStatusToDraft(
+    public ResponseEntity<ProgramResponseDTO> changeProgramStatusToActive(
             @Parameter(description = "Program ID", required = true) @PathVariable Long programId) {
-        Program updated = programService.changeProgramStatusToDraft(programId);
+        Program updated = programService.changeProgramStatusToActive(programId);
         return ResponseEntity.ok(convertToResponseDTO(updated));
     }
 

@@ -241,7 +241,7 @@ public class ProgramService {
         return programRepository.findByStatusAndUser_UserId(ProgramStatus.DRAFT, currentUser.getUserId());
     }
 
-    public Program changeProgramStatusToDraft(Long programId) {
+    public Program changeProgramStatusToActive(Long programId) {
         User currentUser = getCurrentUser();
         if (currentUser == null) {
             throw new ResponseStatusException(NOT_FOUND, "User not found");
@@ -254,11 +254,11 @@ public class ProgramService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to change status of this program");
         }
 
-        if (program.getStatus() != ProgramStatus.ACTIVE) {
+        if (program.getStatus() != ProgramStatus.DRAFT) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Program status must be ACTIVE to change to DRAFT");
         }
 
-        program.setStatus(ProgramStatus.DRAFT);
+        program.setStatus(ProgramStatus.ACTIVE);
         return programRepository.save(program);
     }
 
