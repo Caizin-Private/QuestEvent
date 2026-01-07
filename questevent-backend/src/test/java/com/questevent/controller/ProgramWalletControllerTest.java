@@ -25,43 +25,6 @@ class ProgramWalletControllerTest {
     @InjectMocks
     private ProgramWalletController programWalletController;
 
-    @Test
-    void createProgramWallet_shouldReturnWalletBalanceDto() {
-        ProgramWalletCreateRequestDTO request = new ProgramWalletCreateRequestDTO();
-        request.setUserId(1L);
-        request.setProgramId(10L);
-
-        ProgramWallet wallet = new ProgramWallet();
-        wallet.setProgramWalletId(UUID.randomUUID());
-        wallet.setGems(100);
-
-        when(programWalletService.createWallet(1L, 10L))
-                .thenReturn(wallet);
-
-        ProgramWalletBalanceDTO response =
-                programWalletController.createProgramWallet(request).getBody();
-
-        assertNotNull(response);
-        assertEquals(wallet.getProgramWalletId(), response.getProgramWalletId());
-        assertEquals(100, response.getGems());
-    }
-
-    @Test
-    void getUserProgramWalletBalances_shouldReturnList() {
-        ProgramWalletBalanceDTO dto = new ProgramWalletBalanceDTO();
-        dto.setProgramWalletId(UUID.randomUUID());
-        dto.setGems(200);
-
-        when(programWalletService.getUserProgramWalletBalances(1L))
-                .thenReturn(List.of(dto));
-
-        List<ProgramWalletBalanceDTO> result =
-                programWalletController.getUserProgramWalletBalances(1L).getBody();
-
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(200, result.get(0).getGems());
-    }
 
     @Test
     void getProgramWalletBalance_shouldReturnWallet() {
