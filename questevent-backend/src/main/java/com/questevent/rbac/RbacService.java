@@ -78,7 +78,7 @@ public class RbacService {
 
         // After JwtAuthFilter
         if (principal instanceof UserPrincipal p) {
-            return userRepository.findById(p.userId().longValue()).orElse(null);
+            return userRepository.findById(p.userId()).orElse(null);
         }
 
         // First OAuth2 login
