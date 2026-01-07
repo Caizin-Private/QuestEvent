@@ -1,5 +1,6 @@
 package com.questevent.controller;
 
+import com.questevent.dto.AddParticipantInProgramRequestDTO;
 import com.questevent.dto.ProgramRegistrationDTO;
 import com.questevent.dto.ProgramRegistrationRequestDTO;
 import com.questevent.dto.ProgramRegistrationResponseDTO;
@@ -53,18 +54,13 @@ public class ProgramRegistrationController {
             @ApiResponse(responseCode = "404", description = "Program or user not found")
     })
     public ResponseEntity<ProgramRegistrationResponseDTO> addParticipantByHost(
-            @Parameter(description = "Program ID", required = true) @PathVariable Long programId,
-            @Parameter(description = "User ID to register", required = true) @RequestParam Long userId) {
-        try {
-            ProgramRegistrationRequestDTO request = new ProgramRegistrationRequestDTO();
-            request.setProgramId(programId);
-            request.setUserId(userId);
-            ProgramRegistrationResponseDTO response =
-                    programRegistrationService.registerParticipantForProgram(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e.getMessage());
-        }
+            @PathVariable Long programId,
+            @RequestBody AddParticipantInProgramRequestDTO request) {
+
+        ProgramRegistrationResponseDTO response =
+                programRegistrationService.addParticipantToProgram(programId, request);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PreAuthorize("isAuthenticated()")
@@ -144,7 +140,7 @@ public class ProgramRegistrationController {
         }
     }
 
-    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
+    @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/programs/{programId}/participants/{userId}")
     @Operation(summary = "Remove participant from program (Host only)", description = "Allows program host to remove a user from their program")
     @ApiResponses(value = {
