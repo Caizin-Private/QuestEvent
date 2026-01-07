@@ -49,6 +49,9 @@ public class ActivityService {
     }
 
     public List<Activity> getActivitiesByProgramId(Long programId) {
+        if (!programRepository.existsById(programId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Program not found");
+        }
         return activityRepository.findByProgram_ProgramId(programId);
     }
 
@@ -62,6 +65,9 @@ public class ActivityService {
         activityRepository.delete(activity);
     }
     public List<Activity> getCompulsoryActivitiesByProgramId(Long programId) {
+        if (!programRepository.existsById(programId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Program not found");
+        }
         return activityRepository.findByProgram_ProgramIdAndIsCompulsoryTrue(programId);
     }
 

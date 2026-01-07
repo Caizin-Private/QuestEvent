@@ -9,5 +9,4 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ProgramRegistrationRequestDTO {
     private Long programId;
-    private Long userId;
 }
