@@ -7,11 +7,15 @@
 *.env
 
 # ===============================
-# Maven / Gradle
+# Maven
 # ===============================
 target/
 *.log
 *.tmp
+
+# Gradle
+.gradle/
+build/
 
 # ===============================
 # IntelliJ IDEA
