@@ -172,13 +172,19 @@ class ActivityServiceTest {
         Activity activity2 = new Activity();
         activity2.setActivityId(2L);
 
+        when(programRepository.existsById(programId))
+                .thenReturn(true);
+
         when(activityRepository.findByProgram_ProgramId(programId))
                 .thenReturn(List.of(activity1, activity2));
 
         List<Activity> result = activityService.getActivitiesByProgramId(programId);
 
         assertEquals(2, result.size());
-        verify(activityRepository, times(1)).findByProgram_ProgramId(programId);
+
+        verify(programRepository, times(1)).existsById(programId);
+        verify(activityRepository, times(1))
+                .findByProgram_ProgramId(programId);
     }
 
     @Test
