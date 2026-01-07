@@ -30,6 +30,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     /* ===================== CONSTANTS ===================== */
 
+
     private static final String AUTH_SOURCE = "AUTH_SOURCE";
     private static final String JWT_SOURCE = "JWT_BEARER_TOKEN";
     private static final String OAUTH2_SOURCE = "OAUTH2_SESSION";
