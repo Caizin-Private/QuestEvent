@@ -4,25 +4,21 @@ import com.questevent.entity.User;
 import com.questevent.enums.Department;
 import com.questevent.enums.Role;
 import com.questevent.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -31,6 +27,9 @@ class OAuthSuccessServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @InjectMocks
+    private OAuthSuccessService oAuthSuccessService;
+
     @Mock
     private HttpServletRequest request;
 
@@ -38,93 +37,87 @@ class OAuthSuccessServiceTest {
     private HttpServletResponse response;
 
     @Mock
+    private HttpSession session;
+
+    @Mock
     private Authentication authentication;
 
     @Mock
-    private OAuth2User oauth2User;
+    private OAuth2User oAuth2User;
 
-    @Mock
-    private HttpSession session;
+    @Test
+    void shouldRedirectToCompleteProfileForNewUser() throws IOException {
 
-    @InjectMocks
-    private OAuthSuccessService oAuthSuccessService;
+        when(authentication.getPrincipal()).thenReturn(oAuth2User);
+        when(oAuth2User.getAttribute("email")).thenReturn("test@gmail.com");
+        when(oAuth2User.getAttribute("name")).thenReturn("Test User");
 
-    @BeforeEach
-    void setup() {
-        when(authentication.getPrincipal()).thenReturn(oauth2User);
         when(request.getSession()).thenReturn(session);
-    }
 
-    @Test
-    void shouldNotCreateUserIfAlreadyExists() throws Exception {
-
-        String email = "test@example.com";
-
-        User existing = new User();
-        existing.setUserId(10L);
-        existing.setEmail(email);
-
-        when(oauth2User.getAttribute("email")).thenReturn(email);
-        when(userRepository.findByEmail(email)).thenReturn(Optional.of(existing));
-
-        oAuthSuccessService.onAuthenticationSuccess(request, response, authentication);
-
-        verify(userRepository, never()).save(any());
-        verify(session).setAttribute("userId", 10L);
-        verify(response).sendRedirect("/profile");
-    }
-
-    @Test
-    void shouldCreateUserIfNotExists() throws Exception {
-
-        String email = "new@example.com";
-
-        when(oauth2User.getAttribute("email")).thenReturn(email);
-        when(oauth2User.getAttribute("name")).thenReturn("Test User");
-        when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
+        when(userRepository.findByEmail("test@gmail.com"))
+                .thenReturn(Optional.empty());
 
         User savedUser = new User();
-        savedUser.setUserId(20L);
-        savedUser.setEmail(email);
+        savedUser.setUserId(1L);
+        savedUser.setEmail("test@gmail.com");
+        savedUser.setRole(Role.USER);
+        savedUser.setDepartment(Department.GENERAL);
+        savedUser.setGender("PENDING");
 
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
         oAuthSuccessService.onAuthenticationSuccess(request, response, authentication);
 
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        verify(userRepository).save(userCaptor.capture());
-
-        User created = userCaptor.getValue();
-
-        assertEquals(email, created.getEmail());
-        assertEquals("Test User", created.getName());
-        assertEquals(Role.USER, created.getRole());
-        assertEquals(Department.GENERAL, created.getDepartment());
-        assertEquals("GENDER", created.getGender());
-
-        verify(session).setAttribute("userId", 20L);
-        verify(response).sendRedirect("/profile");
+        verify(session).setAttribute("userId", 1L);
+        verify(response).sendRedirect("/complete-profile");
     }
 
     @Test
-    void shouldResolveEmailFromPreferredUsername() throws Exception {
+    void shouldRedirectToProfileIfProfileCompleted() throws IOException {
 
-        when(oauth2User.getAttribute("email")).thenReturn(null);
-        when(oauth2User.getAttribute("preferred_username"))
-                .thenReturn("fallback@test.com");
+        when(authentication.getPrincipal()).thenReturn(oAuth2User);
+        when(oAuth2User.getAttribute("email")).thenReturn("user@gmail.com");
 
-        when(userRepository.findByEmail(any()))
-                .thenReturn(Optional.empty());
+        when(request.getSession()).thenReturn(session);
 
-        User savedUser = new User();
-        savedUser.setUserId(30L);
+        User existingUser = new User();
+        existingUser.setUserId(2L);
+        existingUser.setEmail("user@gmail.com");
+        existingUser.setDepartment(Department.TECH);
+        existingUser.setGender("MALE");
 
-        when(userRepository.save(any())).thenReturn(savedUser);
+        when(userRepository.findByEmail("user@gmail.com"))
+                .thenReturn(Optional.of(existingUser));
 
         oAuthSuccessService.onAuthenticationSuccess(request, response, authentication);
 
-        verify(userRepository).save(any(User.class));
-        verify(session).setAttribute("userId", 30L);
+        verify(session).setAttribute("userId", 2L);
         verify(response).sendRedirect("/profile");
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldResolveEmailFromPreferredUsername() throws IOException {
+
+        when(authentication.getPrincipal()).thenReturn(oAuth2User);
+        when(oAuth2User.getAttribute("email")).thenReturn(null);
+        when(oAuth2User.getAttribute("preferred_username"))
+                .thenReturn("azure@user.com");
+
+        when(request.getSession()).thenReturn(session);
+
+        when(userRepository.findByEmail("azure@user.com"))
+                .thenReturn(Optional.empty());
+
+        User savedUser = new User();
+        savedUser.setUserId(3L);
+        savedUser.setDepartment(Department.GENERAL);
+        savedUser.setGender("PENDING");
+
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+
+        oAuthSuccessService.onAuthenticationSuccess(request, response, authentication);
+
+        verify(response).sendRedirect("/complete-profile");
     }
 }

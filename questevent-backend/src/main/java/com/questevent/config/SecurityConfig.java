@@ -38,8 +38,7 @@ public class SecurityConfig {
 
                 .oauth2Login(oauth -> oauth
                         .loginPage("/login")
-                        .defaultSuccessUrl("/profile", true)
-                        .successHandler(successHandler) // session + DB logic
+                        .successHandler(successHandler)
                 )
 
                 .addFilterAfter(jwtAuthFilter, OAuth2LoginAuthenticationFilter.class)
