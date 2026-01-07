@@ -314,4 +314,226 @@ class ProgramControllerTest {
         mockMvc.perform(delete("/api/programs/{programId}", 999L))
                 .andExpect(status().isNotFound());
     }
+
+
+    // -------------------- GET COMPLETED PROGRAMS FOR USER --------------------
+
+    @Test
+    void getCompletedProgramsForUser_success() throws Exception {
+        mockAuthenticatedUser(1L);
+
+        User user = new User();
+        user.setUserId(1L);
+
+        Program program = new Program();
+        program.setProgramId(1L);
+        program.setProgramTitle("Completed Program");
+        program.setStatus(ProgramStatus.COMPLETED);
+        program.setUser(user);
+
+        when(programService.getCompletedProgramsForUser())
+                .thenReturn(List.of(program));
+
+        mockMvc.perform(get("/api/programs/my-completed-registrations"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].programId").value(1L))
+                .andExpect(jsonPath("$[0].status").value("COMPLETED"));
+    }
+
+    @Test
+    void getCompletedProgramsForUser_userNotFound() throws Exception {
+        mockAuthenticatedUser(1L);
+
+        when(programService.getCompletedProgramsForUser())
+                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        mockMvc.perform(get("/api/programs/my-completed-registrations"))
+                .andExpect(status().isNotFound());
+    }
+
+    // -------------------- GET PROGRAMS WHERE USER IS JUDGE --------------------
+
+    @Test
+    void getProgramsWhereUserIsJudge_success() throws Exception {
+        mockAuthenticatedUser(1L);
+
+        User user = new User();
+        user.setUserId(1L);
+
+        Program program1 = new Program();
+        program1.setProgramId(1L);
+        program1.setProgramTitle("Judge Program 1");
+        program1.setUser(user);
+
+        Program program2 = new Program();
+        program2.setProgramId(2L);
+        program2.setProgramTitle("Judge Program 2");
+        program2.setUser(user);
+
+        when(programService.getProgramsWhereUserIsJudge())
+                .thenReturn(List.of(program1, program2));
+
+        mockMvc.perform(get("/api/programs/my-judge-programs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].programId").value(1L))
+                .andExpect(jsonPath("$[1].programId").value(2L));
+    }
+
+    @Test
+    void getProgramsWhereUserIsJudge_userNotFound() throws Exception {
+        mockAuthenticatedUser(1L);
+
+        when(programService.getProgramsWhereUserIsJudge())
+                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        mockMvc.perform(get("/api/programs/my-judge-programs"))
+                .andExpect(status().isNotFound());
+    }
+
+    // -------------------- GET ACTIVE PROGRAMS BY DEPARTMENT --------------------
+
+    @Test
+    void getActiveProgramsByUserDepartment_success() throws Exception {
+        mockAuthenticatedUser(1L);
+
+        User user = new User();
+        user.setUserId(1L);
+
+        Program program1 = new Program();
+        program1.setProgramId(1L);
+        program1.setProgramTitle("Active Program 1");
+        program1.setStatus(ProgramStatus.ACTIVE);
+        program1.setDepartment(Department.IT);
+        program1.setUser(user);
+
+        Program program2 = new Program();
+        program2.setProgramId(2L);
+        program2.setProgramTitle("Active Program 2");
+        program2.setStatus(ProgramStatus.ACTIVE);
+        program2.setDepartment(Department.IT);
+        program2.setUser(user);
+
+        when(programService.getActiveProgramsByUserDepartment())
+                .thenReturn(List.of(program1, program2));
+
+        mockMvc.perform(get("/api/programs/active-by-department"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].status").value("ACTIVE"))
+                .andExpect(jsonPath("$[1].status").value("ACTIVE"));
+    }
+
+    @Test
+    void getActiveProgramsByUserDepartment_userNotFound() throws Exception {
+        mockAuthenticatedUser(1L);
+
+        when(programService.getActiveProgramsByUserDepartment())
+                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        mockMvc.perform(get("/api/programs/active-by-department"))
+                .andExpect(status().isNotFound());
+    }
+
+    // -------------------- GET DRAFT PROGRAMS BY HOST --------------------
+
+    @Test
+    void getDraftProgramsByHost_success() throws Exception {
+        mockAuthenticatedUser(1L);
+
+        User user = new User();
+        user.setUserId(1L);
+
+        Program program1 = new Program();
+        program1.setProgramId(1L);
+        program1.setProgramTitle("Draft Program 1");
+        program1.setStatus(ProgramStatus.DRAFT);
+        program1.setUser(user);
+
+        Program program2 = new Program();
+        program2.setProgramId(2L);
+        program2.setProgramTitle("Draft Program 2");
+        program2.setStatus(ProgramStatus.DRAFT);
+        program2.setUser(user);
+
+        when(programService.getDraftProgramsByHost())
+                .thenReturn(List.of(program1, program2));
+
+        mockMvc.perform(get("/api/programs/my-draft-programs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].status").value("DRAFT"))
+                .andExpect(jsonPath("$[1].status").value("DRAFT"));
+    }
+
+    @Test
+    void getDraftProgramsByHost_userNotFound() throws Exception {
+        mockAuthenticatedUser(1L);
+
+        when(programService.getDraftProgramsByHost())
+                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        mockMvc.perform(get("/api/programs/my-draft-programs"))
+                .andExpect(status().isNotFound());
+    }
+
+    // -------------------- CHANGE PROGRAM STATUS TO DRAFT --------------------
+
+    @Test
+    void changeProgramStatusToDraft_success() throws Exception {
+        mockAuthenticatedUser(1L);
+
+        User user = new User();
+        user.setUserId(1L);
+
+        Program program = new Program();
+        program.setProgramId(1L);
+        program.setProgramTitle("Test Program");
+        program.setStatus(ProgramStatus.DRAFT);
+        program.setUser(user);
+
+        when(programService.changeProgramStatusToActive(1L))
+                .thenReturn(program);
+
+        mockMvc.perform(patch("/api/programs/{programId}/status-to-active", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.programId").value(1L))
+                .andExpect(jsonPath("$.status").value("DRAFT"));
+
+        verify(programService, times(1)).changeProgramStatusToActive(1L);
+    }
+
+    @Test
+    void changeProgramStatusToDraft_programNotFound() throws Exception {
+        mockAuthenticatedUser(1L);
+
+        when(programService.changeProgramStatusToActive(999L))
+                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Program not found"));
+
+        mockMvc.perform(patch("/api/programs/{programId}/status-to-active", 999L))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void changeProgramStatusToDraft_permissionDenied() throws Exception {
+        mockAuthenticatedUser(1L);
+
+        when(programService.changeProgramStatusToActive(1L))
+                .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to change status of this program"));
+
+        mockMvc.perform(patch("/api/programs/{programId}/status-to-active", 1L))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void changeProgramStatusToDraft_statusNotActive() throws Exception {
+        mockAuthenticatedUser(1L);
+
+        when(programService.changeProgramStatusToActive(1L))
+                .thenThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Program status must be DRAFT to change to ACTIVE"));
+
+        mockMvc.perform(patch("/api/programs/{programId}/status-to-active", 1L))
+                .andExpect(status().isBadRequest());
+    }
 }

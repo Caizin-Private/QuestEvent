@@ -255,7 +255,7 @@ public class ProgramService {
         }
 
         if (program.getStatus() != ProgramStatus.DRAFT) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Program status must be ACTIVE to change to DRAFT");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Program status must be DRAFT to change to ACTIVE");
         }
 
         program.setStatus(ProgramStatus.ACTIVE);

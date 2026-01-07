@@ -214,7 +214,7 @@ public class ProgramController {
     }
 
     @PreAuthorize("isAuthenticated()")
-    @PatchMapping("/{programId}/status-to-draft")
+    @PatchMapping("/{programId}/status-to-active")
     @Operation(
             summary = "Change program status from ACTIVE to DRAFT",
             description = "Changes the status of a program from ACTIVE to DRAFT. Only works for programs hosted by the current user."
