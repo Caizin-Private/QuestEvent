@@ -67,7 +67,7 @@ public class ProgramController {
         return ResponseEntity.ok(response);
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isAuthenticated() and @rbac.canViewProgram(authentication, #programId)")
     @GetMapping("/{programId}")
     @Operation(summary = "Get program by ID", description = "Retrieves a specific program by its ID")
     @ApiResponses(value = {
@@ -81,8 +81,8 @@ public class ProgramController {
     }
 
     @PreAuthorize("isAuthenticated()")
-    @GetMapping("/users/{userId}")
-    @Operation(summary = "Get all my hosted programs", description = "Retrieves all programs hosted by a specific user")
+    @GetMapping("/my-programs")
+    @Operation(summary = "Get all my hosted programs", description = "Retrieves all programs hosted by the current user")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved programs"),
             @ApiResponse(responseCode = "404", description = "User not found")
@@ -97,7 +97,7 @@ public class ProgramController {
     }
 
     //
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isAuthenticated() and @rbac.canManageProgram(authentication, #programId)")
     @PutMapping("/{programId}")
     @Operation(summary = "Update program", description = "Updates an existing program's information")
     @ApiResponses(value = {
@@ -112,7 +112,7 @@ public class ProgramController {
         return ResponseEntity.ok(convertToResponseDTO(updated));
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isAuthenticated() and @rbac.canManageProgram(authentication, #programId)")
     @PostMapping("/{programId}/settle")
     @Operation(summary = "Settle program wallets", description = "Settles all program wallets for a specific program")
     @ApiResponses(value = {
@@ -125,7 +125,7 @@ public class ProgramController {
         return ResponseEntity.ok("Program settled successfully");
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isAuthenticated() and @rbac.canManageProgram(authentication, #programId)")
     @DeleteMapping("/{programId}")
     @Operation(summary = "Delete program", description = "Deletes a program from the system")
     @ApiResponses(value = {
