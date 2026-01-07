@@ -1,15 +1,20 @@
 package com.questevent.service;
 
+import com.questevent.dto.UserPrincipal;
 import com.questevent.dto.UserWalletBalanceDTO;
 import com.questevent.entity.User;
 import com.questevent.entity.UserWallet;
+import com.questevent.enums.Role;
 import com.questevent.repository.UserRepository;
 import com.questevent.repository.UserWalletRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
@@ -29,6 +34,12 @@ class UserWalletServiceTest {
 
     @InjectMocks
     private UserWalletService userWalletService;
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test
     void createWalletForUser_success() {
         User user = new User();
@@ -39,8 +50,10 @@ class UserWalletServiceTest {
 
         userWalletService.createWalletForUser(user);
 
-        verify(userWalletRepository, times(1)).save(any(UserWallet.class));
+        verify(userWalletRepository, times(1))
+                .save(any(UserWallet.class));
     }
+
     @Test
     void createWalletForUser_walletAlreadyExists() {
         User user = new User();
@@ -59,12 +72,20 @@ class UserWalletServiceTest {
     }
 
     @Test
-    void getWalletBalance_success() {
+    void getMyWalletBalance_success() {
+        UserPrincipal principal =
+                new UserPrincipal(1L, "test@example.com", Role.USER);
+
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(principal, null, null);
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
         User user = new User();
         user.setUserId(1L);
 
-        UserWallet wallet = new UserWallet();
         UUID walletId = UUID.randomUUID();
+        UserWallet wallet = new UserWallet();
         wallet.setWalletId(walletId);
         wallet.setGems(100);
 
@@ -73,29 +94,44 @@ class UserWalletServiceTest {
         when(userRepository.findById(1L))
                 .thenReturn(Optional.of(user));
 
-        UserWalletBalanceDTO dto = userWalletService.getWalletBalance(1L);
+        UserWalletBalanceDTO dto = userWalletService.getMyWalletBalance();
 
         assertNotNull(dto);
         assertEquals(walletId, dto.getWalletId());
         assertEquals(100, dto.getGems());
     }
 
-
     @Test
-    void getWalletBalance_userNotFound() {
+    void getMyWalletBalance_userNotFound() {
+        UserPrincipal principal =
+                new UserPrincipal(1L, "test@example.com", Role.USER);
+
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(principal, null, null);
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
         when(userRepository.findById(1L))
                 .thenReturn(Optional.empty());
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> userWalletService.getWalletBalance(1L)
+                () -> userWalletService.getMyWalletBalance()
         );
 
-        assertEquals("404 NOT_FOUND \"User not found\"", exception.getMessage());
+        assertEquals("User not found", exception.getReason());
     }
 
     @Test
-    void getWalletBalance_walletNotFound() {
+    void getMyWalletBalance_walletNotFound() {
+        UserPrincipal principal =
+                new UserPrincipal(1L, "test@example.com", Role.USER);
+
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(principal, null, null);
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
         User user = new User();
         user.setUserId(1L);
         user.setWallet(null);
@@ -105,9 +141,21 @@ class UserWalletServiceTest {
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> userWalletService.getWalletBalance(1L)
+                () -> userWalletService.getMyWalletBalance()
         );
 
-        assertEquals("404 NOT_FOUND \"Wallet not found\"", exception.getMessage());
+        assertEquals("Wallet not found", exception.getReason());
+    }
+
+    @Test
+    void getMyWalletBalance_unauthenticated() {
+        SecurityContextHolder.clearContext();
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> userWalletService.getMyWalletBalance()
+        );
+
+        assertEquals("Unauthenticated request", exception.getReason());
     }
 }
