@@ -222,4 +222,44 @@ public class ProgramService {
         return programRepository.findByJudgeUserId(currentUser.getUserId());
     }
 
+    public List<Program> getActiveProgramsByUserDepartment() {
+        User currentUser = getCurrentUser();
+        if (currentUser == null) {
+            throw new ResponseStatusException(NOT_FOUND, "User not found");
+        }
+
+        return programRepository.findByStatusAndDepartment(ProgramStatus.ACTIVE, currentUser.getDepartment());
+    }
+
+
+    public List<Program> getDraftProgramsByHost() {
+        User currentUser = getCurrentUser();
+        if (currentUser == null) {
+            throw new ResponseStatusException(NOT_FOUND, "User not found");
+        }
+
+        return programRepository.findByStatusAndUser_UserId(ProgramStatus.DRAFT, currentUser.getUserId());
+    }
+
+    public Program changeProgramStatusToDraft(Long programId) {
+        User currentUser = getCurrentUser();
+        if (currentUser == null) {
+            throw new ResponseStatusException(NOT_FOUND, "User not found");
+        }
+
+        Program program = programRepository.findById(programId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Program not found"));
+
+        if (!program.getUser().getUserId().equals(currentUser.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to change status of this program");
+        }
+
+        if (program.getStatus() != ProgramStatus.ACTIVE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Program status must be ACTIVE to change to DRAFT");
+        }
+
+        program.setStatus(ProgramStatus.DRAFT);
+        return programRepository.save(program);
+    }
+
 }
