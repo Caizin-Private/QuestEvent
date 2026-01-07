@@ -1,15 +1,19 @@
 package com.questevent.service;
 
+import com.questevent.dto.UserPrincipal;
 import com.questevent.dto.UserWalletBalanceDTO;
 import com.questevent.entity.User;
 import com.questevent.entity.UserWallet;
 import com.questevent.repository.UserRepository;
 import com.questevent.repository.UserWalletRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @Service
 public class UserWalletService {
@@ -44,13 +48,27 @@ public class UserWalletService {
         userWalletRepository.save(userWallet);
     }
 
-    public UserWalletBalanceDTO getWalletBalance(Long userId) {
+    public UserWalletBalanceDTO getMyWalletBalance() {
 
-        if (userId == null || userId <= 0) {
-            throw new IllegalArgumentException("Invalid userId");
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new ResponseStatusException(
+                    UNAUTHORIZED,
+                    "Unauthenticated request"
+            );
         }
 
-        User user = userRepository.findById(userId)
+        Object principal = authentication.getPrincipal();
+        if (!(principal instanceof UserPrincipal p)) {
+            throw new ResponseStatusException(
+                    UNAUTHORIZED,
+                    "Invalid authentication principal"
+            );
+        }
+
+        User user = userRepository.findById(p.userId())
                 .orElseThrow(() ->
                         new ResponseStatusException(
                                 NOT_FOUND,
