@@ -39,9 +39,6 @@ public class Program {
     @Column(name = "endDate")
     private Instant endDate;
 
-    @Column(nullable = false)
-    private Integer registrationFee;
-
     @Enumerated(EnumType.STRING)
     private ProgramStatus status;
 

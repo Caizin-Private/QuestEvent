@@ -125,7 +125,6 @@ public class ProgramService {
         program.setDepartment(dto.getDepartment());
         program.setStartDate(dto.getStartDate());
         program.setEndDate(dto.getEndDate());
-        program.setRegistrationFee(dto.getRegistrationFee());
         program.setStatus(dto.getStatus());
     }
 
