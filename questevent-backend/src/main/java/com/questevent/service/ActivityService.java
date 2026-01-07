@@ -15,11 +15,17 @@ import java.util.List;
 @Service
 public class ActivityService {
 
-    @Autowired
-    private ActivityRepository activityRepository;
 
-    @Autowired
-    private ProgramRepository programRepository;
+    private final ActivityRepository activityRepository;
+    private final ProgramRepository programRepository;
+
+    public ActivityService(
+            ActivityRepository activityRepository,
+            ProgramRepository programRepository
+    ) {
+        this.activityRepository = activityRepository;
+        this.programRepository = programRepository;
+    }
 
     public Activity createActivity(Long programId, ActivityRequestDTO dto) {
         Program program = programRepository.findById(programId)
