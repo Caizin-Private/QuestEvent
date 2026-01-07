@@ -147,7 +147,6 @@ public class ProgramController {
         response.setDepartment(program.getDepartment());
         response.setStartDate(program.getStartDate());
         response.setEndDate(program.getEndDate());
-        response.setRegistrationFee(program.getRegistrationFee());
         response.setStatus(program.getStatus());
         response.setHostUserId(program.getUser().getUserId());
         return response;
