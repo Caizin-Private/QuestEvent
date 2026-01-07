@@ -7,7 +7,6 @@ import com.questevent.service.ProgramRegistrationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,141 +24,130 @@ public class ProgramRegistrationController {
 
     private final ProgramRegistrationService programRegistrationService;
 
+    /* ===================== SELF REGISTRATION ===================== */
+
     @PreAuthorize("@rbac.canRegisterForProgram(authentication, #request.programId, #request.userId)")
     @PostMapping
-    @Operation(summary = "Register participant for program", description = "Registers a user for a specific program (self-registration)")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Registration successful"),
-            @ApiResponse(responseCode = "400", description = "Invalid input or user already registered")
-    })
+    @Operation(
+            summary = "Register participant for program",
+            description = "Registers a user for a specific program (self-registration)"
+    )
+    @ApiResponse(responseCode = "201", description = "Registration successful")
+    @ApiResponse(responseCode = "400", description = "Invalid input or user already registered")
     public ResponseEntity<ProgramRegistrationResponseDTO> registerParticipant(
-            @RequestBody ProgramRegistrationRequestDTO request) {
-        try {
-            ProgramRegistrationResponseDTO response =
-                    programRegistrationService.registerParticipantForProgram(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e.getMessage());
-        }
+            @RequestBody ProgramRegistrationRequestDTO request
+    ) {
+        ProgramRegistrationResponseDTO response =
+                programRegistrationService.registerParticipantForProgram(request);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    /* ===================== HOST REGISTRATION ===================== */
 
     @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @PostMapping("/programs/{programId}/participants")
-    @Operation(summary = "Add participant to program (Host only)", description = "Allows program host to register a user for their program")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Registration successful"),
-            @ApiResponse(responseCode = "400", description = "Invalid input or user already registered"),
-            @ApiResponse(responseCode = "403", description = "Permission denied - only program host can add participants"),
-            @ApiResponse(responseCode = "404", description = "Program or user not found")
-    })
+    @Operation(
+            summary = "Add participant to program (Host only)",
+            description = "Allows program host to register a user for their program"
+    )
+    @ApiResponse(responseCode = "201", description = "Registration successful")
+    @ApiResponse(responseCode = "400", description = "Invalid input or user already registered")
+    @ApiResponse(responseCode = "403", description = "Permission denied")
+    @ApiResponse(responseCode = "404", description = "Program or user not found")
     public ResponseEntity<ProgramRegistrationResponseDTO> addParticipantByHost(
-            @Parameter(description = "Program ID", required = true) @PathVariable Long programId,
-            @Parameter(description = "User ID to register", required = true) @RequestParam Long userId) {
-        try {
-            ProgramRegistrationRequestDTO request = new ProgramRegistrationRequestDTO();
-            request.setProgramId(programId);
-            request.setUserId(userId);
-            ProgramRegistrationResponseDTO response =
-                    programRegistrationService.registerParticipantForProgram(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e.getMessage());
-        }
+            @Parameter(description = "Program ID", required = true)
+            @PathVariable Long programId,
+
+            @Parameter(description = "User ID to register", required = true)
+            @RequestParam Long userId
+    ) {
+        ProgramRegistrationRequestDTO request = new ProgramRegistrationRequestDTO();
+        request.setProgramId(programId);
+        request.setUserId(userId);
+
+        ProgramRegistrationResponseDTO response =
+                programRegistrationService.registerParticipantForProgram(request);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    /* ===================== READ ===================== */
 
     @PreAuthorize("isAuthenticated()")
     @GetMapping
-    @Operation(summary = "Get all program registrations", description = "Retrieves all program registrations")
+    @Operation(summary = "Get all program registrations")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
     public ResponseEntity<List<ProgramRegistrationDTO>> getAllRegistrations() {
-        List<ProgramRegistrationDTO> registrations =
-                programRegistrationService.getAllRegistrations();
-        return ResponseEntity.ok(registrations);
+        return ResponseEntity.ok(
+                programRegistrationService.getAllRegistrations()
+        );
     }
 
     @PreAuthorize("@rbac.canAccessProgramRegistration(authentication, #id)")
     @GetMapping("/{id}")
-    @Operation(summary = "Get registration by ID", description = "Retrieves a specific program registration by ID")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Registration found"),
-            @ApiResponse(responseCode = "404", description = "Registration not found")
-    })
+    @Operation(summary = "Get registration by ID")
+    @ApiResponse(responseCode = "200", description = "Registration found")
+    @ApiResponse(responseCode = "404", description = "Registration not found")
     public ResponseEntity<ProgramRegistrationDTO> getRegistrationById(
-            @Parameter(description = "Registration ID", required = true) @PathVariable Long id) {
-        try {
-            ProgramRegistrationDTO registration =
-                    programRegistrationService.getRegistrationById(id);
-            return ResponseEntity.ok(registration);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+            @PathVariable Long id
+    ) {
+        return ResponseEntity.ok(
+                programRegistrationService.getRegistrationById(id)
+        );
     }
 
     @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @GetMapping("/programs/{programId}")
-    @Operation(summary = "Get registrations by program", description = "Retrieves all registrations for a specific program")
+    @Operation(summary = "Get registrations by program")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
     public ResponseEntity<List<ProgramRegistrationDTO>> getRegistrationsByProgram(
-            @Parameter(description = "Program ID", required = true) @PathVariable Long programId) {
-        List<ProgramRegistrationDTO> registrations =
-                programRegistrationService.getRegistrationsByProgramId(programId);
-        return ResponseEntity.ok(registrations);
+            @PathVariable Long programId
+    ) {
+        return ResponseEntity.ok(
+                programRegistrationService.getRegistrationsByProgramId(programId)
+        );
     }
 
     @PreAuthorize("@rbac.canAccessUserProfile(authentication, #userId)")
     @GetMapping("/users/{userId}")
-    @Operation(summary = "Get registrations by user", description = "Retrieves all program registrations for a specific user")
+    @Operation(summary = "Get registrations by user")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
     public ResponseEntity<List<ProgramRegistrationDTO>> getRegistrationsByUser(
-            @Parameter(description = "User ID", required = true) @PathVariable Long userId) {
-        List<ProgramRegistrationDTO> registrations =
-                programRegistrationService.getRegistrationsByUserId(userId);
-        return ResponseEntity.ok(registrations);
+            @PathVariable Long userId
+    ) {
+        return ResponseEntity.ok(
+                programRegistrationService.getRegistrationsByUserId(userId)
+        );
     }
 
-    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
-    @GetMapping("/programs/{programId}/count")
-    @Operation(summary = "Get participant count", description = "Gets the total number of participants registered for a program")
-    @ApiResponse(responseCode = "200", description = "Successfully retrieved count")
-    public ResponseEntity<Long> getParticipantCount(
-            @Parameter(description = "Program ID", required = true) @PathVariable Long programId) {
-        long count = programRegistrationService.getParticipantCountForProgram(programId);
-        return ResponseEntity.ok(count);
-    }
+    /* ===================== DELETE ===================== */
 
     @PreAuthorize("@rbac.canAccessProgramRegistration(authentication, #id)")
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete registration", description = "Deletes a program registration")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Registration deleted successfully"),
-            @ApiResponse(responseCode = "404", description = "Registration not found")
-    })
+    @Operation(summary = "Delete registration")
+    @ApiResponse(responseCode = "204", description = "Registration deleted successfully")
     public ResponseEntity<Void> deleteRegistration(
-            @Parameter(description = "Registration ID", required = true) @PathVariable Long id) {
-        try {
-            programRegistrationService.deleteRegistration(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+            @PathVariable Long id
+    ) {
+        programRegistrationService.deleteRegistration(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @DeleteMapping("/programs/{programId}/participants/{userId}")
-    @Operation(summary = "Remove participant from program (Host only)", description = "Allows program host to remove a user from their program")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Participant removed successfully"),
-            @ApiResponse(responseCode = "403", description = "Permission denied - only program host can remove participants"),
-            @ApiResponse(responseCode = "404", description = "Registration not found")
-    })
+    @Operation(
+            summary = "Remove participant from program (Host only)",
+            description = "Allows program host to remove a user from their program"
+    )
+    @ApiResponse(responseCode = "204", description = "Participant removed successfully")
+    @ApiResponse(responseCode = "403", description = "Permission denied")
+    @ApiResponse(responseCode = "404", description = "Registration not found")
     public ResponseEntity<Void> removeParticipantByHost(
-            @Parameter(description = "Program ID", required = true) @PathVariable Long programId,
-            @Parameter(description = "User ID to remove", required = true) @PathVariable Long userId) {
-        try {
-            programRegistrationService.deleteRegistrationByProgramAndUser(programId, userId);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+            @PathVariable Long programId,
+            @PathVariable Long userId
+    ) {
+        programRegistrationService.deleteRegistrationByProgramAndUser(programId, userId);
+        return ResponseEntity.noContent().build();
     }
 }

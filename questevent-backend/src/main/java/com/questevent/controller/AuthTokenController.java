@@ -5,7 +5,6 @@ import com.questevent.entity.User;
 import com.questevent.repository.UserRepository;
 import com.questevent.service.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,8 +23,17 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthTokenController {
 
+    /* ===================== RESPONSE KEYS ===================== */
+
+    private static final String KEY_USER_ID = "userId";
+    private static final String KEY_EMAIL = "email";
+    private static final String KEY_ROLE = "role";
+    private static final String KEY_AUTHENTICATED = "authenticated";
+
     private final JwtService jwtService;
     private final UserRepository userRepository;
+
+    /* ===================== INFO ===================== */
 
     @GetMapping
     public Map<String, Object> authInfo() {
@@ -40,6 +48,8 @@ public class AuthTokenController {
                 )
         );
     }
+
+    /* ===================== TOKEN GENERATION ===================== */
 
     @GetMapping("/token")
     @PreAuthorize("isAuthenticated()")
@@ -62,31 +72,36 @@ public class AuthTokenController {
         response.put("refreshToken", refreshToken);
         response.put("tokenType", "Bearer");
         response.put("expiresIn", 300); // 5 minutes
-        response.put("userId", principal.userId());
-        response.put("email", principal.email());
-        response.put("role", principal.role().name());
+        response.put(KEY_USER_ID, principal.userId());
+        response.put(KEY_EMAIL, principal.email());
+        response.put(KEY_ROLE, principal.role().name());
 
         return response;
     }
+
+    /* ===================== REFRESH TOKEN ===================== */
 
     @PostMapping("/refresh")
     @Operation(
             summary = "Refresh access token",
             description = "Generate new access token using refresh token"
     )
-    public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> body) {
-
+    public ResponseEntity<Map<String, Object>> refreshToken(
+            @RequestBody Map<String, String> body
+    ) {
         String refreshToken = body.get("refreshToken");
 
-        if (refreshToken == null || !jwtService.validateToken(refreshToken)
+        if (refreshToken == null
+                || !jwtService.validateToken(refreshToken)
                 || !jwtService.isRefreshToken(refreshToken)) {
+
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Invalid or expired refresh token"));
         }
 
         String email = jwtService.extractUsername(refreshToken);
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new IllegalStateException("User not found"));
 
         UserPrincipal principal =
                 new UserPrincipal(user.getUserId(), user.getEmail(), user.getRole());
@@ -100,6 +115,8 @@ public class AuthTokenController {
         ));
     }
 
+    /* ===================== CURRENT USER ===================== */
+
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "bearerAuth")
@@ -111,12 +128,14 @@ public class AuthTokenController {
         UserPrincipal principal = extractPrincipal(authentication);
 
         return Map.of(
-                "userId", principal.userId(),
-                "email", principal.email(),
-                "role", principal.role().name(),
-                "authenticated", authentication.isAuthenticated()
+                KEY_USER_ID, principal.userId(),
+                KEY_EMAIL, principal.email(),
+                KEY_ROLE, principal.role().name(),
+                KEY_AUTHENTICATED, authentication.isAuthenticated()
         );
     }
+
+    /* ===================== TEST ===================== */
 
     @GetMapping("/test")
     @PreAuthorize("isAuthenticated()")
@@ -127,17 +146,19 @@ public class AuthTokenController {
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("status", "JWT authentication working ✅");
-        response.put("authenticated", authentication.isAuthenticated());
+        response.put(KEY_AUTHENTICATED, authentication.isAuthenticated());
         response.put("authorities", authentication.getAuthorities());
 
         if (authentication.getPrincipal() instanceof UserPrincipal p) {
-            response.put("userId", p.userId());
-            response.put("email", p.email());
-            response.put("role", p.role().name());
+            response.put(KEY_USER_ID, p.userId());
+            response.put(KEY_EMAIL, p.email());
+            response.put(KEY_ROLE, p.role().name());
         }
 
         return response;
     }
+
+    /* ===================== VERIFY AUTH SOURCE ===================== */
 
     @GetMapping("/verify")
     @PreAuthorize("isAuthenticated()")
@@ -155,21 +176,23 @@ public class AuthTokenController {
         return response;
     }
 
+    /* ===================== UTIL ===================== */
+
     private UserPrincipal extractPrincipal(Authentication authentication) {
 
         if (authentication.getPrincipal() instanceof UserPrincipal principal) {
             return principal;
         }
 
-        if (authentication.getPrincipal() instanceof
-                org.springframework.security.core.userdetails.UserDetails ud) {
+        if (authentication.getPrincipal()
+                instanceof org.springframework.security.core.userdetails.UserDetails ud) {
 
             User user = userRepository.findByEmail(ud.getUsername())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> new IllegalStateException("User not found"));
 
             return new UserPrincipal(user.getUserId(), user.getEmail(), user.getRole());
         }
 
-        throw new RuntimeException("Unable to extract user principal");
+        throw new IllegalStateException("Unable to extract user principal");
     }
 }

@@ -5,7 +5,6 @@ import com.questevent.service.JudgeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -33,9 +32,7 @@ public class JudgeController {
             description = "Successfully retrieved pending submissions"
     )
     public ResponseEntity<List<JudgeSubmissionDTO>> getPendingSubmissions() {
-        return ResponseEntity.ok(
-                judgeService.getPendingSubmissions()
-        );
+        return ResponseEntity.ok(judgeService.getPendingSubmissions());
     }
 
     @PreAuthorize("isAuthenticated()")
@@ -44,15 +41,10 @@ public class JudgeController {
             summary = "Get submissions for a specific activity",
             description = "Retrieves all submissions related to a given activity ID"
     )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Submissions retrieved successfully"),
-            @ApiResponse(responseCode = "404", description = "Activity not found")
-    })
+    @ApiResponse(responseCode = "200", description = "Submissions retrieved successfully")
+    @ApiResponse(responseCode = "404", description = "Activity not found")
     public ResponseEntity<List<JudgeSubmissionDTO>> getSubmissionsForActivity(
-            @Parameter(
-                    description = "Activity ID",
-                    required = true
-            )
+            @Parameter(description = "Activity ID", required = true)
             @PathVariable Long activityId
     ) {
         return ResponseEntity.ok(
@@ -66,18 +58,13 @@ public class JudgeController {
             summary = "Review an activity submission",
             description = "Allows a judge to review a submission, award gems, and mark the activity as completed"
     )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Submission reviewed successfully"),
-            @ApiResponse(responseCode = "400", description = "Submission already reviewed or invalid request"),
-            @ApiResponse(responseCode = "404", description = "Submission or judge not found")
-    })
+    @ApiResponse(responseCode = "200", description = "Submission reviewed successfully")
+    @ApiResponse(responseCode = "400", description = "Submission already reviewed or invalid request")
+    @ApiResponse(responseCode = "404", description = "Submission or judge not found")
     public ResponseEntity<String> reviewSubmission(
             @PathVariable Long submissionId
-
-//            @RequestParam Long judgeId //
     ) {
         judgeService.reviewSubmission(submissionId);
         return ResponseEntity.ok("Submission reviewed successfully");
     }
-
 }

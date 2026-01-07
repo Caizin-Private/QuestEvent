@@ -18,7 +18,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
 @RestController
 @RequestMapping("/api/activity-registrations")
 @RequiredArgsConstructor
@@ -29,165 +28,148 @@ public class ActivityRegistrationController {
 
     @PreAuthorize("@rbac.canRegisterForActivity(authentication, #request.activityId, #request.userId)")
     @PostMapping
-    @Operation(summary = "Register participant for activity", description = "Registers a user for a specific activity (self-registration)")
+    @Operation(
+            summary = "Register participant for activity",
+            description = "Registers a user for a specific activity (self-registration)"
+    )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Registration successful"),
             @ApiResponse(responseCode = "400", description = "Invalid input or user already registered")
     })
     public ResponseEntity<ActivityRegistrationResponseDTO> registerParticipant(
             @RequestBody ActivityRegistrationRequestDTO request) {
-        try {
-            ActivityRegistrationResponseDTO response =
-                    activityRegistrationService.registerParticipantForActivity(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e.getMessage());
-        }
+
+        ActivityRegistrationResponseDTO response =
+                activityRegistrationService.registerParticipantForActivity(request);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PreAuthorize("@rbac.canManageProgram(authentication, #activityId)")
     @PostMapping("/activities/{activityId}/participants")
-    @Operation(summary = "Add participant to activity (Host only)", description = "Allows program host to register a user for an activity in their program")
+    @Operation(
+            summary = "Add participant to activity (Host only)",
+            description = "Allows program host to register a user for an activity in their program"
+    )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Registration successful"),
             @ApiResponse(responseCode = "400", description = "Invalid input or user already registered"),
-            @ApiResponse(responseCode = "403", description = "Permission denied - only program host can add participants"),
+            @ApiResponse(responseCode = "403", description = "Permission denied"),
             @ApiResponse(responseCode = "404", description = "Activity or user not found")
     })
     public ResponseEntity<ActivityRegistrationResponseDTO> addParticipantByHost(
-            @Parameter(description = "Activity ID", required = true) @PathVariable Long activityId,
-            @Parameter(description = "User ID to register", required = true) @RequestParam Long userId,
-            @Parameter(description = "Completion status", required = false) @RequestParam(required = false) CompletionStatus completionStatus) {
-        try {
-            ActivityRegistrationRequestDTO request = new ActivityRegistrationRequestDTO();
-            request.setActivityId(activityId);
-            request.setUserId(userId);
-            request.setCompletionStatus(completionStatus != null ? completionStatus : CompletionStatus.NOT_COMPLETED);
-            ActivityRegistrationResponseDTO response =
-                    activityRegistrationService.registerParticipantForActivity(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e.getMessage());
-        }
+            @PathVariable Long activityId,
+            @RequestParam Long userId,
+            @RequestParam(required = false) CompletionStatus completionStatus) {
+
+        ActivityRegistrationRequestDTO request = new ActivityRegistrationRequestDTO();
+        request.setActivityId(activityId);
+        request.setUserId(userId);
+        request.setCompletionStatus(
+                completionStatus != null ? completionStatus : CompletionStatus.NOT_COMPLETED
+        );
+
+        ActivityRegistrationResponseDTO response =
+                activityRegistrationService.registerParticipantForActivity(request);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PreAuthorize("isAuthenticated()")
     @GetMapping
-    @Operation(summary = "Get all activity registrations", description = "Retrieves all activity registrations")
-    @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
+    @Operation(summary = "Get all activity registrations")
     public ResponseEntity<List<ActivityRegistrationDTO>> getAllRegistrations() {
-        List<ActivityRegistrationDTO> registrations =
-                activityRegistrationService.getAllRegistrations();
-        return ResponseEntity.ok(registrations);
+        return ResponseEntity.ok(activityRegistrationService.getAllRegistrations());
     }
 
     @PreAuthorize("@rbac.canAccessActivityRegistration(authentication, #id)")
     @GetMapping("/{id}")
-    @Operation(summary = "Get registration by ID", description = "Retrieves a specific activity registration by ID")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Registration found"),
-            @ApiResponse(responseCode = "404", description = "Registration not found")
-    })
+    @Operation(summary = "Get registration by ID")
     public ResponseEntity<ActivityRegistrationDTO> getRegistrationById(
-            @Parameter(description = "Registration ID", required = true) @PathVariable Long id) {
-        try {
-            ActivityRegistrationDTO registration =
-                    activityRegistrationService.getRegistrationById(id);
-            return ResponseEntity.ok(registration);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+            @PathVariable Long id) {
+
+        ActivityRegistrationDTO registration =
+                activityRegistrationService.getRegistrationById(id);
+
+        return ResponseEntity.ok(registration);
     }
 
     @PreAuthorize("@rbac.canManageProgram(authentication, #activityId)")
     @GetMapping("/activities/{activityId}")
-    @Operation(summary = "Get registrations by activity", description = "Retrieves all registrations for a specific activity")
-    @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
+    @Operation(summary = "Get registrations by activity")
     public ResponseEntity<List<ActivityRegistrationDTO>> getRegistrationsByActivity(
-            @Parameter(description = "Activity ID", required = true) @PathVariable Long activityId) {
-        List<ActivityRegistrationDTO> registrations =
-                activityRegistrationService.getRegistrationsByActivityId(activityId);
-        return ResponseEntity.ok(registrations);
+            @PathVariable Long activityId) {
+
+        return ResponseEntity.ok(
+                activityRegistrationService.getRegistrationsByActivityId(activityId)
+        );
     }
 
     @PreAuthorize("@rbac.canAccessUserProfile(authentication, #userId)")
     @GetMapping("/users/{userId}")
-    @Operation(summary = "Get registrations by user", description = "Retrieves all activity registrations for a specific user")
-    @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
+    @Operation(summary = "Get registrations by user")
     public ResponseEntity<List<ActivityRegistrationDTO>> getRegistrationsByUser(
-            @Parameter(description = "User ID", required = true) @PathVariable Long userId) {
-        List<ActivityRegistrationDTO> registrations =
-                activityRegistrationService.getRegistrationsByUserId(userId);
-        return ResponseEntity.ok(registrations);
+            @PathVariable Long userId) {
+
+        return ResponseEntity.ok(
+                activityRegistrationService.getRegistrationsByUserId(userId)
+        );
     }
 
     @PreAuthorize("@rbac.canManageProgram(authentication, #activityId)")
     @GetMapping("/activities/{activityId}/status/{status}")
-    @Operation(summary = "Get registrations by activity and status", description = "Retrieves registrations for an activity filtered by completion status")
-    @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
+    @Operation(summary = "Get registrations by activity and status")
     public ResponseEntity<List<ActivityRegistrationDTO>> getRegistrationsByActivityAndStatus(
-            @Parameter(description = "Activity ID", required = true) @PathVariable Long activityId,
-            @Parameter(description = "Completion status", required = true) @PathVariable CompletionStatus status) {
-        List<ActivityRegistrationDTO> registrations =
-                activityRegistrationService.getRegistrationsByActivityIdAndStatus(activityId, status);
-        return ResponseEntity.ok(registrations);
+            @PathVariable Long activityId,
+            @PathVariable CompletionStatus status) {
+
+        return ResponseEntity.ok(
+                activityRegistrationService.getRegistrationsByActivityIdAndStatus(activityId, status)
+        );
     }
 
     @PreAuthorize("@rbac.canAccessUserProfile(authentication, #userId)")
     @GetMapping("/users/{userId}/status/{status}")
-    @Operation(summary = "Get registrations by user and status", description = "Retrieves activity registrations for a user filtered by completion status")
-    @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
+    @Operation(summary = "Get registrations by user and status")
     public ResponseEntity<List<ActivityRegistrationDTO>> getRegistrationsByUserAndStatus(
-            @Parameter(description = "User ID", required = true) @PathVariable Long userId,
-            @Parameter(description = "Completion status", required = true) @PathVariable CompletionStatus status) {
-        List<ActivityRegistrationDTO> registrations =
-                activityRegistrationService.getRegistrationsByUserIdAndStatus(userId, status);
-        return ResponseEntity.ok(registrations);
+            @PathVariable Long userId,
+            @PathVariable CompletionStatus status) {
+
+        return ResponseEntity.ok(
+                activityRegistrationService.getRegistrationsByUserIdAndStatus(userId, status)
+        );
     }
 
     @PreAuthorize("@rbac.canManageProgram(authentication, #id)")
     @PatchMapping("/{id}/status")
-    @Operation(summary = "Update completion status", description = "Updates the completion status of an activity registration")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Status updated successfully"),
-            @ApiResponse(responseCode = "404", description = "Registration not found")
-    })
+    @Operation(summary = "Update completion status")
     public ResponseEntity<ActivityRegistrationDTO> updateCompletionStatus(
-            @Parameter(description = "Registration ID", required = true) @PathVariable Long id,
+            @PathVariable Long id,
             @RequestBody ActivityCompletionUpdateDTO updateDTO) {
-        try {
-            ActivityRegistrationDTO updatedRegistration =
-                    activityRegistrationService.updateCompletionStatus(id, updateDTO);
-            return ResponseEntity.ok(updatedRegistration);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+
+        ActivityRegistrationDTO updated =
+                activityRegistrationService.updateCompletionStatus(id, updateDTO);
+
+        return ResponseEntity.ok(updated);
     }
 
     @PreAuthorize("@rbac.canManageProgram(authentication, #activityId)")
     @GetMapping("/activities/{activityId}/count")
-    @Operation(summary = "Get participant count", description = "Gets the total number of participants registered for an activity")
-    @ApiResponse(responseCode = "200", description = "Successfully retrieved count")
+    @Operation(summary = "Get participant count")
     public ResponseEntity<Long> getParticipantCount(
-            @Parameter(description = "Activity ID", required = true) @PathVariable Long activityId) {
-        long count = activityRegistrationService.getParticipantCountForActivity(activityId);
-        return ResponseEntity.ok(count);
+            @PathVariable Long activityId) {
+
+        return ResponseEntity.ok(
+                activityRegistrationService.getParticipantCountForActivity(activityId)
+        );
     }
 
     @PreAuthorize("@rbac.canAccessActivityRegistration(authentication, #id)")
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete registration", description = "Deletes an activity registration")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Registration deleted successfully"),
-            @ApiResponse(responseCode = "404", description = "Registration not found")
-    })
-    public ResponseEntity<Void> deleteRegistration(
-            @Parameter(description = "Registration ID", required = true) @PathVariable Long id) {
-        try {
-            activityRegistrationService.deleteRegistration(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+    @Operation(summary = "Delete registration")
+    public ResponseEntity<Void> deleteRegistration(@PathVariable Long id) {
+
+        activityRegistrationService.deleteRegistration(id);
+        return ResponseEntity.noContent().build();
     }
 }

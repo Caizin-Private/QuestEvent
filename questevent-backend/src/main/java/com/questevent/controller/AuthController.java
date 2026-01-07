@@ -7,20 +7,18 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 
-@Controller
+@RestController
 @RequiredArgsConstructor
 public class AuthController {
 
     private final UserRepository userRepository;
 
     @GetMapping({"/", "/login"})
-    @ResponseBody
     public String loginPage(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         HttpSession session = request.getSession(false);
@@ -28,8 +26,9 @@ public class AuthController {
         // ✅ already logged-in user
         if (session != null && session.getAttribute("userId") != null) {
             response.sendRedirect("/profile");
-            return null;
+            return "";
         }
+
         return """
         <!DOCTYPE html>
         <html>
@@ -46,12 +45,11 @@ public class AuthController {
             </a>
         </body>
         </html>
-    """;
+        """;
     }
 
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/profile")
-    @ResponseBody
     public String profile(HttpServletRequest request) {
 
         Long userId = (Long) request.getSession().getAttribute("userId");
@@ -83,7 +81,6 @@ public class AuthController {
     }
 
     @GetMapping("/logout-success")
-    @ResponseBody
     public String logoutSuccess() {
         return """
             <h2>Logged out successfully ✅</h2>
