@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 @Data
 public class ProgramRequestDTO {
-    private Long hostUserId;
+//    private Long hostUserId;
     private String programTitle;
     private String programDescription;
     private Department department;
