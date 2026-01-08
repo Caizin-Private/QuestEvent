@@ -135,7 +135,7 @@ public class ProgramController {
 
 
 
-    @PreAuthorize("isAuthenticated() and @rbac.canManageProgram(authentication, #programId)")
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @PutMapping("/{programId}")
     @Operation(summary = "Update program", description = "Updates an existing program's information")
     @ApiResponses(value = {
@@ -150,7 +150,7 @@ public class ProgramController {
         return ResponseEntity.ok(convertToResponseDTO(updated));
     }
 
-    @PreAuthorize("isAuthenticated() and @rbac.canManageProgram(authentication, #programId)")
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @PostMapping("/{programId}/settle")
     @Operation(summary = "Settle program wallets", description = "Settles all program wallets for a specific program")
     @ApiResponses(value = {
@@ -163,7 +163,7 @@ public class ProgramController {
         return ResponseEntity.ok("Program settled successfully");
     }
 
-    @PreAuthorize("isAuthenticated() and @rbac.canManageProgram(authentication, #programId)")
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @DeleteMapping("/{programId}")
     @Operation(summary = "Delete program", description = "Deletes a program from the system")
     @ApiResponses(value = {
