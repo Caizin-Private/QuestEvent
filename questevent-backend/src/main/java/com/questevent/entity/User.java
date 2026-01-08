@@ -1,6 +1,5 @@
 package com.questevent.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.questevent.enums.Department;
 import com.questevent.enums.Role;
 import jakarta.persistence.*;
@@ -56,6 +55,4 @@ public class User {
             fetch = FetchType.LAZY
     )
     private Judge judge;
-
-
 }

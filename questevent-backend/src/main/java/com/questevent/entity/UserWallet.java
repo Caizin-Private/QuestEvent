@@ -24,6 +24,6 @@ public class UserWallet {
     private User user;
 
     @Column(name="gems",nullable = false)
-    private int gems;
+    private Long gems;
 
 }

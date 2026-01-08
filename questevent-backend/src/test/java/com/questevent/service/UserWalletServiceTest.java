@@ -87,7 +87,7 @@ class UserWalletServiceTest {
         UUID walletId = UUID.randomUUID();
         UserWallet wallet = new UserWallet();
         wallet.setWalletId(walletId);
-        wallet.setGems(100);
+        wallet.setGems(100L);
 
         user.setWallet(wallet);
 

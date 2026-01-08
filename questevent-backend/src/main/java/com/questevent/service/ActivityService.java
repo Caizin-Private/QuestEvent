@@ -76,7 +76,7 @@ public class ActivityService {
         activity.setActivityDuration(dto.getActivityDuration());
         activity.setActivityRulebook(dto.getActivityRulebook());
         activity.setActivityDescription(dto.getActivityDescription());
-        activity.setRewardGems(dto.getRewardGems());
+        activity.setRewardGems(Long.valueOf(dto.getRewardGems()));
         activity.setIsCompulsory(dto.getIsCompulsory());
     }
 }

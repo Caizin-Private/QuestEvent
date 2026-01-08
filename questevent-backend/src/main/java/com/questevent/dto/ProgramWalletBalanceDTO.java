@@ -10,5 +10,5 @@ public class ProgramWalletBalanceDTO {
     private UUID programWalletId;
     private Long programId;
     private Long userId;
-    private int gems;
+    private Long gems;
 }

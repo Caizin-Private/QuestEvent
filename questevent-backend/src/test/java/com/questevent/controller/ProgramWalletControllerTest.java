@@ -32,7 +32,7 @@ class ProgramWalletControllerTest {
 
         ProgramWalletBalanceDTO dto = new ProgramWalletBalanceDTO();
         dto.setProgramWalletId(walletId);
-        dto.setGems(150);
+        dto.setGems(150L);
 
         when(programWalletService.getWalletBalanceByWalletId(walletId))
                 .thenReturn(dto);
@@ -50,7 +50,7 @@ class ProgramWalletControllerTest {
         ProgramWalletBalanceDTO dto = new ProgramWalletBalanceDTO();
         dto.setProgramWalletId(UUID.randomUUID());
         dto.setUserId(1L);
-        dto.setGems(300);
+        dto.setGems(300L);
 
         when(programWalletService.getProgramWalletsByProgramId(10L))
                 .thenReturn(List.of(dto));
@@ -81,12 +81,12 @@ class ProgramWalletControllerTest {
         ProgramWalletBalanceDTO dto1 = new ProgramWalletBalanceDTO();
         dto1.setProgramWalletId(UUID.randomUUID());
         dto1.setUserId(1L);
-        dto1.setGems(100);
+        dto1.setGems(100L);
 
         ProgramWalletBalanceDTO dto2 = new ProgramWalletBalanceDTO();
         dto2.setProgramWalletId(UUID.randomUUID());
         dto2.setUserId(2L);
-        dto2.setGems(200);
+        dto2.setGems(200L);
 
         when(programWalletService.getProgramWalletsByProgramId(10L))
                 .thenReturn(List.of(dto1, dto2));
@@ -108,7 +108,7 @@ class ProgramWalletControllerTest {
         dto.setProgramWalletId(UUID.randomUUID());
         dto.setProgramId(9L);
         dto.setUserId(1L);
-        dto.setGems(50);
+        dto.setGems(50L);
 
         when(programWalletService.getMyProgramWallet(9L))
                 .thenReturn(dto);

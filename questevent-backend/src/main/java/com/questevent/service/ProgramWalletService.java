@@ -53,7 +53,7 @@ public class ProgramWalletService {
         ProgramWallet programWallet = new ProgramWallet();
         programWallet.setUser(user);
         programWallet.setProgram(program);
-        programWallet.setGems(0);
+        programWallet.setGems(0L);
 
         return programWalletRepository.save(programWallet);
     }

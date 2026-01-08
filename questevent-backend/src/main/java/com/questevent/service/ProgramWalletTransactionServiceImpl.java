@@ -33,7 +33,7 @@ public class ProgramWalletTransactionServiceImpl
 
     @Override
     @Transactional
-    public void creditGems(User user, Program program, int amount) {
+    public void creditGems(User user, Program program, Long amount) {
 
         if (user == null || user.getUserId() == null ||
                 program == null || program.getProgramId() == null) {
@@ -75,7 +75,7 @@ public class ProgramWalletTransactionServiceImpl
 
             for (ProgramWallet programWallet : wallets) {
 
-                int gems = programWallet.getGems();
+                Long gems = programWallet.getGems();
                 if (gems <= 0) {
                     continue;
                 }
@@ -89,7 +89,7 @@ public class ProgramWalletTransactionServiceImpl
                         );
 
                 userWallet.setGems(userWallet.getGems() + gems);
-                programWallet.setGems(0);
+                programWallet.setGems(0L);
 
                 userWalletRepository.save(userWallet);
                 programWalletRepository.save(programWallet);
@@ -123,7 +123,7 @@ public class ProgramWalletTransactionServiceImpl
 
         for (ProgramWallet programWallet : wallets) {
 
-            int gems = programWallet.getGems();
+            Long gems = programWallet.getGems();
             if (gems <= 0) {
                 continue;
             }
@@ -134,7 +134,7 @@ public class ProgramWalletTransactionServiceImpl
             }
 
             userWallet.setGems(userWallet.getGems() + gems);
-            programWallet.setGems(0);
+            programWallet.setGems(0L);
 
             userWalletRepository.save(userWallet);
             programWalletRepository.save(programWallet);

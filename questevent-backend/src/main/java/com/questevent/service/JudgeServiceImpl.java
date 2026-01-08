@@ -67,7 +67,7 @@ public class JudgeServiceImpl implements JudgeService {
             throw new RuntimeException("Judge not assigned to this program");
         }
 
-        int rewardGems = activity.getRewardGems();
+        Long rewardGems = activity.getRewardGems();
         if (rewardGems <= 0) {
             throw new RuntimeException("Invalid reward configuration");
         }

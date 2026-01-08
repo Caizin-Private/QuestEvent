@@ -12,7 +12,7 @@ public record JudgeSubmissionDTO(
         Long userId,
         String userName,
         String submissionUrl,
-        Integer awardedGems,
+        Long awardedGems,
         Instant submittedAt,
         Instant reviewedAt,
         ReviewStatus reviewStatus

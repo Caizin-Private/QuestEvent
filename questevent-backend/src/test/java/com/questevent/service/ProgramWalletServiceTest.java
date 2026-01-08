@@ -128,7 +128,7 @@ class ProgramWalletServiceTest {
         wallet.setProgramWalletId(walletId);
         wallet.setUser(user);
         wallet.setProgram(program);
-        wallet.setGems(50);
+        wallet.setGems(50L);
 
         when(programWalletRepository.findById(any(UUID.class)))
                 .thenReturn(Optional.of(wallet));
@@ -169,7 +169,7 @@ class ProgramWalletServiceTest {
         wallet.setProgramWalletId(UUID.randomUUID());
         wallet.setProgram(program);
         wallet.setUser(user);
-        wallet.setGems(300);
+        wallet.setGems(300L);
 
         when(programWalletRepository.findByProgramProgramId(10L))
                 .thenReturn(List.of(wallet));
@@ -215,7 +215,7 @@ class ProgramWalletServiceTest {
         wallet.setProgramWalletId(UUID.randomUUID());
         wallet.setUser(user);
         wallet.setProgram(program);
-        wallet.setGems(80);
+        wallet.setGems(80L);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(programWalletRepository

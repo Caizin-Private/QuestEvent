@@ -13,7 +13,7 @@ public class ActivityResponseDTO {
     private Integer activityDuration;
     private String activityRulebook;
     private String activityDescription;
-    private Integer rewardGems;
+    private Long rewardGems;
     private Instant createdAt;
     private Boolean isCompulsory;
 }

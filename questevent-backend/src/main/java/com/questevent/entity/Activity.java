@@ -39,7 +39,7 @@ public class Activity {
     private String activityDescription;
 
     @Column(name = "reward_gems",nullable = false)
-    private Integer rewardGems;
+    private Long rewardGems;
 
     @Column(name = "created_at",updatable = false)
     private Instant createdAt;

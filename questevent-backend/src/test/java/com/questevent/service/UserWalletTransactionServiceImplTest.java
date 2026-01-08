@@ -33,12 +33,12 @@ class UserWalletTransactionServiceImplTest {
         user.setUserId(1L);
 
         UserWallet wallet = new UserWallet();
-        wallet.setGems(100);
+        wallet.setGems(100L);
 
         when(userWalletRepository.findByUserUserId(1L))
                 .thenReturn(Optional.of(wallet));
 
-        userWalletTransactionService.creditGems(user, 50);
+        userWalletTransactionService.creditGems(user, 50L);
 
         assertEquals(150, wallet.getGems());
         verify(userWalletRepository, times(1)).save(wallet);
@@ -51,7 +51,7 @@ class UserWalletTransactionServiceImplTest {
 
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
-                () -> userWalletTransactionService.creditGems(user, 0)
+                () -> userWalletTransactionService.creditGems(user, 0L)
         );
 
         assertEquals("Amount must be greater than zero", ex.getMessage());
@@ -65,7 +65,7 @@ class UserWalletTransactionServiceImplTest {
 
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
-                () -> userWalletTransactionService.creditGems(user, -10)
+                () -> userWalletTransactionService.creditGems(user, (long) -10)
         );
 
         assertEquals("Amount must be greater than zero", ex.getMessage());
@@ -83,7 +83,7 @@ class UserWalletTransactionServiceImplTest {
 
         RuntimeException ex = assertThrows(
                 RuntimeException.class,
-                () -> userWalletTransactionService.creditGems(user, 20)
+                () -> userWalletTransactionService.creditGems(user, 20L)
         );
 
         assertEquals("Wallet not found", ex.getMessage());

@@ -6,5 +6,5 @@ import java.util.UUID;
 @Data
 public class UserWalletBalanceDTO {
     private UUID walletId;
-    private int gems;
+    private Long gems;
 }

@@ -48,13 +48,13 @@ public class ProgramWalletTransactionServiceImplTest {
         wallet.setProgramWalletId(UUID.randomUUID());
         wallet.setUser(user);
         wallet.setProgram(program);
-        wallet.setGems(100);
+        wallet.setGems(100L);
 
         when(programWalletRepository
                 .findByUserUserIdAndProgramProgramId(1L, 10L))
                 .thenReturn(Optional.of(wallet));
 
-        service.creditGems(user, program, 50);
+        service.creditGems(user, program, 50L);
 
         assertEquals(150, wallet.getGems());
         verify(programWalletRepository).save(wallet);
@@ -70,7 +70,7 @@ public class ProgramWalletTransactionServiceImplTest {
 
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
-                () -> service.creditGems(user, program, 0)
+                () -> service.creditGems(user, program, 0L)
         );
 
         assertEquals("Amount must be greater than zero", ex.getMessage());
@@ -87,7 +87,7 @@ public class ProgramWalletTransactionServiceImplTest {
 
         assertThrows(
                 IllegalArgumentException.class,
-                () -> service.creditGems(user, program, -20)
+                () -> service.creditGems(user, program, (long) -20)
         );
 
         verifyNoInteractions(programWalletRepository);
@@ -107,7 +107,7 @@ public class ProgramWalletTransactionServiceImplTest {
 
         RuntimeException ex = assertThrows(
                 RuntimeException.class,
-                () -> service.creditGems(user, program, 10)
+                () -> service.creditGems(user, program, 10L)
         );
 
         assertEquals("Program wallet not found", ex.getMessage());
@@ -126,13 +126,13 @@ public class ProgramWalletTransactionServiceImplTest {
         wallet.setProgramWalletId(UUID.randomUUID());
         wallet.setUser(user);
         wallet.setProgram(program);
-        wallet.setGems(1_000_000);
+        wallet.setGems(1_000_000L);
 
         when(programWalletRepository
                 .findByUserUserIdAndProgramProgramId(1L, 10L))
                 .thenReturn(Optional.of(wallet));
 
-        service.creditGems(user, program, 500_000);
+        service.creditGems(user, program, 500_000L);
 
         assertEquals(1_500_000, wallet.getGems());
         verify(programWalletRepository).save(wallet);
@@ -148,13 +148,13 @@ public class ProgramWalletTransactionServiceImplTest {
         user.setUserId(1L);
 
         UserWallet userWallet = new UserWallet();
-        userWallet.setGems(100);
+        userWallet.setGems(100L);
 
         user.setWallet(userWallet);
 
         ProgramWallet programWallet = new ProgramWallet();
         programWallet.setUser(user);
-        programWallet.setGems(50);
+        programWallet.setGems(50L);
 
         when(programRepository
                 .findByStatusAndEndDateBefore(eq(ProgramStatus.ACTIVE), any()))
@@ -186,7 +186,7 @@ public class ProgramWalletTransactionServiceImplTest {
         program.setStatus(ProgramStatus.ACTIVE);
 
         ProgramWallet programWallet = new ProgramWallet();
-        programWallet.setGems(0);
+        programWallet.setGems(0L);
 
         when(programRepository
                 .findByStatusAndEndDateBefore(eq(ProgramStatus.ACTIVE), any()))
@@ -209,14 +209,14 @@ public class ProgramWalletTransactionServiceImplTest {
         program.setStatus(ProgramStatus.ACTIVE);
 
         UserWallet userWallet = new UserWallet();
-        userWallet.setGems(200);
+        userWallet.setGems(200L);
 
         User user = new User();
         user.setWallet(userWallet);
 
         ProgramWallet programWallet = new ProgramWallet();
         programWallet.setUser(user);
-        programWallet.setGems(50);
+        programWallet.setGems(50L);
 
         when(programRepository.findById(10L))
                 .thenReturn(Optional.of(program));

@@ -43,7 +43,7 @@ public class UserWalletService {
 
         UserWallet userWallet = new UserWallet();
         userWallet.setUser(user);
-        userWallet.setGems(0);
+        userWallet.setGems(0L);
 
         userWalletRepository.save(userWallet);
     }

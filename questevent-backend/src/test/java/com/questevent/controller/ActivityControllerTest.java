@@ -62,7 +62,7 @@ class ActivityControllerTest {
         activity.setActivityId(1L);
         activity.setActivityName("Test Activity");
         activity.setActivityDuration(60);
-        activity.setRewardGems(100);
+        activity.setRewardGems(100L);
         activity.setIsCompulsory(true);
         activity.setProgram(program);
         activity.setCreatedAt(Instant.now());
@@ -134,7 +134,7 @@ class ActivityControllerTest {
         Activity updatedActivity = new Activity();
         updatedActivity.setActivityId(activityId);
         updatedActivity.setActivityName("Updated Activity");
-        updatedActivity.setRewardGems(200);
+        updatedActivity.setRewardGems(200L);
         updatedActivity.setProgram(program);
 
         when(activityService.updateActivity(eq(programId), eq(activityId), any(ActivityRequestDTO.class)))

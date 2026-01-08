@@ -8,7 +8,7 @@ public record ActivitySubmissionDTO(
         Long activityId,
         Long userId,
         String submissionUrl,
-        Integer awardedGems,
+        Long awardedGems,
         Instant submittedAt,
         Instant reviewedAt
 ) {}

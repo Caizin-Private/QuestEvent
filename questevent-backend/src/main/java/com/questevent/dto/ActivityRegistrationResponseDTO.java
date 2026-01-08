@@ -16,6 +16,6 @@ public class ActivityRegistrationResponseDTO {
     private String userName;
     private String userEmail;
     private CompletionStatus completionStatus;
-    private Integer rewardGems;
+    private Long rewardGems;
     private String message;
 }

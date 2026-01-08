@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 
 @Data
 @Entity
@@ -47,7 +46,7 @@ public class ActivitySubmission {
     private Instant submittedAt;
 
     @Column(name = "awarded_gems")
-    private Integer awardedGems;
+    private Long awardedGems;
 
     @Column(name = "reviewed_at")
     private Instant reviewedAt;

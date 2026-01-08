@@ -82,7 +82,7 @@ class ActivityRegistrationServiceTest {
         Activity activity = new Activity();
         activity.setActivityId(1L);
         activity.setActivityName("Test Activity");
-        activity.setRewardGems(100);
+        activity.setRewardGems(100L);
 
         ActivityRegistration saved = new ActivityRegistration();
         saved.setActivityRegistrationId(1L);

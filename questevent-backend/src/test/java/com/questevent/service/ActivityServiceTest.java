@@ -53,7 +53,7 @@ class ActivityServiceTest {
         savedActivity.setActivityId(1L);
         savedActivity.setActivityName("Test Activity");
         savedActivity.setActivityDuration(60);
-        savedActivity.setRewardGems(100);
+        savedActivity.setRewardGems(100L);
         savedActivity.setIsCompulsory(true);
         savedActivity.setProgram(program);
 
@@ -106,7 +106,7 @@ class ActivityServiceTest {
         Activity updatedActivity = new Activity();
         updatedActivity.setActivityId(activityId);
         updatedActivity.setActivityName("New Name");
-        updatedActivity.setRewardGems(200);
+        updatedActivity.setRewardGems(200L);
         updatedActivity.setProgram(program);
 
         when(activityRepository.findById(activityId)).thenReturn(Optional.of(existingActivity));

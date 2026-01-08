@@ -105,7 +105,7 @@ public class AuthController {
                 .orElseGet(() -> {
                     UserWallet wallet = new UserWallet();
                     wallet.setUser(user);
-                    wallet.setGems(0);
+                    wallet.setGems(0L);
                     return userWalletRepository.save(wallet);
                 });
 

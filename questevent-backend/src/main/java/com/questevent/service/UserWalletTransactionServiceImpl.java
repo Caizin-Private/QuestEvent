@@ -17,7 +17,7 @@ public class UserWalletTransactionServiceImpl implements UserWalletTransactionSe
 
     @Override
     @Transactional
-    public void creditGems(User user, int amount) {
+    public void creditGems(User user, Long amount) {
 
         if (user == null || user.getUserId() == null) {
             throw new IllegalArgumentException("Invalid user");

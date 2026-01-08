@@ -86,7 +86,7 @@ class JudgeServiceImplTest {
                 submission.getActivityRegistration()
                         .getActivity()
                         .getProgram(),
-                50
+                50L
         );
     }
 
@@ -137,7 +137,7 @@ class JudgeServiceImplTest {
         ActivitySubmission submission = mockSubmission();
         submission.getActivityRegistration()
                 .getActivity()
-                .setRewardGems(0);
+                .setRewardGems(0L);
 
         when(submissionRepository.findById(10L))
                 .thenReturn(Optional.of(submission));
@@ -163,7 +163,7 @@ class JudgeServiceImplTest {
         Activity activity = new Activity();
         activity.setActivityId(1L);
         activity.setActivityName("Hackathon");
-        activity.setRewardGems(50);
+        activity.setRewardGems(50L);
         activity.setProgram(program);
 
         ActivityRegistration registration = new ActivityRegistration();
