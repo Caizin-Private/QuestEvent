@@ -24,9 +24,8 @@ public class JudgeController {
     @PreAuthorize("@rbac.canAccessJudgeSubmissions(authentication)")
     @GetMapping("/submissions")
     @Operation(summary = "Get all submissions for judge")
-    public ResponseEntity<List<JudgeSubmissionDTO>> getAllSubmissions(
-            Authentication authentication
-    ) {
+    public ResponseEntity<List<JudgeSubmissionDTO>> getAllSubmissions(Authentication authentication)
+    {
         return ResponseEntity.ok(
                 judgeService.getAllSubmissionsForJudge(authentication)
         );
