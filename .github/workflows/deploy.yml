@@ -1,0 +1,74 @@
+name: Beanstalk JAR Deploy
+
+on:
+  push:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Build JAR
+        run: mvn -U clean verify package
+        working-directory: questevent-backend
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: questevent-backend/target/*.jar
+          retention-days: 1
+
+  deploy:
+    name: Deploy to Elastic Beanstalk
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download JAR artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+          path: questevent-backend/target
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Upload JAR to S3 (Fixed Name)
+        run: |
+          JAR_FILE=$(ls target/*.jar | head -n 1)
+          aws s3 cp "$JAR_FILE" "s3://questevent-versions/questevent-backend-0.0.1-SNAPSHOT.jar"
+        working-directory: questevent-backend
+
+      - name: Create or Reprocess Beanstalk Version
+        run: |
+          VERSION_LABEL="gh-20813801865"
+
+          aws elasticbeanstalk update-application-version \
+            --application-name "questevent" \
+            --version-label "$VERSION_LABEL" \
+            --process || true
+        working-directory: questevent-backend
+
+      - name: Deploy to Elastic Beanstalk Environment
+        run: |
+          VERSION_LABEL="gh-20813801865"
+          aws elasticbeanstalk update-environment \
+            --environment-name "QuestEventuTest-env" \
+            --version-label "$VERSION_LABEL"
+        working-directory: questevent-backend

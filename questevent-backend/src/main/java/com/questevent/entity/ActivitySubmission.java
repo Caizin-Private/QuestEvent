@@ -52,9 +52,10 @@ public class ActivitySubmission {
     @Column(name = "reviewed_at")
     private Instant reviewedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(
             name = "reviewed_by",
+            nullable = true,
             foreignKey = @ForeignKey(name = "fk_submission_judge")
     )
     private Judge reviewedBy;

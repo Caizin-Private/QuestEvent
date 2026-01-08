@@ -422,39 +422,38 @@ public class RbacService {
             Long requestUserId
     ) {
         User user = currentUser(authentication);
-        if (user == null) return false;
+        if (user == null) {
+            return false;
+        }
 
+        // Only USER role can submit
         if (user.getRole() != Role.USER) {
             return false;
         }
 
+        // User can submit only for self
         if (!user.getUserId().equals(requestUserId)) {
             return false;
         }
 
-        if (!activityRegistrationRepository.existsByActivity_ActivityIdAndUser_UserId(activityId, requestUserId)) {
-            return false;
-        }
-
-        ActivityRegistration registration = activityRegistrationRepository
-                .findAll()
-                .stream()
-                .filter(r ->
-                        r.getActivity() != null &&
-                        r.getUser() != null &&
-                        r.getActivity().getActivityId().equals(activityId) &&
-                        r.getUser().getUserId().equals(requestUserId)
-                )
-                .findFirst()
-                .orElse(null);
+        // Must be registered for the activity
+        ActivityRegistration registration =
+                activityRegistrationRepository
+                        .findByActivityActivityIdAndUserUserId(
+                                activityId,
+                                requestUserId
+                        )
+                        .orElse(null);
 
         if (registration == null) {
             return false;
         }
 
-        return !submissionRepository.existsByActivityRegistration_ActivityRegistrationId(
-                registration.getActivityRegistrationId()
-        );
+        // Submission must not already exist
+        return !submissionRepository
+                .existsByActivityRegistration_ActivityRegistrationId(
+                        registration.getActivityRegistrationId()
+                );
     }
 
     public Long getProgramIdByActivityId(Long activityId) {

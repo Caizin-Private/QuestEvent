@@ -2,6 +2,7 @@ package com.questevent.service;
 
 import com.questevent.dto.UserResponseDto;
 import com.questevent.entity.User;
+import com.questevent.exception.UserNotFoundException;
 import com.questevent.repository.UserRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
@@ -25,8 +26,7 @@ public class UserService {
 
     public User getUserById(Long id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
-    }
+                .orElseThrow(() -> new UserNotFoundException("User not found with id " + id));    }
 
     public User addUser(User user) {
 
