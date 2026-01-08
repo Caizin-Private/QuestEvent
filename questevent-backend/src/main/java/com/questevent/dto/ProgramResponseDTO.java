@@ -10,7 +10,6 @@ import java.util.UUID;
 
 @Data
 public class ProgramResponseDTO {
-    private UUID judgeUserId;
     private UUID programId;
     private String programTitle;
     private String programDescription;
@@ -19,4 +18,7 @@ public class ProgramResponseDTO {
     private Instant endDate;
     private ProgramStatus status;
     private UUID hostUserId;
+    private UUID judgeUserId;
+    private Instant createdAt;
+    private Instant updatedAt;
 }

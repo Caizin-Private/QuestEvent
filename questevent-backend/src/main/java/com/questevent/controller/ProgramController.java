@@ -245,6 +245,8 @@ public class ProgramController {
         if (program.getJudge() != null && program.getJudge().getUser() != null) {
             response.setJudgeUserId(program.getJudge().getUser().getUserId());
         }
+        response.setCreatedAt(program.getCreatedAt());
+        response.setUpdatedAt(program.getUpdatedAt());
         return response;
     }
 }
