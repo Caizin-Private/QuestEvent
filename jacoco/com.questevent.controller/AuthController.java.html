@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">questevent-backend</a> &gt; <a href="index.source.html" class="el_package">com.questevent.controller</a> &gt; <span class="el_source">AuthController.java</span></div><h1>AuthController.java</h1><pre class="source lang-java linenums">package com.questevent.controller;
+
+import com.questevent.entity.User;
+import com.questevent.entity.UserWallet;
+import com.questevent.enums.Department;
+import com.questevent.repository.UserWalletRepository;
+import com.questevent.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.io.IOException;
+
+@Controller
+@RequiredArgsConstructor
+public class AuthController {
+
+    private final UserRepository userRepository;
+    private final UserWalletRepository userWalletRepository;
+
+    @GetMapping({&quot;/&quot;, &quot;/login&quot;})
+    @ResponseBody
+    public String loginPage(HttpServletRequest request, HttpServletResponse response) throws IOException {
+
+<span class="fc" id="L32">        HttpSession session = request.getSession(false);</span>
+
+        // already logged in → go to profile
+<span class="pc bpc" id="L35" title="1 of 4 branches missed.">        if (session != null &amp;&amp; session.getAttribute(&quot;userId&quot;) != null) {</span>
+<span class="fc" id="L36">            response.sendRedirect(&quot;/profile&quot;);</span>
+<span class="fc" id="L37">            return null;</span>
+        }
+
+<span class="fc" id="L40">        return &quot;&quot;&quot;</span>
+        &lt;!DOCTYPE html&gt;
+        &lt;html&gt;
+        &lt;head&gt;
+            &lt;title&gt;Login&lt;/title&gt;
+        &lt;/head&gt;
+        &lt;body style=&quot;font-family: Arial; padding: 40px;&quot;&gt;
+            &lt;h2&gt;Login Page&lt;/h2&gt;
+
+            &lt;a href=&quot;/oauth2/authorization/azure&quot;&gt;
+                &lt;button style=&quot;padding:10px 20px; cursor:pointer;&quot;&gt;
+                    Login with Microsoft
+                &lt;/button&gt;
+            &lt;/a&gt;
+
+        &lt;/body&gt;
+        &lt;/html&gt;
+        &quot;&quot;&quot;;
+    }
+
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @GetMapping(&quot;/complete-profile&quot;)
+    @ResponseBody
+    public String completeProfilePage() {
+
+<span class="fc" id="L65">        return &quot;&quot;&quot;</span>
+        &lt;h2&gt;Complete Your Profile 📝&lt;/h2&gt;
+
+        &lt;form method=&quot;post&quot; action=&quot;/complete-profile&quot;&gt;
+            &lt;label&gt;Department:&lt;/label&gt;&lt;br&gt;
+            &lt;select name=&quot;department&quot;&gt;
+                &lt;option value=&quot;HR&quot;&gt;HR&lt;/option&gt;
+                &lt;option value=&quot;TECH&quot;&gt;TECH&lt;/option&gt;
+                &lt;option value=&quot;GENERAL&quot;&gt;GENERAL&lt;/option&gt;
+                &lt;option value=&quot;GENERAL&quot;&gt;IT&lt;/option&gt;
+            &lt;/select&gt;&lt;br&gt;&lt;br&gt;
+
+            &lt;label&gt;Gender:&lt;/label&gt;&lt;br&gt;
+            &lt;select name=&quot;gender&quot;&gt;
+                &lt;option value=&quot;MALE&quot;&gt;MALE&lt;/option&gt;
+                &lt;option value=&quot;FEMALE&quot;&gt;FEMALE&lt;/option&gt;
+            &lt;/select&gt;&lt;br&gt;&lt;br&gt;
+
+            &lt;button type=&quot;submit&quot;&gt;Save&lt;/button&gt;
+        &lt;/form&gt;
+        &quot;&quot;&quot;;
+    }
+
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @PostMapping(&quot;/complete-profile&quot;)
+    public void saveProfile(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            @RequestParam Department department,
+            @RequestParam String gender
+    ) throws IOException {
+
+<span class="fc" id="L97">        Long userId = (Long) request.getSession().getAttribute(&quot;userId&quot;);</span>
+
+<span class="fc" id="L99">        User user = userRepository.findById(userId)</span>
+<span class="pc" id="L100">                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));</span>
+<span class="fc" id="L101">        user.setDepartment(department);</span>
+<span class="fc" id="L102">        user.setGender(gender);</span>
+<span class="fc" id="L103">        userRepository.save(user);</span>
+<span class="fc" id="L104">        userWalletRepository.findByUserUserId(userId)</span>
+<span class="fc" id="L105">                .orElseGet(() -&gt; {</span>
+<span class="fc" id="L106">                    UserWallet wallet = new UserWallet();</span>
+<span class="fc" id="L107">                    wallet.setUser(user);</span>
+<span class="fc" id="L108">                    wallet.setGems(0);</span>
+<span class="fc" id="L109">                    return userWalletRepository.save(wallet);</span>
+                });
+
+<span class="fc" id="L112">        response.sendRedirect(&quot;/profile&quot;);</span>
+<span class="fc" id="L113">    }</span>
+
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @GetMapping(&quot;/profile&quot;)
+    @ResponseBody
+    public String profile(HttpServletRequest request) {
+
+<span class="fc" id="L120">        Long userId = (Long) request.getSession().getAttribute(&quot;userId&quot;);</span>
+<span class="fc" id="L121">        User user = userRepository.findById(userId).orElseThrow();</span>
+
+<span class="fc" id="L123">        return &quot;&quot;&quot;</span>
+            &lt;h2&gt;User Profile 👤&lt;/h2&gt;
+
+            &lt;p&gt;&lt;b&gt;User ID:&lt;/b&gt; %d&lt;/p&gt;
+            &lt;p&gt;&lt;b&gt;Name:&lt;/b&gt; %s&lt;/p&gt;
+            &lt;p&gt;&lt;b&gt;Email:&lt;/b&gt; %s&lt;/p&gt;
+            &lt;p&gt;&lt;b&gt;Department:&lt;/b&gt; %s&lt;/p&gt;
+            &lt;p&gt;&lt;b&gt;Gender:&lt;/b&gt; %s&lt;/p&gt;
+            &lt;p&gt;&lt;b&gt;Role:&lt;/b&gt; %s&lt;/p&gt;
+
+            &lt;form method=&quot;post&quot; action=&quot;/logout&quot;&gt;
+                &lt;button style=&quot;padding:8px 15px; margin-top:20px;&quot;&gt;
+                    Logout
+                &lt;/button&gt;
+            &lt;/form&gt;
+<span class="fc" id="L138">        &quot;&quot;&quot;.formatted(</span>
+<span class="fc" id="L139">                user.getUserId(),</span>
+<span class="fc" id="L140">                user.getName(),</span>
+<span class="fc" id="L141">                user.getEmail(),</span>
+<span class="fc" id="L142">                user.getDepartment(),</span>
+<span class="fc" id="L143">                user.getGender(),</span>
+<span class="fc" id="L144">                user.getRole()</span>
+        );
+    }
+
+    @GetMapping(&quot;/logout-success&quot;)
+    @ResponseBody
+    public String logoutSuccess() {
+<span class="fc" id="L151">        return &quot;&quot;&quot;</span>
+            &lt;h2&gt;Logged out successfully ✅&lt;/h2&gt;
+            &lt;a href=&quot;/login&quot;&gt;Login again&lt;/a&gt;
+        &quot;&quot;&quot;;
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
