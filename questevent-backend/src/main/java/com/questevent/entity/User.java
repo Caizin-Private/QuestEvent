@@ -5,6 +5,7 @@ import com.questevent.enums.Role;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @Entity
@@ -12,9 +13,9 @@ import java.util.List;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name="user_id", nullable = false)
-    private Long userId;
+    @GeneratedValue
+    @Column(name = "user_id", nullable = false, updatable = false)
+    private UUID userId;
 
     @Column(nullable = false)
     private String name;

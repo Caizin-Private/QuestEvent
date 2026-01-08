@@ -8,6 +8,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -24,7 +25,7 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    public User getUserById(Long id) {
+    public User getUserById(UUID id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id " + id));    }
 
@@ -36,7 +37,7 @@ public class UserService {
 
     }
 
-    public User updateUser(Long id, User updatedUser) {
+    public User updateUser(UUID id, User updatedUser) {
 
         User user = getUserById(id);
 
@@ -66,7 +67,7 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public void deleteUser(Long id) {
+    public void deleteUser(UUID id) {
         userRepository.deleteById(id);
     }
 

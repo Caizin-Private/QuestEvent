@@ -38,7 +38,7 @@ public class ProgramWalletService {
         this.programRepository = programRepository;
     }
 
-    public ProgramWallet createWallet(Long userId, Long programId) {
+    public ProgramWallet createWallet(UUID userId, UUID programId) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -76,7 +76,7 @@ public class ProgramWalletService {
         return dto;
     }
 
-    public List<ProgramWalletBalanceDTO> getProgramWalletsByProgramId(Long programId) {
+    public List<ProgramWalletBalanceDTO> getProgramWalletsByProgramId(UUID programId) {
 
         List<ProgramWallet> wallets =
                 programWalletRepository.findByProgramProgramId(programId);
@@ -98,7 +98,7 @@ public class ProgramWalletService {
     }
 
 
-    public ProgramWalletBalanceDTO getMyProgramWallet(Long programId) {
+    public ProgramWalletBalanceDTO getMyProgramWallet(UUID programId) {
 
         @Nullable Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();

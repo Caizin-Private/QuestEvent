@@ -48,7 +48,7 @@ public class ProgramWalletController {
     )
     @PreAuthorize("@rbac.canAccessMyProgramWallet(authentication, #programId)")
     public ResponseEntity<ProgramWalletBalanceDTO> getMyProgramWallet(
-            @PathVariable Long programId
+            @PathVariable UUID programId
     ) {
         return ResponseEntity.ok(
                 programWalletService.getMyProgramWallet(programId)
@@ -67,7 +67,7 @@ public class ProgramWalletController {
     })
     public ResponseEntity<List<ProgramWalletBalanceDTO>> getProgramWalletsByProgramId(
             @Parameter(description = "Program ID", required = true)
-            @PathVariable Long programId
+            @PathVariable UUID programId
     ) {
         return ResponseEntity.ok(
                 programWalletService.getProgramWalletsByProgramId(programId)

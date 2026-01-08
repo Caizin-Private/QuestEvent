@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,7 +34,7 @@ public class ActivityRegistrationService {
                         .getAuthentication()
                         .getPrincipal();
 
-        Long userId = principal.userId();
+        UUID userId = principal.userId();
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() ->
@@ -75,7 +76,7 @@ public class ActivityRegistrationService {
     }
 
     @Transactional(readOnly = true)
-    public ActivityRegistrationDTO getRegistrationById(Long id) {
+    public ActivityRegistrationDTO getRegistrationById(UUID id) {
         ActivityRegistration registration =
                 activityRegistrationRepository.findById(id)
                         .orElseThrow(() ->
@@ -84,7 +85,7 @@ public class ActivityRegistrationService {
     }
 
     @Transactional(readOnly = true)
-    public List<ActivityRegistrationDTO> getRegistrationsByActivityId(Long activityId) {
+    public List<ActivityRegistrationDTO> getRegistrationsByActivityId(UUID activityId) {
         return activityRegistrationRepository.findByActivityActivityId(activityId)
                 .stream()
                 .map(this::mapToDTO)
@@ -92,7 +93,7 @@ public class ActivityRegistrationService {
     }
 
     @Transactional(readOnly = true)
-    public List<ActivityRegistrationDTO> getRegistrationsByUserId(Long userId) {
+    public List<ActivityRegistrationDTO> getRegistrationsByUserId(UUID userId) {
         return activityRegistrationRepository.findByUserUserId(userId)
                 .stream()
                 .map(this::mapToDTO)
@@ -101,7 +102,7 @@ public class ActivityRegistrationService {
 
     @Transactional(readOnly = true)
     public List<ActivityRegistrationDTO> getRegistrationsByActivityIdAndStatus(
-            Long activityId, CompletionStatus status) {
+            UUID activityId, CompletionStatus status) {
 
         return activityRegistrationRepository
                 .findByActivityActivityIdAndCompletionStatus(activityId, status)
@@ -112,7 +113,7 @@ public class ActivityRegistrationService {
 
     @Transactional(readOnly = true)
     public List<ActivityRegistrationDTO> getRegistrationsByUserIdAndStatus(
-            Long userId, CompletionStatus status) {
+            UUID userId, CompletionStatus status) {
 
         return activityRegistrationRepository
                 .findByUserUserIdAndCompletionStatus(userId, status)
@@ -124,7 +125,7 @@ public class ActivityRegistrationService {
 
     @Transactional
     public ActivityRegistrationDTO updateCompletionStatus(
-            Long id, ActivityCompletionUpdateDTO updateDTO) {
+            UUID id, ActivityCompletionUpdateDTO updateDTO) {
 
         ActivityRegistration registration =
                 activityRegistrationRepository.findById(id)
@@ -138,7 +139,7 @@ public class ActivityRegistrationService {
     // -------------------- DELETE --------------------
 
     @Transactional
-    public void deleteRegistration(Long id) {
+    public void deleteRegistration(UUID id) {
         if (!activityRegistrationRepository.existsById(id)) {
             throw new RuntimeException("Registration not found");
         }
@@ -146,7 +147,7 @@ public class ActivityRegistrationService {
     }
 
     @Transactional(readOnly = true)
-    public long getParticipantCountForActivity(Long activityId) {
+    public long getParticipantCountForActivity(UUID activityId) {
         return activityRegistrationRepository.countByActivityActivityId(activityId);
     }
 
@@ -176,7 +177,7 @@ public class ActivityRegistrationService {
         return dto;
     }
 
-    public ActivityRegistrationResponseDTO addParticipantToActivity(Long activityId, AddParticipantInActivityRequestDTO request) {
+    public ActivityRegistrationResponseDTO addParticipantToActivity(UUID activityId, AddParticipantInActivityRequestDTO request) {
 
         Activity activity = activityRepository.findById(activityId)
                 .orElseThrow(() ->

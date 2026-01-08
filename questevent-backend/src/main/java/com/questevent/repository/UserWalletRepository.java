@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface UserWalletRepository extends JpaRepository<UserWallet, UUID> {
-    Optional<UserWallet> findByUserUserId(Long userId);
+    Optional<UserWallet> findByUserUserId(UUID userId);
 
     @Query("""
         SELECT w FROM UserWallet w

@@ -12,6 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/leaderboard")
@@ -57,7 +58,7 @@ public class LeaderboardController {
                     required = true,
                     example = "1"
             )
-            @PathVariable Long programId
+            @PathVariable UUID programId
     ) {
         return leaderboardService.getProgramLeaderboard(programId);
     }

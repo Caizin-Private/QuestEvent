@@ -15,6 +15,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Optional;
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -54,8 +56,10 @@ class JwtAuthFilterTest {
 
         when(jwtService.validateToken("valid-token")).thenReturn(true);
 
+        UUID userId = UUID.randomUUID();
+
         UserPrincipal principal =
-                new UserPrincipal(1L, "test@user.com", Role.USER);
+                new UserPrincipal(userId, "test@user.com", Role.USER);
 
         when(jwtService.extractUserPrincipal("valid-token"))
                 .thenReturn(principal);

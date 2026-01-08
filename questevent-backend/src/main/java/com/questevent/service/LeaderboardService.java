@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -26,10 +27,10 @@ public class LeaderboardService {
         return leaderboard;
     }
 
-    public List<LeaderboardDTO> getProgramLeaderboard(Long programId) {
+    public List<LeaderboardDTO> getProgramLeaderboard(UUID programId) {
 
-        if (programId == null || programId <= 0) {
-            throw new IllegalArgumentException("Program ID must be greater than zero");
+        if (programId == null ) {
+            throw new IllegalArgumentException("Program ID cannot be null or negative");
         }
 
         List<LeaderboardDTO> leaderboard =

@@ -3,12 +3,12 @@ package com.questevent.dto;
 import lombok.Data;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 public class ActivityResponseDTO {
-    private Long activityId;
-    private Long programId;
+    private UUID activityId;
+    private UUID programId;
     private String activityName;
     private Integer activityDuration;
     private String activityRulebook;

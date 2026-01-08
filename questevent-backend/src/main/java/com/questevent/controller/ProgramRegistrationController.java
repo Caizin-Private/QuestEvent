@@ -17,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/program-registrations")
@@ -54,7 +55,7 @@ public class ProgramRegistrationController {
             @ApiResponse(responseCode = "404", description = "Program or user not found")
     })
     public ResponseEntity<ProgramRegistrationResponseDTO> addParticipantByHost(
-            @PathVariable Long programId,
+            @PathVariable UUID programId,
             @RequestBody AddParticipantInProgramRequestDTO request) {
 
         ProgramRegistrationResponseDTO response =
@@ -82,7 +83,7 @@ public class ProgramRegistrationController {
             @ApiResponse(responseCode = "404", description = "Registration not found")
     })
     public ResponseEntity<ProgramRegistrationDTO> getRegistrationById(
-            @Parameter(description = "Registration ID", required = true) @PathVariable Long id) {
+            @Parameter(description = "Registration ID", required = true) @PathVariable UUID id) {
         try {
             ProgramRegistrationDTO registration =
                     programRegistrationService.getRegistrationById(id);
@@ -97,7 +98,7 @@ public class ProgramRegistrationController {
     @Operation(summary = "Get registrations by program", description = "Retrieves all registrations for a specific program")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
     public ResponseEntity<List<ProgramRegistrationDTO>> getRegistrationsByProgram(
-            @Parameter(description = "Program ID", required = true) @PathVariable Long programId) {
+            @Parameter(description = "Program ID", required = true) @PathVariable UUID programId) {
         List<ProgramRegistrationDTO> registrations =
                 programRegistrationService.getRegistrationsByProgramId(programId);
         return ResponseEntity.ok(registrations);
@@ -108,7 +109,7 @@ public class ProgramRegistrationController {
     @Operation(summary = "Get registrations by user", description = "Retrieves all program registrations for a specific user")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
     public ResponseEntity<List<ProgramRegistrationDTO>> getRegistrationsByUser(
-            @Parameter(description = "User ID", required = true) @PathVariable Long userId) {
+            @Parameter(description = "User ID", required = true) @PathVariable UUID userId) {
         List<ProgramRegistrationDTO> registrations =
                 programRegistrationService.getRegistrationsByUserId(userId);
         return ResponseEntity.ok(registrations);
@@ -119,7 +120,7 @@ public class ProgramRegistrationController {
     @Operation(summary = "Get participant count", description = "Gets the total number of participants registered for a program")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved count")
     public ResponseEntity<Long> getParticipantCount(
-            @Parameter(description = "Program ID", required = true) @PathVariable Long programId) {
+            @Parameter(description = "Program ID", required = true) @PathVariable UUID programId) {
         long count = programRegistrationService.getParticipantCountForProgram(programId);
         return ResponseEntity.ok(count);
     }
@@ -132,7 +133,7 @@ public class ProgramRegistrationController {
             @ApiResponse(responseCode = "404", description = "Registration not found")
     })
     public ResponseEntity<Void> deleteRegistration(
-            @Parameter(description = "Registration ID", required = true) @PathVariable Long id) {
+            @Parameter(description = "Registration ID", required = true) @PathVariable UUID id) {
         try {
             programRegistrationService.deleteRegistration(id);
             return ResponseEntity.noContent().build();
@@ -150,8 +151,8 @@ public class ProgramRegistrationController {
             @ApiResponse(responseCode = "404", description = "Registration not found")
     })
     public ResponseEntity<Void> removeParticipantByHost(
-            @Parameter(description = "Program ID", required = true) @PathVariable Long programId,
-            @Parameter(description = "User ID to remove", required = true) @PathVariable Long userId) {
+            @Parameter(description = "Program ID", required = true) @PathVariable UUID programId,
+            @Parameter(description = "User ID to remove", required = true) @PathVariable UUID userId) {
         try {
             programRegistrationService.deleteRegistrationByProgramAndUser(programId, userId);
             return ResponseEntity.noContent().build();

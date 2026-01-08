@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class ActivityService {
@@ -26,7 +27,7 @@ public class ActivityService {
         this.programRepository = programRepository;
     }
 
-    public Activity createActivity(Long programId, ActivityRequestDTO dto) {
+    public Activity createActivity(UUID programId, ActivityRequestDTO dto) {
         Program program = programRepository.findById(programId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Program not found"));
 
@@ -36,7 +37,7 @@ public class ActivityService {
         return activityRepository.save(activity);
     }
 
-    public Activity updateActivity(Long programId, Long activityId, ActivityRequestDTO dto) {
+    public Activity updateActivity(UUID programId, UUID activityId, ActivityRequestDTO dto) {
         Activity existingActivity = activityRepository.findById(activityId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Activity not found"));
 
@@ -48,14 +49,14 @@ public class ActivityService {
         return activityRepository.save(existingActivity);
     }
 
-    public List<Activity> getActivitiesByProgramId(Long programId) {
+    public List<Activity> getActivitiesByProgramId(UUID programId) {
         if (!programRepository.existsById(programId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Program not found");
         }
         return activityRepository.findByProgram_ProgramId(programId);
     }
 
-    public void deleteActivity(Long programId, Long activityId) {
+    public void deleteActivity(UUID programId, UUID activityId) {
         Activity activity = activityRepository.findById(activityId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Activity not found"));
 
@@ -64,7 +65,7 @@ public class ActivityService {
         }
         activityRepository.delete(activity);
     }
-    public List<Activity> getCompulsoryActivitiesByProgramId(Long programId) {
+    public List<Activity> getCompulsoryActivitiesByProgramId(UUID programId) {
         if (!programRepository.existsById(programId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Program not found");
         }

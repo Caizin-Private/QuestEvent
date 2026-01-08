@@ -20,6 +20,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/activity-registrations")
@@ -57,7 +58,7 @@ public class ActivityRegistrationController {
             @ApiResponse(responseCode = "404", description = "Activity or user not found")
     })
     public ResponseEntity<ActivityRegistrationResponseDTO> addParticipantToActivity(
-            @Parameter(description = "Activity ID", required = true) @PathVariable Long activityId,
+            @Parameter(description = "Activity ID", required = true) @PathVariable UUID activityId,
             @RequestBody AddParticipantInActivityRequestDTO request) {
         try {
             ActivityRegistrationResponseDTO response =
@@ -86,7 +87,7 @@ public class ActivityRegistrationController {
             @ApiResponse(responseCode = "404", description = "Registration not found")
     })
     public ResponseEntity<ActivityRegistrationDTO> getRegistrationById(
-            @Parameter(description = "Registration ID", required = true) @PathVariable Long id) {
+            @Parameter(description = "Registration ID", required = true) @PathVariable UUID id) {
         try {
             ActivityRegistrationDTO registration =
                     activityRegistrationService.getRegistrationById(id);
@@ -101,7 +102,7 @@ public class ActivityRegistrationController {
     @Operation(summary = "Get registrations by activity", description = "Retrieves all registrations for a specific activity")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
     public ResponseEntity<List<ActivityRegistrationDTO>> getRegistrationsByActivity(
-            @Parameter(description = "Activity ID", required = true) @PathVariable Long activityId) {
+            @Parameter(description = "Activity ID", required = true) @PathVariable UUID activityId) {
         List<ActivityRegistrationDTO> registrations =
                 activityRegistrationService.getRegistrationsByActivityId(activityId);
         return ResponseEntity.ok(registrations);
@@ -112,7 +113,7 @@ public class ActivityRegistrationController {
     @Operation(summary = "Get registrations by user", description = "Retrieves all activity registrations for a specific user")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
     public ResponseEntity<List<ActivityRegistrationDTO>> getRegistrationsByUser(
-            @Parameter(description = "User ID", required = true) @PathVariable Long userId) {
+            @Parameter(description = "User ID", required = true) @PathVariable UUID userId) {
         List<ActivityRegistrationDTO> registrations =
                 activityRegistrationService.getRegistrationsByUserId(userId);
         return ResponseEntity.ok(registrations);
@@ -123,7 +124,7 @@ public class ActivityRegistrationController {
     @Operation(summary = "Get registrations by activity and status", description = "Retrieves registrations for an activity filtered by completion status")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
     public ResponseEntity<List<ActivityRegistrationDTO>> getRegistrationsByActivityAndStatus(
-            @Parameter(description = "Activity ID", required = true) @PathVariable Long activityId,
+            @Parameter(description = "Activity ID", required = true) @PathVariable UUID activityId,
             @Parameter(description = "Completion status", required = true) @PathVariable CompletionStatus status) {
         List<ActivityRegistrationDTO> registrations =
                 activityRegistrationService.getRegistrationsByActivityIdAndStatus(activityId, status);
@@ -135,7 +136,7 @@ public class ActivityRegistrationController {
     @Operation(summary = "Get registrations by user and status", description = "Retrieves activity registrations for a user filtered by completion status")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
     public ResponseEntity<List<ActivityRegistrationDTO>> getRegistrationsByUserAndStatus(
-            @Parameter(description = "User ID", required = true) @PathVariable Long userId,
+            @Parameter(description = "User ID", required = true) @PathVariable UUID userId,
             @Parameter(description = "Completion status", required = true) @PathVariable CompletionStatus status) {
         List<ActivityRegistrationDTO> registrations =
                 activityRegistrationService.getRegistrationsByUserIdAndStatus(userId, status);
@@ -150,7 +151,7 @@ public class ActivityRegistrationController {
             @ApiResponse(responseCode = "404", description = "Registration not found")
     })
     public ResponseEntity<ActivityRegistrationDTO> updateCompletionStatus(
-            @Parameter(description = "Registration ID", required = true) @PathVariable Long id,
+            @Parameter(description = "Registration ID", required = true) @PathVariable UUID id,
             @RequestBody ActivityCompletionUpdateDTO updateDTO) {
         try {
             ActivityRegistrationDTO updatedRegistration =
@@ -166,7 +167,7 @@ public class ActivityRegistrationController {
     @Operation(summary = "Get participant count", description = "Gets total number of participants registered for an activity")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved count")
     public ResponseEntity<Long> getParticipantCount(
-            @Parameter(description = "Activity ID", required = true) @PathVariable Long activityId) {
+            @Parameter(description = "Activity ID", required = true) @PathVariable UUID activityId) {
         long count = activityRegistrationService.getParticipantCountForActivity(activityId);
         return ResponseEntity.ok(count);
     }
@@ -179,7 +180,7 @@ public class ActivityRegistrationController {
             @ApiResponse(responseCode = "404", description = "Registration not found")
     })
     public ResponseEntity<Void> deleteRegistration(
-            @Parameter(description = "Registration ID", required = true) @PathVariable Long id) {
+            @Parameter(description = "Registration ID", required = true) @PathVariable UUID id) {
         try {
             activityRegistrationService.deleteRegistration(id);
             return ResponseEntity.noContent().build();

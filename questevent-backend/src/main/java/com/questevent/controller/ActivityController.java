@@ -16,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/programs/{programId}/activities")
@@ -37,7 +38,7 @@ public class ActivityController {
             @ApiResponse(responseCode = "404", description = "Program not found")
     })
     public ResponseEntity<ActivityResponseDTO> createActivity(
-            @Parameter(description = "Program ID", required = true) @PathVariable Long programId,
+            @Parameter(description = "Program ID", required = true) @PathVariable UUID programId,
             @RequestBody ActivityRequestDTO dto) {
         Activity activity = activityService.createActivity(programId, dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(convertToResponseDTO(activity));
@@ -51,7 +52,7 @@ public class ActivityController {
             @ApiResponse(responseCode = "404", description = "Program not found")
     })
     public ResponseEntity<List<ActivityResponseDTO>> getActivities(
-            @Parameter(description = "Program ID", required = true) @PathVariable Long programId) {
+            @Parameter(description = "Program ID", required = true) @PathVariable UUID programId) {
         return ResponseEntity.ok(activityService.getActivitiesByProgramId(programId)
                 .stream().map(this::convertToResponseDTO).toList());
     }
@@ -64,8 +65,8 @@ public class ActivityController {
             @ApiResponse(responseCode = "404", description = "Activity or program not found")
     })
     public ResponseEntity<ActivityResponseDTO> updateActivity(
-            @Parameter(description = "Program ID", required = true) @PathVariable Long programId,
-            @Parameter(description = "Activity ID", required = true) @PathVariable Long activityId,
+            @Parameter(description = "Program ID", required = true) @PathVariable UUID programId,
+            @Parameter(description = "Activity ID", required = true) @PathVariable UUID activityId,
             @RequestBody ActivityRequestDTO dto) {
         Activity updated = activityService.updateActivity(programId, activityId, dto);
         return ResponseEntity.ok(convertToResponseDTO(updated));
@@ -79,8 +80,8 @@ public class ActivityController {
             @ApiResponse(responseCode = "404", description = "Activity or program not found")
     })
     public ResponseEntity<Void> deleteActivity(
-            @Parameter(description = "Program ID", required = true) @PathVariable Long programId,
-            @Parameter(description = "Activity ID", required = true) @PathVariable Long activityId) {
+            @Parameter(description = "Program ID", required = true) @PathVariable UUID programId,
+            @Parameter(description = "Activity ID", required = true) @PathVariable UUID activityId) {
         activityService.deleteActivity(programId, activityId);
         return ResponseEntity.noContent().build();
     }
@@ -92,7 +93,7 @@ public class ActivityController {
             @ApiResponse(responseCode = "404", description = "Program not found")
     })
     public ResponseEntity<List<ActivityResponseDTO>> getCompulsoryActivities(
-            @Parameter(description = "Program ID", required = true) @PathVariable Long programId) {
+            @Parameter(description = "Program ID", required = true) @PathVariable UUID programId) {
         return ResponseEntity.ok(activityService.getCompulsoryActivitiesByProgramId(programId)
                 .stream().map(this::convertToResponseDTO).toList());
     }

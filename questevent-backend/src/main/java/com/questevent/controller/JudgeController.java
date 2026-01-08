@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/judge")
@@ -58,7 +59,7 @@ public class JudgeController {
                     description = "Activity ID",
                     required = true
             )
-            @PathVariable Long activityId
+            @PathVariable UUID activityId
     ) {
         return ResponseEntity.ok(
                 judgeService.getSubmissionsForActivity(activityId)
@@ -78,7 +79,7 @@ public class JudgeController {
             @ApiResponse(responseCode = "404", description = "Submission not found")
     })
     public ResponseEntity<String> reviewSubmission(
-            @PathVariable Long submissionId
+            @PathVariable UUID submissionId
 
 //            @RequestParam Long judgeId //
     ) {

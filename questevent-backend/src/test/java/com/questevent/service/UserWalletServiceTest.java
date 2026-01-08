@@ -42,10 +42,13 @@ class UserWalletServiceTest {
 
     @Test
     void createWalletForUser_success() {
-        User user = new User();
-        user.setUserId(1L);
 
-        when(userWalletRepository.findByUserUserId(1L))
+        UUID userId = UUID.randomUUID();
+
+        User user = new User();
+        user.setUserId(userId);
+
+        when(userWalletRepository.findByUserUserId(userId))
                 .thenReturn(Optional.empty());
 
         userWalletService.createWalletForUser(user);
@@ -56,10 +59,13 @@ class UserWalletServiceTest {
 
     @Test
     void createWalletForUser_walletAlreadyExists() {
-        User user = new User();
-        user.setUserId(1L);
 
-        when(userWalletRepository.findByUserUserId(1L))
+        UUID userId = UUID.randomUUID();
+
+        User user = new User();
+        user.setUserId(userId);
+
+        when(userWalletRepository.findByUserUserId(userId))
                 .thenReturn(Optional.of(new UserWallet()));
 
         RuntimeException exception = assertThrows(
@@ -73,8 +79,11 @@ class UserWalletServiceTest {
 
     @Test
     void getMyWalletBalance_success() {
+
+        UUID userId = UUID.randomUUID();
+
         UserPrincipal principal =
-                new UserPrincipal(1L, "test@example.com", Role.USER);
+                new UserPrincipal(userId, "test@example.com", Role.USER);
 
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(principal, null, null);
@@ -82,7 +91,7 @@ class UserWalletServiceTest {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         User user = new User();
-        user.setUserId(1L);
+        user.setUserId(userId);
 
         UUID walletId = UUID.randomUUID();
         UserWallet wallet = new UserWallet();
@@ -91,10 +100,11 @@ class UserWalletServiceTest {
 
         user.setWallet(wallet);
 
-        when(userRepository.findById(1L))
+        when(userRepository.findById(userId))
                 .thenReturn(Optional.of(user));
 
-        UserWalletBalanceDTO dto = userWalletService.getMyWalletBalance();
+        UserWalletBalanceDTO dto =
+                userWalletService.getMyWalletBalance();
 
         assertNotNull(dto);
         assertEquals(walletId, dto.getWalletId());
@@ -103,15 +113,18 @@ class UserWalletServiceTest {
 
     @Test
     void getMyWalletBalance_userNotFound() {
+
+        UUID userId = UUID.randomUUID();
+
         UserPrincipal principal =
-                new UserPrincipal(1L, "test@example.com", Role.USER);
+                new UserPrincipal(userId, "test@example.com", Role.USER);
 
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(principal, null, null);
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        when(userRepository.findById(1L))
+        when(userRepository.findById(userId))
                 .thenReturn(Optional.empty());
 
         ResponseStatusException exception = assertThrows(
@@ -124,8 +137,11 @@ class UserWalletServiceTest {
 
     @Test
     void getMyWalletBalance_walletNotFound() {
+
+        UUID userId = UUID.randomUUID();
+
         UserPrincipal principal =
-                new UserPrincipal(1L, "test@example.com", Role.USER);
+                new UserPrincipal(userId, "test@example.com", Role.USER);
 
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(principal, null, null);
@@ -133,10 +149,10 @@ class UserWalletServiceTest {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         User user = new User();
-        user.setUserId(1L);
+        user.setUserId(userId);
         user.setWallet(null);
 
-        when(userRepository.findById(1L))
+        when(userRepository.findById(userId))
                 .thenReturn(Optional.of(user));
 
         ResponseStatusException exception = assertThrows(
@@ -149,6 +165,7 @@ class UserWalletServiceTest {
 
     @Test
     void getMyWalletBalance_unauthenticated() {
+
         SecurityContextHolder.clearContext();
 
         ResponseStatusException exception = assertThrows(

@@ -8,7 +8,7 @@ import java.util.UUID;
 public class ProgramWalletBalanceDTO {
 
     private UUID programWalletId;
-    private Long programId;
-    private Long userId;
+    private UUID programId;
+    private UUID userId;
     private Long gems;
 }

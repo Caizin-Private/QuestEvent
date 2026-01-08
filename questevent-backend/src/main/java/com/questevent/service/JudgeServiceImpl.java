@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +27,7 @@ public class JudgeServiceImpl implements JudgeService {
     //
     @Override
     @Transactional(readOnly = true)
-    public List<JudgeSubmissionDTO> getSubmissionsForActivity(Long activityId) {
+    public List<JudgeSubmissionDTO> getSubmissionsForActivity(UUID activityId) {
 
         return submissionRepository
                 .findByActivityRegistrationActivityActivityId(activityId)
@@ -48,7 +49,7 @@ public class JudgeServiceImpl implements JudgeService {
 
     @Override
     @Transactional
-    public void reviewSubmission(Long submissionId) {
+    public void reviewSubmission(UUID submissionId) {
 
         ActivitySubmission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new RuntimeException("Submission not found"));

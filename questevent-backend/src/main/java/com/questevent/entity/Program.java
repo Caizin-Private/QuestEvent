@@ -10,6 +10,7 @@ import org.hibernate.annotations.Cascade;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Data
@@ -17,8 +18,9 @@ import java.util.List;
 public class Program {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long programId;
+    @GeneratedValue
+    @Column(name = "program_id", nullable = false, updatable = false)
+    private UUID programId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)

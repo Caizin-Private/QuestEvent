@@ -1,10 +1,12 @@
 package com.questevent.service;
 
+import java.util.UUID;
+
 public interface SubmissionService {
 
     void submitActivity(
-            Long activityId,
-            Long userId,
+            UUID activityId,
+            UUID userId,
             String submissionUrl
     );
 }

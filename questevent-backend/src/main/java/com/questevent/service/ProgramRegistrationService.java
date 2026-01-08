@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,7 +35,7 @@ public class ProgramRegistrationService {
                         .getAuthentication()
                         .getPrincipal();
 
-        Long userId = principal.userId();
+        UUID userId = principal.userId();
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -63,7 +64,7 @@ public class ProgramRegistrationService {
 
     @Transactional
     public ProgramRegistrationResponseDTO addParticipantToProgram(
-            Long programId,
+            UUID programId,
             AddParticipantInProgramRequestDTO request) {
 
         Program program = programRepository.findById(programId)
@@ -99,28 +100,28 @@ public class ProgramRegistrationService {
     }
 
     @Transactional(readOnly = true)
-    public ProgramRegistrationDTO getRegistrationById(Long id) {
+    public ProgramRegistrationDTO getRegistrationById(UUID id) {
         ProgramRegistration registration = programRegistrationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Registration not found with id: " + id));
         return mapToDTO(registration);
     }
 
     @Transactional(readOnly = true)
-    public List<ProgramRegistrationDTO> getRegistrationsByProgramId(Long programId) {
+    public List<ProgramRegistrationDTO> getRegistrationsByProgramId(UUID programId) {
         return programRegistrationRepository.findByProgramProgramId(programId).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public List<ProgramRegistrationDTO> getRegistrationsByUserId(Long userId) {
+    public List<ProgramRegistrationDTO> getRegistrationsByUserId(UUID userId) {
         return programRegistrationRepository.findByUserUserId(userId).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
 
     @Transactional
-    public void deleteRegistration(Long id) {
+    public void deleteRegistration(UUID id) {
         if (!programRegistrationRepository.existsById(id)) {
             throw new RuntimeException("Registration not found with id: " + id);
         }
@@ -128,12 +129,12 @@ public class ProgramRegistrationService {
     }
 
     @Transactional(readOnly = true)
-    public long getParticipantCountForProgram(Long programId) {
+    public long getParticipantCountForProgram(UUID programId) {
         return programRegistrationRepository.countByProgramProgramId(programId);
     }
 
     @Transactional
-    public void deleteRegistrationByProgramAndUser(Long programId, Long userId) {
+    public void deleteRegistrationByProgramAndUser(UUID programId, UUID userId) {
         ProgramRegistration registration = programRegistrationRepository
                 .findByProgramProgramIdAndUserUserId(programId, userId)
                 .orElseThrow(() -> new RuntimeException("Registration not found for program id: " + programId + " and user id: " + userId));

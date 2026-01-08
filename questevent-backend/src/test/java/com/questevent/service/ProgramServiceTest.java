@@ -27,6 +27,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -64,7 +65,7 @@ class ProgramServiceTest {
 
     // -------------------- SECURITY MOCK --------------------
 
-    private void mockAuthenticatedUser(Long userId) {
+    private void mockAuthenticatedUser(UUID userId) {
         UserPrincipal principal =
                 new UserPrincipal(userId, "test@questevent.com", Role.USER);
 
@@ -84,32 +85,41 @@ class ProgramServiceTest {
 
     @Test
     void createProgram_success() {
-        mockAuthenticatedUser(1L);
+
+        UUID authUserId = UUID.randomUUID();
+        UUID judgeUserId = UUID.randomUUID();
+        UUID programId = UUID.randomUUID();
+
+        mockAuthenticatedUser(authUserId);
 
         User creator = new User();
-        creator.setUserId(1L);
+        creator.setUserId(authUserId);
 
         User judgeUser = new User();
-        judgeUser.setUserId(2L);
+        judgeUser.setUserId(judgeUserId);
 
         ProgramRequestDTO dto = new ProgramRequestDTO();
         dto.setProgramTitle("Test Program");
         dto.setProgramDescription("Test Description");
         dto.setDepartment(Department.IT);
         dto.setStatus(ProgramStatus.ACTIVE);
-        dto.setJudgeUserId(2L);
+        dto.setJudgeUserId(judgeUserId);
 
         Program savedProgram = new Program();
-        savedProgram.setProgramId(1L);
+        savedProgram.setProgramId(programId);
         savedProgram.setProgramTitle("Test Program");
         savedProgram.setDepartment(Department.IT);
         savedProgram.setStatus(ProgramStatus.ACTIVE);
         savedProgram.setUser(creator);
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(creator));
-        when(userRepository.findById(2L)).thenReturn(Optional.of(judgeUser));
-        when(judgeRepository.findByUserUserId(2L)).thenReturn(Optional.empty());
-        when(programRepository.save(any(Program.class))).thenReturn(savedProgram);
+        when(userRepository.findById(authUserId))
+                .thenReturn(Optional.of(creator));
+        when(userRepository.findById(judgeUserId))
+                .thenReturn(Optional.of(judgeUser));
+        when(judgeRepository.findByUserUserId(judgeUserId))
+                .thenReturn(Optional.empty());
+        when(programRepository.save(any(Program.class)))
+                .thenReturn(savedProgram);
 
         Program result = programService.createProgram(dto);
 
@@ -122,12 +132,17 @@ class ProgramServiceTest {
 
     @Test
     void createProgram_userNotFound() {
-        mockAuthenticatedUser(999L);
+
+        UUID authUserId = UUID.randomUUID();
+        UUID judgeUserId = UUID.randomUUID();
+
+        mockAuthenticatedUser(authUserId);
 
         ProgramRequestDTO dto = new ProgramRequestDTO();
-        dto.setJudgeUserId(2L);
+        dto.setJudgeUserId(judgeUserId);
 
-        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+        when(userRepository.findById(authUserId))
+                .thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
@@ -144,41 +159,55 @@ class ProgramServiceTest {
 
     @Test
     void updateProgram_success() {
-        mockAuthenticatedUser(1L);
+
+        UUID authUserId = UUID.randomUUID();
+        UUID programId = UUID.randomUUID();
+
+        mockAuthenticatedUser(authUserId);
 
         User authUser = new User();
-        authUser.setUserId(1L);
+        authUser.setUserId(authUserId);
 
         Program existingProgram = new Program();
-        existingProgram.setProgramId(1L);
+        existingProgram.setProgramId(programId);
         existingProgram.setProgramTitle("Old Title");
         existingProgram.setUser(authUser);
 
         ProgramRequestDTO dto = new ProgramRequestDTO();
         dto.setProgramTitle("New Title");
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
-        when(programRepository.findById(1L)).thenReturn(Optional.of(existingProgram));
-        when(programRepository.save(any())).thenReturn(existingProgram);
+        when(userRepository.findById(authUserId))
+                .thenReturn(Optional.of(authUser));
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.of(existingProgram));
+        when(programRepository.save(any()))
+                .thenReturn(existingProgram);
 
-        Program result = programService.updateProgram(1L, dto);
+        Program result =
+                programService.updateProgram(programId, dto);
 
         assertEquals("New Title", result.getProgramTitle());
     }
 
     @Test
     void updateProgram_programNotFound() {
-        mockAuthenticatedUser(1L);
+
+        UUID authUserId = UUID.randomUUID();
+        UUID programId = UUID.randomUUID();
+
+        mockAuthenticatedUser(authUserId);
 
         User authUser = new User();
-        authUser.setUserId(1L);
+        authUser.setUserId(authUserId);
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
-        when(programRepository.findById(999L)).thenReturn(Optional.empty());
+        when(userRepository.findById(authUserId))
+                .thenReturn(Optional.of(authUser));
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> programService.updateProgram(999L, new ProgramRequestDTO())
+                () -> programService.updateProgram(programId, new ProgramRequestDTO())
         );
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
@@ -187,24 +216,31 @@ class ProgramServiceTest {
 
     @Test
     void updateProgram_permissionDenied() {
-        mockAuthenticatedUser(1L);
+
+        UUID authUserId = UUID.randomUUID();
+        UUID otherUserId = UUID.randomUUID();
+        UUID programId = UUID.randomUUID();
+
+        mockAuthenticatedUser(authUserId);
 
         User authUser = new User();
-        authUser.setUserId(1L);
+        authUser.setUserId(authUserId);
 
         User otherUser = new User();
-        otherUser.setUserId(2L);
+        otherUser.setUserId(otherUserId);
 
         Program program = new Program();
-        program.setProgramId(1L);
+        program.setProgramId(programId);
         program.setUser(otherUser);
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
-        when(programRepository.findById(1L)).thenReturn(Optional.of(program));
+        when(userRepository.findById(authUserId))
+                .thenReturn(Optional.of(authUser));
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.of(program));
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> programService.updateProgram(1L, new ProgramRequestDTO())
+                () -> programService.updateProgram(programId, new ProgramRequestDTO())
         );
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
@@ -215,16 +251,21 @@ class ProgramServiceTest {
 
     @Test
     void getMyPrograms_success() {
-        mockAuthenticatedUser(1L);
+
+        UUID authUserId = UUID.randomUUID();
+        UUID programId = UUID.randomUUID();
+
+        mockAuthenticatedUser(authUserId);
 
         User authUser = new User();
-        authUser.setUserId(1L);
+        authUser.setUserId(authUserId);
 
         Program program = new Program();
-        program.setProgramId(1L);
+        program.setProgramId(programId);
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
-        when(programRepository.findByUser_UserId(1L))
+        when(userRepository.findById(authUserId))
+                .thenReturn(Optional.of(authUser));
+        when(programRepository.findByUser_UserId(authUserId))
                 .thenReturn(List.of(program));
 
         List<Program> result = programService.getMyPrograms();
@@ -236,12 +277,16 @@ class ProgramServiceTest {
 
     @Test
     void getProgramById_success() {
+
+        UUID programId = UUID.randomUUID();
+
         Program program = new Program();
-        program.setProgramId(1L);
+        program.setProgramId(programId);
 
-        when(programRepository.findById(1L)).thenReturn(Optional.of(program));
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.of(program));
 
-        Program result = programService.getProgramById(1L);
+        Program result = programService.getProgramById(programId);
 
         assertNotNull(result);
     }
@@ -250,42 +295,57 @@ class ProgramServiceTest {
 
     @Test
     void deleteProgram_success() {
-        mockAuthenticatedUser(1L);
+
+        UUID authUserId = UUID.randomUUID();
+        UUID programId = UUID.randomUUID();
+
+        mockAuthenticatedUser(authUserId);
 
         User authUser = new User();
-        authUser.setUserId(1L);
+        authUser.setUserId(authUserId);
 
         Program program = new Program();
-        program.setProgramId(1L);
+        program.setProgramId(programId);
         program.setUser(authUser);
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
-        when(programRepository.findById(1L)).thenReturn(Optional.of(program));
+        when(userRepository.findById(authUserId))
+                .thenReturn(Optional.of(authUser));
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.of(program));
 
-        assertDoesNotThrow(() -> programService.deleteProgram(1L));
+        assertDoesNotThrow(() ->
+                programService.deleteProgram(programId));
+
         verify(programRepository).delete(program);
     }
 
     @Test
     void deleteProgram_permissionDenied() {
-        mockAuthenticatedUser(1L);
+
+        UUID authUserId = UUID.randomUUID();
+        UUID otherUserId = UUID.randomUUID();
+        UUID programId = UUID.randomUUID();
+
+        mockAuthenticatedUser(authUserId);
 
         User authUser = new User();
-        authUser.setUserId(1L);
+        authUser.setUserId(authUserId);
 
         User otherUser = new User();
-        otherUser.setUserId(2L);
+        otherUser.setUserId(otherUserId);
 
         Program program = new Program();
-        program.setProgramId(1L);
+        program.setProgramId(programId);
         program.setUser(otherUser);
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
-        when(programRepository.findById(1L)).thenReturn(Optional.of(program));
+        when(userRepository.findById(authUserId))
+                .thenReturn(Optional.of(authUser));
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.of(program));
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> programService.deleteProgram(1L)
+                () -> programService.deleteProgram(programId)
         );
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
@@ -296,17 +356,22 @@ class ProgramServiceTest {
 
     @Test
     void getCompletedProgramsForUser_success() {
-        mockAuthenticatedUser(1L);
+
+        UUID authUserId = UUID.randomUUID();
+        UUID completedProgramId = UUID.randomUUID();
+        UUID activeProgramId = UUID.randomUUID();
+
+        mockAuthenticatedUser(authUserId);
 
         User authUser = new User();
-        authUser.setUserId(1L);
+        authUser.setUserId(authUserId);
 
         Program completedProgram = new Program();
-        completedProgram.setProgramId(1L);
+        completedProgram.setProgramId(completedProgramId);
         completedProgram.setStatus(ProgramStatus.COMPLETED);
 
         Program activeProgram = new Program();
-        activeProgram.setProgramId(2L);
+        activeProgram.setProgramId(activeProgramId);
         activeProgram.setStatus(ProgramStatus.ACTIVE);
 
         ProgramRegistration reg1 = new ProgramRegistration();
@@ -315,11 +380,13 @@ class ProgramServiceTest {
         ProgramRegistration reg2 = new ProgramRegistration();
         reg2.setProgram(activeProgram);
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
-        when(programRegistrationRepository.findByUserUserId(1L))
+        when(userRepository.findById(authUserId))
+                .thenReturn(Optional.of(authUser));
+        when(programRegistrationRepository.findByUserUserId(authUserId))
                 .thenReturn(List.of(reg1, reg2));
 
-        List<Program> result = programService.getCompletedProgramsForUser();
+        List<Program> result =
+                programService.getCompletedProgramsForUser();
 
         assertEquals(1, result.size());
         assertEquals(ProgramStatus.COMPLETED, result.get(0).getStatus());
@@ -327,7 +394,11 @@ class ProgramServiceTest {
 
     @Test
     void getCompletedProgramsForUser_userNotFound() {
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        UUID authUserId = UUID.randomUUID();
+
+        when(userRepository.findById(authUserId))
+                .thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
@@ -342,32 +413,44 @@ class ProgramServiceTest {
 
     @Test
     void getProgramsWhereUserIsJudge_success() {
-        mockAuthenticatedUser(1L);
+
+        UUID authUserId = UUID.randomUUID();
+        UUID programId1 = UUID.randomUUID();
+        UUID programId2 = UUID.randomUUID();
+
+        mockAuthenticatedUser(authUserId);
 
         User authUser = new User();
-        authUser.setUserId(1L);
+        authUser.setUserId(authUserId);
 
         Program program1 = new Program();
-        program1.setProgramId(1L);
+        program1.setProgramId(programId1);
         program1.setProgramTitle("Program 1");
 
         Program program2 = new Program();
-        program2.setProgramId(2L);
+        program2.setProgramId(programId2);
         program2.setProgramTitle("Program 2");
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
-        when(programRepository.findByJudgeUserId(1L))
+        when(userRepository.findById(authUserId))
+                .thenReturn(Optional.of(authUser));
+        when(programRepository.findByJudgeUserId(authUserId))
                 .thenReturn(List.of(program1, program2));
 
-        List<Program> result = programService.getProgramsWhereUserIsJudge();
+        List<Program> result =
+                programService.getProgramsWhereUserIsJudge();
 
         assertEquals(2, result.size());
-        verify(programRepository, times(1)).findByJudgeUserId(1L);
+        verify(programRepository, times(1))
+                .findByJudgeUserId(authUserId);
     }
 
     @Test
     void getProgramsWhereUserIsJudge_userNotFound() {
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        UUID authUserId = UUID.randomUUID();
+
+        when(userRepository.findById(authUserId))
+                .thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
@@ -382,27 +465,35 @@ class ProgramServiceTest {
 
     @Test
     void getActiveProgramsByUserDepartment_success() {
-        mockAuthenticatedUser(1L);
+
+        UUID authUserId = UUID.randomUUID();
+        UUID programId1 = UUID.randomUUID();
+        UUID programId2 = UUID.randomUUID();
+
+        mockAuthenticatedUser(authUserId);
 
         User authUser = new User();
-        authUser.setUserId(1L);
+        authUser.setUserId(authUserId);
         authUser.setDepartment(Department.IT);
 
         Program program1 = new Program();
-        program1.setProgramId(1L);
+        program1.setProgramId(programId1);
         program1.setDepartment(Department.IT);
         program1.setStatus(ProgramStatus.ACTIVE);
 
         Program program2 = new Program();
-        program2.setProgramId(2L);
+        program2.setProgramId(programId2);
         program2.setDepartment(Department.IT);
         program2.setStatus(ProgramStatus.ACTIVE);
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
-        when(programRepository.findByStatusAndDepartment(ProgramStatus.ACTIVE, Department.IT))
+        when(userRepository.findById(authUserId))
+                .thenReturn(Optional.of(authUser));
+        when(programRepository.findByStatusAndDepartment(
+                ProgramStatus.ACTIVE, Department.IT))
                 .thenReturn(List.of(program1, program2));
 
-        List<Program> result = programService.getActiveProgramsByUserDepartment();
+        List<Program> result =
+                programService.getActiveProgramsByUserDepartment();
 
         assertEquals(2, result.size());
         result.forEach(program -> {
@@ -413,7 +504,11 @@ class ProgramServiceTest {
 
     @Test
     void getActiveProgramsByUserDepartment_userNotFound() {
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        UUID authUserId = UUID.randomUUID();
+
+        when(userRepository.findById(authUserId))
+                .thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
@@ -428,37 +523,49 @@ class ProgramServiceTest {
 
     @Test
     void getDraftProgramsByHost_success() {
-        mockAuthenticatedUser(1L);
+
+        UUID authUserId = UUID.randomUUID();
+        UUID programId1 = UUID.randomUUID();
+        UUID programId2 = UUID.randomUUID();
+
+        mockAuthenticatedUser(authUserId);
 
         User authUser = new User();
-        authUser.setUserId(1L);
+        authUser.setUserId(authUserId);
 
         Program program1 = new Program();
-        program1.setProgramId(1L);
+        program1.setProgramId(programId1);
         program1.setStatus(ProgramStatus.DRAFT);
         program1.setUser(authUser);
 
         Program program2 = new Program();
-        program2.setProgramId(2L);
+        program2.setProgramId(programId2);
         program2.setStatus(ProgramStatus.DRAFT);
         program2.setUser(authUser);
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
-        when(programRepository.findByStatusAndUser_UserId(ProgramStatus.DRAFT, 1L))
+        when(userRepository.findById(authUserId))
+                .thenReturn(Optional.of(authUser));
+        when(programRepository.findByStatusAndUser_UserId(
+                ProgramStatus.DRAFT, authUserId))
                 .thenReturn(List.of(program1, program2));
 
-        List<Program> result = programService.getDraftProgramsByHost();
+        List<Program> result =
+                programService.getDraftProgramsByHost();
 
         assertEquals(2, result.size());
         result.forEach(program -> {
             assertEquals(ProgramStatus.DRAFT, program.getStatus());
-            assertEquals(1L, program.getUser().getUserId());
+            assertEquals(authUserId, program.getUser().getUserId());
         });
     }
 
     @Test
     void getDraftProgramsByHost_userNotFound() {
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        UUID authUserId = UUID.randomUUID();
+
+        when(userRepository.findById(authUserId))
+                .thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
@@ -469,30 +576,38 @@ class ProgramServiceTest {
         assertEquals("User not found", ex.getReason());
     }
 
-    // -------------------- CHANGE PROGRAM STATUS TO DRAFT --------------------
+    // -------------------- CHANGE PROGRAM STATUS TO ACTIVE --------------------
 
     @Test
     void changeProgramStatusToDraft_success() {
-        mockAuthenticatedUser(1L);
+
+        UUID authUserId = UUID.randomUUID();
+        UUID programId = UUID.randomUUID();
+
+        mockAuthenticatedUser(authUserId);
 
         User authUser = new User();
-        authUser.setUserId(1L);
+        authUser.setUserId(authUserId);
 
         Program program = new Program();
-        program.setProgramId(1L);
+        program.setProgramId(programId);
         program.setStatus(ProgramStatus.DRAFT);
         program.setUser(authUser);
 
         Program savedProgram = new Program();
-        savedProgram.setProgramId(1L);
+        savedProgram.setProgramId(programId);
         savedProgram.setStatus(ProgramStatus.ACTIVE);
         savedProgram.setUser(authUser);
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
-        when(programRepository.findById(1L)).thenReturn(Optional.of(program));
-        when(programRepository.save(program)).thenReturn(savedProgram);
+        when(userRepository.findById(authUserId))
+                .thenReturn(Optional.of(authUser));
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.of(program));
+        when(programRepository.save(program))
+                .thenReturn(savedProgram);
 
-        Program result = programService.changeProgramStatusToActive(1L);
+        Program result =
+                programService.changeProgramStatusToActive(programId);
 
         assertEquals(ProgramStatus.ACTIVE, result.getStatus());
         verify(programRepository, times(1)).save(program);
@@ -500,17 +615,23 @@ class ProgramServiceTest {
 
     @Test
     void changeProgramStatusToDraft_programNotFound() {
-        mockAuthenticatedUser(1L);
+
+        UUID authUserId = UUID.randomUUID();
+        UUID programId = UUID.randomUUID();
+
+        mockAuthenticatedUser(authUserId);
 
         User authUser = new User();
-        authUser.setUserId(1L);
+        authUser.setUserId(authUserId);
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
-        when(programRepository.findById(999L)).thenReturn(Optional.empty());
+        when(userRepository.findById(authUserId))
+                .thenReturn(Optional.of(authUser));
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> programService.changeProgramStatusToActive(999L)
+                () -> programService.changeProgramStatusToActive(programId)
         );
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
@@ -519,52 +640,71 @@ class ProgramServiceTest {
 
     @Test
     void changeProgramStatusToDraft_permissionDenied() {
-        mockAuthenticatedUser(1L);
+
+        UUID authUserId = UUID.randomUUID();
+        UUID otherUserId = UUID.randomUUID();
+        UUID programId = UUID.randomUUID();
+
+        mockAuthenticatedUser(authUserId);
 
         User authUser = new User();
-        authUser.setUserId(1L);
+        authUser.setUserId(authUserId);
 
         User otherUser = new User();
-        otherUser.setUserId(2L);
+        otherUser.setUserId(otherUserId);
 
         Program program = new Program();
-        program.setProgramId(1L);
+        program.setProgramId(programId);
         program.setStatus(ProgramStatus.ACTIVE);
         program.setUser(otherUser);
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
-        when(programRepository.findById(1L)).thenReturn(Optional.of(program));
+        when(userRepository.findById(authUserId))
+                .thenReturn(Optional.of(authUser));
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.of(program));
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> programService.changeProgramStatusToActive(1L)
+                () -> programService.changeProgramStatusToActive(programId)
         );
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("You do not have permission to change status of this program", ex.getReason());
+        assertEquals(
+                "You do not have permission to change status of this program",
+                ex.getReason()
+        );
     }
 
     @Test
     void changeProgramStatusToDraft_statusNotActive() {
-        mockAuthenticatedUser(1L);
+
+        UUID authUserId = UUID.randomUUID();
+        UUID programId = UUID.randomUUID();
+
+        mockAuthenticatedUser(authUserId);
 
         User authUser = new User();
-        authUser.setUserId(1L);
+        authUser.setUserId(authUserId);
 
         Program program = new Program();
-        program.setProgramId(1L);
+        program.setProgramId(programId);
         program.setStatus(ProgramStatus.COMPLETED);
         program.setUser(authUser);
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
-        when(programRepository.findById(1L)).thenReturn(Optional.of(program));
+        when(userRepository.findById(authUserId))
+                .thenReturn(Optional.of(authUser));
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.of(program));
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> programService.changeProgramStatusToActive(1L)
+                () -> programService.changeProgramStatusToActive(programId)
         );
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
-        assertEquals("Program status must be DRAFT to change to ACTIVE", ex.getReason());
+        assertEquals(
+                "Program status must be DRAFT to change to ACTIVE",
+                ex.getReason()
+        );
     }
 }

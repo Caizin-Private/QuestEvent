@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -29,13 +30,16 @@ class UserWalletTransactionServiceImplTest {
 
     @Test
     void creditGems_success() {
+
+        UUID userId = UUID.randomUUID();
+
         User user = new User();
-        user.setUserId(1L);
+        user.setUserId(userId);
 
         UserWallet wallet = new UserWallet();
         wallet.setGems(100L);
 
-        when(userWalletRepository.findByUserUserId(1L))
+        when(userWalletRepository.findByUserUserId(userId))
                 .thenReturn(Optional.of(wallet));
 
         userWalletTransactionService.creditGems(user, 50L);
@@ -46,8 +50,9 @@ class UserWalletTransactionServiceImplTest {
 
     @Test
     void creditGems_amountZero_shouldThrowException() {
+
         User user = new User();
-        user.setUserId(1L);
+        user.setUserId(UUID.randomUUID());
 
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
@@ -60,25 +65,28 @@ class UserWalletTransactionServiceImplTest {
 
     @Test
     void creditGems_amountNegative_shouldThrowException() {
+
         User user = new User();
-        user.setUserId(1L);
+        user.setUserId(UUID.randomUUID());
 
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
-                () -> userWalletTransactionService.creditGems(user, (long) -10)
+                () -> userWalletTransactionService.creditGems(user, -10L)
         );
 
         assertEquals("Amount must be greater than zero", ex.getMessage());
         verifyNoInteractions(userWalletRepository);
     }
 
-
     @Test
     void creditGems_walletNotFound_shouldThrowException() {
-        User user = new User();
-        user.setUserId(1L);
 
-        when(userWalletRepository.findByUserUserId(1L))
+        UUID userId = UUID.randomUUID();
+
+        User user = new User();
+        user.setUserId(userId);
+
+        when(userWalletRepository.findByUserUserId(userId))
                 .thenReturn(Optional.empty());
 
         RuntimeException ex = assertThrows(

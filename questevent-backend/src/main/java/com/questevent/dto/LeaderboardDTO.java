@@ -1,7 +1,9 @@
 package com.questevent.dto;
 
+import java.util.UUID;
+
 public record LeaderboardDTO(
-        Long userId,
+        UUID userId,
         String userName,
         Long completedActivitiesCount,
         Long gems,

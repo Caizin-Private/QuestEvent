@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
@@ -27,9 +28,12 @@ class LeaderboardServiceTest {
     void getGlobalLeaderboard_shouldReturnGlobalLeaderboard() {
 
         // Arrange
+        UUID userId1 = UUID.randomUUID();
+        UUID userId2 = UUID.randomUUID();
+
         List<LeaderboardDTO> mockLeaderboard = List.of(
-                new LeaderboardDTO(1L, "Alice", 6L, 200L, 98.5),
-                new LeaderboardDTO(2L, "Bob", 4L, 150L, 92.0)
+                new LeaderboardDTO(userId1, "Alice", 6L, 200L, 98.5),
+                new LeaderboardDTO(userId2, "Bob", 4L, 150L, 92.0)
         );
 
         when(leaderboardRepository.getGlobalLeaderboard())
@@ -43,7 +47,7 @@ class LeaderboardServiceTest {
         assertEquals(2, result.size());
 
         LeaderboardDTO first = result.get(0);
-        assertEquals(1L, first.userId());
+        assertEquals(userId1, first.userId());
         assertEquals("Alice", first.userName());
         assertEquals(6L, first.completedActivitiesCount());
         assertEquals(200L, first.gems());
@@ -56,11 +60,14 @@ class LeaderboardServiceTest {
     void getProgramLeaderboard_shouldReturnProgramLeaderboard() {
 
         // Arrange
-        Long programId = 10L;
+        UUID programId = UUID.randomUUID();
+
+        UUID userId3 = UUID.randomUUID();
+        UUID userId4 = UUID.randomUUID();
 
         List<LeaderboardDTO> mockLeaderboard = List.of(
-                new LeaderboardDTO(3L, "User3", 5L, 150L, 95.5),
-                new LeaderboardDTO(4L, "User4", 4L, 120L, 90.0)
+                new LeaderboardDTO(userId3, "User3", 5L, 150L, 95.5),
+                new LeaderboardDTO(userId4, "User4", 4L, 120L, 90.0)
         );
 
         when(leaderboardRepository.getProgramLeaderboard(programId))

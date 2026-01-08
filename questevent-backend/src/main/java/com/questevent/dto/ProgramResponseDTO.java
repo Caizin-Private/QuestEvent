@@ -6,16 +6,17 @@ import lombok.Data;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 public class ProgramResponseDTO {
-    private Long judgeUserId;
-    private Long programId;
+    private UUID judgeUserId;
+    private UUID programId;
     private String programTitle;
     private String programDescription;
     private Department department;
     private Instant startDate;
     private Instant endDate;
     private ProgramStatus status;
-    private Long hostUserId;
+    private UUID hostUserId;
 }

@@ -15,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/users")
@@ -75,7 +76,7 @@ public class UserController {
     })
     public ResponseEntity<UserResponseDto> getUser(
             @Parameter(description = "User ID", required = true)
-            @PathVariable Long id) {
+            @PathVariable UUID id) {
 
         User user = userService.getUserById(id);
         return ResponseEntity.ok(userService.convertToDto(user));
@@ -91,7 +92,7 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = "Forbidden - Access denied")
     })
     public ResponseEntity<UserResponseDto> updateUser(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Valid @RequestBody User user) {
 
         User updatedUser = userService.updateUser(id, user);
@@ -107,7 +108,7 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = "Forbidden - Platform Owner only")
     })
     public ResponseEntity<Void> deleteUser(
-            @PathVariable Long id) {
+            @PathVariable UUID id) {
 
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();

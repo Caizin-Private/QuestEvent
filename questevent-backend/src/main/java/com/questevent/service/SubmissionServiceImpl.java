@@ -9,6 +9,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class SubmissionServiceImpl implements SubmissionService {
@@ -18,7 +20,7 @@ public class SubmissionServiceImpl implements SubmissionService {
 
     @Override
     @Transactional
-    public void submitActivity(Long activityId, Long userId, String submissionUrl) {
+    public void submitActivity(UUID activityId, UUID userId, String submissionUrl) {
 
 
         // 1️⃣ Validate registration

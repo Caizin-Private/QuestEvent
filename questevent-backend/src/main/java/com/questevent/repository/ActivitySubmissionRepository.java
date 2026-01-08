@@ -7,16 +7,17 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 public interface ActivitySubmissionRepository
-        extends JpaRepository<ActivitySubmission, Long> {
+        extends JpaRepository<ActivitySubmission, UUID> {
 
 
-    boolean existsByActivityRegistration_ActivityRegistrationId(Long activityRegistrationId);
+    boolean existsByActivityRegistration_ActivityRegistrationId(UUID activityRegistrationId);
 
     List<ActivitySubmission>
-    findByActivityRegistrationActivityActivityId(Long activityId);
+    findByActivityRegistrationActivityActivityId(UUID activityId);
 
     List<ActivitySubmission> findByReviewStatus(ReviewStatus reviewStatus);
 

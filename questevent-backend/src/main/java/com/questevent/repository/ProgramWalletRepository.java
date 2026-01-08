@@ -14,12 +14,12 @@ public interface ProgramWalletRepository extends JpaRepository<ProgramWallet, UU
     Optional<ProgramWallet> findByUserAndProgram(User user, Program program);
 
     Optional<ProgramWallet> findByUserUserIdAndProgramProgramId(
-            Long userId,
-            Long programId
+            UUID userId,
+            UUID programId
     );
 
     List<ProgramWallet> findByUser(User user);
 
-    List<ProgramWallet> findByProgramProgramId(Long programId);
+    List<ProgramWallet> findByProgramProgramId(UUID programId);
 
 }

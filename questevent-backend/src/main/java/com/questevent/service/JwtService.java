@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Service
@@ -107,7 +108,7 @@ public class JwtService {
     public UserPrincipal extractUserPrincipal(String token) {
         Claims claims = extractAllClaims(token);
 
-        Long userId = claims.get("userId", Long.class);
+        UUID userId = claims.get("userId", UUID.class);
         String email = claims.get("email", String.class);
         String roleStr = claims.get("role", String.class);
 

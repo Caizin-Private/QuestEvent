@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Date;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -30,7 +31,7 @@ class JwtServiceTest {
     void shouldGenerateAndValidateAccessToken() {
 
         UserPrincipal principal =
-                new UserPrincipal(1L, "test@example.com", Role.USER);
+                new UserPrincipal(UUID.randomUUID(), "test@example.com", Role.USER);
 
         String token = jwtService.generateAccessToken(principal);
 
@@ -44,7 +45,7 @@ class JwtServiceTest {
     void shouldGenerateAndValidateRefreshToken() {
 
         UserPrincipal principal =
-                new UserPrincipal(1L, "test@example.com", Role.USER);
+                new UserPrincipal(UUID.randomUUID(), "test@example.com", Role.USER);
 
         String token = jwtService.generateRefreshToken(principal);
 
@@ -58,7 +59,7 @@ class JwtServiceTest {
     void shouldExtractUsernameFromToken() {
 
         UserPrincipal principal =
-                new UserPrincipal(2L, "abc@test.com", Role.HOST);
+                new UserPrincipal(UUID.randomUUID(), "abc@test.com", Role.HOST);
 
         String token = jwtService.generateAccessToken(principal);
 
@@ -71,7 +72,7 @@ class JwtServiceTest {
     void shouldExtractExpirationDate() {
 
         UserPrincipal principal =
-                new UserPrincipal(3L, "x@y.com", Role.USER);
+                new UserPrincipal(UUID.randomUUID(), "x@y.com", Role.USER);
 
         String token = jwtService.generateAccessToken(principal);
 
@@ -84,15 +85,17 @@ class JwtServiceTest {
     @Test
     void shouldExtractUserPrincipalFromAccessToken() {
 
+        UUID userId = UUID.randomUUID();
+
         UserPrincipal principal =
-                new UserPrincipal(10L, "user@test.com", Role.HOST);
+                new UserPrincipal(userId, "user@test.com", Role.HOST);
 
         String token = jwtService.generateAccessToken(principal);
 
         UserPrincipal extracted =
                 jwtService.extractUserPrincipal(token);
 
-        assertEquals(10L, extracted.userId());
+        assertEquals(userId, extracted.userId());
         assertEquals("user@test.com", extracted.email());
         assertEquals(Role.HOST, extracted.role());
     }
@@ -111,7 +114,7 @@ class JwtServiceTest {
     void shouldFailExtractPrincipalFromRefreshToken() {
 
         UserPrincipal principal =
-                new UserPrincipal(5L, "r@test.com", Role.USER);
+                new UserPrincipal(UUID.randomUUID(), "r@test.com", Role.USER);
 
         String refresh = jwtService.generateRefreshToken(principal);
 

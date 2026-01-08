@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class ProgramWalletTransactionServiceImpl
@@ -103,9 +104,9 @@ public class ProgramWalletTransactionServiceImpl
 
     @Override
     @Transactional
-    public void manuallySettleExpiredProgramWallets(Long programId) {
+    public void manuallySettleExpiredProgramWallets(UUID programId) {
 
-        if (programId == null || programId <= 0) {
+        if (programId == null) {
             throw new IllegalArgumentException("Invalid programId");
         }
 

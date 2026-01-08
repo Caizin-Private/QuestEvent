@@ -4,9 +4,11 @@ import com.questevent.enums.Department;
 import com.questevent.enums.Role;
 import lombok.Data;
 
+import java.util.UUID;
+
 @Data
 public class UserResponseDto {
-    private Long userId;
+    private UUID userId;
     private String name;
     private String email;
     private Department department;

@@ -4,12 +4,13 @@ import com.questevent.enums.ReviewStatus;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record JudgeSubmissionDTO(
-        Long submissionId,
-        Long activityId,
+        UUID submissionId,
+        UUID activityId,
         String activityName,
-        Long userId,
+        UUID userId,
         String userName,
         String submissionUrl,
         Long awardedGems,

@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
@@ -86,7 +87,7 @@ public class ProgramService {
 
 
     @Transactional
-    public Program updateProgram(Long programId, ProgramRequestDTO dto) {
+    public Program updateProgram(UUID programId, ProgramRequestDTO dto) {
 
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
@@ -174,7 +175,7 @@ public class ProgramService {
         return programRepository.findByUser_UserId(hostUser.getUserId());
     }
 
-    public Program getProgramById(Long programId) {
+    public Program getProgramById(UUID programId) {
         return programRepository.findById(programId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Program not found"));
     }
@@ -184,7 +185,7 @@ public class ProgramService {
         return programRepository.findAll();
     }
 
-    public void deleteProgram(Long programId) {
+    public void deleteProgram(UUID programId) {
         @Nullable Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
 
@@ -265,7 +266,7 @@ public class ProgramService {
         return programRepository.findByStatusAndUser_UserId(ProgramStatus.DRAFT, currentUser.getUserId());
     }
 
-    public Program changeProgramStatusToActive(Long programId) {
+    public Program changeProgramStatusToActive(UUID programId) {
         User currentUser = getCurrentUser();
         if (currentUser == null) {
             throw new ResponseStatusException(NOT_FOUND, "User not found");

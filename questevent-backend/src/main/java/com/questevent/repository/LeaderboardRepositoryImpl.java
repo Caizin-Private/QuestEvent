@@ -6,6 +6,7 @@ import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 public class LeaderboardRepositoryImpl implements LeaderboardRepository {
@@ -62,7 +63,7 @@ public class LeaderboardRepositoryImpl implements LeaderboardRepository {
     }
 
     @Override
-    public List<LeaderboardDTO> getProgramLeaderboard(Long programId) {
+    public List<LeaderboardDTO> getProgramLeaderboard(UUID programId) {
         return em.createQuery("""
             SELECT new com.questevent.dto.LeaderboardDTO(
                 pw.user.userId,

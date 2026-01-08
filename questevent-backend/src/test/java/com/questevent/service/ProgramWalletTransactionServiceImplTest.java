@@ -38,11 +38,15 @@ public class ProgramWalletTransactionServiceImplTest {
 
     @Test
     void creditGems_shouldIncreaseBalance_whenValidInput() {
+
+        UUID userId = UUID.randomUUID();
+        UUID programId = UUID.randomUUID();
+
         User user = new User();
-        user.setUserId(1L);
+        user.setUserId(userId);
 
         Program program = new Program();
-        program.setProgramId(10L);
+        program.setProgramId(programId);
 
         ProgramWallet wallet = new ProgramWallet();
         wallet.setProgramWalletId(UUID.randomUUID());
@@ -51,7 +55,7 @@ public class ProgramWalletTransactionServiceImplTest {
         wallet.setGems(100L);
 
         when(programWalletRepository
-                .findByUserUserIdAndProgramProgramId(1L, 10L))
+                .findByUserUserIdAndProgramProgramId(userId, programId))
                 .thenReturn(Optional.of(wallet));
 
         service.creditGems(user, program, 50L);
@@ -62,11 +66,12 @@ public class ProgramWalletTransactionServiceImplTest {
 
     @Test
     void creditGems_shouldThrowException_whenAmountIsZero() {
+
         User user = new User();
-        user.setUserId(1L);
+        user.setUserId(UUID.randomUUID());
 
         Program program = new Program();
-        program.setProgramId(10L);
+        program.setProgramId(UUID.randomUUID());
 
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
@@ -79,15 +84,16 @@ public class ProgramWalletTransactionServiceImplTest {
 
     @Test
     void creditGems_shouldThrowException_whenAmountIsNegative() {
+
         User user = new User();
-        user.setUserId(1L);
+        user.setUserId(UUID.randomUUID());
 
         Program program = new Program();
-        program.setProgramId(10L);
+        program.setProgramId(UUID.randomUUID());
 
         assertThrows(
                 IllegalArgumentException.class,
-                () -> service.creditGems(user, program, (long) -20)
+                () -> service.creditGems(user, program, -20L)
         );
 
         verifyNoInteractions(programWalletRepository);
@@ -95,14 +101,18 @@ public class ProgramWalletTransactionServiceImplTest {
 
     @Test
     void creditGems_shouldThrowException_whenWalletNotFound() {
+
+        UUID userId = UUID.randomUUID();
+        UUID programId = UUID.randomUUID();
+
         User user = new User();
-        user.setUserId(1L);
+        user.setUserId(userId);
 
         Program program = new Program();
-        program.setProgramId(10L);
+        program.setProgramId(programId);
 
         when(programWalletRepository
-                .findByUserUserIdAndProgramProgramId(1L, 10L))
+                .findByUserUserIdAndProgramProgramId(userId, programId))
                 .thenReturn(Optional.empty());
 
         RuntimeException ex = assertThrows(
@@ -116,11 +126,15 @@ public class ProgramWalletTransactionServiceImplTest {
 
     @Test
     void creditGems_shouldHandleLargeAmount() {
+
+        UUID userId = UUID.randomUUID();
+        UUID programId = UUID.randomUUID();
+
         User user = new User();
-        user.setUserId(1L);
+        user.setUserId(userId);
 
         Program program = new Program();
-        program.setProgramId(10L);
+        program.setProgramId(programId);
 
         ProgramWallet wallet = new ProgramWallet();
         wallet.setProgramWalletId(UUID.randomUUID());
@@ -129,7 +143,7 @@ public class ProgramWalletTransactionServiceImplTest {
         wallet.setGems(1_000_000L);
 
         when(programWalletRepository
-                .findByUserUserIdAndProgramProgramId(1L, 10L))
+                .findByUserUserIdAndProgramProgramId(userId, programId))
                 .thenReturn(Optional.of(wallet));
 
         service.creditGems(user, program, 500_000L);
@@ -140,16 +154,19 @@ public class ProgramWalletTransactionServiceImplTest {
 
     @Test
     void autoSettleExpiredProgramWallets_shouldTransferGemsAndCompleteProgram() {
+
+        UUID programId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+
         Program program = new Program();
-        program.setProgramId(10L);
+        program.setProgramId(programId);
         program.setStatus(ProgramStatus.ACTIVE);
 
         User user = new User();
-        user.setUserId(1L);
+        user.setUserId(userId);
 
         UserWallet userWallet = new UserWallet();
         userWallet.setGems(100L);
-
         user.setWallet(userWallet);
 
         ProgramWallet programWallet = new ProgramWallet();
@@ -161,11 +178,11 @@ public class ProgramWalletTransactionServiceImplTest {
                 .thenReturn(List.of(program));
 
         when(programWalletRepository
-                .findByProgramProgramId(10L))
+                .findByProgramProgramId(programId))
                 .thenReturn(List.of(programWallet));
 
         when(userWalletRepository
-                .findByUserUserId(1L))
+                .findByUserUserId(userId))
                 .thenReturn(Optional.of(userWallet));
 
         service.autoSettleExpiredProgramWallets();
@@ -181,8 +198,11 @@ public class ProgramWalletTransactionServiceImplTest {
 
     @Test
     void autoSettleExpiredProgramWallets_shouldSkipWalletsWithZeroGems() {
+
+        UUID programId = UUID.randomUUID();
+
         Program program = new Program();
-        program.setProgramId(10L);
+        program.setProgramId(programId);
         program.setStatus(ProgramStatus.ACTIVE);
 
         ProgramWallet programWallet = new ProgramWallet();
@@ -193,7 +213,7 @@ public class ProgramWalletTransactionServiceImplTest {
                 .thenReturn(List.of(program));
 
         when(programWalletRepository
-                .findByProgramProgramId(10L))
+                .findByProgramProgramId(programId))
                 .thenReturn(List.of(programWallet));
 
         service.autoSettleExpiredProgramWallets();
@@ -204,8 +224,11 @@ public class ProgramWalletTransactionServiceImplTest {
 
     @Test
     void manuallySettleExpiredProgramWallets_shouldSettleAndCompleteProgram() {
+
+        UUID programId = UUID.randomUUID();
+
         Program program = new Program();
-        program.setProgramId(10L);
+        program.setProgramId(programId);
         program.setStatus(ProgramStatus.ACTIVE);
 
         UserWallet userWallet = new UserWallet();
@@ -218,14 +241,14 @@ public class ProgramWalletTransactionServiceImplTest {
         programWallet.setUser(user);
         programWallet.setGems(50L);
 
-        when(programRepository.findById(10L))
+        when(programRepository.findById(programId))
                 .thenReturn(Optional.of(program));
 
         when(programWalletRepository
-                .findByProgramProgramId(10L))
+                .findByProgramProgramId(programId))
                 .thenReturn(List.of(programWallet));
 
-        service.manuallySettleExpiredProgramWallets(10L);
+        service.manuallySettleExpiredProgramWallets(programId);
 
         assertEquals(250, userWallet.getGems());
         assertEquals(0, programWallet.getGems());
@@ -238,15 +261,18 @@ public class ProgramWalletTransactionServiceImplTest {
 
     @Test
     void manuallySettleExpiredProgramWallets_shouldThrowException_whenProgramCompleted() {
+
+        UUID programId = UUID.randomUUID();
+
         Program program = new Program();
         program.setStatus(ProgramStatus.COMPLETED);
 
-        when(programRepository.findById(10L))
+        when(programRepository.findById(programId))
                 .thenReturn(Optional.of(program));
 
         IllegalStateException ex = assertThrows(
                 IllegalStateException.class,
-                () -> service.manuallySettleExpiredProgramWallets(10L)
+                () -> service.manuallySettleExpiredProgramWallets(programId)
         );
 
         assertEquals("Program already completed", ex.getMessage());
@@ -254,9 +280,10 @@ public class ProgramWalletTransactionServiceImplTest {
 
     @Test
     void manuallySettleExpiredProgramWallets_shouldThrowException_whenProgramIdInvalid() {
+
         assertThrows(
                 IllegalArgumentException.class,
-                () -> service.manuallySettleExpiredProgramWallets(0L)
+                () -> service.manuallySettleExpiredProgramWallets(null)
         );
     }
 }

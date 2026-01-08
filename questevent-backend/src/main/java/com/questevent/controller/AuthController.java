@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.io.IOException;
+import java.util.UUID;
 
 @Controller
 @RequiredArgsConstructor
@@ -94,7 +95,7 @@ public class AuthController {
             @RequestParam String gender
     ) throws IOException {
 
-        Long userId = (Long) request.getSession().getAttribute("userId");
+        UUID userId = (UUID) request.getSession().getAttribute("userId");
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -117,7 +118,7 @@ public class AuthController {
     @ResponseBody
     public String profile(HttpServletRequest request) {
 
-        Long userId = (Long) request.getSession().getAttribute("userId");
+        UUID userId = (UUID) request.getSession().getAttribute("userId");
         User user = userRepository.findById(userId).orElseThrow();
 
         return """

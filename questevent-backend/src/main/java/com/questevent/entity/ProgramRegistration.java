@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Data
 @Entity
@@ -15,9 +16,9 @@ import java.time.Instant;
 public class ProgramRegistration {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "program_registration_id")
-    private Long programRegistrationId;
+    @GeneratedValue
+    @Column(name = "program_registration_id", nullable = false, updatable = false)
+    private UUID programRegistrationId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(

@@ -18,6 +18,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -57,10 +58,13 @@ class OAuthSuccessServiceTest {
 
         when(oauth2User.getAttribute("email")).thenReturn("new@test.com");
         when(oauth2User.getAttribute("name")).thenReturn("New User");
-        when(userRepository.findByEmail("new@test.com")).thenReturn(Optional.empty());
+        when(userRepository.findByEmail("new@test.com"))
+                .thenReturn(Optional.empty());
+
+        UUID userId = UUID.randomUUID();
 
         User savedUser = new User();
-        savedUser.setUserId(1L);
+        savedUser.setUserId(userId);
         savedUser.setEmail("new@test.com");
         savedUser.setDepartment(Department.GENERAL);
         savedUser.setGender("PENDING");
@@ -70,7 +74,7 @@ class OAuthSuccessServiceTest {
         successService.onAuthenticationSuccess(request, response, authentication);
 
         verify(userRepository).save(any(User.class));
-        verify(session).setAttribute("userId", 1L);
+        verify(session).setAttribute("userId", userId);
         verify(response).sendRedirect("/complete-profile");
     }
 
@@ -79,16 +83,19 @@ class OAuthSuccessServiceTest {
 
         when(oauth2User.getAttribute("email")).thenReturn("user@test.com");
 
+        UUID userId = UUID.randomUUID();
+
         User user = new User();
-        user.setUserId(2L);
+        user.setUserId(userId);
         user.setDepartment(Department.GENERAL);
         user.setGender("PENDING");
 
-        when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail("user@test.com"))
+                .thenReturn(Optional.of(user));
 
         successService.onAuthenticationSuccess(request, response, authentication);
 
-        verify(session).setAttribute("userId", 2L);
+        verify(session).setAttribute("userId", userId);
         verify(response).sendRedirect("/complete-profile");
         verify(userRepository, never()).save(any());
     }
@@ -98,16 +105,19 @@ class OAuthSuccessServiceTest {
 
         when(oauth2User.getAttribute("email")).thenReturn("user2@test.com");
 
+        UUID userId = UUID.randomUUID();
+
         User user = new User();
-        user.setUserId(3L);
+        user.setUserId(userId);
         user.setDepartment(Department.TECH);
         user.setGender("MALE");
 
-        when(userRepository.findByEmail("user2@test.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail("user2@test.com"))
+                .thenReturn(Optional.of(user));
 
         successService.onAuthenticationSuccess(request, response, authentication);
 
-        verify(session).setAttribute("userId", 3L);
+        verify(session).setAttribute("userId", userId);
         verify(response).sendRedirect("/profile");
         verify(userRepository, never()).save(any());
     }
@@ -116,14 +126,18 @@ class OAuthSuccessServiceTest {
     void shouldResolveEmailFromPreferredUsername_whenEmailIsNull() throws IOException {
 
         when(oauth2User.getAttribute("email")).thenReturn(null);
-        when(oauth2User.getAttribute("preferred_username")).thenReturn("alt@test.com");
+        when(oauth2User.getAttribute("preferred_username"))
+                .thenReturn("alt@test.com");
+
+        UUID userId = UUID.randomUUID();
 
         User user = new User();
-        user.setUserId(4L);
+        user.setUserId(userId);
         user.setDepartment(Department.TECH);
         user.setGender("MALE");
 
-        when(userRepository.findByEmail("alt@test.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail("alt@test.com"))
+                .thenReturn(Optional.of(user));
 
         successService.onAuthenticationSuccess(request, response, authentication);
 
@@ -137,12 +151,15 @@ class OAuthSuccessServiceTest {
         when(oauth2User.getAttribute("preferred_username")).thenReturn(null);
         when(oauth2User.getAttribute("upn")).thenReturn("upn@test.com");
 
+        UUID userId = UUID.randomUUID();
+
         User user = new User();
-        user.setUserId(5L);
+        user.setUserId(userId);
         user.setDepartment(Department.TECH);
         user.setGender("MALE");
 
-        when(userRepository.findByEmail("upn@test.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail("upn@test.com"))
+                .thenReturn(Optional.of(user));
 
         successService.onAuthenticationSuccess(request, response, authentication);
 

@@ -14,9 +14,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -38,23 +38,26 @@ class JudgeServiceImplTest {
 
     @Test
     void getSubmissionsForActivity_shouldReturnMappedDtos() {
-        ActivitySubmission submission = mockSubmission();
+
+        UUID activityId = UUID.randomUUID();
+        ActivitySubmission submission = mockSubmission(activityId);
 
         when(submissionRepository
-                .findByActivityRegistrationActivityActivityId(1L))
+                .findByActivityRegistrationActivityActivityId(activityId))
                 .thenReturn(List.of(submission));
 
         List<JudgeSubmissionDTO> result =
-                judgeService.getSubmissionsForActivity(1L);
+                judgeService.getSubmissionsForActivity(activityId);
 
         assertEquals(1, result.size());
-        assertEquals(1L, result.get(0).activityId());
+        assertEquals(activityId, result.get(0).activityId());
         assertEquals(ReviewStatus.PENDING, result.get(0).reviewStatus());
     }
 
     @Test
     void getPendingSubmissions_shouldReturnOnlyPending() {
-        ActivitySubmission submission = mockSubmission();
+
+        ActivitySubmission submission = mockSubmission(UUID.randomUUID());
 
         when(submissionRepository.findByReviewStatus(ReviewStatus.PENDING))
                 .thenReturn(List.of(submission));
@@ -68,12 +71,14 @@ class JudgeServiceImplTest {
 
     @Test
     void reviewSubmission_shouldApproveSubmissionAndCreditWallet() {
-        ActivitySubmission submission = mockSubmission();
 
-        when(submissionRepository.findById(10L))
+        UUID submissionId = UUID.randomUUID();
+        ActivitySubmission submission = mockSubmission(UUID.randomUUID());
+
+        when(submissionRepository.findById(submissionId))
                 .thenReturn(Optional.of(submission));
 
-        judgeService.reviewSubmission(10L);
+        judgeService.reviewSubmission(submissionId);
 
         assertEquals(ReviewStatus.APPROVED,
                 submission.getReviewStatus());
@@ -92,76 +97,86 @@ class JudgeServiceImplTest {
 
     @Test
     void reviewSubmission_shouldThrowIfSubmissionNotFound() {
-        when(submissionRepository.findById(99L))
+
+        UUID submissionId = UUID.randomUUID();
+
+        when(submissionRepository.findById(submissionId))
                 .thenReturn(Optional.empty());
 
         RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> judgeService.reviewSubmission(99L));
+                () -> judgeService.reviewSubmission(submissionId));
 
         assertEquals("Submission not found", ex.getMessage());
     }
 
     @Test
     void reviewSubmission_shouldThrowIfAlreadyReviewed() {
-        ActivitySubmission submission = mockSubmission();
+
+        UUID submissionId = UUID.randomUUID();
+        ActivitySubmission submission = mockSubmission(UUID.randomUUID());
         submission.setReviewStatus(ReviewStatus.APPROVED);
 
-        when(submissionRepository.findById(10L))
+        when(submissionRepository.findById(submissionId))
                 .thenReturn(Optional.of(submission));
 
         RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> judgeService.reviewSubmission(10L));
+                () -> judgeService.reviewSubmission(submissionId));
 
         assertEquals("Submission already reviewed", ex.getMessage());
     }
 
     @Test
     void reviewSubmission_shouldThrowIfJudgeNotAssignedToProgram() {
-        ActivitySubmission submission = mockSubmission();
+
+        UUID submissionId = UUID.randomUUID();
+        ActivitySubmission submission = mockSubmission(UUID.randomUUID());
         submission.getActivityRegistration()
                 .getActivity()
                 .getProgram()
                 .setJudge(null);
 
-        when(submissionRepository.findById(10L))
+        when(submissionRepository.findById(submissionId))
                 .thenReturn(Optional.of(submission));
 
         RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> judgeService.reviewSubmission(10L));
+                () -> judgeService.reviewSubmission(submissionId));
 
         assertEquals("Judge not assigned to this program", ex.getMessage());
     }
 
     @Test
     void reviewSubmission_shouldThrowIfInvalidRewardGems() {
-        ActivitySubmission submission = mockSubmission();
+
+        UUID submissionId = UUID.randomUUID();
+        ActivitySubmission submission = mockSubmission(UUID.randomUUID());
         submission.getActivityRegistration()
                 .getActivity()
                 .setRewardGems(0L);
 
-        when(submissionRepository.findById(10L))
+        when(submissionRepository.findById(submissionId))
                 .thenReturn(Optional.of(submission));
 
         RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> judgeService.reviewSubmission(10L));
+                () -> judgeService.reviewSubmission(submissionId));
 
         assertEquals("Invalid reward configuration", ex.getMessage());
     }
 
-    private ActivitySubmission mockSubmission() {
+    private ActivitySubmission mockSubmission(UUID activityId) {
+
         User user = new User();
-        user.setUserId(5L);
+        user.setUserId(UUID.randomUUID());
         user.setName("User A");
 
         Judge judge = new Judge();
-        judge.setJudgeId(1L);
+        judge.setJudgeId(UUID.randomUUID());
 
         Program program = new Program();
-        program.setProgramId(3L);
+        program.setProgramId(UUID.randomUUID());
         program.setJudge(judge); // ✅ IMPORTANT
 
         Activity activity = new Activity();
-        activity.setActivityId(1L);
+        activity.setActivityId(activityId);
         activity.setActivityName("Hackathon");
         activity.setRewardGems(50L);
         activity.setProgram(program);
@@ -172,7 +187,7 @@ class JudgeServiceImplTest {
         registration.setCompletionStatus(CompletionStatus.NOT_COMPLETED);
 
         ActivitySubmission submission = new ActivitySubmission();
-        submission.setSubmissionId(10L);
+        submission.setSubmissionId(UUID.randomUUID());
         submission.setActivityRegistration(registration);
         submission.setSubmissionUrl("http://link");
         submission.setSubmittedAt(Instant.now());

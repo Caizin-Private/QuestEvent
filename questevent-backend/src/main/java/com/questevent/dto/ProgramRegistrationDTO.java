@@ -6,15 +6,16 @@ import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class ProgramRegistrationDTO {
-    private Long programRegistrationId;
-    private Long programId;
+    private UUID programRegistrationId;
+    private UUID programId;
     private String programTitle;
-    private Long userId;
+    private UUID userId;
     private String userName;
     private Instant registeredAt;
 }

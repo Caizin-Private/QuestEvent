@@ -103,7 +103,7 @@ public class RbacService {
         return user != null && user.getRole() == Role.OWNER;
     }
 
-    public boolean canAccessUserProfile(Authentication authentication, Long userId) {
+    public boolean canAccessUserProfile(Authentication authentication, UUID userId) {
         User user = currentUser(authentication);
         if (user == null) return false;
 
@@ -114,7 +114,7 @@ public class RbacService {
         return user.getUserId().equals(userId);
     }
 
-    public boolean canManageProgram(Authentication authentication, Long programId) {
+    public boolean canManageProgram(Authentication authentication, UUID programId) {
         User user = currentUser(authentication);
         if (user == null) return false;
 
@@ -128,11 +128,11 @@ public class RbacService {
         return program.getUser().getUserId().equals(user.getUserId());
     }
 
-    public boolean canViewProgram(Authentication authentication, Long programId) {
+    public boolean canViewProgram(Authentication authentication, UUID programId) {
         return currentUser(authentication) != null;
     }
 
-    public boolean canJudgeAccessProgram(Authentication authentication, Long programId) {
+    public boolean canJudgeAccessProgram(Authentication authentication, UUID programId) {
         User user = currentUser(authentication);
         if (user == null) return false;
 
@@ -147,7 +147,7 @@ public class RbacService {
                 program.getJudge().getUser().getUserId().equals(user.getUserId());
     }
 
-    public boolean canAccessActivityRegistration(Authentication authentication, Long registrationId) {
+    public boolean canAccessActivityRegistration(Authentication authentication, UUID registrationId) {
         User user = currentUser(authentication);
         if (user == null) return false;
 
@@ -180,7 +180,7 @@ public class RbacService {
         return false;
     }
 
-    public boolean canAccessProgramRegistration(Authentication authentication, Long registrationId) {
+    public boolean canAccessProgramRegistration(Authentication authentication, UUID registrationId) {
         User user = currentUser(authentication);
         if (user == null) return false;
 
@@ -211,7 +211,7 @@ public class RbacService {
         return false;
     }
 
-    public boolean canVerifySubmission(Authentication authentication, Long submissionId) {
+    public boolean canVerifySubmission(Authentication authentication, UUID submissionId) {
         User user = currentUser(authentication);
         if (user == null) return false;
 
@@ -232,7 +232,7 @@ public class RbacService {
                 .orElse(false);
     }
 
-    public boolean isJudgeForProgram(Authentication authentication, Long programId) {
+    public boolean isJudgeForProgram(Authentication authentication, UUID programId) {
         User user = currentUser(authentication);
         if (user == null) return false;
 
@@ -246,7 +246,7 @@ public class RbacService {
                 .orElse(false);
     }
 
-    public boolean isJudgeForActivity(Authentication authentication, Long activityId) {
+    public boolean isJudgeForActivity(Authentication authentication, UUID activityId) {
         User user = currentUser(authentication);
         if (user == null) return false;
 
@@ -275,7 +275,7 @@ public class RbacService {
         return judgeRepository.findByUserUserId(user.getUserId()).isPresent();
     }
 
-    public boolean canAccessUserWallet(Authentication authentication, Long userId) {
+    public boolean canAccessUserWallet(Authentication authentication, UUID userId) {
         User user = currentUser(authentication);
         if (user == null) return false;
 
@@ -298,7 +298,7 @@ public class RbacService {
 
     public boolean canAccessMyProgramWallet(
             Authentication authentication,
-            Long programId
+            UUID programId
     ) {
         User user = currentUser(authentication);
         if (user == null) return false;
@@ -322,7 +322,7 @@ public class RbacService {
 
     public boolean canAccessProgramWalletsByProgram(
             Authentication authentication,
-            Long programId
+            UUID programId
     ) {
         User user = currentUser(authentication);
         if (user == null) {
@@ -352,8 +352,8 @@ public class RbacService {
 
     public boolean canRegisterForProgram(
             Authentication authentication,
-            Long programId,
-            Long userId
+            UUID programId,
+            UUID userId
     ) {
         User user = currentUser(authentication);
         if (user == null) return false;
@@ -380,8 +380,8 @@ public class RbacService {
 
     public boolean canRegisterForActivity(
             Authentication authentication,
-            Long activityId,
-            Long userId
+            UUID activityId,
+            UUID userId
     ) {
         User user = currentUser(authentication);
         if (user == null) return false;
@@ -393,7 +393,7 @@ public class RbacService {
         Activity activity = activityRepository.findById(activityId).orElse(null);
         if (activity == null) return false;
 
-        Long programId = activity.getProgram() != null ? activity.getProgram().getProgramId() : null;
+        UUID programId = activity.getProgram() != null ? activity.getProgram().getProgramId() : null;
         if (programId == null) return false;
 
         Program program = programRepository.findById(programId).orElse(null);
@@ -418,8 +418,8 @@ public class RbacService {
 
     public boolean canSubmitActivity(
             Authentication authentication,
-            Long activityId,
-            Long requestUserId
+            UUID activityId,
+            UUID requestUserId
     ) {
         User user = currentUser(authentication);
         if (user == null) {
@@ -456,7 +456,7 @@ public class RbacService {
                 );
     }
 
-    public Long getProgramIdByActivityId(Long activityId) {
+    public UUID getProgramIdByActivityId(UUID activityId) {
         Activity activity = activityRepository.findById(activityId).orElse(null);
         if (activity != null && activity.getProgram() != null) {
             return activity.getProgram().getProgramId();
