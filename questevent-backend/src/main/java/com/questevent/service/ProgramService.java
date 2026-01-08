@@ -8,6 +8,7 @@ import com.questevent.entity.ProgramRegistration;
 import com.questevent.entity.User;
 import com.questevent.enums.ProgramStatus;
 import com.questevent.repository.*;
+import jakarta.transaction.Transactional;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -38,30 +39,25 @@ public class ProgramService {
         this.programRegistrationRepository = programRegistrationRepository;
     }
 
+    @Transactional
     public Program createProgram(ProgramRequestDTO dto) {
 
-        @Nullable Authentication authentication =
+        Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
 
-        User hostUser = null;
-
-        // Reuse RBAC logic style
-        if (authentication != null && authentication.isAuthenticated()) {
-            Object principal = authentication.getPrincipal();
-            if (principal instanceof UserPrincipal p) {
-                hostUser = userRepository.findById(p.userId()).orElse(null);
-            }
+        if (authentication == null || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof UserPrincipal p)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
         }
 
-        if (hostUser == null) {
-            throw new ResponseStatusException(NOT_FOUND, "User not found");
-        }
-
+        User hostUser = userRepository.findById(p.userId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "User not found"
+                ));
 
         User judgeUser = userRepository.findById(dto.getJudgeUserId())
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Judge user not found"
+                        HttpStatus.NOT_FOUND, "Judge user not found"
                 ));
 
         if (hostUser.getUserId().equals(judgeUser.getUserId())) {
@@ -75,12 +71,11 @@ public class ProgramService {
         mapDtoToEntity(dto, program);
         program.setUser(hostUser);
 
-        Judge judge = judgeRepository
-                .findByUserUserId(judgeUser.getUserId())
+        Judge judge = judgeRepository.findByUserUserId(judgeUser.getUserId())
                 .orElseGet(() -> {
                     Judge j = new Judge();
                     j.setUser(judgeUser);
-                    return j;
+                    return j; // persisted via CascadeType.PERSIST
                 });
 
         program.setJudge(judge);
@@ -89,35 +84,65 @@ public class ProgramService {
     }
 
 
+
+    @Transactional
     public Program updateProgram(Long programId, ProgramRequestDTO dto) {
 
-        @Nullable Authentication authentication =
+        Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
 
-        User hostUser = null;
-
-        if (authentication != null && authentication.isAuthenticated()) {
-            Object principal = authentication.getPrincipal();
-            if (principal instanceof UserPrincipal p) {
-                hostUser = userRepository.findById(p.userId()).orElse(null);
-            }
+        if (authentication == null || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof UserPrincipal p)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
         }
 
-        if (hostUser == null) {
-            throw new ResponseStatusException(NOT_FOUND, "User not found");
-        }
+        User hostUser = userRepository.findById(p.userId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "User not found"
+                ));
 
         Program existingProgram = programRepository.findById(programId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Program not found"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Program not found"
+                ));
 
         if (!existingProgram.getUser().getUserId().equals(hostUser.getUserId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to update this program");
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "You do not have permission to update this program"
+            );
         }
 
         mapDtoToEntity(dto, existingProgram);
 
+        if (dto.getJudgeUserId() != null) {
+
+            User judgeUser = userRepository.findById(dto.getJudgeUserId())
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND,
+                            "Judge user not found"
+                    ));
+
+            if (hostUser.getUserId().equals(judgeUser.getUserId())) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Creator cannot be the judge"
+                );
+            }
+
+            Judge judge = judgeRepository.findByUserUserId(judgeUser.getUserId())
+                    .orElseGet(() -> {
+                        Judge j = new Judge();
+                        j.setUser(judgeUser);
+                        return j;
+                    });
+
+            existingProgram.setJudge(judge);
+        }
+
         return programRepository.save(existingProgram);
     }
+
 
 
     private void mapDtoToEntity(ProgramRequestDTO dto, Program program) {
