@@ -12,36 +12,38 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LeaderboardService {
 
+    //global service
     private final LeaderboardRepository leaderboardRepository;
 
     public List&lt;LeaderboardDTO&gt; getGlobalLeaderboard() {
 
-<span class="fc" id="L19">        List&lt;LeaderboardDTO&gt; leaderboard =</span>
-<span class="fc" id="L20">                leaderboardRepository.getGlobalLeaderboard();</span>
+<span class="fc" id="L20">        List&lt;LeaderboardDTO&gt; leaderboard =</span>
+<span class="fc" id="L21">                leaderboardRepository.getGlobalLeaderboard();</span>
 
-<span class="pc bpc" id="L22" title="2 of 4 branches missed.">        if (leaderboard == null || leaderboard.isEmpty()) {</span>
-<span class="nc" id="L23">            throw new IllegalStateException(&quot;Global leaderboard is empty&quot;);</span>
+<span class="pc bpc" id="L23" title="2 of 4 branches missed.">        if (leaderboard == null || leaderboard.isEmpty()) {</span>
+<span class="nc" id="L24">            throw new IllegalStateException(&quot;Global leaderboard is empty&quot;);</span>
         }
 
-<span class="fc" id="L26">        return leaderboard;</span>
+<span class="fc" id="L27">        return leaderboard;</span>
     }
 
+    //program service
     public List&lt;LeaderboardDTO&gt; getProgramLeaderboard(Long programId) {
 
-<span class="pc bpc" id="L31" title="2 of 4 branches missed.">        if (programId == null || programId &lt;= 0) {</span>
-<span class="nc" id="L32">            throw new IllegalArgumentException(&quot;Program ID must be greater than zero&quot;);</span>
+<span class="pc bpc" id="L33" title="2 of 4 branches missed.">        if (programId == null || programId &lt;= 0) {</span>
+<span class="nc" id="L34">            throw new IllegalArgumentException(&quot;Program ID must be greater than zero&quot;);</span>
         }
 
-<span class="fc" id="L35">        List&lt;LeaderboardDTO&gt; leaderboard =</span>
-<span class="fc" id="L36">                leaderboardRepository.getProgramLeaderboard(programId);</span>
+<span class="fc" id="L37">        List&lt;LeaderboardDTO&gt; leaderboard =</span>
+<span class="fc" id="L38">                leaderboardRepository.getProgramLeaderboard(programId);</span>
 
-<span class="pc bpc" id="L38" title="2 of 4 branches missed.">        if (leaderboard == null || leaderboard.isEmpty()) {</span>
-<span class="nc" id="L39">            throw new IllegalStateException(</span>
+<span class="pc bpc" id="L40" title="2 of 4 branches missed.">        if (leaderboard == null || leaderboard.isEmpty()) {</span>
+<span class="nc" id="L41">            throw new IllegalStateException(</span>
                     &quot;No leaderboard data found for programId: &quot; + programId
             );
         }
 
-<span class="fc" id="L44">        return leaderboard;</span>
+<span class="fc" id="L46">        return leaderboard;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
