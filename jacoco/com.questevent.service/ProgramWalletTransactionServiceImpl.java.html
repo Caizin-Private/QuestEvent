@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProgramWalletTransactionServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">questevent-backend</a> &gt; <a href="index.source.html" class="el_package">com.questevent.service</a> &gt; <span class="el_source">ProgramWalletTransactionServiceImpl.java</span></div><h1>ProgramWalletTransactionServiceImpl.java</h1><pre class="source lang-java linenums">package com.questevent.service;
+
+import com.questevent.entity.Program;
+import com.questevent.entity.ProgramWallet;
+import com.questevent.entity.User;
+import com.questevent.entity.UserWallet;
+import com.questevent.enums.ProgramStatus;
+import com.questevent.repository.ProgramRepository;
+import com.questevent.repository.ProgramWalletRepository;
+import com.questevent.repository.UserWalletRepository;
+import jakarta.transaction.Transactional;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+public class ProgramWalletTransactionServiceImpl
+        implements ProgramWalletTransactionService {
+
+    private final ProgramWalletRepository programWalletRepository;
+    private final ProgramRepository programRepository;
+    private final UserWalletRepository userWalletRepository;
+
+    public ProgramWalletTransactionServiceImpl(
+            ProgramWalletRepository programWalletRepository,
+            ProgramRepository programRepository,
+<span class="fc" id="L28">            UserWalletRepository userWalletRepository) {</span>
+<span class="fc" id="L29">        this.programWalletRepository = programWalletRepository;</span>
+<span class="fc" id="L30">        this.programRepository = programRepository;</span>
+<span class="fc" id="L31">        this.userWalletRepository = userWalletRepository;</span>
+<span class="fc" id="L32">    }</span>
+
+    @Override
+    @Transactional
+    public void creditGems(User user, Program program, int amount) {
+
+<span class="pc bpc" id="L38" title="3 of 6 branches missed.">        if (user == null || user.getUserId() == null ||</span>
+<span class="pc bpc" id="L39" title="1 of 2 branches missed.">                program == null || program.getProgramId() == null) {</span>
+<span class="nc" id="L40">            throw new IllegalArgumentException(&quot;Invalid user or program&quot;);</span>
+        }
+
+<span class="fc bfc" id="L43" title="All 2 branches covered.">        if (amount &lt;= 0) {</span>
+<span class="fc" id="L44">            throw new IllegalArgumentException(&quot;Amount must be greater than zero&quot;);</span>
+        }
+
+<span class="fc" id="L47">        ProgramWallet wallet = programWalletRepository</span>
+<span class="fc" id="L48">                .findByUserUserIdAndProgramProgramId(</span>
+<span class="fc" id="L49">                        user.getUserId(),</span>
+<span class="fc" id="L50">                        program.getProgramId()</span>
+                )
+<span class="fc" id="L52">                .orElseThrow(() -&gt;</span>
+<span class="fc" id="L53">                        new IllegalStateException(&quot;Program wallet not found&quot;)</span>
+                );
+
+<span class="fc" id="L56">        wallet.setGems(wallet.getGems() + amount);</span>
+<span class="fc" id="L57">        programWalletRepository.save(wallet);</span>
+<span class="fc" id="L58">    }</span>
+
+    @Override
+    @Transactional
+    public void autoSettleExpiredProgramWallets() {
+
+<span class="fc" id="L64">        List&lt;Program&gt; expiredPrograms =</span>
+<span class="fc" id="L65">                programRepository.findByStatusAndEndDateBefore(</span>
+                        ProgramStatus.ACTIVE,
+<span class="fc" id="L67">                        LocalDateTime.now()</span>
+                );
+
+<span class="fc bfc" id="L70" title="All 2 branches covered.">        for (Program program : expiredPrograms) {</span>
+
+<span class="fc" id="L72">            List&lt;ProgramWallet&gt; wallets =</span>
+                    programWalletRepository
+<span class="fc" id="L74">                            .findByProgramProgramId(program.getProgramId());</span>
+
+<span class="fc bfc" id="L76" title="All 2 branches covered.">            for (ProgramWallet programWallet : wallets) {</span>
+
+<span class="fc" id="L78">                int gems = programWallet.getGems();</span>
+<span class="fc bfc" id="L79" title="All 2 branches covered.">                if (gems &lt;= 0) {</span>
+<span class="fc" id="L80">                    continue;</span>
+                }
+
+<span class="fc" id="L83">                UserWallet userWallet = userWalletRepository</span>
+<span class="fc" id="L84">                        .findByUserUserId(</span>
+<span class="fc" id="L85">                                programWallet.getUser().getUserId()</span>
+                        )
+<span class="fc" id="L87">                        .orElseThrow(() -&gt;</span>
+<span class="nc" id="L88">                                new IllegalStateException(&quot;User wallet not found&quot;)</span>
+                        );
+
+<span class="fc" id="L91">                userWallet.setGems(userWallet.getGems() + gems);</span>
+<span class="fc" id="L92">                programWallet.setGems(0);</span>
+
+<span class="fc" id="L94">                userWalletRepository.save(userWallet);</span>
+<span class="fc" id="L95">                programWalletRepository.save(programWallet);</span>
+<span class="fc" id="L96">            }</span>
+
+<span class="fc" id="L98">            program.setStatus(ProgramStatus.COMPLETED);</span>
+<span class="fc" id="L99">            programRepository.save(program);</span>
+<span class="fc" id="L100">        }</span>
+<span class="fc" id="L101">    }</span>
+
+
+    @Override
+    @Transactional
+    public void manuallySettleExpiredProgramWallets(Long programId) {
+
+<span class="pc bpc" id="L108" title="1 of 4 branches missed.">        if (programId == null || programId &lt;= 0) {</span>
+<span class="fc" id="L109">            throw new IllegalArgumentException(&quot;Invalid programId&quot;);</span>
+        }
+
+<span class="fc" id="L112">        Program program = programRepository.findById(programId)</span>
+<span class="fc" id="L113">                .orElseThrow(() -&gt;</span>
+<span class="nc" id="L114">                        new IllegalStateException(&quot;Program not found&quot;)</span>
+                );
+
+<span class="fc bfc" id="L117" title="All 2 branches covered.">        if (program.getStatus() == ProgramStatus.COMPLETED) {</span>
+<span class="fc" id="L118">            throw new IllegalStateException(&quot;Program already completed&quot;);</span>
+        }
+
+<span class="fc" id="L121">        List&lt;ProgramWallet&gt; wallets =</span>
+<span class="fc" id="L122">                programWalletRepository.findByProgramProgramId(programId);</span>
+
+<span class="fc bfc" id="L124" title="All 2 branches covered.">        for (ProgramWallet programWallet : wallets) {</span>
+
+<span class="fc" id="L126">            int gems = programWallet.getGems();</span>
+<span class="pc bpc" id="L127" title="1 of 2 branches missed.">            if (gems &lt;= 0) {</span>
+<span class="nc" id="L128">                continue;</span>
+            }
+
+<span class="fc" id="L131">            UserWallet userWallet = programWallet.getUser().getWallet();</span>
+<span class="pc bpc" id="L132" title="1 of 2 branches missed.">            if (userWallet == null) {</span>
+<span class="nc" id="L133">                throw new IllegalStateException(&quot;User wallet not found&quot;);</span>
+            }
+
+<span class="fc" id="L136">            userWallet.setGems(userWallet.getGems() + gems);</span>
+<span class="fc" id="L137">            programWallet.setGems(0);</span>
+
+<span class="fc" id="L139">            userWalletRepository.save(userWallet);</span>
+<span class="fc" id="L140">            programWalletRepository.save(programWallet);</span>
+<span class="fc" id="L141">        }</span>
+
+<span class="fc" id="L143">        program.setStatus(ProgramStatus.COMPLETED);</span>
+<span class="fc" id="L144">        programRepository.save(program);</span>
+<span class="fc" id="L145">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
