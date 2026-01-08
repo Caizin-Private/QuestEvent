@@ -1,7 +1,6 @@
 package com.questevent.repository;
 
 import com.questevent.entity.ActivitySubmission;
-import com.questevent.enums.CompletionStatus;
 import com.questevent.enums.ReviewStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -12,12 +11,51 @@ import java.util.List;
 public interface ActivitySubmissionRepository
         extends JpaRepository<ActivitySubmission, Long> {
 
+    // Existing (keep)
+    boolean existsByActivityRegistration_ActivityRegistrationId(
+            Long activityRegistrationId
+    );
 
-    boolean existsByActivityRegistration_ActivityRegistrationId(Long activityRegistrationId);
+    // Existing (keep)
+    List<ActivitySubmission>
+    findByActivityRegistrationActivityActivityId(
+            Long activityId
+    );
+
+    // Existing (keep)
+    List<ActivitySubmission>
+    findByReviewStatus(
+            ReviewStatus reviewStatus
+    );
+
+    /* =====================================================
+       🔑 REQUIRED FOR JUDGE APIs (ADD THESE)
+       ===================================================== */
+
+    // ✅ Pending submissions for a judge (judge-scoped)
+    List<ActivitySubmission>
+    findByReviewStatusAndActivityRegistrationActivityProgramJudgeUserUserId(
+            ReviewStatus reviewStatus,
+            Long judgeUserId
+    );
+
+    // ✅ Pending submissions for an activity (all judges / owner)
+    List<ActivitySubmission>
+    findByReviewStatusAndActivityRegistrationActivityActivityId(
+            ReviewStatus reviewStatus,
+            Long activityId
+    );
+
+    // ✅ Pending submissions for an activity AND judge
+    List<ActivitySubmission>
+    findByReviewStatusAndActivityRegistrationActivityActivityIdAndActivityRegistrationActivityProgramJudgeUserUserId(
+            ReviewStatus reviewStatus,
+            Long activityId,
+            Long judgeUserId
+    );
 
     List<ActivitySubmission>
-    findByActivityRegistrationActivityActivityId(Long activityId);
-
-    List<ActivitySubmission> findByReviewStatus(ReviewStatus reviewStatus);
-
+    findByActivityRegistrationActivityProgramJudgeUserUserId(
+            Long judgeUserId
+    );
 }

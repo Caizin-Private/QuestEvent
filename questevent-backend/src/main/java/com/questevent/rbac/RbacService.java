@@ -60,6 +60,7 @@ public class RbacService {
             return null;
         }
 
+
         Object principal = authentication.getPrincipal();
 
         if (authentication instanceof JwtAuthenticationToken jwtAuth) {
