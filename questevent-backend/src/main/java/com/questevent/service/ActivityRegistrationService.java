@@ -3,12 +3,14 @@ package com.questevent.service;
 import com.questevent.dto.*;
 import com.questevent.entity.Activity;
 import com.questevent.entity.ActivityRegistration;
+import com.questevent.entity.Program;
 import com.questevent.entity.User;
 import com.questevent.enums.CompletionStatus;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivityRepository;
 import com.questevent.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,14 +26,22 @@ public class ActivityRegistrationService {
     private final ActivityRepository activityRepository;
     private final UserRepository userRepository;
 
+    /* =====================================================
+       REGISTER PARTICIPANT (SAFE)
+       ===================================================== */
+
     @Transactional
     public ActivityRegistrationResponseDTO registerParticipantForActivity(
             ActivityRegistrationRequestDTO request) {
 
-        UserPrincipal principal =
-                (UserPrincipal) SecurityContextHolder.getContext()
-                        .getAuthentication()
-                        .getPrincipal();
+        // 🔐 SAFE AUTHENTICATION RESOLUTION
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof UserPrincipal principal)) {
+            throw new RuntimeException("Unauthorized");
+        }
 
         Long userId = principal.userId();
 
@@ -42,6 +52,8 @@ public class ActivityRegistrationService {
         Activity activity = activityRepository.findById(request.getActivityId())
                 .orElseThrow(() ->
                         new RuntimeException("Activity not found"));
+
+        validateCompulsoryActivities(activity, userId);
 
         if (activityRegistrationRepository
                 .existsByActivity_ActivityIdAndUser_UserId(
@@ -58,13 +70,15 @@ public class ActivityRegistrationService {
                         : CompletionStatus.NOT_COMPLETED
         );
 
-        ActivityRegistration saved = activityRegistrationRepository.save(registration);
+        ActivityRegistration saved =
+                activityRegistrationRepository.save(registration);
 
         return mapToResponseDTO(saved);
     }
 
-
-
+    /* =====================================================
+       READ APIs
+       ===================================================== */
 
     @Transactional(readOnly = true)
     public List<ActivityRegistrationDTO> getAllRegistrations() {
@@ -121,6 +135,9 @@ public class ActivityRegistrationService {
                 .collect(Collectors.toList());
     }
 
+    /* =====================================================
+       UPDATE
+       ===================================================== */
 
     @Transactional
     public ActivityRegistrationDTO updateCompletionStatus(
@@ -135,7 +152,9 @@ public class ActivityRegistrationService {
         return mapToDTO(activityRegistrationRepository.save(registration));
     }
 
-    // -------------------- DELETE --------------------
+    /* =====================================================
+       DELETE
+       ===================================================== */
 
     @Transactional
     public void deleteRegistration(Long id) {
@@ -145,11 +164,54 @@ public class ActivityRegistrationService {
         activityRegistrationRepository.deleteById(id);
     }
 
+    /* =====================================================
+       UTILITIES
+       ===================================================== */
+
     @Transactional(readOnly = true)
     public long getParticipantCountForActivity(Long activityId) {
         return activityRegistrationRepository.countByActivityActivityId(activityId);
     }
 
+    private void validateCompulsoryActivities(Activity activity, Long userId) {
+
+        if (Boolean.TRUE.equals(activity.getIsCompulsory())) {
+            return;
+        }
+
+        Program program = activity.getProgram();
+        if (program == null) {
+            return;
+        }
+
+        Long programId = program.getProgramId();
+
+        List<Activity> compulsoryActivities =
+                activityRepository.findByProgram_ProgramIdAndIsCompulsoryTrue(programId);
+
+        for (Activity compulsory : compulsoryActivities) {
+
+            boolean completed =
+                    activityRegistrationRepository
+                            .existsByActivity_ActivityIdAndUser_UserIdAndCompletionStatus(
+                                    compulsory.getActivityId(),
+                                    userId,
+                                    CompletionStatus.COMPLETED
+                            );
+
+            if (!completed) {
+                throw new RuntimeException(
+                        "Complete compulsory activity '" +
+                                compulsory.getActivityName() +
+                                "' before registering for this activity"
+                );
+            }
+        }
+    }
+
+    /* =====================================================
+       MAPPERS
+       ===================================================== */
 
     private ActivityRegistrationDTO mapToDTO(ActivityRegistration registration) {
         return new ActivityRegistrationDTO(
@@ -162,21 +224,42 @@ public class ActivityRegistrationService {
         );
     }
 
-    private ActivityRegistrationResponseDTO mapToResponseDTO(ActivityRegistration registration) {
-        ActivityRegistrationResponseDTO dto = new ActivityRegistrationResponseDTO();
-        dto.setActivityRegistrationId(registration.getActivityRegistrationId());
-        dto.setActivityId(registration.getActivity().getActivityId());
-        dto.setActivityName(registration.getActivity().getActivityName());
-        dto.setUserId(registration.getUser().getUserId());
-        dto.setUserName(registration.getUser().getName());
-        dto.setUserEmail(registration.getUser().getEmail());
-        dto.setCompletionStatus(registration.getCompletionStatus());
-        dto.setRewardGems(registration.getActivity().getRewardGems());
-        dto.setMessage("Successfully registered for activity");
+    private ActivityRegistrationResponseDTO mapToResponseDTO(
+            ActivityRegistration registration) {
+
+        ActivityRegistrationResponseDTO dto =
+                new ActivityRegistrationResponseDTO();
+
+        dto.setActivityRegistrationId(
+                registration.getActivityRegistrationId());
+        dto.setActivityId(
+                registration.getActivity().getActivityId());
+        dto.setActivityName(
+                registration.getActivity().getActivityName());
+        dto.setUserId(
+                registration.getUser().getUserId());
+        dto.setUserName(
+                registration.getUser().getName());
+        dto.setUserEmail(
+                registration.getUser().getEmail());
+        dto.setCompletionStatus(
+                registration.getCompletionStatus());
+        dto.setRewardGems(
+                registration.getActivity().getRewardGems());
+        dto.setMessage(
+                "Successfully registered for activity");
+
         return dto;
     }
 
-    public ActivityRegistrationResponseDTO addParticipantToActivity(Long activityId, AddParticipantInActivityRequestDTO request) {
+    /* =====================================================
+       ADMIN ADD PARTICIPANT
+       ===================================================== */
+
+    @Transactional
+    public ActivityRegistrationResponseDTO addParticipantToActivity(
+            Long activityId,
+            AddParticipantInActivityRequestDTO request) {
 
         Activity activity = activityRepository.findById(activityId)
                 .orElseThrow(() ->
@@ -197,7 +280,8 @@ public class ActivityRegistrationService {
         registration.setUser(user);
         registration.setCompletionStatus(CompletionStatus.NOT_COMPLETED);
 
-        ActivityRegistration saved = activityRegistrationRepository.save(registration);
+        ActivityRegistration saved =
+                activityRegistrationRepository.save(registration);
 
         return mapToResponseDTO(saved);
     }

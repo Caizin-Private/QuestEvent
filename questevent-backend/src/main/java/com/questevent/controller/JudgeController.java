@@ -4,12 +4,16 @@ import com.questevent.dto.JudgeSubmissionDTO;
 import com.questevent.service.JudgeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,73 +21,146 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/judge")
 @RequiredArgsConstructor
-@Tag(name = "Judge", description = "APIs for judges to review and manage activity submissions")
+@Tag(
+        name = "Judge APIs",
+        description = "APIs for judges to view and review activity submissions " +
+                "only for programs they are assigned to"
+)
+@SecurityRequirement(name = "bearerAuth")
 public class JudgeController {
 
     private final JudgeService judgeService;
 
-    @PreAuthorize("@rbac.canAccessJudgeSubmissions(authentication)")
-    @GetMapping("/submissions/pending")
-    @Operation(
-            summary = "Get all pending submissions",
-            description = "Retrieves all activity submissions that have not yet been reviewed by any judge"
-    )
-    @ApiResponse(
-            responseCode = "200",
-            description = "Successfully retrieved pending submissions"
-    )
-    @ApiResponse(
-            responseCode = "403",
-            description = "Forbidden - Assigned Judge or Owner only"
-    )
-    public ResponseEntity<List<JudgeSubmissionDTO>> getPendingSubmissions() {
-        return ResponseEntity.ok(
-                judgeService.getPendingSubmissions()
-        );
-    }
 
-    @PreAuthorize("@rbac.isJudgeForActivity(authentication, #activityId)")
-    @GetMapping("/submissions/activity/{activityId}")
     @Operation(
-            summary = "Get submissions for a specific activity",
-            description = "Retrieves all submissions related to a given activity ID"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Submissions retrieved successfully"),
-            @ApiResponse(responseCode = "403", description = "Forbidden - Assigned Judge for the program or Owner only"),
-            @ApiResponse(responseCode = "404", description = "Activity not found")
-    })
-    public ResponseEntity<List<JudgeSubmissionDTO>> getSubmissionsForActivity(
-            @Parameter(
-                    description = "Activity ID",
-                    required = true
-            )
-            @PathVariable Long activityId
-    ) {
-        return ResponseEntity.ok(
-                judgeService.getSubmissionsForActivity(activityId)
-        );
-    }
-
-    @PreAuthorize("@rbac.canVerifySubmission(authentication, #submissionId)")
-    @PostMapping("/review/{submissionId}")
-    @Operation(
-            summary = "Review an activity submission",
-            description = "Allows a judge to review a submission, award gems, and mark the activity as completed"
+            summary = "Get pending submissions for judge",
+            description = "Returns all PENDING submissions for activities " +
+                    "belonging to programs where the logged-in judge is assigned"
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Submission reviewed successfully"),
-            @ApiResponse(responseCode = "400", description = "Submission already reviewed or invalid request"),
-            @ApiResponse(responseCode = "403", description = "Forbidden - Assigned Judge for the program or Owner only"),
-            @ApiResponse(responseCode = "404", description = "Submission not found")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Pending submissions fetched successfully",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = JudgeSubmissionDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized – JWT missing or invalid"
+            )
     })
-    public ResponseEntity<String> reviewSubmission(
-            @PathVariable Long submissionId
-
-//            @RequestParam Long judgeId //
+    @GetMapping("/submissions/pending")
+    public ResponseEntity<List<JudgeSubmissionDTO>> getPendingSubmissions(
+            Authentication authentication
     ) {
-        judgeService.reviewSubmission(submissionId);
-        return ResponseEntity.ok("Submission reviewed successfully");
+        return ResponseEntity.ok(
+                judgeService.getPendingSubmissionsForJudge(authentication)
+        );
     }
 
+
+    @Operation(
+            summary = "Get pending submissions for an activity",
+            description = "Returns all PENDING submissions for a specific activity. " +
+                    "Judge must be assigned to the program of that activity."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Pending submissions for activity fetched successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized – Judge not assigned or JWT invalid"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Activity not found"
+            )
+    })
+    @GetMapping("/submissions/pending/activity/{activityId}")
+    public ResponseEntity<List<JudgeSubmissionDTO>> getPendingSubmissionsForActivity(
+            @Parameter(
+                    name = "activityId",
+                    description = "ID of the activity",
+                    required = true,
+                    in = ParameterIn.PATH
+            )
+            @PathVariable Long activityId,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                judgeService.getPendingSubmissionsForActivity(
+                        activityId,
+                        authentication
+                )
+        );
+    }
+
+
+    @Operation(
+            summary = "Get all submissions for judge",
+            description = "Returns all submissions (PENDING + REVIEWED) " +
+                    "for programs where the judge is assigned. " +
+                    "OWNER role sees all submissions."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "All submissions fetched successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized"
+            )
+    })
+    @GetMapping("/submissions")
+    public ResponseEntity<List<JudgeSubmissionDTO>> getAllSubmissions(
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                judgeService.getAllSubmissionsForJudge(authentication)
+        );
+    }
+
+
+    @Operation(
+            summary = "Review a submission",
+            description = "Approves a submission, awards reward gems, " +
+                    "and marks activity as completed. " +
+                    "Only the assigned judge can review."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Submission reviewed successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid submission or already reviewed"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized – Judge not assigned"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Submission not found"
+            )
+    })
+    @PostMapping("/submissions/{submissionId}/review")
+    public ResponseEntity<Void> reviewSubmission(
+            @Parameter(
+                    name = "submissionId",
+                    description = "ID of the submission to review",
+                    required = true,
+                    in = ParameterIn.PATH
+            )
+            @PathVariable Long submissionId
+    ) {
+        judgeService.reviewSubmission(submissionId);
+        return ResponseEntity.ok().build();
+    }
 }
