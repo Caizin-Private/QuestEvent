@@ -26,7 +26,7 @@ public class ProgramRegistrationController {
 
     private final ProgramRegistrationService programRegistrationService;
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@rbac.canRegisterForProgram(authentication, #request.programId, authentication.principal.userId)")
     @PostMapping
     @Operation(summary = "Register participant for program", description = "Registers a user for a specific program (self-registration)")
     @ApiResponses(value = {
@@ -63,10 +63,11 @@ public class ProgramRegistrationController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@rbac.isPlatformOwner(authentication)")
     @GetMapping
-    @Operation(summary = "Get all program registrations", description = "Retrieves all program registrations")
+    @Operation(summary = "Get all program registrations", description = "Retrieves all program registrations (Platform Owner only)")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
+    @ApiResponse(responseCode = "403", description = "Forbidden - Platform Owner only")
     public ResponseEntity<List<ProgramRegistrationDTO>> getAllRegistrations() {
         List<ProgramRegistrationDTO> registrations =
                 programRegistrationService.getAllRegistrations();
@@ -91,7 +92,7 @@ public class ProgramRegistrationController {
         }
     }
 
-    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId) or @rbac.canJudgeAccessProgram(authentication, #programId)")
     @GetMapping("/programs/{programId}")
     @Operation(summary = "Get registrations by program", description = "Retrieves all registrations for a specific program")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
@@ -113,7 +114,7 @@ public class ProgramRegistrationController {
         return ResponseEntity.ok(registrations);
     }
 
-    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId) or @rbac.canJudgeAccessProgram(authentication, #programId)")
     @GetMapping("/programs/{programId}/count")
     @Operation(summary = "Get participant count", description = "Gets the total number of participants registered for a program")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved count")
@@ -140,7 +141,7 @@ public class ProgramRegistrationController {
         }
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @DeleteMapping("/programs/{programId}/participants/{userId}")
     @Operation(summary = "Remove participant from program (Host only)", description = "Allows program host to remove a user from their program")
     @ApiResponses(value = {
