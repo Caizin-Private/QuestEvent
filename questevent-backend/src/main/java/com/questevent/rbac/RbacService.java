@@ -78,12 +78,10 @@ public class RbacService {
             return userRepository.findByEmail(email).orElse(null);
         }
 
-        // After JwtAuthFilter
         if (principal instanceof UserPrincipal p) {
             return userRepository.findById(p.userId()).orElse(null);
         }
 
-        // First OAuth2 login
         if (principal instanceof OAuth2User oauthUser) {
             String email = oauthUser.getAttribute("email");
             if (email == null) {
@@ -127,7 +125,6 @@ public class RbacService {
             return true;
         }
 
-        // Only program creator (host) can manage their programs
         return program.getUser().getUserId().equals(user.getUserId());
     }
 
@@ -146,7 +143,6 @@ public class RbacService {
         Program program = programRepository.findById(programId).orElse(null);
         if (program == null) return false;
 
-        // Judge can access programs they are assigned to (read-only)
         return program.getJudge() != null &&
                 program.getJudge().getUser().getUserId().equals(user.getUserId());
     }
@@ -162,13 +158,11 @@ public class RbacService {
         ActivityRegistration registration = activityRegistrationRepository.findById(registrationId).orElse(null);
         if (registration == null) return false;
 
-        // User can access their own registrations
         if (registration.getUser() != null &&
                 user.getUserId().equals(registration.getUser().getUserId())) {
             return true;
         }
 
-        // Program creator (host) can access registrations for their activities
         if (registration.getActivity() != null &&
                 registration.getActivity().getProgram() != null &&
                 registration.getActivity().getProgram().getUser() != null &&
@@ -176,7 +170,6 @@ public class RbacService {
             return true;
         }
 
-        // Judge can access registrations for activities in their assigned programs
         if (registration.getActivity() != null &&
                 registration.getActivity().getProgram() != null &&
                 registration.getActivity().getProgram().getJudge() != null &&
@@ -198,20 +191,17 @@ public class RbacService {
         ProgramRegistration registration = programRegistrationRepository.findById(registrationId).orElse(null);
         if (registration == null) return false;
 
-        // User can access their own registrations
         if (registration.getUser() != null &&
                 user.getUserId().equals(registration.getUser().getUserId())) {
             return true;
         }
 
-        // Program creator (host) can access registrations for their programs
         if (registration.getProgram() != null &&
                 registration.getProgram().getUser() != null &&
                 user.getUserId().equals(registration.getProgram().getUser().getUserId())) {
             return true;
         }
 
-        // Judge can access registrations for their assigned programs
         if (registration.getProgram() != null &&
                 registration.getProgram().getJudge() != null &&
                 user.getUserId().equals(registration.getProgram().getJudge().getUser().getUserId())) {
@@ -228,8 +218,6 @@ public class RbacService {
         if (user.getRole() == Role.OWNER) {
             return true;
         }
-
-        // Check if user is assigned as judge for the program containing this submission
         return submissionRepository.findById(submissionId)
                 .map(submission -> {
                     ActivityRegistration activityReg = submission.getActivityRegistration();
@@ -284,8 +272,6 @@ public class RbacService {
         if (user.getRole() == Role.OWNER) {
             return true;
         }
-
-        // Check if user is assigned as judge for any program
         return judgeRepository.findByUserUserId(user.getUserId()).isPresent();
     }
 
@@ -316,20 +302,16 @@ public class RbacService {
     ) {
         User user = currentUser(authentication);
         if (user == null) return false;
-
-        // OWNER can access everything
         if (user.getRole() == Role.OWNER) {
             return true;
         }
 
-        // Program creator (host) can access their own program wallets
         Program program = programRepository.findById(programId).orElse(null);
         if (program != null && program.getUser() != null &&
                 program.getUser().getUserId().equals(user.getUserId())) {
             return true;
         }
 
-        // USER can access only their own wallet
         return programWalletRepository
                 .findByUserUserIdAndProgramProgramId(
                         user.getUserId(),
@@ -347,7 +329,6 @@ public class RbacService {
             return false;
         }
 
-        // OWNER can access all programs
         if (user.getRole() == Role.OWNER) {
             return true;
         }
@@ -357,12 +338,10 @@ public class RbacService {
             return false;
         }
 
-        // Check if user is the host/owner of this specific program
         if (program.getUser().getUserId().equals(user.getUserId())) {
             return true;
         }
 
-        // Check if user is the judge assigned to this program
         if (program.getJudge() != null &&
                 program.getJudge().getUser().getUserId().equals(user.getUserId())) {
             return true;
@@ -378,8 +357,6 @@ public class RbacService {
     ) {
         User user = currentUser(authentication);
         if (user == null) return false;
-
-        // OWNER can do anything
         if (user.getRole() == Role.OWNER) {
             return true;
         }
@@ -387,20 +364,16 @@ public class RbacService {
         Program program = programRepository.findById(programId).orElse(null);
         if (program == null) return false;
 
-        // Program creator (host) can register any user for their program
         if (program.getUser() != null &&
                 user.getUserId().equals(program.getUser().getUserId())) {
-            // Check duplicate
             return !programRegistrationRepository
                     .existsByProgram_ProgramIdAndUser_UserId(programId, userId);
         }
 
-        // Regular users can only register themselves
         if (!user.getUserId().equals(userId)) {
             return false;
         }
 
-        // Check duplicate
         return !programRegistrationRepository
                 .existsByProgram_ProgramIdAndUser_UserId(programId, userId);
     }
@@ -413,7 +386,6 @@ public class RbacService {
         User user = currentUser(authentication);
         if (user == null) return false;
 
-        // OWNER can do anything
         if (user.getRole() == Role.OWNER) {
             return true;
         }
@@ -427,27 +399,20 @@ public class RbacService {
         Program program = programRepository.findById(programId).orElse(null);
         if (program == null) return false;
 
-        // Program creator (host) can register any user for activities in their program
         if (program.getUser() != null && user.getUserId().equals(program.getUser().getUserId())) {
-            // Check if target user is registered to program first
             if (!programRegistrationRepository.existsByProgram_ProgramIdAndUser_UserId(programId, userId)) {
                 return false;
             }
-            // Check duplicate activity registration
             return !activityRegistrationRepository.existsByActivity_ActivityIdAndUser_UserId(activityId, userId);
         }
 
-        // Regular users can only register themselves
         if (!user.getUserId().equals(userId)) {
             return false;
         }
 
-        // Must be registered to program first
         if (!programRegistrationRepository.existsByProgram_ProgramIdAndUser_UserId(programId, userId)) {
             return false;
         }
-
-        // Not already registered for activity
         return !activityRegistrationRepository.existsByActivity_ActivityIdAndUser_UserId(activityId, userId);
     }
 
@@ -459,22 +424,18 @@ public class RbacService {
         User user = currentUser(authentication);
         if (user == null) return false;
 
-        // Only users can submit activities (not owners or program creators)
         if (user.getRole() != Role.USER) {
             return false;
         }
 
-        // Users can only submit for themselves
         if (!user.getUserId().equals(requestUserId)) {
             return false;
         }
 
-        // Must be registered for the activity
         if (!activityRegistrationRepository.existsByActivity_ActivityIdAndUser_UserId(activityId, requestUserId)) {
             return false;
         }
 
-        // Find the activity registration to check for existing submissions
         ActivityRegistration registration = activityRegistrationRepository
                 .findAll()
                 .stream()
@@ -491,7 +452,6 @@ public class RbacService {
             return false;
         }
 
-        // Check if already submitted
         return !submissionRepository.existsByActivityRegistration_ActivityRegistrationId(
                 registration.getActivityRegistrationId()
         );
