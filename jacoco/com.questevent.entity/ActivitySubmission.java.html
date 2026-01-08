@@ -52,18 +52,19 @@ public class ActivitySubmission {
     @Column(name = &quot;reviewed_at&quot;)
     private Instant reviewedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(
             name = &quot;reviewed_by&quot;,
+            nullable = true,
             foreignKey = @ForeignKey(name = &quot;fk_submission_judge&quot;)
     )
     private Judge reviewedBy;
 
     @PrePersist
     protected void onSubmit() {
-<span class="nc" id="L64">        this.submittedAt = Instant.now();</span>
-<span class="nc" id="L65">        this.reviewStatus = ReviewStatus.PENDING;</span>
-<span class="nc" id="L66">    }</span>
+<span class="nc" id="L65">        this.submittedAt = Instant.now();</span>
+<span class="nc" id="L66">        this.reviewStatus = ReviewStatus.PENDING;</span>
+<span class="nc" id="L67">    }</span>
 
 }
 

@@ -8,6 +8,7 @@ import com.questevent.entity.ProgramRegistration;
 import com.questevent.entity.User;
 import com.questevent.enums.ProgramStatus;
 import com.questevent.repository.*;
+import jakarta.transaction.Transactional;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -30,235 +31,259 @@ public class ProgramService {
     private final ProgramRegistrationRepository programRegistrationRepository;
 
     @Autowired
-<span class="fc" id="L33">    public ProgramService(ProgramRepository programRepository, UserRepository userRepository, ProgramWalletService programWalletService, JudgeRepository judgeRepository, ProgramRegistrationRepository programRegistrationRepository) {</span>
-<span class="fc" id="L34">        this.programRepository = programRepository;</span>
-<span class="fc" id="L35">        this.userRepository = userRepository;</span>
-<span class="fc" id="L36">        this.programWalletService = programWalletService;</span>
-<span class="fc" id="L37">        this.judgeRepository = judgeRepository;</span>
-<span class="fc" id="L38">        this.programRegistrationRepository = programRegistrationRepository;</span>
-<span class="fc" id="L39">    }</span>
+<span class="fc" id="L34">    public ProgramService(ProgramRepository programRepository, UserRepository userRepository, ProgramWalletService programWalletService, JudgeRepository judgeRepository, ProgramRegistrationRepository programRegistrationRepository) {</span>
+<span class="fc" id="L35">        this.programRepository = programRepository;</span>
+<span class="fc" id="L36">        this.userRepository = userRepository;</span>
+<span class="fc" id="L37">        this.programWalletService = programWalletService;</span>
+<span class="fc" id="L38">        this.judgeRepository = judgeRepository;</span>
+<span class="fc" id="L39">        this.programRegistrationRepository = programRegistrationRepository;</span>
+<span class="fc" id="L40">    }</span>
 
+    @Transactional
     public Program createProgram(ProgramRequestDTO dto) {
 
-        @Nullable Authentication authentication =
-<span class="fc" id="L44">                SecurityContextHolder.getContext().getAuthentication();</span>
+        Authentication authentication =
+<span class="fc" id="L46">                SecurityContextHolder.getContext().getAuthentication();</span>
 
-<span class="fc" id="L46">        User hostUser = null;</span>
-
-        // Reuse RBAC logic style
-<span class="pc bpc" id="L49" title="2 of 4 branches missed.">        if (authentication != null &amp;&amp; authentication.isAuthenticated()) {</span>
-<span class="fc" id="L50">            Object principal = authentication.getPrincipal();</span>
-<span class="pc bpc" id="L51" title="1 of 2 branches missed.">            if (principal instanceof UserPrincipal p) {</span>
-<span class="fc" id="L52">                hostUser = userRepository.findById(p.userId()).orElse(null);</span>
-            }
+<span class="pc bpc" id="L48" title="2 of 4 branches missed.">        if (authentication == null || !authentication.isAuthenticated()</span>
+<span class="pc bpc" id="L49" title="1 of 2 branches missed.">                || !(authentication.getPrincipal() instanceof UserPrincipal p)) {</span>
+<span class="nc" id="L50">            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, &quot;Unauthorized&quot;);</span>
         }
 
-<span class="fc bfc" id="L56" title="All 2 branches covered.">        if (hostUser == null) {</span>
-<span class="fc" id="L57">            throw new ResponseStatusException(NOT_FOUND, &quot;User not found&quot;);</span>
-        }
-
-
-<span class="fc" id="L61">        User judgeUser = userRepository.findById(dto.getJudgeUserId())</span>
-<span class="pc" id="L62">                .orElseThrow(() -&gt; new ResponseStatusException(</span>
-                        HttpStatus.NOT_FOUND,
-                        &quot;Judge user not found&quot;
+<span class="fc" id="L53">        User hostUser = userRepository.findById(p.userId())</span>
+<span class="fc" id="L54">                .orElseThrow(() -&gt; new ResponseStatusException(</span>
+                        HttpStatus.NOT_FOUND, &quot;User not found&quot;
                 ));
 
-<span class="pc bpc" id="L67" title="1 of 2 branches missed.">        if (hostUser.getUserId().equals(judgeUser.getUserId())) {</span>
-<span class="nc" id="L68">            throw new ResponseStatusException(</span>
+<span class="fc" id="L58">        User judgeUser = userRepository.findById(dto.getJudgeUserId())</span>
+<span class="pc" id="L59">                .orElseThrow(() -&gt; new ResponseStatusException(</span>
+                        HttpStatus.NOT_FOUND, &quot;Judge user not found&quot;
+                ));
+
+<span class="pc bpc" id="L63" title="1 of 2 branches missed.">        if (hostUser.getUserId().equals(judgeUser.getUserId())) {</span>
+<span class="nc" id="L64">            throw new ResponseStatusException(</span>
                     HttpStatus.BAD_REQUEST,
                     &quot;Creator cannot be the judge&quot;
             );
         }
 
-<span class="fc" id="L74">        Program program = new Program();</span>
-<span class="fc" id="L75">        mapDtoToEntity(dto, program);</span>
-<span class="fc" id="L76">        program.setUser(hostUser);</span>
+<span class="fc" id="L70">        Program program = new Program();</span>
+<span class="fc" id="L71">        mapDtoToEntity(dto, program);</span>
+<span class="fc" id="L72">        program.setUser(hostUser);</span>
 
-<span class="fc" id="L78">        Judge judge = judgeRepository</span>
-<span class="fc" id="L79">                .findByUserUserId(judgeUser.getUserId())</span>
-<span class="fc" id="L80">                .orElseGet(() -&gt; {</span>
-<span class="fc" id="L81">                    Judge j = new Judge();</span>
-<span class="fc" id="L82">                    j.setUser(judgeUser);</span>
-<span class="fc" id="L83">                    return j;</span>
+<span class="fc" id="L74">        Judge judge = judgeRepository.findByUserUserId(judgeUser.getUserId())</span>
+<span class="fc" id="L75">                .orElseGet(() -&gt; {</span>
+<span class="fc" id="L76">                    Judge j = new Judge();</span>
+<span class="fc" id="L77">                    j.setUser(judgeUser);</span>
+<span class="fc" id="L78">                    return j; // persisted via CascadeType.PERSIST</span>
                 });
 
-<span class="fc" id="L86">        program.setJudge(judge);</span>
+<span class="fc" id="L81">        program.setJudge(judge);</span>
 
-<span class="fc" id="L88">        return programRepository.save(program);</span>
+<span class="fc" id="L83">        return programRepository.save(program);</span>
     }
 
 
+
+    @Transactional
     public Program updateProgram(Long programId, ProgramRequestDTO dto) {
 
-        @Nullable Authentication authentication =
-<span class="fc" id="L95">                SecurityContextHolder.getContext().getAuthentication();</span>
+        Authentication authentication =
+<span class="fc" id="L92">                SecurityContextHolder.getContext().getAuthentication();</span>
 
-<span class="fc" id="L97">        User hostUser = null;</span>
+<span class="pc bpc" id="L94" title="2 of 4 branches missed.">        if (authentication == null || !authentication.isAuthenticated()</span>
+<span class="pc bpc" id="L95" title="1 of 2 branches missed.">                || !(authentication.getPrincipal() instanceof UserPrincipal p)) {</span>
+<span class="nc" id="L96">            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, &quot;Unauthorized&quot;);</span>
+        }
 
-<span class="pc bpc" id="L99" title="2 of 4 branches missed.">        if (authentication != null &amp;&amp; authentication.isAuthenticated()) {</span>
-<span class="fc" id="L100">            Object principal = authentication.getPrincipal();</span>
-<span class="pc bpc" id="L101" title="1 of 2 branches missed.">            if (principal instanceof UserPrincipal p) {</span>
-<span class="fc" id="L102">                hostUser = userRepository.findById(p.userId()).orElse(null);</span>
+<span class="fc" id="L99">        User hostUser = userRepository.findById(p.userId())</span>
+<span class="pc" id="L100">                .orElseThrow(() -&gt; new ResponseStatusException(</span>
+                        HttpStatus.NOT_FOUND, &quot;User not found&quot;
+                ));
+
+<span class="fc" id="L104">        Program existingProgram = programRepository.findById(programId)</span>
+<span class="fc" id="L105">                .orElseThrow(() -&gt; new ResponseStatusException(</span>
+                        HttpStatus.NOT_FOUND, &quot;Program not found&quot;
+                ));
+
+<span class="fc bfc" id="L109" title="All 2 branches covered.">        if (!existingProgram.getUser().getUserId().equals(hostUser.getUserId())) {</span>
+<span class="fc" id="L110">            throw new ResponseStatusException(</span>
+                    HttpStatus.FORBIDDEN,
+                    &quot;You do not have permission to update this program&quot;
+            );
+        }
+
+<span class="fc" id="L116">        mapDtoToEntity(dto, existingProgram);</span>
+
+<span class="pc bpc" id="L118" title="1 of 2 branches missed.">        if (dto.getJudgeUserId() != null) {</span>
+
+<span class="nc" id="L120">            User judgeUser = userRepository.findById(dto.getJudgeUserId())</span>
+<span class="nc" id="L121">                    .orElseThrow(() -&gt; new ResponseStatusException(</span>
+                            HttpStatus.NOT_FOUND,
+                            &quot;Judge user not found&quot;
+                    ));
+
+<span class="nc bnc" id="L126" title="All 2 branches missed.">            if (hostUser.getUserId().equals(judgeUser.getUserId())) {</span>
+<span class="nc" id="L127">                throw new ResponseStatusException(</span>
+                        HttpStatus.BAD_REQUEST,
+                        &quot;Creator cannot be the judge&quot;
+                );
             }
+
+<span class="nc" id="L133">            Judge judge = judgeRepository.findByUserUserId(judgeUser.getUserId())</span>
+<span class="nc" id="L134">                    .orElseGet(() -&gt; {</span>
+<span class="nc" id="L135">                        Judge j = new Judge();</span>
+<span class="nc" id="L136">                        j.setUser(judgeUser);</span>
+<span class="nc" id="L137">                        return j;</span>
+                    });
+
+<span class="nc" id="L140">            existingProgram.setJudge(judge);</span>
         }
 
-<span class="pc bpc" id="L106" title="1 of 2 branches missed.">        if (hostUser == null) {</span>
-<span class="nc" id="L107">            throw new ResponseStatusException(NOT_FOUND, &quot;User not found&quot;);</span>
-        }
-
-<span class="fc" id="L110">        Program existingProgram = programRepository.findById(programId)</span>
-<span class="fc" id="L111">                .orElseThrow(() -&gt; new ResponseStatusException(HttpStatus.NOT_FOUND, &quot;Program not found&quot;));</span>
-
-<span class="fc bfc" id="L113" title="All 2 branches covered.">        if (!existingProgram.getUser().getUserId().equals(hostUser.getUserId())) {</span>
-<span class="fc" id="L114">            throw new ResponseStatusException(HttpStatus.FORBIDDEN, &quot;You do not have permission to update this program&quot;);</span>
-        }
-
-<span class="fc" id="L117">        mapDtoToEntity(dto, existingProgram);</span>
-
-<span class="fc" id="L119">        return programRepository.save(existingProgram);</span>
+<span class="fc" id="L143">        return programRepository.save(existingProgram);</span>
     }
+
 
 
     private void mapDtoToEntity(ProgramRequestDTO dto, Program program) {
-<span class="fc" id="L124">        program.setProgramTitle(dto.getProgramTitle());</span>
-<span class="fc" id="L125">        program.setProgramDescription(dto.getProgramDescription());</span>
-<span class="fc" id="L126">        program.setDepartment(dto.getDepartment());</span>
-<span class="fc" id="L127">        program.setStartDate(dto.getStartDate());</span>
-<span class="fc" id="L128">        program.setEndDate(dto.getEndDate());</span>
-<span class="fc" id="L129">        program.setStatus(dto.getStatus());</span>
-<span class="fc" id="L130">    }</span>
+<span class="fc" id="L149">        program.setProgramTitle(dto.getProgramTitle());</span>
+<span class="fc" id="L150">        program.setProgramDescription(dto.getProgramDescription());</span>
+<span class="fc" id="L151">        program.setDepartment(dto.getDepartment());</span>
+<span class="fc" id="L152">        program.setStartDate(dto.getStartDate());</span>
+<span class="fc" id="L153">        program.setEndDate(dto.getEndDate());</span>
+<span class="fc" id="L154">        program.setStatus(dto.getStatus());</span>
+<span class="fc" id="L155">    }</span>
 
 
     public List&lt;Program&gt; getMyPrograms() {
         @Nullable Authentication authentication =
-<span class="fc" id="L135">                SecurityContextHolder.getContext().getAuthentication();</span>
+<span class="fc" id="L160">                SecurityContextHolder.getContext().getAuthentication();</span>
 
-<span class="fc" id="L137">        User hostUser = null;</span>
+<span class="fc" id="L162">        User hostUser = null;</span>
 
-<span class="pc bpc" id="L139" title="2 of 4 branches missed.">        if (authentication != null &amp;&amp; authentication.isAuthenticated()) {</span>
-<span class="fc" id="L140">            Object principal = authentication.getPrincipal();</span>
-<span class="pc bpc" id="L141" title="1 of 2 branches missed.">            if (principal instanceof UserPrincipal p) {</span>
-<span class="fc" id="L142">                hostUser = userRepository.findById(p.userId()).orElse(null);</span>
+<span class="pc bpc" id="L164" title="2 of 4 branches missed.">        if (authentication != null &amp;&amp; authentication.isAuthenticated()) {</span>
+<span class="fc" id="L165">            Object principal = authentication.getPrincipal();</span>
+<span class="pc bpc" id="L166" title="1 of 2 branches missed.">            if (principal instanceof UserPrincipal p) {</span>
+<span class="fc" id="L167">                hostUser = userRepository.findById(p.userId()).orElse(null);</span>
             }
         }
 
-<span class="pc bpc" id="L146" title="1 of 2 branches missed.">        if (hostUser == null) {</span>
-<span class="nc" id="L147">            throw new ResponseStatusException(NOT_FOUND, &quot;User not found&quot;);</span>
+<span class="pc bpc" id="L171" title="1 of 2 branches missed.">        if (hostUser == null) {</span>
+<span class="nc" id="L172">            throw new ResponseStatusException(NOT_FOUND, &quot;User not found&quot;);</span>
         }
-<span class="fc" id="L149">        return programRepository.findByUser_UserId(hostUser.getUserId());</span>
+<span class="fc" id="L174">        return programRepository.findByUser_UserId(hostUser.getUserId());</span>
     }
 
     public Program getProgramById(Long programId) {
-<span class="fc" id="L153">        return programRepository.findById(programId)</span>
-<span class="pc" id="L154">                .orElseThrow(() -&gt; new ResponseStatusException(HttpStatus.NOT_FOUND, &quot;Program not found&quot;));</span>
+<span class="fc" id="L178">        return programRepository.findById(programId)</span>
+<span class="pc" id="L179">                .orElseThrow(() -&gt; new ResponseStatusException(HttpStatus.NOT_FOUND, &quot;Program not found&quot;));</span>
     }
 
 
     public List&lt;Program&gt; getAllPrograms() {
-<span class="nc" id="L159">        return programRepository.findAll();</span>
+<span class="nc" id="L184">        return programRepository.findAll();</span>
     }
 
     public void deleteProgram(Long programId) {
         @Nullable Authentication authentication =
-<span class="fc" id="L164">                SecurityContextHolder.getContext().getAuthentication();</span>
+<span class="fc" id="L189">                SecurityContextHolder.getContext().getAuthentication();</span>
 
-<span class="fc" id="L166">        User hostUser = null;</span>
+<span class="fc" id="L191">        User hostUser = null;</span>
 
-<span class="pc bpc" id="L168" title="2 of 4 branches missed.">        if (authentication != null &amp;&amp; authentication.isAuthenticated()) {</span>
-<span class="fc" id="L169">            Object principal = authentication.getPrincipal();</span>
-<span class="pc bpc" id="L170" title="1 of 2 branches missed.">            if (principal instanceof UserPrincipal p) {</span>
-<span class="fc" id="L171">                hostUser = userRepository.findById(p.userId()).orElse(null);</span>
+<span class="pc bpc" id="L193" title="2 of 4 branches missed.">        if (authentication != null &amp;&amp; authentication.isAuthenticated()) {</span>
+<span class="fc" id="L194">            Object principal = authentication.getPrincipal();</span>
+<span class="pc bpc" id="L195" title="1 of 2 branches missed.">            if (principal instanceof UserPrincipal p) {</span>
+<span class="fc" id="L196">                hostUser = userRepository.findById(p.userId()).orElse(null);</span>
             }
         }
 
-<span class="pc bpc" id="L175" title="1 of 2 branches missed.">        if (hostUser == null) {</span>
-<span class="nc" id="L176">            throw new ResponseStatusException(NOT_FOUND, &quot;User not found&quot;);</span>
+<span class="pc bpc" id="L200" title="1 of 2 branches missed.">        if (hostUser == null) {</span>
+<span class="nc" id="L201">            throw new ResponseStatusException(NOT_FOUND, &quot;User not found&quot;);</span>
         }
 
-<span class="fc" id="L179">        Program program = programRepository.findById(programId)</span>
-<span class="pc" id="L180">                .orElseThrow(() -&gt; new ResponseStatusException(HttpStatus.NOT_FOUND, &quot;Program not found&quot;));</span>
+<span class="fc" id="L204">        Program program = programRepository.findById(programId)</span>
+<span class="pc" id="L205">                .orElseThrow(() -&gt; new ResponseStatusException(HttpStatus.NOT_FOUND, &quot;Program not found&quot;));</span>
 
-<span class="fc bfc" id="L182" title="All 2 branches covered.">        if (!program.getUser().getUserId().equals(hostUser.getUserId())) {</span>
-<span class="fc" id="L183">            throw new ResponseStatusException(HttpStatus.FORBIDDEN, &quot;You do not have permission to delete this program&quot;);</span>
+<span class="fc bfc" id="L207" title="All 2 branches covered.">        if (!program.getUser().getUserId().equals(hostUser.getUserId())) {</span>
+<span class="fc" id="L208">            throw new ResponseStatusException(HttpStatus.FORBIDDEN, &quot;You do not have permission to delete this program&quot;);</span>
         }
 
-<span class="fc" id="L186">        programRepository.delete(program);</span>
-<span class="fc" id="L187">    }</span>
+<span class="fc" id="L211">        programRepository.delete(program);</span>
+<span class="fc" id="L212">    }</span>
 
     public List&lt;Program&gt; getCompletedProgramsForUser() {
-<span class="fc" id="L190">        User currentUser = getCurrentUser();</span>
-<span class="fc bfc" id="L191" title="All 2 branches covered.">        if (currentUser == null) {</span>
-<span class="fc" id="L192">            throw new ResponseStatusException(NOT_FOUND, &quot;User not found&quot;);</span>
+<span class="fc" id="L215">        User currentUser = getCurrentUser();</span>
+<span class="fc bfc" id="L216" title="All 2 branches covered.">        if (currentUser == null) {</span>
+<span class="fc" id="L217">            throw new ResponseStatusException(NOT_FOUND, &quot;User not found&quot;);</span>
         }
 
-<span class="fc" id="L195">        List&lt;ProgramRegistration&gt; registrations = programRegistrationRepository.findByUserUserId(currentUser.getUserId());</span>
-<span class="fc" id="L196">        return registrations.stream()</span>
-<span class="fc" id="L197">                .map(ProgramRegistration::getProgram)</span>
-<span class="fc bfc" id="L198" title="All 2 branches covered.">                .filter(program -&gt; program.getStatus() == ProgramStatus.COMPLETED)</span>
-<span class="fc" id="L199">                .toList();</span>
+<span class="fc" id="L220">        List&lt;ProgramRegistration&gt; registrations = programRegistrationRepository.findByUserUserId(currentUser.getUserId());</span>
+<span class="fc" id="L221">        return registrations.stream()</span>
+<span class="fc" id="L222">                .map(ProgramRegistration::getProgram)</span>
+<span class="fc bfc" id="L223" title="All 2 branches covered.">                .filter(program -&gt; program.getStatus() == ProgramStatus.COMPLETED)</span>
+<span class="fc" id="L224">                .toList();</span>
     }
 
     private User getCurrentUser() {
         @Nullable Authentication authentication =
-<span class="fc" id="L204">                SecurityContextHolder.getContext().getAuthentication();</span>
+<span class="fc" id="L229">                SecurityContextHolder.getContext().getAuthentication();</span>
 
-<span class="pc bpc" id="L206" title="1 of 4 branches missed.">        if (authentication != null &amp;&amp; authentication.isAuthenticated()) {</span>
-<span class="fc" id="L207">            Object principal = authentication.getPrincipal();</span>
-<span class="pc bpc" id="L208" title="1 of 2 branches missed.">            if (principal instanceof UserPrincipal p) {</span>
-<span class="fc" id="L209">                return userRepository.findById(p.userId()).orElse(null);</span>
+<span class="pc bpc" id="L231" title="1 of 4 branches missed.">        if (authentication != null &amp;&amp; authentication.isAuthenticated()) {</span>
+<span class="fc" id="L232">            Object principal = authentication.getPrincipal();</span>
+<span class="pc bpc" id="L233" title="1 of 2 branches missed.">            if (principal instanceof UserPrincipal p) {</span>
+<span class="fc" id="L234">                return userRepository.findById(p.userId()).orElse(null);</span>
             }
         }
 
-<span class="fc" id="L213">        return null;</span>
+<span class="fc" id="L238">        return null;</span>
     }
 
     public List&lt;Program&gt; getProgramsWhereUserIsJudge() {
-<span class="fc" id="L217">        User currentUser = getCurrentUser();</span>
-<span class="fc bfc" id="L218" title="All 2 branches covered.">        if (currentUser == null) {</span>
-<span class="fc" id="L219">            throw new ResponseStatusException(NOT_FOUND, &quot;User not found&quot;);</span>
+<span class="fc" id="L242">        User currentUser = getCurrentUser();</span>
+<span class="fc bfc" id="L243" title="All 2 branches covered.">        if (currentUser == null) {</span>
+<span class="fc" id="L244">            throw new ResponseStatusException(NOT_FOUND, &quot;User not found&quot;);</span>
         }
-<span class="fc" id="L221">        return programRepository.findByJudgeUserId(currentUser.getUserId());</span>
+<span class="fc" id="L246">        return programRepository.findByJudgeUserId(currentUser.getUserId());</span>
     }
 
     public List&lt;Program&gt; getActiveProgramsByUserDepartment() {
-<span class="fc" id="L225">        User currentUser = getCurrentUser();</span>
-<span class="fc bfc" id="L226" title="All 2 branches covered.">        if (currentUser == null) {</span>
-<span class="fc" id="L227">            throw new ResponseStatusException(NOT_FOUND, &quot;User not found&quot;);</span>
+<span class="fc" id="L250">        User currentUser = getCurrentUser();</span>
+<span class="fc bfc" id="L251" title="All 2 branches covered.">        if (currentUser == null) {</span>
+<span class="fc" id="L252">            throw new ResponseStatusException(NOT_FOUND, &quot;User not found&quot;);</span>
         }
 
-<span class="fc" id="L230">        return programRepository.findByStatusAndDepartment(ProgramStatus.ACTIVE, currentUser.getDepartment());</span>
+<span class="fc" id="L255">        return programRepository.findByStatusAndDepartment(ProgramStatus.ACTIVE, currentUser.getDepartment());</span>
     }
 
 
     public List&lt;Program&gt; getDraftProgramsByHost() {
-<span class="fc" id="L235">        User currentUser = getCurrentUser();</span>
-<span class="fc bfc" id="L236" title="All 2 branches covered.">        if (currentUser == null) {</span>
-<span class="fc" id="L237">            throw new ResponseStatusException(NOT_FOUND, &quot;User not found&quot;);</span>
+<span class="fc" id="L260">        User currentUser = getCurrentUser();</span>
+<span class="fc bfc" id="L261" title="All 2 branches covered.">        if (currentUser == null) {</span>
+<span class="fc" id="L262">            throw new ResponseStatusException(NOT_FOUND, &quot;User not found&quot;);</span>
         }
 
-<span class="fc" id="L240">        return programRepository.findByStatusAndUser_UserId(ProgramStatus.DRAFT, currentUser.getUserId());</span>
+<span class="fc" id="L265">        return programRepository.findByStatusAndUser_UserId(ProgramStatus.DRAFT, currentUser.getUserId());</span>
     }
 
     public Program changeProgramStatusToActive(Long programId) {
-<span class="fc" id="L244">        User currentUser = getCurrentUser();</span>
-<span class="pc bpc" id="L245" title="1 of 2 branches missed.">        if (currentUser == null) {</span>
-<span class="nc" id="L246">            throw new ResponseStatusException(NOT_FOUND, &quot;User not found&quot;);</span>
+<span class="fc" id="L269">        User currentUser = getCurrentUser();</span>
+<span class="pc bpc" id="L270" title="1 of 2 branches missed.">        if (currentUser == null) {</span>
+<span class="nc" id="L271">            throw new ResponseStatusException(NOT_FOUND, &quot;User not found&quot;);</span>
         }
 
-<span class="fc" id="L249">        Program program = programRepository.findById(programId)</span>
-<span class="fc" id="L250">                .orElseThrow(() -&gt; new ResponseStatusException(HttpStatus.NOT_FOUND, &quot;Program not found&quot;));</span>
+<span class="fc" id="L274">        Program program = programRepository.findById(programId)</span>
+<span class="fc" id="L275">                .orElseThrow(() -&gt; new ResponseStatusException(HttpStatus.NOT_FOUND, &quot;Program not found&quot;));</span>
 
-<span class="fc bfc" id="L252" title="All 2 branches covered.">        if (!program.getUser().getUserId().equals(currentUser.getUserId())) {</span>
-<span class="fc" id="L253">            throw new ResponseStatusException(HttpStatus.FORBIDDEN, &quot;You do not have permission to change status of this program&quot;);</span>
+<span class="fc bfc" id="L277" title="All 2 branches covered.">        if (!program.getUser().getUserId().equals(currentUser.getUserId())) {</span>
+<span class="fc" id="L278">            throw new ResponseStatusException(HttpStatus.FORBIDDEN, &quot;You do not have permission to change status of this program&quot;);</span>
         }
 
-<span class="fc bfc" id="L256" title="All 2 branches covered.">        if (program.getStatus() != ProgramStatus.DRAFT) {</span>
-<span class="fc" id="L257">            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, &quot;Program status must be DRAFT to change to ACTIVE&quot;);</span>
+<span class="fc bfc" id="L281" title="All 2 branches covered.">        if (program.getStatus() != ProgramStatus.DRAFT) {</span>
+<span class="fc" id="L282">            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, &quot;Program status must be DRAFT to change to ACTIVE&quot;);</span>
         }
 
-<span class="fc" id="L260">        program.setStatus(ProgramStatus.ACTIVE);</span>
-<span class="fc" id="L261">        return programRepository.save(program);</span>
+<span class="fc" id="L285">        program.setStatus(ProgramStatus.ACTIVE);</span>
+<span class="fc" id="L286">        return programRepository.save(program);</span>
     }
 
 }
