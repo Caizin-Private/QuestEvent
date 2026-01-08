@@ -16,6 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+
     private final OAuthSuccessService successHandler;
     private final JwtAuthFilter jwtAuthFilter;
     private final CorsConfig corsConfig;

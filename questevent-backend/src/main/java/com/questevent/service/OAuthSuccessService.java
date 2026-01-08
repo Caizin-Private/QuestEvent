@@ -51,7 +51,7 @@ public class OAuthSuccessService extends SavedRequestAwareAuthenticationSuccessH
 
         boolean profileIncomplete =
                 user.getDepartment() == Department.GENERAL &&
-                        user.getGender() == "PENDING";
+                        "PENDING".equals(user.getGender());
 
         if (profileIncomplete) {
             response.sendRedirect("/complete-profile"); // FIRST LOGIN
