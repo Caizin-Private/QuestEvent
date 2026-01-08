@@ -4,6 +4,8 @@ import com.questevent.enums.Department;
 import com.questevent.enums.Role;
 import jakarta.persistence.*;
 import lombok.Data;
+
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -56,4 +58,22 @@ public class User {
             fetch = FetchType.LAZY
     )
     private Judge judge;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        Instant now = Instant.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = Instant.now();
+    }
 }

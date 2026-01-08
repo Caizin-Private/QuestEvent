@@ -85,6 +85,9 @@ public class UserService {
         userDto.setDepartment(user.getDepartment());
         userDto.setGender(user.getGender());
         userDto.setRole(user.getRole());
+        userDto.setCreatedAt(user.getCreatedAt());
+        userDto.setUpdatedAt(user.getUpdatedAt());
+
         return userDto;
     }
 }
