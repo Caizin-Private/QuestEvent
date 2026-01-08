@@ -2,7 +2,7 @@ name: Beanstalk JAR Deploy
 
 on:
   push:
-    branches: [ "deployement" ]  # workflow trigger branch
+    branches: [ "master" ]  # workflow trigger branch
   workflow_dispatch:  # allows manual run
 
 jobs:
