@@ -68,7 +68,21 @@ QuestEvent can be used to build systems such as:
 - **Authentication:** JWT-based security  
 
 ---
+## Test Coverage (JaCoCo)
 
+Test coverage for the QuestEvent backend is generated using **JaCoCo** and published as a static report.
+
+🔗 **JaCoCo Coverage Report:**  
+https://caizin-private.github.io/QuestEvent/jacoco/index.html
+
+The report provides detailed insights into:
+- Instruction coverage
+- Branch coverage
+- Line coverage
+- Method coverage
+
+Coverage primarily focuses on **service and controller layers**, where core business logic resides.
+---
 
 ## Project Structure
 
