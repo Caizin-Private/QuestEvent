@@ -49,23 +49,26 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Upload JAR to S3
+      - name: Upload JAR to S3 (Fixed Name)
         run: |
           JAR_FILE=$(ls target/*.jar | head -n 1)
-          aws s3 cp "$JAR_FILE" "s3://questevent-versions/$(basename $JAR_FILE)"
+          aws s3 cp "$JAR_FILE" "s3://questevent-versions/questevent-backend-0.0.1-SNAPSHOT.jar"
         working-directory: questevent-backend
 
-      - name: Create Beanstalk Version & Deploy
+      - name: Create or Reprocess Beanstalk Version
         run: |
-          JAR_FILE=$(ls target/*.jar | head -n 1)
-          VERSION_LABEL="gh-${{ github.run_id }}"
+          VERSION_LABEL="gh-20813801865"
 
-          aws elasticbeanstalk create-application-version \
-            --application-name "${{ secrets.EB_APP_NAME }}" \
+          aws elasticbeanstalk update-application-version \
+            --application-name "questevent" \
             --version-label "$VERSION_LABEL" \
-            --source-bundle S3Bucket="questevent-versions",S3Key="$(basename $JAR_FILE)" || true
+            --process || true
+        working-directory: questevent-backend
 
+      - name: Deploy to Elastic Beanstalk Environment
+        run: |
+          VERSION_LABEL="gh-20813801865"
           aws elasticbeanstalk update-environment \
-            --environment-name "${{ secrets.EB_ENV_NAME }}" \
+            --environment-name "QuestEventuTest-env" \
             --version-label "$VERSION_LABEL"
         working-directory: questevent-backend
