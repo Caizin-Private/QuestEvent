@@ -35,7 +35,7 @@ questevent-backend,com.questevent.controller,JudgeController,0,18,0,0,0,6,0,3,0,
 questevent-backend,com.questevent.controller,ActivityController,11,93,0,0,2,22,1,6,1,6
 questevent-backend,com.questevent.repository,LeaderboardRepositoryImpl,17,3,0,0,5,1,2,1,2,1
 questevent-backend,com.questevent.service,ProgramRegistrationService,121,185,3,3,28,47,9,11,7,10
-questevent-backend,com.questevent.service,ActivityRegistrationService,145,186,2,6,45,50,15,8,13,6
+questevent-backend,com.questevent.service,ActivityRegistrationService,233,146,9,5,70,40,21,6,15,5
 questevent-backend,com.questevent.service,SubmissionServiceImpl,0,61,0,4,0,18,0,4,0,2
 questevent-backend,com.questevent.service,OAuthSuccessService,0,98,1,9,0,23,1,7,0,3
 questevent-backend,com.questevent.service,ActivityService,22,142,3,5,4,31,3,11,1,9
