@@ -146,11 +146,7 @@ public class AuthController {
     }
 
     @GetMapping("/logout-success")
-    @ResponseBody
     public String logoutSuccess() {
-        return """
-            <h2>Logged out successfully ✅</h2>
-            <a href="/login">Login again</a>
-        """;
+        return "redirect:/login";
     }
 }

@@ -25,11 +25,11 @@ public class SecurityConfig {
 
         http
                 .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**", "/login", "/logout"))
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/", "/login", "/logout-success",
+                                "/", "/login", "/logout-success", "/logout",
                                 "/oauth2/**",
                                 "/swagger-ui/**", "/v3/api-docs/**"
                         ).permitAll()
@@ -45,10 +45,13 @@ public class SecurityConfig {
 
                 .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .logoutSuccessUrl("/logout-success")
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            response.sendRedirect("/logout-success");
+                        })
                         .invalidateHttpSession(true)
                         .clearAuthentication(true)
                         .deleteCookies("JSESSIONID")
+                        .permitAll()
                 );
 
         return http.build();
