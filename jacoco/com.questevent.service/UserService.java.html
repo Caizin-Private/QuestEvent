@@ -2,6 +2,7 @@
 
 import com.questevent.dto.UserResponseDto;
 import com.questevent.entity.User;
+import com.questevent.exception.UserNotFoundException;
 import com.questevent.repository.UserRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
@@ -14,19 +15,18 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserWalletService userWalletService;
 
-<span class="fc" id="L17">    public UserService(UserRepository userRepository, UserWalletService userWalletService) {</span>
-<span class="fc" id="L18">        this.userRepository = userRepository;</span>
-<span class="fc" id="L19">        this.userWalletService = userWalletService;</span>
-<span class="fc" id="L20">    }</span>
+<span class="fc" id="L18">    public UserService(UserRepository userRepository, UserWalletService userWalletService) {</span>
+<span class="fc" id="L19">        this.userRepository = userRepository;</span>
+<span class="fc" id="L20">        this.userWalletService = userWalletService;</span>
+<span class="fc" id="L21">    }</span>
 
     public List&lt;User&gt; getAllUsers() {
-<span class="fc" id="L23">        return userRepository.findAll();</span>
+<span class="fc" id="L24">        return userRepository.findAll();</span>
     }
 
     public User getUserById(Long id) {
-<span class="fc" id="L27">        return userRepository.findById(id)</span>
-<span class="fc" id="L28">                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found with ID: &quot; + id));</span>
-    }
+<span class="fc" id="L28">        return userRepository.findById(id)</span>
+<span class="fc" id="L29">                .orElseThrow(() -&gt; new UserNotFoundException(&quot;User not found with id &quot; + id));    }</span>
 
     public User addUser(User user) {
 

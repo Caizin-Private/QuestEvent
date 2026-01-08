@@ -1,39 +1,80 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GlobalExceptionHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">questevent-backend</a> &gt; <a href="index.source.html" class="el_package">com.questevent.exception</a> &gt; <span class="el_source">GlobalExceptionHandler.java</span></div><h1>GlobalExceptionHandler.java</h1><pre class="source lang-java linenums">package com.questevent.exception;
 
 import com.questevent.dto.ApiErrorDTO;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestControllerAdvice(basePackages = &quot;com.questevent&quot;)
-<span class="fc" id="L13">public class GlobalExceptionHandler {</span>
+<span class="fc" id="L17">public class GlobalExceptionHandler {</span>
 
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity&lt;ApiErrorDTO&gt; handleIllegalStateException(IllegalStateException ex) {
-<span class="nc" id="L17">        ApiErrorDTO error = new ApiErrorDTO(HttpStatus.CONFLICT.value(), ex.getMessage(), Instant.now());</span>
-<span class="nc" id="L18">        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);</span>
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity&lt;ApiErrorDTO&gt; handleUserNotFound(UserNotFoundException ex) {
+<span class="nc" id="L21">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity&lt;ApiErrorDTO&gt; handleUnauthorized(UnauthorizedException ex) {
+<span class="nc" id="L26">        return build(HttpStatus.UNAUTHORIZED, ex.getMessage());</span>
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity&lt;ApiErrorDTO&gt; handleAccessDenied(AccessDeniedException ex) {
+<span class="nc" id="L31">        return build(HttpStatus.FORBIDDEN, &quot;You do not have permission to access this resource&quot;);</span>
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity&lt;?&gt; handleValidationErrors(MethodArgumentNotValidException ex) {
+
+<span class="nc" id="L37">        Map&lt;String, String&gt; fieldErrors = new HashMap&lt;&gt;();</span>
+
+<span class="nc" id="L39">        ex.getBindingResult()</span>
+<span class="nc" id="L40">                .getFieldErrors()</span>
+<span class="nc" id="L41">                .forEach(err -&gt; fieldErrors.put(err.getField(), err.getDefaultMessage()));</span>
+
+<span class="nc" id="L43">        return ResponseEntity</span>
+<span class="nc" id="L44">                .status(HttpStatus.BAD_REQUEST)</span>
+<span class="nc" id="L45">                .body(fieldErrors);</span>
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity&lt;ApiErrorDTO&gt; handleDatabaseError(DataIntegrityViolationException ex) {
+<span class="nc" id="L50">        return build(HttpStatus.BAD_REQUEST, &quot;Database constraint violation&quot;);</span>
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity&lt;ApiErrorDTO&gt; handleIllegalArgumentException(IllegalArgumentException ex) {
-<span class="nc" id="L23">        ApiErrorDTO error = new ApiErrorDTO(HttpStatus.BAD_REQUEST.value(), ex.getMessage(), Instant.now());</span>
-<span class="nc" id="L24">        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);</span>
+    public ResponseEntity&lt;ApiErrorDTO&gt; handleIllegalArgument(IllegalArgumentException ex) {
+<span class="nc" id="L55">        return build(HttpStatus.BAD_REQUEST, ex.getMessage());</span>
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity&lt;ApiErrorDTO&gt; handleIllegalState(IllegalStateException ex) {
+<span class="nc" id="L60">        return build(HttpStatus.CONFLICT, ex.getMessage());</span>
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity&lt;ApiErrorDTO&gt; handleGenericException(Exception ex) {
-<span class="nc" id="L29">        ApiErrorDTO error = new ApiErrorDTO(HttpStatus.INTERNAL_SERVER_ERROR.value(), &quot;Something went wrong&quot;, Instant.now());</span>
-<span class="nc" id="L30">        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);</span>
+    public ResponseEntity&lt;ApiErrorDTO&gt; handleAll(Exception ex) {
+<span class="nc" id="L65">        ex.printStackTrace();</span>
+<span class="nc" id="L66">        return build(HttpStatus.INTERNAL_SERVER_ERROR, &quot;Something went wrong&quot;);</span>
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity&lt;ApiErrorDTO&gt; handleRuntimeException(RuntimeException ex) {
-<span class="nc" id="L35">        ApiErrorDTO error = new ApiErrorDTO(HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage(), Instant.now());</span>
-<span class="nc" id="L36">        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);</span>
+    private ResponseEntity&lt;ApiErrorDTO&gt; build(HttpStatus status, String message) {
+
+<span class="nc" id="L71">        ApiErrorDTO error = new ApiErrorDTO(</span>
+<span class="nc" id="L72">                status.value(),</span>
+                message,
+<span class="nc" id="L74">                Instant.now()</span>
+        );
+
+<span class="nc" id="L77">        return ResponseEntity.status(status).body(error);</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
