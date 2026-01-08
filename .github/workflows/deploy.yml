@@ -2,7 +2,7 @@ name: Beanstalk JAR Deploy
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "deploymen" ]
   workflow_dispatch:
 
 jobs:
