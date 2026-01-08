@@ -6,7 +6,6 @@ spring:
 
   jpa:
     hibernate:
-#      ddl-auto: update
     show-sql: true
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 
@@ -22,7 +21,6 @@ spring:
               - profile
               - email
 
-            # ✅ REQUIRED for CloudFront
             redirect-uri: "https://d33m3dyxosqoxf.cloudfront.net/login/oauth2/code/azure"
             client-name: Azure AD
 
@@ -35,7 +33,6 @@ spring:
           issuer-uri: https://login.microsoftonline.com/f7b92ef4-239a-49ad-aff6-679ec33dea08/v2.0
 
 server:
-  # ✅ REQUIRED so Spring respects HTTPS from CloudFront
   forward-headers-strategy: framework
 
   tomcat:
@@ -47,3 +44,15 @@ jwt:
   secret: eIRIbe+6tVbbcYtOOR/PUpK6YQQ9Psm3YIa+BnBdhG0=
   access-expiration: 900000
   refresh-expiration: 1800000
+
+logging:
+  level:
+    root: INFO
+    com.questevent: DEBUG
+    org.springframework.security: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+  file:
+    path: questevent-backend/logs
+

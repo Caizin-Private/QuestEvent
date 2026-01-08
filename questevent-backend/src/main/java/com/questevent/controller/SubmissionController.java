@@ -7,6 +7,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,6 +20,8 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Activity Submissions", description = "APIs for submitting activity work")
 public class SubmissionController {
 
+    private static final Logger log = LoggerFactory.getLogger(SubmissionController.class);
+
     private final SubmissionService submissionService;
 
     @PreAuthorize("@rbac.canSubmitActivity(authentication, #request.activityId, authentication.principal.userId)")
@@ -26,20 +30,20 @@ public class SubmissionController {
             summary = "Submit activity work",
             description = "Allows a registered user to submit work for an activity"
     )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Submission successful"),
-            @ApiResponse(responseCode = "400", description = "Invalid request or submission already exists"),
-            @ApiResponse(responseCode = "403", description = "Activity already completed, submission not allowed"),
-            @ApiResponse(responseCode = "404", description = "User is not registered for the activity")
-    })
     public ResponseEntity<String> submitActivity(
             @RequestBody ActivitySubmissionRequestDTO request
     ) {
+        log.info("Submitting activity work: activityId={}, userId={}",
+                request.getActivityId(), request.getUserId());
+
         submissionService.submitActivity(
                 request.getActivityId(),
                 request.getUserId(),
                 request.getSubmissionUrl()
         );
+
+        log.info("Activity submission successful: activityId={}, userId={}",
+                request.getActivityId(), request.getUserId());
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
