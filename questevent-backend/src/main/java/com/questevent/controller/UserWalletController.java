@@ -12,26 +12,30 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/users/{userId}/wallet")
-@Tag(name = "User Wallets", description = "User wallet management APIs")
+@RequestMapping("/api/users/me/wallet")
+@Tag(name = "User Wallets", description = "Authenticated user's wallet APIs")
 public class UserWalletController {
 
-    private final UserWalletService walletService;
+    private final UserWalletService userWalletService;
 
-    public UserWalletController(UserWalletService walletService) {
-        this.walletService = walletService;
+    public UserWalletController(UserWalletService userWalletService) {
+        this.userWalletService = userWalletService;
     }
 
-    @PreAuthorize("@rbac.canAccessUserWallet(authentication, #userId)")
+    @PreAuthorize("isAuthenticated()")
     @GetMapping
-    @Operation(summary = "Get user wallet balance", description = "Retrieves user wallet balance for a specific user")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "User Wallet balance retrieved successfully"),
-            @ApiResponse(responseCode = "403", description = "Access denied"),
-            @ApiResponse(responseCode = "404", description = "User or wallet not found")
+    @Operation(
+            summary = "Get my wallet balance",
+            description = "Returns wallet balance of the authenticated user"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Wallet retrieved successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "Wallet not found")
     })
-    public ResponseEntity<UserWalletBalanceDTO> getUserWalletBalance(
-            @Parameter(description = "User ID", required = true) @PathVariable Long userId) {
-        return ResponseEntity.ok(walletService.getWalletBalance(userId));
+    public ResponseEntity<UserWalletBalanceDTO> getMyWalletBalance() {
+        return ResponseEntity.ok(
+                userWalletService.getMyWalletBalance()
+        );
     }
 }

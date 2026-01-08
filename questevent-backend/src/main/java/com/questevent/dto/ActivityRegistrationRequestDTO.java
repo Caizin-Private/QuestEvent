@@ -10,6 +10,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ActivityRegistrationRequestDTO {
     private Long activityId;
-    private Long userId;
     private CompletionStatus completionStatus;
 }

@@ -6,12 +6,14 @@ import com.questevent.enums.CompletionStatus;
 import com.questevent.enums.ReviewStatus;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
+import com.questevent.repository.JudgeRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -34,13 +36,12 @@ class JudgeServiceImplTest {
     @InjectMocks
     private JudgeServiceImpl judgeService;
 
-    // ---------------- READ APIs ----------------
-
     @Test
     void getSubmissionsForActivity_shouldReturnMappedDtos() {
         ActivitySubmission submission = mockSubmission();
 
-        when(submissionRepository.findByActivityRegistrationActivityActivityId(1L))
+        when(submissionRepository
+                .findByActivityRegistrationActivityActivityId(1L))
                 .thenReturn(List.of(submission));
 
         List<JudgeSubmissionDTO> result =
@@ -65,8 +66,6 @@ class JudgeServiceImplTest {
         assertEquals(ReviewStatus.PENDING, result.get(0).reviewStatus());
     }
 
-    // ---------------- REVIEW API ----------------
-
     @Test
     void reviewSubmission_shouldApproveSubmissionAndCreditWallet() {
         ActivitySubmission submission = mockSubmission();
@@ -76,13 +75,17 @@ class JudgeServiceImplTest {
 
         judgeService.reviewSubmission(10L);
 
-        assertEquals(ReviewStatus.APPROVED, submission.getReviewStatus());
+        assertEquals(ReviewStatus.APPROVED,
+                submission.getReviewStatus());
+
         assertEquals(CompletionStatus.COMPLETED,
                 submission.getActivityRegistration().getCompletionStatus());
 
         verify(programWalletTransactionService).creditGems(
                 submission.getActivityRegistration().getUser(),
-                submission.getActivityRegistration().getActivity().getProgram(),
+                submission.getActivityRegistration()
+                        .getActivity()
+                        .getProgram(),
                 50
         );
     }
@@ -113,7 +116,7 @@ class JudgeServiceImplTest {
     }
 
     @Test
-    void reviewSubmission_shouldThrowIfJudgeNotAssigned() {
+    void reviewSubmission_shouldThrowIfJudgeNotAssignedToProgram() {
         ActivitySubmission submission = mockSubmission();
         submission.getActivityRegistration()
                 .getActivity()
@@ -145,8 +148,6 @@ class JudgeServiceImplTest {
         assertEquals("Invalid reward configuration", ex.getMessage());
     }
 
-    // ---------------- MOCK GRAPH ----------------
-
     private ActivitySubmission mockSubmission() {
         User user = new User();
         user.setUserId(5L);
@@ -157,7 +158,7 @@ class JudgeServiceImplTest {
 
         Program program = new Program();
         program.setProgramId(3L);
-        program.setJudge(judge); // 🔑 CRITICAL
+        program.setJudge(judge); // ✅ IMPORTANT
 
         Activity activity = new Activity();
         activity.setActivityId(1L);
@@ -174,7 +175,7 @@ class JudgeServiceImplTest {
         submission.setSubmissionId(10L);
         submission.setActivityRegistration(registration);
         submission.setSubmissionUrl("http://link");
-        submission.setSubmittedAt(LocalDateTime.now());
+        submission.setSubmittedAt(Instant.now());
         submission.setReviewStatus(ReviewStatus.PENDING);
 
         return submission;

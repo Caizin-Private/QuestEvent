@@ -1,8 +1,6 @@
 package com.questevent.service;
 
-import com.questevent.dto.ProgramRegistrationDTO;
-import com.questevent.dto.ProgramRegistrationRequestDTO;
-import com.questevent.dto.ProgramRegistrationResponseDTO;
+import com.questevent.dto.*;
 import com.questevent.entity.Program;
 import com.questevent.entity.ProgramRegistration;
 import com.questevent.entity.User;
@@ -10,10 +8,11 @@ import com.questevent.repository.ProgramRegistrationRepository;
 import com.questevent.repository.ProgramRepository;
 import com.questevent.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,27 +26,69 @@ public class ProgramRegistrationService {
     private final ProgramWalletService programWalletService;
 
     @Transactional
-    public ProgramRegistrationResponseDTO registerParticipantForProgram(ProgramRegistrationRequestDTO request) {
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + request.getUserId()));
+    public ProgramRegistrationResponseDTO registerParticipantForProgram(
+            ProgramRegistrationRequestDTO request) {
+
+        UserPrincipal principal =
+                (UserPrincipal) SecurityContextHolder.getContext()
+                        .getAuthentication()
+                        .getPrincipal();
+
+        Long userId = principal.userId();
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         Program program = programRepository.findById(request.getProgramId())
-                .orElseThrow(() -> new RuntimeException("Program not found with id: " + request.getProgramId()));
+                .orElseThrow(() -> new RuntimeException("Program not found"));
 
-        if (programRegistrationRepository.existsByProgram_ProgramIdAndUser_UserId(
-                request.getProgramId(), request.getUserId())) {
+        if (programRegistrationRepository
+                .existsByProgram_ProgramIdAndUser_UserId(
+                        program.getProgramId(), userId)) {
             throw new RuntimeException("User already registered for this program");
         }
 
         ProgramRegistration registration = new ProgramRegistration();
         registration.setProgram(program);
         registration.setUser(user);
-        registration.setRegisteredAt(LocalDateTime.now());
+        registration.setRegisteredAt(Instant.now());
 
-        ProgramRegistration savedRegistration = programRegistrationRepository.save(registration);
-        programWalletService.createWallet(user.getUserId(), program.getProgramId());
+        ProgramRegistration saved =
+                programRegistrationRepository.save(registration);
 
-        return mapToResponseDTO(savedRegistration);
+        programWalletService.createWallet(userId, program.getProgramId());
+
+        return mapToResponseDTO(saved);
+    }
+
+    @Transactional
+    public ProgramRegistrationResponseDTO addParticipantToProgram(
+            Long programId,
+            AddParticipantInProgramRequestDTO request) {
+
+        Program program = programRepository.findById(programId)
+                .orElseThrow(() -> new RuntimeException("Program not found"));
+
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (programRegistrationRepository
+                .existsByProgram_ProgramIdAndUser_UserId(
+                        programId, user.getUserId())) {
+            throw new RuntimeException("User already registered for this program");
+        }
+
+        ProgramRegistration registration = new ProgramRegistration();
+        registration.setProgram(program);
+        registration.setUser(user);
+        registration.setRegisteredAt(Instant.now());
+
+        ProgramRegistration saved =
+                programRegistrationRepository.save(registration);
+
+        programWalletService.createWallet(user.getUserId(), programId);
+
+        return mapToResponseDTO(saved);
     }
 
     @Transactional(readOnly = true)

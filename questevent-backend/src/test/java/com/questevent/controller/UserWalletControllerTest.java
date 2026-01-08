@@ -1,7 +1,10 @@
 package com.questevent.controller;
 
+import com.questevent.dto.UserPrincipal;
 import com.questevent.dto.UserWalletBalanceDTO;
+import com.questevent.enums.Role;
 import com.questevent.service.UserWalletService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -9,6 +12,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.server.ResponseStatusException;
@@ -29,24 +34,40 @@ class UserWalletControllerTest {
     @InjectMocks
     private UserWalletController userWalletController;
 
+    private AutoCloseable closeable;
+
     @BeforeEach
     void setup() {
-        MockitoAnnotations.openMocks(this);
-        mockMvc = MockMvcBuilders.standaloneSetup(userWalletController).build();
+        closeable = MockitoAnnotations.openMocks(this);
+        mockMvc = MockMvcBuilders
+                .standaloneSetup(userWalletController)
+                .build();
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        SecurityContextHolder.clearContext();
+        closeable.close();
     }
 
     @Test
-    void getUserWalletBalance_success() throws Exception {
+    void getMyWalletBalance_success() throws Exception {
+        // Mock Security Context
+        UserPrincipal principal = new UserPrincipal(1L, "test@example.com", Role.USER);
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(principal, null, null);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
         UUID walletId = UUID.randomUUID();
 
         UserWalletBalanceDTO dto = new UserWalletBalanceDTO();
         dto.setWalletId(walletId);
         dto.setGems(150);
 
-        when(userWalletService.getWalletBalance(1L))
+        when(userWalletService.getMyWalletBalance())
                 .thenReturn(dto);
 
-        mockMvc.perform(get("/api/users/{userId}/wallet", 1L)
+        mockMvc.perform(get("/api/users/me/wallet")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.walletId").value(walletId.toString()))
@@ -54,26 +75,36 @@ class UserWalletControllerTest {
     }
 
     @Test
-    void getUserWalletBalance_userNotFound() throws Exception {
-        when(userWalletService.getWalletBalance(1L))
+    void getMyWalletBalance_userNotFound() throws Exception {
+        UserPrincipal principal = new UserPrincipal(1L, "test@example.com", Role.USER);
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(principal, null, null);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        when(userWalletService.getMyWalletBalance())
                 .thenThrow(new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "User not found"
                 ));
 
-        mockMvc.perform(get("/api/users/{userId}/wallet", 1L))
+        mockMvc.perform(get("/api/users/me/wallet"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    void getUserWalletBalance_walletNotFound() throws Exception {
-        when(userWalletService.getWalletBalance(1L))
+    void getMyWalletBalance_walletNotFound() throws Exception {
+        UserPrincipal principal = new UserPrincipal(1L, "test@example.com", Role.USER);
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(principal, null, null);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        when(userWalletService.getMyWalletBalance())
                 .thenThrow(new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Wallet not found"
                 ));
 
-        mockMvc.perform(get("/api/users/{userId}/wallet", 1L))
+        mockMvc.perform(get("/api/users/me/wallet"))
                 .andExpect(status().isNotFound());
     }
 }

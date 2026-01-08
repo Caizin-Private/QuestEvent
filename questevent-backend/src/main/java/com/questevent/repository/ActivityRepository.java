@@ -7,5 +7,6 @@ import java.util.List;
 
 public interface ActivityRepository extends JpaRepository<Activity, Long> {
     List<Activity> findByProgram_ProgramId(Long programId);
+    List<Activity> findByProgram_ProgramIdAndIsCompulsoryTrue(Long programId);
 }
 

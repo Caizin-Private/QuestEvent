@@ -7,24 +7,28 @@ import com.questevent.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
-import static org.junit.jupiter.api.Assertions.*;
+
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OAuthSuccessServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @InjectMocks
+    private OAuthSuccessService oAuthSuccessService;
 
     @Mock
     private HttpServletRequest request;
@@ -39,120 +43,81 @@ class OAuthSuccessServiceTest {
     private Authentication authentication;
 
     @Mock
-    private OAuth2User oauth2User;
-
-    @InjectMocks
-    private OAuthSuccessService oAuthSuccessService;
-
-    private User user;
-
-    @BeforeEach
-    void setup() {
-        user = new User();
-        user.setUserId(1L);
-        user.setEmail("test@company.com");
-        user.setName("Test User");
-        user.setGender("GENDER");
-        user.setDepartment(Department.GENERAL);
-        user.setRole(Role.USER);
-    }
-    @Test
-    void shouldRedirectToCompleteProfile_whenUserHasDefaultProfile() throws IOException {
-
-        Mockito.when(authentication.getPrincipal()).thenReturn(oauth2User);
-        Mockito.when(request.getSession()).thenReturn(session);
-
-        Mockito.when(oauth2User.getAttribute("email"))
-                .thenReturn("test@company.com");
-
-        Mockito.when(userRepository.findByEmail("test@company.com"))
-                .thenReturn(Optional.of(user));
-
-        oAuthSuccessService.onAuthenticationSuccess(
-                request, response, authentication);
-
-        Mockito.verify(session)
-                .setAttribute("userId", 1L);
-
-        Mockito.verify(response)
-                .sendRedirect("/complete-profile");
-    }
+    private OAuth2User oAuth2User;
 
     @Test
-    void shouldRedirectToHome_whenProfileIsComplete() throws IOException {
+    void shouldRedirectToCompleteProfileForNewUser() throws IOException {
 
-        user.setGender("Male");
-        user.setDepartment(Department.IT);
+        when(authentication.getPrincipal()).thenReturn(oAuth2User);
+        when(oAuth2User.getAttribute("email")).thenReturn("test@gmail.com");
+        when(oAuth2User.getAttribute("name")).thenReturn("Test User");
 
-        Mockito.when(authentication.getPrincipal()).thenReturn(oauth2User);
-        Mockito.when(request.getSession()).thenReturn(session);
+        when(request.getSession()).thenReturn(session);
 
-        Mockito.when(oauth2User.getAttribute("email"))
-                .thenReturn("test@company.com");
-
-        Mockito.when(userRepository.findByEmail("test@company.com"))
-                .thenReturn(Optional.of(user));
-
-        oAuthSuccessService.onAuthenticationSuccess(
-                request, response, authentication);
-
-        Mockito.verify(response)
-                .sendRedirect("/home");
-    }
-
-    @Test
-    void shouldCreateUser_whenUserDoesNotExist() throws IOException {
-
-        Mockito.when(authentication.getPrincipal()).thenReturn(oauth2User);
-        Mockito.when(request.getSession()).thenReturn(session);
-
-        Mockito.when(oauth2User.getAttribute("email"))
-                .thenReturn("new@company.com");
-
-        Mockito.when(oauth2User.getAttribute("name"))
-                .thenReturn("New User");
-
-        Mockito.when(userRepository.findByEmail("new@company.com"))
+        when(userRepository.findByEmail("test@gmail.com"))
                 .thenReturn(Optional.empty());
 
-        Mockito.when(userRepository.save(Mockito.any(User.class)))
-                .thenAnswer(invocation -> {
-                    User saved = invocation.getArgument(0);
-                    saved.setUserId(10L);
-                    return saved;
-                });
+        User savedUser = new User();
+        savedUser.setUserId(1L);
+        savedUser.setEmail("test@gmail.com");
+        savedUser.setRole(Role.USER);
+        savedUser.setDepartment(Department.GENERAL);
+        savedUser.setGender("PENDING");
 
-        oAuthSuccessService.onAuthenticationSuccess(
-                request, response, authentication);
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
-        Mockito.verify(userRepository)
-                .save(Mockito.any(User.class));
+        oAuthSuccessService.onAuthenticationSuccess(request, response, authentication);
 
-        Mockito.verify(session)
-                .setAttribute("userId", 10L);
-
-        Mockito.verify(response)
-                .sendRedirect("/complete-profile");
+        verify(session).setAttribute("userId", 1L);
+        verify(response).sendRedirect("/complete-profile");
     }
 
     @Test
-    void shouldResolveEmail_fromPreferredUsername() throws IOException {
+    void shouldRedirectToProfileIfProfileCompleted() throws IOException {
 
-        Mockito.when(authentication.getPrincipal()).thenReturn(oauth2User);
-        Mockito.when(request.getSession()).thenReturn(session);
+        when(authentication.getPrincipal()).thenReturn(oAuth2User);
+        when(oAuth2User.getAttribute("email")).thenReturn("user@gmail.com");
 
-        Mockito.when(oauth2User.getAttribute("email"))
-                .thenReturn(null);
-        Mockito.when(oauth2User.getAttribute("preferred_username"))
-                .thenReturn("fallback@company.com");
+        when(request.getSession()).thenReturn(session);
 
-        Mockito.when(userRepository.findByEmail("fallback@company.com"))
-                .thenReturn(Optional.of(user));
+        User existingUser = new User();
+        existingUser.setUserId(2L);
+        existingUser.setEmail("user@gmail.com");
+        existingUser.setDepartment(Department.TECH);
+        existingUser.setGender("MALE");
 
-        oAuthSuccessService.onAuthenticationSuccess(
-                request, response, authentication);
+        when(userRepository.findByEmail("user@gmail.com"))
+                .thenReturn(Optional.of(existingUser));
 
-        Mockito.verify(response)
-                .sendRedirect("/complete-profile");
+        oAuthSuccessService.onAuthenticationSuccess(request, response, authentication);
+
+        verify(session).setAttribute("userId", 2L);
+        verify(response).sendRedirect("/profile");
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldResolveEmailFromPreferredUsername() throws IOException {
+
+        when(authentication.getPrincipal()).thenReturn(oAuth2User);
+        when(oAuth2User.getAttribute("email")).thenReturn(null);
+        when(oAuth2User.getAttribute("preferred_username"))
+                .thenReturn("azure@user.com");
+
+        when(request.getSession()).thenReturn(session);
+
+        when(userRepository.findByEmail("azure@user.com"))
+                .thenReturn(Optional.empty());
+
+        User savedUser = new User();
+        savedUser.setUserId(3L);
+        savedUser.setDepartment(Department.GENERAL);
+        savedUser.setGender("PENDING");
+
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+
+        oAuthSuccessService.onAuthenticationSuccess(request, response, authentication);
+
+        verify(response).sendRedirect("/complete-profile");
     }
 }

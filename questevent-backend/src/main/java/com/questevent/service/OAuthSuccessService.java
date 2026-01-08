@@ -30,22 +30,33 @@ public class OAuthSuccessService extends SavedRequestAwareAuthenticationSuccessH
 
         OAuth2User oauthUser = (OAuth2User) authentication.getPrincipal();
         HttpSession session = request.getSession();
+
         String email = resolveEmail(oauthUser);
+
         User user = userRepository.findByEmail(email).orElseGet(() -> {
+
             User u = new User();
             u.setEmail(email);
             u.setName(oauthUser.getAttribute("name"));
-            u.setGender("GENDER");
             u.setRole(Role.USER);
+
             u.setDepartment(Department.GENERAL);
+            u.setGender("PENDING");
+
             return userRepository.save(u);
         });
 
+
         session.setAttribute("userId", user.getUserId());
-        if (user.getDepartment() == Department.GENERAL && "GENDER".equals(user.getGender())) {
-            response.sendRedirect("/complete-profile");
+
+        boolean profileIncomplete =
+                user.getDepartment() == Department.GENERAL &&
+                        user.getGender() == "PENDING";
+
+        if (profileIncomplete) {
+            response.sendRedirect("/complete-profile"); // FIRST LOGIN
         } else {
-            response.sendRedirect("/home");
+            response.sendRedirect("/profile"); // NORMAL LOGIN
         }
     }
 

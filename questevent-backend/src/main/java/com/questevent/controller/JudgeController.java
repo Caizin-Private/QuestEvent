@@ -22,7 +22,7 @@ public class JudgeController {
 
     private final JudgeService judgeService;
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@rbac.canAccessJudgeSubmissions(authentication)")
     @GetMapping("/submissions/pending")
     @Operation(
             summary = "Get all pending submissions",
@@ -32,13 +32,17 @@ public class JudgeController {
             responseCode = "200",
             description = "Successfully retrieved pending submissions"
     )
+    @ApiResponse(
+            responseCode = "403",
+            description = "Forbidden - Assigned Judge or Owner only"
+    )
     public ResponseEntity<List<JudgeSubmissionDTO>> getPendingSubmissions() {
         return ResponseEntity.ok(
                 judgeService.getPendingSubmissions()
         );
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@rbac.isJudgeForActivity(authentication, #activityId)")
     @GetMapping("/submissions/activity/{activityId}")
     @Operation(
             summary = "Get submissions for a specific activity",
@@ -46,6 +50,7 @@ public class JudgeController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Submissions retrieved successfully"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Assigned Judge for the program or Owner only"),
             @ApiResponse(responseCode = "404", description = "Activity not found")
     })
     public ResponseEntity<List<JudgeSubmissionDTO>> getSubmissionsForActivity(
@@ -60,7 +65,7 @@ public class JudgeController {
         );
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@rbac.canVerifySubmission(authentication, #submissionId)")
     @PostMapping("/review/{submissionId}")
     @Operation(
             summary = "Review an activity submission",
@@ -69,12 +74,13 @@ public class JudgeController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Submission reviewed successfully"),
             @ApiResponse(responseCode = "400", description = "Submission already reviewed or invalid request"),
-            @ApiResponse(responseCode = "404", description = "Submission or judge not found")
+            @ApiResponse(responseCode = "403", description = "Forbidden - Assigned Judge for the program or Owner only"),
+            @ApiResponse(responseCode = "404", description = "Submission not found")
     })
     public ResponseEntity<String> reviewSubmission(
             @PathVariable Long submissionId
 
-//            @RequestParam Long judgeId
+//            @RequestParam Long judgeId //
     ) {
         judgeService.reviewSubmission(submissionId);
         return ResponseEntity.ok("Submission reviewed successfully");

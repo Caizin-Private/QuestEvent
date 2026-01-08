@@ -1,88 +1,139 @@
 package com.questevent.controller;
 
 import com.questevent.entity.User;
+import com.questevent.entity.UserWallet;
+import com.questevent.enums.Department;
+import com.questevent.enums.Role;
 import com.questevent.repository.UserRepository;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
+import com.questevent.repository.UserWalletRepository;
+import com.questevent.service.JwtService;
+import com.questevent.config.JwtAuthFilter;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Map;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@ExtendWith(MockitoExtension.class)
+@WebMvcTest(AuthController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class AuthControllerTest {
 
-    @Mock
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
     private UserRepository userRepository;
 
-    @Mock
-    private HttpServletRequest request;
+    @MockBean
+    private UserWalletRepository userWalletRepository;
 
-    @Mock
-    private HttpSession session;
+    @MockBean
+    private JwtService jwtService;
 
-    @InjectMocks
-    private AuthController authController;
-
-    private User user;
+    @MockBean
+    private JwtAuthFilter jwtAuthFilter;
 
     @BeforeEach
-    void setup() {
-        user = new User();
+    void setupAuth() {
+        var auth = new UsernamePasswordAuthenticationToken(
+                "test-user", null, List.of()
+        );
+        SecurityContextHolder.getContext().setAuthentication(auth);
+    }
+
+    @AfterEach
+    void clear() {
+        SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    void shouldShowLoginPage() throws Exception {
+        mockMvc.perform(get("/login"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Login with Microsoft")));
+    }
+
+    @Test
+    void shouldRedirectIfAlreadyLoggedIn() throws Exception {
+        mockMvc.perform(get("/login").sessionAttr("userId", 10L))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/profile"));
+    }
+
+    // ================= COMPLETE PROFILE =================
+
+    @Test
+    void shouldShowCompleteProfilePage() throws Exception {
+        mockMvc.perform(get("/complete-profile").sessionAttr("userId", 1L))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Complete Your Profile")));
+    }
+
+    @Test
+    void shouldSaveProfileAndCreateWallet() throws Exception {
+
+        User user = new User();
         user.setUserId(1L);
+        user.setEmail("test@test.com");
         user.setName("Test");
-        user.setEmail("User@test.com");
-        user.setGender("Male");
-        user.setDepartment(user.getDepartment());
-        user.setRole(user.getRole());
-    }
+        user.setRole(Role.USER);
 
-    @Test
-    void home_shouldReturnLoginSuccessHtml() {
-
-        Mockito.when(request.getSession()).thenReturn(session);
-        Mockito.when(session.getAttribute("userId")).thenReturn(1L);
-
-        String response = authController.home(request);
-
-        assertTrue(response.contains("Login Successful"));
-        assertTrue(response.contains("UserID = 1"));
-        assertTrue(response.contains("Logout"));
-    }
-
-
-    @Test
-    void getProfile_shouldReturnUserProfileMap() {
-
-        Mockito.when(request.getSession()).thenReturn(session);
-        Mockito.when(session.getAttribute("userId")).thenReturn(1L);
-        Mockito.when(userRepository.findById(1L))
+        when(userRepository.findById(1L))
                 .thenReturn(Optional.of(user));
 
-        Map<String, Object> response =
-                authController.getProfile(request);
+        when(userWalletRepository.findByUserUserId(1L))
+                .thenReturn(Optional.empty());
 
-        assertEquals(1L, response.get("userId"));
-        assertEquals("Test", response.get("name"));
-        assertEquals("User@test.com", response.get("email"));
-        assertEquals("Male", response.get("gender"));
+        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(userWalletRepository.save(any(UserWallet.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(post("/complete-profile")
+                        .sessionAttr("userId", 1L)
+                        .param("department", "TECH")
+                        .param("gender", "MALE"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/profile"));
     }
 
+    @Test
+    void shouldShowProfilePage() throws Exception {
+
+        User user = new User();
+        user.setUserId(2L);
+        user.setName("User");
+        user.setEmail("user@test.com");
+        user.setDepartment(Department.GENERAL);
+        user.setGender("MALE");
+        user.setRole(Role.USER);
+
+        when(userRepository.findById(2L))
+                .thenReturn(Optional.of(user));
+
+        mockMvc.perform(get("/profile").sessionAttr("userId", 2L))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("User Profile")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("user@test.com")));
+    }
 
     @Test
-    void logoutSuccess_shouldReturnLogoutHtml() {
-
-        String response = authController.logoutSuccess();
-
-        assertTrue(response.contains("Logged out successfully"));
-        assertTrue(response.contains("Login again"));
+    void shouldShowLogoutSuccessPage() throws Exception {
+        mockMvc.perform(get("/logout-success"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Logged out successfully")));
     }
 }

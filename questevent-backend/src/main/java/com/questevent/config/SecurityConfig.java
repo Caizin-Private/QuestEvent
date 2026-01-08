@@ -18,41 +18,39 @@ public class SecurityConfig {
 
     private final OAuthSuccessService successHandler;
     private final JwtAuthFilter jwtAuthFilter;
+    private final CorsConfig corsConfig;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
+                .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
+
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers( "/", "/access-denied", "/oauth2/**", "/login/**", "/login", "/logout-success").permitAll()
+                        .requestMatchers(
+                                "/", "/login", "/logout-success",
+                                "/oauth2/**",
+                                "/swagger-ui/**", "/v3/api-docs/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
+
                 .oauth2Login(oauth -> oauth
-                        .successHandler(successHandler) // <-- main logic executed here
+                        .loginPage("/login")
+                        .successHandler(successHandler)
                 )
-                .addFilterAfter(jwtAuthFilter,
-                        OAuth2LoginAuthenticationFilter.class
-                )
-                .headers(headers -> headers
-                        .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'"))
-                        .frameOptions(frame -> frame.deny())
-                        .httpStrictTransportSecurity(hsts -> hsts
-                                .maxAgeInSeconds(31536000)
-                        )
-                )
-                .sessionManagement(session -> session
-                        .maximumSessions(1)
-                        .maxSessionsPreventsLogin(false)
-                )
+
+                .addFilterAfter(jwtAuthFilter, OAuth2LoginAuthenticationFilter.class)
+
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/logout-success")
                         .invalidateHttpSession(true)
                         .clearAuthentication(true)
                         .deleteCookies("JSESSIONID")
-                        .permitAll()
                 );
+
         return http.build();
     }
 }

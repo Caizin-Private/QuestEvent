@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class JudgeServiceImpl implements JudgeService {
     private final ActivityRegistrationRepository registrationRepository;
     private final JudgeRepository judgeRepository;
     private final ProgramWalletTransactionService programWalletTransactionService;
-
+    //
     @Override
     @Transactional(readOnly = true)
     public List<JudgeSubmissionDTO> getSubmissionsForActivity(Long activityId) {
@@ -74,7 +75,7 @@ public class JudgeServiceImpl implements JudgeService {
         submission.setReviewedBy(judge);
         submission.setReviewStatus(ReviewStatus.APPROVED);
         submission.setAwardedGems(rewardGems);
-        submission.setReviewedAt(LocalDateTime.now());
+        submission.setReviewedAt(Instant.now());
         submissionRepository.save(submission);
 
         registration.setCompletionStatus(CompletionStatus.COMPLETED);

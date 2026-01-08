@@ -15,13 +15,17 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-public class ProgramWalletTransactionServiceImpl implements ProgramWalletTransactionService {
+public class ProgramWalletTransactionServiceImpl
+        implements ProgramWalletTransactionService {
 
     private final ProgramWalletRepository programWalletRepository;
     private final ProgramRepository programRepository;
     private final UserWalletRepository userWalletRepository;
 
-    public ProgramWalletTransactionServiceImpl(ProgramWalletRepository programWalletRepository, ProgramRepository programRepository, UserWalletRepository userWalletRepository) {
+    public ProgramWalletTransactionServiceImpl(
+            ProgramWalletRepository programWalletRepository,
+            ProgramRepository programRepository,
+            UserWalletRepository userWalletRepository) {
         this.programWalletRepository = programWalletRepository;
         this.programRepository = programRepository;
         this.userWalletRepository = userWalletRepository;
@@ -30,6 +34,11 @@ public class ProgramWalletTransactionServiceImpl implements ProgramWalletTransac
     @Override
     @Transactional
     public void creditGems(User user, Program program, int amount) {
+
+        if (user == null || user.getUserId() == null ||
+                program == null || program.getProgramId() == null) {
+            throw new IllegalArgumentException("Invalid user or program");
+        }
 
         if (amount <= 0) {
             throw new IllegalArgumentException("Amount must be greater than zero");
@@ -41,56 +50,72 @@ public class ProgramWalletTransactionServiceImpl implements ProgramWalletTransac
                         program.getProgramId()
                 )
                 .orElseThrow(() ->
-                        new RuntimeException("Program wallet not found"));
+                        new IllegalStateException("Program wallet not found")
+                );
 
         wallet.setGems(wallet.getGems() + amount);
         programWalletRepository.save(wallet);
     }
 
-    @Transactional
     @Override
+    @Transactional
     public void autoSettleExpiredProgramWallets() {
 
-        List<Program> completedPrograms =
+        List<Program> expiredPrograms =
                 programRepository.findByStatusAndEndDateBefore(
-                        ProgramStatus.COMPLETED,
+                        ProgramStatus.ACTIVE,
                         LocalDateTime.now()
                 );
 
-        for (Program program : completedPrograms) {
+        for (Program program : expiredPrograms) {
+
             List<ProgramWallet> wallets =
                     programWalletRepository
                             .findByProgramProgramId(program.getProgramId());
+
             for (ProgramWallet programWallet : wallets) {
-                if (programWallet.getGems() == 0) {
+
+                int gems = programWallet.getGems();
+                if (gems <= 0) {
                     continue;
                 }
+
                 UserWallet userWallet = userWalletRepository
-                                .findByUserUserId(programWallet.getUser().getUserId())
-                                .orElseThrow(() ->
-                                        new IllegalStateException(
-                                                "User wallet not found for userId "
-                                                        + programWallet.getUser().getUserId()
-                                        ));
-                userWallet.setGems(
-                        userWallet.getGems() + programWallet.getGems()
-                );
+                        .findByUserUserId(
+                                programWallet.getUser().getUserId()
+                        )
+                        .orElseThrow(() ->
+                                new IllegalStateException("User wallet not found")
+                        );
+
+                userWallet.setGems(userWallet.getGems() + gems);
                 programWallet.setGems(0);
+
+                userWalletRepository.save(userWallet);
+                programWalletRepository.save(programWallet);
             }
 
-            program.setStatus(ProgramStatus.SETTLED);
+            program.setStatus(ProgramStatus.COMPLETED);
+            programRepository.save(program);
         }
     }
 
-    @Transactional
+
     @Override
+    @Transactional
     public void manuallySettleExpiredProgramWallets(Long programId) {
 
-        Program program = programRepository.findById(programId)
-                .orElseThrow(() -> new RuntimeException("Program not found"));
+        if (programId == null || programId <= 0) {
+            throw new IllegalArgumentException("Invalid programId");
+        }
 
-        if (program.getStatus() == ProgramStatus.SETTLED) {
-            throw new IllegalStateException("Program already settled");
+        Program program = programRepository.findById(programId)
+                .orElseThrow(() ->
+                        new IllegalStateException("Program not found")
+                );
+
+        if (program.getStatus() == ProgramStatus.COMPLETED) {
+            throw new IllegalStateException("Program already completed");
         }
 
         List<ProgramWallet> wallets =
@@ -98,12 +123,24 @@ public class ProgramWalletTransactionServiceImpl implements ProgramWalletTransac
 
         for (ProgramWallet programWallet : wallets) {
 
+            int gems = programWallet.getGems();
+            if (gems <= 0) {
+                continue;
+            }
+
             UserWallet userWallet = programWallet.getUser().getWallet();
-            userWallet.setGems(userWallet.getGems() + programWallet.getGems());
+            if (userWallet == null) {
+                throw new IllegalStateException("User wallet not found");
+            }
+
+            userWallet.setGems(userWallet.getGems() + gems);
             programWallet.setGems(0);
 
+            userWalletRepository.save(userWallet);
+            programWalletRepository.save(programWallet);
         }
 
-        program.setStatus(ProgramStatus.SETTLED);
+        program.setStatus(ProgramStatus.COMPLETED);
+        programRepository.save(program);
     }
 }
