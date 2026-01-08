@@ -87,6 +87,8 @@ public class UserWalletService {
         UserWalletBalanceDTO dto = new UserWalletBalanceDTO();
         dto.setWalletId(wallet.getWalletId());
         dto.setGems(wallet.getGems());
+        dto.setCreatedAt(wallet.getCreatedAt());
+        dto.setUpdatedAt(wallet.getUpdatedAt());
 
         return dto;
     }
