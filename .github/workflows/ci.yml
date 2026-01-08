@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   build:
@@ -36,8 +37,8 @@ jobs:
         run: rm -rf ~/.m2/repository
 
       - name: Build and test
-        run: mvn -U clean verify
         working-directory: questevent-backend
+        run: mvn -U clean verify
 
       - name: Upload test coverage report
         if: always()
@@ -54,9 +55,12 @@ jobs:
           publish_branch: gh-pages
           publish_dir: questevent-backend/target/site/jacoco
           destination_dir: jacoco
+          disable_nojekyll: true
 
       - name: Comment JaCoCo coverage on PR
-        if: github.event_name == 'pull_request'
+        if: >
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
         uses: madrapps/jacoco-report@v1.6.1
         with:
           paths: questevent-backend/target/site/jacoco/jacoco.xml
