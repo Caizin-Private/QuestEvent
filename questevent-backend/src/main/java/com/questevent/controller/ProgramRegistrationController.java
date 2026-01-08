@@ -1,5 +1,6 @@
 package com.questevent.controller;
 
+import com.questevent.dto.AddParticipantInProgramRequestDTO;
 import com.questevent.dto.ProgramRegistrationDTO;
 import com.questevent.dto.ProgramRegistrationRequestDTO;
 import com.questevent.dto.ProgramRegistrationResponseDTO;
@@ -25,7 +26,7 @@ public class ProgramRegistrationController {
 
     private final ProgramRegistrationService programRegistrationService;
 
-    @PreAuthorize("@rbac.canRegisterForProgram(authentication, #request.programId, #request.userId)")
+    @PreAuthorize("@rbac.canRegisterForProgram(authentication, #request.programId, authentication.principal.userId)")
     @PostMapping
     @Operation(summary = "Register participant for program", description = "Registers a user for a specific program (self-registration)")
     @ApiResponses(value = {
@@ -53,24 +54,20 @@ public class ProgramRegistrationController {
             @ApiResponse(responseCode = "404", description = "Program or user not found")
     })
     public ResponseEntity<ProgramRegistrationResponseDTO> addParticipantByHost(
-            @Parameter(description = "Program ID", required = true) @PathVariable Long programId,
-            @Parameter(description = "User ID to register", required = true) @RequestParam Long userId) {
-        try {
-            ProgramRegistrationRequestDTO request = new ProgramRegistrationRequestDTO();
-            request.setProgramId(programId);
-            request.setUserId(userId);
-            ProgramRegistrationResponseDTO response =
-                    programRegistrationService.registerParticipantForProgram(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e.getMessage());
-        }
+            @PathVariable Long programId,
+            @RequestBody AddParticipantInProgramRequestDTO request) {
+
+        ProgramRegistrationResponseDTO response =
+                programRegistrationService.addParticipantToProgram(programId, request);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@rbac.isPlatformOwner(authentication)")
     @GetMapping
-    @Operation(summary = "Get all program registrations", description = "Retrieves all program registrations")
+    @Operation(summary = "Get all program registrations", description = "Retrieves all program registrations (Platform Owner only)")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
+    @ApiResponse(responseCode = "403", description = "Forbidden - Platform Owner only")
     public ResponseEntity<List<ProgramRegistrationDTO>> getAllRegistrations() {
         List<ProgramRegistrationDTO> registrations =
                 programRegistrationService.getAllRegistrations();
@@ -95,7 +92,7 @@ public class ProgramRegistrationController {
         }
     }
 
-    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId) or @rbac.canJudgeAccessProgram(authentication, #programId)")
     @GetMapping("/programs/{programId}")
     @Operation(summary = "Get registrations by program", description = "Retrieves all registrations for a specific program")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
@@ -117,7 +114,7 @@ public class ProgramRegistrationController {
         return ResponseEntity.ok(registrations);
     }
 
-    @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
+    @PreAuthorize("@rbac.canManageProgram(authentication, #programId) or @rbac.canJudgeAccessProgram(authentication, #programId)")
     @GetMapping("/programs/{programId}/count")
     @Operation(summary = "Get participant count", description = "Gets the total number of participants registered for a program")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved count")

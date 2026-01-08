@@ -61,13 +61,13 @@ public class ProgramWalletTransactionServiceImpl
     @Transactional
     public void autoSettleExpiredProgramWallets() {
 
-        List<Program> completedPrograms =
+        List<Program> expiredPrograms =
                 programRepository.findByStatusAndEndDateBefore(
-                        ProgramStatus.COMPLETED,
+                        ProgramStatus.ACTIVE,
                         LocalDateTime.now()
                 );
 
-        for (Program program : completedPrograms) {
+        for (Program program : expiredPrograms) {
 
             List<ProgramWallet> wallets =
                     programWalletRepository
@@ -75,7 +75,8 @@ public class ProgramWalletTransactionServiceImpl
 
             for (ProgramWallet programWallet : wallets) {
 
-                if (programWallet.getGems() == 0) {
+                int gems = programWallet.getGems();
+                if (gems <= 0) {
                     continue;
                 }
 
@@ -87,19 +88,18 @@ public class ProgramWalletTransactionServiceImpl
                                 new IllegalStateException("User wallet not found")
                         );
 
-                userWallet.setGems(
-                        userWallet.getGems() + programWallet.getGems()
-                );
+                userWallet.setGems(userWallet.getGems() + gems);
                 programWallet.setGems(0);
 
                 userWalletRepository.save(userWallet);
                 programWalletRepository.save(programWallet);
             }
 
-            program.setStatus(ProgramStatus.SETTLED);
+            program.setStatus(ProgramStatus.COMPLETED);
             programRepository.save(program);
         }
     }
+
 
     @Override
     @Transactional
@@ -114,8 +114,8 @@ public class ProgramWalletTransactionServiceImpl
                         new IllegalStateException("Program not found")
                 );
 
-        if (program.getStatus() == ProgramStatus.SETTLED) {
-            throw new IllegalStateException("Program already settled");
+        if (program.getStatus() == ProgramStatus.COMPLETED) {
+            throw new IllegalStateException("Program already completed");
         }
 
         List<ProgramWallet> wallets =
@@ -123,22 +123,24 @@ public class ProgramWalletTransactionServiceImpl
 
         for (ProgramWallet programWallet : wallets) {
 
-            UserWallet userWallet = programWallet.getUser().getWallet();
+            int gems = programWallet.getGems();
+            if (gems <= 0) {
+                continue;
+            }
 
+            UserWallet userWallet = programWallet.getUser().getWallet();
             if (userWallet == null) {
                 throw new IllegalStateException("User wallet not found");
             }
 
-            userWallet.setGems(
-                    userWallet.getGems() + programWallet.getGems()
-            );
+            userWallet.setGems(userWallet.getGems() + gems);
             programWallet.setGems(0);
 
             userWalletRepository.save(userWallet);
             programWalletRepository.save(programWallet);
         }
 
-        program.setStatus(ProgramStatus.SETTLED);
+        program.setStatus(ProgramStatus.COMPLETED);
         programRepository.save(program);
     }
 }

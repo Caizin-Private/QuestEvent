@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
@@ -17,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -33,67 +33,68 @@ class UserServiceTest {
     private User user;
 
     @BeforeEach
-    void setup() {
+    void setUp() {
         user = new User();
         user.setUserId(1L);
-        user.setName("Test");
-        user.setEmail("User@test.com");
+        user.setName("Test User");
+        user.setEmail("user@test.com");
         user.setGender("Male");
         user.setRole(Role.USER);
     }
 
     @Test
-    void getAllUsers_success() {
+    void shouldReturnAllUsers_whenUsersExist() {
 
-        Mockito.when(userRepository.findAll())
-                .thenReturn(List.of(user));
+        when(userRepository.findAll()).thenReturn(List.of(user));
 
         List<User> users = userService.getAllUsers();
 
+        assertNotNull(users);
         assertEquals(1, users.size());
-        assertEquals("Test", users.get(0).getName());
+        assertEquals("Test User", users.get(0).getName());
+        verify(userRepository).findAll();
     }
 
     @Test
-    void getUserById_success() {
+    void shouldReturnUser_whenValidIdProvided() {
 
-        Mockito.when(userRepository.findById(1L))
-                .thenReturn(Optional.of(user));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
-        User foundUser = userService.getUserById(1L);
+        User found = userService.getUserById(1L);
 
-        assertEquals("User@test.com", foundUser.getEmail());
+        assertNotNull(found);
+        assertEquals("user@test.com", found.getEmail());
+        verify(userRepository).findById(1L);
     }
 
     @Test
-    void getUserById_notFound_shouldThrowException() {
+    void shouldThrowException_whenUserNotFoundById() {
 
-        Mockito.when(userRepository.findById(1L))
-                .thenReturn(Optional.empty());
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         RuntimeException ex = assertThrows(RuntimeException.class,
                 () -> userService.getUserById(1L));
 
         assertTrue(ex.getMessage().contains("User not found"));
+        verify(userRepository).findById(1L);
     }
 
     @Test
-    void addUser_success() {
+    void shouldSaveUserAndCreateWallet_whenAddUserCalled() {
 
-        Mockito.when(userRepository.save(user))
-                .thenReturn(user);
+        when(userRepository.save(user)).thenReturn(user);
 
-        User savedUser = userService.addUser(user);
+        User saved = userService.addUser(user);
 
-        assertEquals("Test", savedUser.getName());
+        assertNotNull(saved);
+        assertEquals("Test User", saved.getName());
 
-        Mockito.verify(userRepository).save(user);
-        Mockito.verify(userWalletService).createWalletForUser(user);
+        verify(userRepository).save(user);
+        verify(userWalletService).createWalletForUser(user);
     }
 
-
     @Test
-    void updateUser_success() {
+    void shouldUpdateUserFields_whenValidUpdateProvided() {
 
         User updatedUser = new User();
         updatedUser.setName("Updated Name");
@@ -101,33 +102,31 @@ class UserServiceTest {
         updatedUser.setGender("Male");
         updatedUser.setRole(Role.HOST);
 
-        Mockito.when(userRepository.findById(1L))
-                .thenReturn(Optional.of(user));
-
-        Mockito.when(userRepository.save(Mockito.any(User.class)))
-                .thenReturn(user);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
         User result = userService.updateUser(1L, updatedUser);
 
         assertEquals("Updated Name", result.getName());
         assertEquals("updated@test.com", result.getEmail());
         assertEquals(Role.HOST, result.getRole());
+
+        verify(userRepository).findById(1L);
+        verify(userRepository).save(user);
     }
 
     @Test
-    void deleteUser_success() {
+    void shouldDeleteUser_whenDeleteUserCalled() {
 
-        Mockito.doNothing()
-                .when(userRepository)
-                .deleteById(1L);
+        doNothing().when(userRepository).deleteById(1L);
 
         userService.deleteUser(1L);
 
-        Mockito.verify(userRepository).deleteById(1L);
+        verify(userRepository).deleteById(1L);
     }
 
     @Test
-    void getAuthorities_success() {
+    void shouldReturnUserRoleAuthority() {
 
         List<SimpleGrantedAuthority> authorities =
                 userService.getAuthorities(user);
@@ -136,15 +135,15 @@ class UserServiceTest {
         assertEquals("ROLE_USER", authorities.get(0).getAuthority());
     }
 
-
     @Test
-    void convertToDto_success() {
+    void shouldConvertUserToDtoCorrectly() {
 
         UserResponseDto dto = userService.convertToDto(user);
 
+        assertNotNull(dto);
         assertEquals(1L, dto.getUserId());
-        assertEquals("Test", dto.getName());
-        assertEquals("User@test.com", dto.getEmail());
+        assertEquals("Test User", dto.getName());
+        assertEquals("user@test.com", dto.getEmail());
         assertEquals(Role.USER, dto.getRole());
     }
 }

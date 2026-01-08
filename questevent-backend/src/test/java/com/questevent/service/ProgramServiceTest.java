@@ -1,28 +1,35 @@
 package com.questevent.service;
 
 import com.questevent.dto.ProgramRequestDTO;
+import com.questevent.dto.UserPrincipal;
 import com.questevent.entity.Program;
+import com.questevent.entity.ProgramRegistration;
 import com.questevent.entity.User;
 import com.questevent.enums.Department;
 import com.questevent.enums.ProgramStatus;
+import com.questevent.enums.Role;
 import com.questevent.repository.JudgeRepository;
 import com.questevent.repository.ProgramRepository;
+import com.questevent.repository.ProgramRegistrationRepository;
 import com.questevent.repository.UserRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 class ProgramServiceTest {
@@ -34,7 +41,10 @@ class ProgramServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private JudgeRepository judgeRepository ;
+    private ProgramRegistrationRepository programRegistrationRepository;
+
+    @Mock
+    private JudgeRepository judgeRepository;
 
     @Mock
     private ProgramWalletService programWalletService;
@@ -47,293 +57,514 @@ class ProgramServiceTest {
         MockitoAnnotations.openMocks(this);
     }
 
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
+
+    // -------------------- SECURITY MOCK --------------------
+
+    private void mockAuthenticatedUser(Long userId) {
+        UserPrincipal principal =
+                new UserPrincipal(userId, "test@questevent.com", Role.USER);
+
+        Authentication authentication =
+                new UsernamePasswordAuthenticationToken(
+                        principal,
+                        null,
+                        List.of()
+                );
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+        SecurityContextHolder.setContext(context);
+    }
+
+    // -------------------- CREATE PROGRAM --------------------
+
     @Test
     void createProgram_success() {
-
-        Long creatorUserId = 1L;
-        Long judgeUserId = 2L;
+        mockAuthenticatedUser(1L);
 
         User creator = new User();
-        creator.setUserId(creatorUserId);
+        creator.setUserId(1L);
 
         User judgeUser = new User();
-        judgeUser.setUserId(judgeUserId);
+        judgeUser.setUserId(2L);
 
         ProgramRequestDTO dto = new ProgramRequestDTO();
         dto.setProgramTitle("Test Program");
         dto.setProgramDescription("Test Description");
         dto.setDepartment(Department.IT);
-        dto.setRegistrationFee(100);
         dto.setStatus(ProgramStatus.ACTIVE);
-        dto.setJudgeUserId(judgeUserId);
+        dto.setJudgeUserId(2L);
 
         Program savedProgram = new Program();
         savedProgram.setProgramId(1L);
         savedProgram.setProgramTitle("Test Program");
-        savedProgram.setProgramDescription("Test Description");
         savedProgram.setDepartment(Department.IT);
-        savedProgram.setRegistrationFee(100);
         savedProgram.setStatus(ProgramStatus.ACTIVE);
         savedProgram.setUser(creator);
 
-        when(userRepository.findById(creatorUserId)).thenReturn(Optional.of(creator));
-        when(userRepository.findById(judgeUserId)).thenReturn(Optional.of(judgeUser));
-        when(judgeRepository.findByUserUserId(judgeUserId)).thenReturn(Optional.empty());
+        when(userRepository.findById(1L)).thenReturn(Optional.of(creator));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(judgeUser));
+        when(judgeRepository.findByUserUserId(2L)).thenReturn(Optional.empty());
         when(programRepository.save(any(Program.class))).thenReturn(savedProgram);
 
-        Program result = programService.createProgram(
-                creatorUserId,
-                judgeUserId,
-                dto
-        );
+        Program result = programService.createProgram(dto);
 
         assertNotNull(result);
         assertEquals("Test Program", result.getProgramTitle());
-        assertEquals(Department.IT, result.getDepartment());
         assertEquals(creator, result.getUser());
 
         verify(programRepository, times(1)).save(any(Program.class));
     }
+
     @Test
     void createProgram_userNotFound() {
-
-        Long creatorUserId = 999L;
-        Long judgeUserId = 2L;
+        mockAuthenticatedUser(999L);
 
         ProgramRequestDTO dto = new ProgramRequestDTO();
-        dto.setJudgeUserId(judgeUserId);
+        dto.setJudgeUserId(2L);
 
-        when(userRepository.findById(creatorUserId)).thenReturn(Optional.empty());
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
-        ResponseStatusException exception = assertThrows(
+        ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> programService.createProgram(creatorUserId, judgeUserId, dto)
+                () -> programService.createProgram(dto)
         );
 
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
-        assertEquals("Creator not found", exception.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("User not found", ex.getReason());
 
         verify(programRepository, never()).save(any());
     }
+
+    // -------------------- UPDATE PROGRAM --------------------
+
     @Test
     void updateProgram_success() {
-        Long userId = 1L;
-        Long programId = 1L;
+        mockAuthenticatedUser(1L);
 
-        User user = new User();
-        user.setUserId(userId);
+        User authUser = new User();
+        authUser.setUserId(1L);
 
         Program existingProgram = new Program();
-        existingProgram.setProgramId(programId);
+        existingProgram.setProgramId(1L);
         existingProgram.setProgramTitle("Old Title");
-        existingProgram.setUser(user);
+        existingProgram.setUser(authUser);
 
         ProgramRequestDTO dto = new ProgramRequestDTO();
         dto.setProgramTitle("New Title");
-        dto.setRegistrationFee(200);
 
-        Program updatedProgram = new Program();
-        updatedProgram.setProgramId(programId);
-        updatedProgram.setProgramTitle("New Title");
-        updatedProgram.setRegistrationFee(200);
-        updatedProgram.setUser(user);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
+        when(programRepository.findById(1L)).thenReturn(Optional.of(existingProgram));
+        when(programRepository.save(any())).thenReturn(existingProgram);
 
-        when(programRepository.findById(programId)).thenReturn(Optional.of(existingProgram));
-        when(programRepository.save(any(Program.class))).thenReturn(updatedProgram);
+        Program result = programService.updateProgram(1L, dto);
 
-        Program result = programService.updateProgram(userId, programId, dto);
-
-        assertNotNull(result);
         assertEquals("New Title", result.getProgramTitle());
-        assertEquals(200, result.getRegistrationFee());
-        verify(programRepository, times(1)).save(any(Program.class));
     }
 
     @Test
     void updateProgram_programNotFound() {
-        Long userId = 1L;
-        Long programId = 999L;
-        ProgramRequestDTO dto = new ProgramRequestDTO();
+        mockAuthenticatedUser(1L);
 
-        when(programRepository.findById(programId)).thenReturn(Optional.empty());
+        User authUser = new User();
+        authUser.setUserId(1L);
 
-        ResponseStatusException exception = assertThrows(
+        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
+        when(programRepository.findById(999L)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> programService.updateProgram(userId, programId, dto)
+                () -> programService.updateProgram(999L, new ProgramRequestDTO())
         );
 
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
-        assertEquals("Program not found", exception.getReason());
-        verify(programRepository, never()).save(any());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Program not found", ex.getReason());
     }
 
     @Test
     void updateProgram_permissionDenied() {
-        Long userId = 1L;
-        Long programId = 1L;
-        Long differentUserId = 2L;
+        mockAuthenticatedUser(1L);
 
-        User differentUser = new User();
-        differentUser.setUserId(differentUserId);
+        User authUser = new User();
+        authUser.setUserId(1L);
 
-        Program existingProgram = new Program();
-        existingProgram.setProgramId(programId);
-        existingProgram.setUser(differentUser);
+        User otherUser = new User();
+        otherUser.setUserId(2L);
 
-        ProgramRequestDTO dto = new ProgramRequestDTO();
+        Program program = new Program();
+        program.setProgramId(1L);
+        program.setUser(otherUser);
 
-        when(programRepository.findById(programId)).thenReturn(Optional.of(existingProgram));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
+        when(programRepository.findById(1L)).thenReturn(Optional.of(program));
 
-        ResponseStatusException exception = assertThrows(
+        ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> programService.updateProgram(userId, programId, dto)
+                () -> programService.updateProgram(1L, new ProgramRequestDTO())
         );
 
-        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
-        assertEquals("You do not have permission to update this program", exception.getReason());
-        verify(programRepository, never()).save(any());
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("You do not have permission to update this program", ex.getReason());
     }
+
+    // -------------------- GET MY PROGRAMS --------------------
 
     @Test
-    void getProgramsByUserId_success() {
-        Long userId = 1L;
-        Program program1 = new Program();
-        program1.setProgramId(1L);
-        Program program2 = new Program();
-        program2.setProgramId(2L);
+    void getMyPrograms_success() {
+        mockAuthenticatedUser(1L);
 
-        when(userRepository.existsById(userId)).thenReturn(true);
-        when(programRepository.findByUser_UserId(userId))
-                .thenReturn(List.of(program1, program2));
+        User authUser = new User();
+        authUser.setUserId(1L);
 
-        List<Program> result = programService.getProgramsByUserId(userId);
+        Program program = new Program();
+        program.setProgramId(1L);
 
-        assertEquals(2, result.size());
-        verify(programRepository, times(1)).findByUser_UserId(userId);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
+        when(programRepository.findByUser_UserId(1L))
+                .thenReturn(List.of(program));
+
+        List<Program> result = programService.getMyPrograms();
+
+        assertEquals(1, result.size());
     }
 
-    @Test
-    void getProgramsByUserId_userNotFound() {
-        Long userId = 999L;
-
-        when(userRepository.existsById(userId)).thenReturn(false);
-
-        ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
-                () -> programService.getProgramsByUserId(userId)
-        );
-
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
-        assertEquals("User not found", exception.getReason());
-        verify(programRepository, never()).findByUser_UserId(any());
-    }
+    // -------------------- GET PROGRAM BY ID --------------------
 
     @Test
     void getProgramById_success() {
-        Long programId = 1L;
         Program program = new Program();
-        program.setProgramId(programId);
-        program.setProgramTitle("Test Program");
+        program.setProgramId(1L);
 
-        when(programRepository.findById(programId)).thenReturn(Optional.of(program));
+        when(programRepository.findById(1L)).thenReturn(Optional.of(program));
 
-        Program result = programService.getProgramById(programId);
+        Program result = programService.getProgramById(1L);
 
         assertNotNull(result);
-        assertEquals(programId, result.getProgramId());
-        assertEquals("Test Program", result.getProgramTitle());
-        verify(programRepository, times(1)).findById(programId);
     }
 
-    @Test
-    void getProgramById_notFound() {
-        Long programId = 999L;
-
-        when(programRepository.findById(programId)).thenReturn(Optional.empty());
-
-        ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
-                () -> programService.getProgramById(programId)
-        );
-
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
-        assertEquals("Program not found", exception.getReason());
-    }
-
-    @Test
-    void getAllPrograms_success() {
-        Program program1 = new Program();
-        program1.setProgramId(1L);
-        Program program2 = new Program();
-        program2.setProgramId(2L);
-
-        when(programRepository.findAll()).thenReturn(List.of(program1, program2));
-
-        List<Program> result = programService.getAllPrograms();
-
-        assertEquals(2, result.size());
-        verify(programRepository, times(1)).findAll();
-    }
+    // -------------------- DELETE PROGRAM --------------------
 
     @Test
     void deleteProgram_success() {
-        Long userId = 1L;
-        Long programId = 1L;
+        mockAuthenticatedUser(1L);
 
-        User user = new User();
-        user.setUserId(userId);
+        User authUser = new User();
+        authUser.setUserId(1L);
 
         Program program = new Program();
-        program.setProgramId(programId);
-        program.setUser(user);
+        program.setProgramId(1L);
+        program.setUser(authUser);
 
-        when(programRepository.findById(programId)).thenReturn(Optional.of(program));
-        doNothing().when(programRepository).delete(program);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
+        when(programRepository.findById(1L)).thenReturn(Optional.of(program));
 
-        assertDoesNotThrow(() -> programService.deleteProgram(userId, programId));
-
-        verify(programRepository, times(1)).delete(program);
-    }
-
-    @Test
-    void deleteProgram_programNotFound() {
-        Long userId = 1L;
-        Long programId = 999L;
-
-        when(programRepository.findById(programId)).thenReturn(Optional.empty());
-
-        ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
-                () -> programService.deleteProgram(userId, programId)
-        );
-
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
-        assertEquals("Program not found", exception.getReason());
-        verify(programRepository, never()).delete(any());
+        assertDoesNotThrow(() -> programService.deleteProgram(1L));
+        verify(programRepository).delete(program);
     }
 
     @Test
     void deleteProgram_permissionDenied() {
-        Long userId = 1L;
-        Long programId = 1L;
-        Long differentUserId = 2L;
+        mockAuthenticatedUser(1L);
 
-        User differentUser = new User();
-        differentUser.setUserId(differentUserId);
+        User authUser = new User();
+        authUser.setUserId(1L);
+
+        User otherUser = new User();
+        otherUser.setUserId(2L);
 
         Program program = new Program();
-        program.setProgramId(programId);
-        program.setUser(differentUser);
+        program.setProgramId(1L);
+        program.setUser(otherUser);
 
-        when(programRepository.findById(programId)).thenReturn(Optional.of(program));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
+        when(programRepository.findById(1L)).thenReturn(Optional.of(program));
 
-        ResponseStatusException exception = assertThrows(
+        ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> programService.deleteProgram(userId, programId)
+                () -> programService.deleteProgram(1L)
         );
 
-        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
-        assertEquals("You do not have permission to delete this program", exception.getReason());
-        verify(programRepository, never()).delete(any());
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("You do not have permission to delete this program", ex.getReason());
+    }
+
+    // -------------------- GET COMPLETED PROGRAMS FOR USER --------------------
+
+    @Test
+    void getCompletedProgramsForUser_success() {
+        mockAuthenticatedUser(1L);
+
+        User authUser = new User();
+        authUser.setUserId(1L);
+
+        Program completedProgram = new Program();
+        completedProgram.setProgramId(1L);
+        completedProgram.setStatus(ProgramStatus.COMPLETED);
+
+        Program activeProgram = new Program();
+        activeProgram.setProgramId(2L);
+        activeProgram.setStatus(ProgramStatus.ACTIVE);
+
+        ProgramRegistration reg1 = new ProgramRegistration();
+        reg1.setProgram(completedProgram);
+
+        ProgramRegistration reg2 = new ProgramRegistration();
+        reg2.setProgram(activeProgram);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
+        when(programRegistrationRepository.findByUserUserId(1L))
+                .thenReturn(List.of(reg1, reg2));
+
+        List<Program> result = programService.getCompletedProgramsForUser();
+
+        assertEquals(1, result.size());
+        assertEquals(ProgramStatus.COMPLETED, result.get(0).getStatus());
+    }
+
+    @Test
+    void getCompletedProgramsForUser_userNotFound() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> programService.getCompletedProgramsForUser()
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("User not found", ex.getReason());
+    }
+
+    // -------------------- GET PROGRAMS WHERE USER IS JUDGE --------------------
+
+    @Test
+    void getProgramsWhereUserIsJudge_success() {
+        mockAuthenticatedUser(1L);
+
+        User authUser = new User();
+        authUser.setUserId(1L);
+
+        Program program1 = new Program();
+        program1.setProgramId(1L);
+        program1.setProgramTitle("Program 1");
+
+        Program program2 = new Program();
+        program2.setProgramId(2L);
+        program2.setProgramTitle("Program 2");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
+        when(programRepository.findByJudgeUserId(1L))
+                .thenReturn(List.of(program1, program2));
+
+        List<Program> result = programService.getProgramsWhereUserIsJudge();
+
+        assertEquals(2, result.size());
+        verify(programRepository, times(1)).findByJudgeUserId(1L);
+    }
+
+    @Test
+    void getProgramsWhereUserIsJudge_userNotFound() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> programService.getProgramsWhereUserIsJudge()
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("User not found", ex.getReason());
+    }
+
+    // -------------------- GET ACTIVE PROGRAMS BY USER DEPARTMENT --------------------
+
+    @Test
+    void getActiveProgramsByUserDepartment_success() {
+        mockAuthenticatedUser(1L);
+
+        User authUser = new User();
+        authUser.setUserId(1L);
+        authUser.setDepartment(Department.IT);
+
+        Program program1 = new Program();
+        program1.setProgramId(1L);
+        program1.setDepartment(Department.IT);
+        program1.setStatus(ProgramStatus.ACTIVE);
+
+        Program program2 = new Program();
+        program2.setProgramId(2L);
+        program2.setDepartment(Department.IT);
+        program2.setStatus(ProgramStatus.ACTIVE);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
+        when(programRepository.findByStatusAndDepartment(ProgramStatus.ACTIVE, Department.IT))
+                .thenReturn(List.of(program1, program2));
+
+        List<Program> result = programService.getActiveProgramsByUserDepartment();
+
+        assertEquals(2, result.size());
+        result.forEach(program -> {
+            assertEquals(ProgramStatus.ACTIVE, program.getStatus());
+            assertEquals(Department.IT, program.getDepartment());
+        });
+    }
+
+    @Test
+    void getActiveProgramsByUserDepartment_userNotFound() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> programService.getActiveProgramsByUserDepartment()
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("User not found", ex.getReason());
+    }
+
+    // -------------------- GET DRAFT PROGRAMS BY HOST --------------------
+
+    @Test
+    void getDraftProgramsByHost_success() {
+        mockAuthenticatedUser(1L);
+
+        User authUser = new User();
+        authUser.setUserId(1L);
+
+        Program program1 = new Program();
+        program1.setProgramId(1L);
+        program1.setStatus(ProgramStatus.DRAFT);
+        program1.setUser(authUser);
+
+        Program program2 = new Program();
+        program2.setProgramId(2L);
+        program2.setStatus(ProgramStatus.DRAFT);
+        program2.setUser(authUser);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
+        when(programRepository.findByStatusAndUser_UserId(ProgramStatus.DRAFT, 1L))
+                .thenReturn(List.of(program1, program2));
+
+        List<Program> result = programService.getDraftProgramsByHost();
+
+        assertEquals(2, result.size());
+        result.forEach(program -> {
+            assertEquals(ProgramStatus.DRAFT, program.getStatus());
+            assertEquals(1L, program.getUser().getUserId());
+        });
+    }
+
+    @Test
+    void getDraftProgramsByHost_userNotFound() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> programService.getDraftProgramsByHost()
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("User not found", ex.getReason());
+    }
+
+    // -------------------- CHANGE PROGRAM STATUS TO DRAFT --------------------
+
+    @Test
+    void changeProgramStatusToDraft_success() {
+        mockAuthenticatedUser(1L);
+
+        User authUser = new User();
+        authUser.setUserId(1L);
+
+        Program program = new Program();
+        program.setProgramId(1L);
+        program.setStatus(ProgramStatus.DRAFT);
+        program.setUser(authUser);
+
+        Program savedProgram = new Program();
+        savedProgram.setProgramId(1L);
+        savedProgram.setStatus(ProgramStatus.ACTIVE);
+        savedProgram.setUser(authUser);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
+        when(programRepository.findById(1L)).thenReturn(Optional.of(program));
+        when(programRepository.save(program)).thenReturn(savedProgram);
+
+        Program result = programService.changeProgramStatusToActive(1L);
+
+        assertEquals(ProgramStatus.ACTIVE, result.getStatus());
+        verify(programRepository, times(1)).save(program);
+    }
+
+    @Test
+    void changeProgramStatusToDraft_programNotFound() {
+        mockAuthenticatedUser(1L);
+
+        User authUser = new User();
+        authUser.setUserId(1L);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
+        when(programRepository.findById(999L)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> programService.changeProgramStatusToActive(999L)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Program not found", ex.getReason());
+    }
+
+    @Test
+    void changeProgramStatusToDraft_permissionDenied() {
+        mockAuthenticatedUser(1L);
+
+        User authUser = new User();
+        authUser.setUserId(1L);
+
+        User otherUser = new User();
+        otherUser.setUserId(2L);
+
+        Program program = new Program();
+        program.setProgramId(1L);
+        program.setStatus(ProgramStatus.ACTIVE);
+        program.setUser(otherUser);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
+        when(programRepository.findById(1L)).thenReturn(Optional.of(program));
+
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> programService.changeProgramStatusToActive(1L)
+        );
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("You do not have permission to change status of this program", ex.getReason());
+    }
+
+    @Test
+    void changeProgramStatusToDraft_statusNotActive() {
+        mockAuthenticatedUser(1L);
+
+        User authUser = new User();
+        authUser.setUserId(1L);
+
+        Program program = new Program();
+        program.setProgramId(1L);
+        program.setStatus(ProgramStatus.COMPLETED);
+        program.setUser(authUser);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(authUser));
+        when(programRepository.findById(1L)).thenReturn(Optional.of(program));
+
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> programService.changeProgramStatusToActive(1L)
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("Program status must be DRAFT to change to ACTIVE", ex.getReason());
     }
 }

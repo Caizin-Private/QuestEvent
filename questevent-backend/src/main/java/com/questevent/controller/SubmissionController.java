@@ -20,7 +20,7 @@ public class SubmissionController {
 
     private final SubmissionService submissionService;
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@rbac.canSubmitActivity(authentication, #request.activityId, authentication.principal.userId)")
     @PostMapping
     @Operation(
             summary = "Submit activity work",

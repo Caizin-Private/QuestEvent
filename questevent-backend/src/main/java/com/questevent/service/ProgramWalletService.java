@@ -58,29 +58,6 @@ public class ProgramWalletService {
         return programWalletRepository.save(programWallet);
     }
 
-    public List<ProgramWalletBalanceDTO> getUserProgramWalletBalances(Long userId) {
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        NOT_FOUND, "User not found"
-                ));
-
-        List<ProgramWallet> wallets =
-                programWalletRepository.findByUser(user);
-
-        if (wallets.isEmpty()) {
-            throw new ResponseStatusException(
-                    NOT_FOUND, "No program wallets found for user"
-            );
-        }
-
-        return wallets.stream().map(wallet -> {
-            ProgramWalletBalanceDTO dto = new ProgramWalletBalanceDTO();
-            dto.setProgramWalletId(wallet.getProgramWalletId());
-            dto.setGems(wallet.getGems());
-            return dto;
-        }).toList();
-    }
 
 
     public ProgramWalletBalanceDTO getWalletBalanceByWalletId(UUID walletId) {

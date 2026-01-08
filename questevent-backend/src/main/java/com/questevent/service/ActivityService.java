@@ -15,11 +15,16 @@ import java.util.List;
 @Service
 public class ActivityService {
 
-    @Autowired
-    private ActivityRepository activityRepository;
+    private final ActivityRepository activityRepository;
+    private final ProgramRepository programRepository;
 
-    @Autowired
-    private ProgramRepository programRepository;
+    public ActivityService(
+            ActivityRepository activityRepository,
+            ProgramRepository programRepository
+    ) {
+        this.activityRepository = activityRepository;
+        this.programRepository = programRepository;
+    }
 
     public Activity createActivity(Long programId, ActivityRequestDTO dto) {
         Program program = programRepository.findById(programId)
@@ -44,6 +49,9 @@ public class ActivityService {
     }
 
     public List<Activity> getActivitiesByProgramId(Long programId) {
+        if (!programRepository.existsById(programId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Program not found");
+        }
         return activityRepository.findByProgram_ProgramId(programId);
     }
 
@@ -57,6 +65,9 @@ public class ActivityService {
         activityRepository.delete(activity);
     }
     public List<Activity> getCompulsoryActivitiesByProgramId(Long programId) {
+        if (!programRepository.existsById(programId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Program not found");
+        }
         return activityRepository.findByProgram_ProgramIdAndIsCompulsoryTrue(programId);
     }
 

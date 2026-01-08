@@ -5,6 +5,7 @@ import com.questevent.enums.Department;
 import com.questevent.enums.ProgramStatus;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.Cascade;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -39,9 +40,6 @@ public class Program {
     @Column(name = "endDate")
     private Instant endDate;
 
-    @Column(nullable = false)
-    private Integer registrationFee;
-
     @Enumerated(EnumType.STRING)
     private ProgramStatus status;
 
@@ -54,13 +52,14 @@ public class Program {
     @OneToMany(mappedBy = "program", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProgramRegistration> programRegistrations;
 
-    @OneToOne(fetch = FetchType.LAZY,cascade = CascadeType.ALL, optional = false )
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "judge_id",
-            unique = true,
             nullable = false,
             foreignKey = @ForeignKey(name = "fk_program_judge")
     )
+    @Cascade(org.hibernate.annotations.CascadeType.PERSIST)
     private Judge judge;
+
 }
 

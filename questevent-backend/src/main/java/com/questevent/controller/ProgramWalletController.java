@@ -28,34 +28,6 @@ public class ProgramWalletController {
         this.programWalletService = programWalletService;
     }
 
-    @PreAuthorize("@rbac.canManageProgram(authentication, #request.programId)")
-    @PostMapping
-    @Operation(summary = "Create program wallet", description = "Creates a new program wallet for a user and program")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Wallet created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid input or wallet already exists")
-    })
-    public ResponseEntity<ProgramWalletBalanceDTO> createProgramWallet(
-            @RequestBody ProgramWalletCreateRequestDTO request) {
-        ProgramWallet wallet = programWalletService.createWallet(
-                request.getUserId(),
-                request.getProgramId()
-        );
-
-        ProgramWalletBalanceDTO dto = new ProgramWalletBalanceDTO();
-        dto.setProgramWalletId(wallet.getProgramWalletId());
-        dto.setGems(wallet.getGems());
-        return ResponseEntity.status(HttpStatus.CREATED).body(dto);
-    }
-
-    @PreAuthorize("@rbac.canAccessUserWallet(authentication, #userId)")
-    @GetMapping("/users/{userId}")
-    @Operation(summary = "Get user program wallets", description = "Retrieves all program wallets for a specific user")
-    @ApiResponse(responseCode = "200", description = "Successfully retrieved wallets")
-    public ResponseEntity<List<ProgramWalletBalanceDTO>> getUserProgramWalletBalances(
-            @Parameter(description = "User ID", required = true) @PathVariable Long userId) {
-        return ResponseEntity.ok(programWalletService.getUserProgramWalletBalances(userId));
-    }
 
     @PreAuthorize("@rbac.canAccessProgramWallet(authentication, #programWalletId)")
     @GetMapping("/{programWalletId}")

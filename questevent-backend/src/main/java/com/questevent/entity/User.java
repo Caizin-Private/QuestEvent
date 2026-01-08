@@ -49,4 +49,13 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<ProgramWallet> programWallets;
 
+    @OneToOne(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private Judge judge;
+
+
 }
