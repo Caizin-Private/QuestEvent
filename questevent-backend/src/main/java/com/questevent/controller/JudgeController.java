@@ -80,6 +80,7 @@ public class JudgeController {
     public ResponseEntity<String> reviewSubmission(
             @PathVariable Long submissionId
 
+
 //            @RequestParam Long judgeId //
     ) {
         judgeService.reviewSubmission(submissionId);
