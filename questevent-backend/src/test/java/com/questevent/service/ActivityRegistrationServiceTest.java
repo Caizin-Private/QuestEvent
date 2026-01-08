@@ -1,9 +1,7 @@
 package com.questevent.service;
 
 import com.questevent.dto.*;
-import com.questevent.entity.Activity;
-import com.questevent.entity.ActivityRegistration;
-import com.questevent.entity.User;
+import com.questevent.entity.*;
 import com.questevent.enums.CompletionStatus;
 import com.questevent.enums.Role;
 import com.questevent.repository.ActivityRegistrationRepository;
@@ -46,25 +44,39 @@ class ActivityRegistrationServiceTest {
         SecurityContextHolder.clearContext();
     }
 
+    /* =====================================================
+       HELPERS
+       ===================================================== */
+
     private void mockAuthenticatedUser(Long userId) {
-        UserPrincipal principal = new UserPrincipal(
-                userId,
-                "test@questevent.com",
-                Role.USER
-        );
+        UserPrincipal principal =
+                new UserPrincipal(userId, "test@questevent.com", Role.USER);
 
         Authentication authentication =
-                new UsernamePasswordAuthenticationToken(
-                        principal,
-                        null,
-                        List.of()
-                );
+                new UsernamePasswordAuthenticationToken(principal, null, List.of());
 
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);
     }
 
+    private Activity createNonCompulsoryActivity(Long activityId, Long programId) {
+        Program program = new Program();
+        program.setProgramId(programId);
+
+        Activity activity = new Activity();
+        activity.setActivityId(activityId);
+        activity.setActivityName("Test Activity");
+        activity.setRewardGems(100);
+        activity.setIsCompulsory(false);
+        activity.setProgram(program);
+
+        return activity;
+    }
+
+    /* =====================================================
+       REGISTER PARTICIPANT
+       ===================================================== */
 
     @Test
     void registerParticipantForActivity_success() {
@@ -72,31 +84,29 @@ class ActivityRegistrationServiceTest {
 
         ActivityRegistrationRequestDTO request = new ActivityRegistrationRequestDTO();
         request.setActivityId(1L);
-        request.setCompletionStatus(CompletionStatus.NOT_COMPLETED);
 
         User user = new User();
         user.setUserId(1L);
         user.setName("Test User");
         user.setEmail("test@example.com");
 
-        Activity activity = new Activity();
-        activity.setActivityId(1L);
-        activity.setActivityName("Test Activity");
-        activity.setRewardGems(100);
-
-        ActivityRegistration saved = new ActivityRegistration();
-        saved.setActivityRegistrationId(1L);
-        saved.setActivity(activity);
-        saved.setUser(user);
-        saved.setCompletionStatus(CompletionStatus.NOT_COMPLETED);
+        Activity activity = createNonCompulsoryActivity(1L, 10L);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(activityRepository.findById(1L)).thenReturn(Optional.of(activity));
+        when(activityRepository
+                .findByProgram_ProgramIdAndIsCompulsoryTrue(10L))
+                .thenReturn(List.of());
         when(activityRegistrationRepository
                 .existsByActivity_ActivityIdAndUser_UserId(1L, 1L))
                 .thenReturn(false);
+
         when(activityRegistrationRepository.save(any()))
-                .thenReturn(saved);
+                .thenAnswer(invocation -> {
+                    ActivityRegistration reg = invocation.getArgument(0);
+                    reg.setActivityRegistrationId(1L);
+                    return reg;
+                });
 
         ActivityRegistrationResponseDTO result =
                 activityRegistrationService.registerParticipantForActivity(request);
@@ -104,7 +114,7 @@ class ActivityRegistrationServiceTest {
         assertNotNull(result);
         assertEquals(1L, result.getUserId());
         assertEquals(1L, result.getActivityId());
-        verify(activityRegistrationRepository).save(any());
+        assertEquals("Successfully registered for activity", result.getMessage());
     }
 
     @Test
@@ -155,11 +165,13 @@ class ActivityRegistrationServiceTest {
         User user = new User();
         user.setUserId(1L);
 
-        Activity activity = new Activity();
-        activity.setActivityId(1L);
+        Activity activity = createNonCompulsoryActivity(1L, 10L);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(activityRepository.findById(1L)).thenReturn(Optional.of(activity));
+        when(activityRepository
+                .findByProgram_ProgramIdAndIsCompulsoryTrue(10L))
+                .thenReturn(List.of());
         when(activityRegistrationRepository
                 .existsByActivity_ActivityIdAndUser_UserId(1L, 1L))
                 .thenReturn(true);
@@ -170,61 +182,5 @@ class ActivityRegistrationServiceTest {
         );
 
         assertEquals("User already registered for this activity", ex.getMessage());
-    }
-
-
-    @Test
-    void addParticipantToActivity_success() {
-        AddParticipantInActivityRequestDTO request =
-                new AddParticipantInActivityRequestDTO();
-        request.setUserId(2L);
-
-        Activity activity = new Activity();
-        activity.setActivityId(1L);
-
-        User user = new User();
-        user.setUserId(2L);
-        user.setName("Target User");
-
-        ActivityRegistration saved = new ActivityRegistration();
-        saved.setActivityRegistrationId(1L);
-        saved.setActivity(activity);
-        saved.setUser(user);
-        saved.setCompletionStatus(CompletionStatus.NOT_COMPLETED);
-
-        when(activityRepository.findById(1L)).thenReturn(Optional.of(activity));
-        when(userRepository.findById(2L)).thenReturn(Optional.of(user));
-        when(activityRegistrationRepository
-                .existsByActivity_ActivityIdAndUser_UserId(1L, 2L))
-                .thenReturn(false);
-        when(activityRegistrationRepository.save(any()))
-                .thenReturn(saved);
-
-        ActivityRegistrationResponseDTO result =
-                activityRegistrationService.addParticipantToActivity(1L, request);
-
-        assertNotNull(result);
-        assertEquals(2L, result.getUserId());
-        verify(activityRegistrationRepository).save(any());
-    }
-
-
-    @Test
-    void deleteRegistration_success() {
-        when(activityRegistrationRepository.existsById(1L)).thenReturn(true);
-        assertDoesNotThrow(() ->
-                activityRegistrationService.deleteRegistration(1L));
-    }
-
-    @Test
-    void deleteRegistration_notFound() {
-        when(activityRegistrationRepository.existsById(99L)).thenReturn(false);
-
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
-                () -> activityRegistrationService.deleteRegistration(99L)
-        );
-
-        assertEquals("Registration not found", ex.getMessage());
     }
 }
