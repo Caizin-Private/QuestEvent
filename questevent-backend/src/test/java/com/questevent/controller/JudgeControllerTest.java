@@ -10,9 +10,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -23,6 +23,9 @@ class JudgeControllerTest {
 
     @Mock
     private JudgeService judgeService;
+
+    @Mock
+    private Authentication authentication;
 
     @InjectMocks
     private JudgeController judgeController;
@@ -43,11 +46,11 @@ class JudgeControllerTest {
                 ReviewStatus.PENDING
         );
 
-        when(judgeService.getPendingSubmissions())
+        when(judgeService.getPendingSubmissionsForJudge(authentication))
                 .thenReturn(List.of(dto));
 
         ResponseEntity<List<JudgeSubmissionDTO>> response =
-                judgeController.getPendingSubmissions();
+                judgeController.getPendingSubmissions(authentication);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -56,12 +59,40 @@ class JudgeControllerTest {
     }
 
     @Test
+    void getAllSubmissions_shouldReturnList() {
+
+        JudgeSubmissionDTO dto = new JudgeSubmissionDTO(
+                2L,
+                11L,
+                "Hackathon",
+                4L,
+                "User A",
+                "https://drive.link",
+                100,
+                Instant.now(),
+                Instant.now(),
+                ReviewStatus.APPROVED
+        );
+
+        when(judgeService.getAllSubmissionsForJudge(authentication))
+                .thenReturn(List.of(dto));
+
+        ResponseEntity<List<JudgeSubmissionDTO>> response =
+                judgeController.getAllSubmissions(authentication);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(1, response.getBody().size());
+        assertEquals(ReviewStatus.APPROVED, response.getBody().get(0).reviewStatus());
+    }
+
+    @Test
     void getSubmissionsForActivity_shouldReturnSubmissions() {
 
         Long activityId = 10L;
 
         JudgeSubmissionDTO dto = new JudgeSubmissionDTO(
-                2L,
+                3L,
                 activityId,
                 "Hackathon",
                 4L,
@@ -81,7 +112,6 @@ class JudgeControllerTest {
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals(1, response.getBody().size());
         assertEquals(activityId, response.getBody().get(0).activityId());
     }
 

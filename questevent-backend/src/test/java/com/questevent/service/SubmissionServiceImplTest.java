@@ -30,7 +30,9 @@ class SubmissionServiceImplTest {
     @InjectMocks
     private SubmissionServiceImpl submissionService;
 
-
+    /* =====================================================
+       SUCCESS CASE
+       ===================================================== */
 
     @Test
     void submitActivity_shouldSaveSubmissionSuccessfully() {
@@ -42,8 +44,9 @@ class SubmissionServiceImplTest {
                 .findByActivityActivityIdAndUserUserId(1L, 2L))
                 .thenReturn(Optional.of(registration));
 
+        // ✅ FIXED
         when(submissionRepository
-                .existsByActivityRegistration_ActivityRegistrationId(1L))
+                .existsByActivityRegistration(registration))
                 .thenReturn(false);
 
         submissionService.submitActivity(
@@ -53,11 +56,15 @@ class SubmissionServiceImplTest {
         );
 
         verify(submissionRepository).save(any(ActivitySubmission.class));
-        assertEquals(CompletionStatus.COMPLETED,
-                registration.getCompletionStatus());
+        assertEquals(
+                CompletionStatus.COMPLETED,
+                registration.getCompletionStatus()
+        );
     }
 
-
+    /* =====================================================
+       FAILURE CASES
+       ===================================================== */
 
     @Test
     void submitActivity_shouldThrowIfUserNotRegistered() {
@@ -66,17 +73,20 @@ class SubmissionServiceImplTest {
                 .findByActivityActivityIdAndUserUserId(1L, 2L))
                 .thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(RuntimeException.class,
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
                 () -> submissionService.submitActivity(
                         1L,
                         2L,
                         "url"
-                ));
+                )
+        );
 
-        assertEquals("User is not registered for this activity", ex.getMessage());
+        assertEquals(
+                "User is not registered for this activity",
+                ex.getMessage()
+        );
     }
-
-
 
     @Test
     void submitActivity_shouldThrowIfActivityAlreadyCompleted() {
@@ -88,18 +98,20 @@ class SubmissionServiceImplTest {
                 .findByActivityActivityIdAndUserUserId(1L, 2L))
                 .thenReturn(Optional.of(registration));
 
-        RuntimeException ex = assertThrows(RuntimeException.class,
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
                 () -> submissionService.submitActivity(
                         1L,
                         2L,
                         "url"
-                ));
+                )
+        );
 
-        assertEquals("Activity already completed. Submission not allowed.",
-                ex.getMessage());
+        assertEquals(
+                "Activity already completed. Submission not allowed.",
+                ex.getMessage()
+        );
     }
-
-
 
     @Test
     void submitActivity_shouldThrowIfSubmissionAlreadyExists() {
@@ -111,22 +123,29 @@ class SubmissionServiceImplTest {
                 .findByActivityActivityIdAndUserUserId(1L, 2L))
                 .thenReturn(Optional.of(registration));
 
+        // ✅ FIXED
         when(submissionRepository
-                .existsByActivityRegistration_ActivityRegistrationId(1L))
+                .existsByActivityRegistration(registration))
                 .thenReturn(true);
 
-        RuntimeException ex = assertThrows(RuntimeException.class,
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
                 () -> submissionService.submitActivity(
                         1L,
                         2L,
                         "url"
-                ));
+                )
+        );
 
-        assertEquals("Submission already exists for this registration",
-                ex.getMessage());
+        assertEquals(
+                "Submission already exists for this registration",
+                ex.getMessage()
+        );
     }
 
-
+    /* =====================================================
+       TEST DATA
+       ===================================================== */
 
     private ActivityRegistration mockRegistration() {
 

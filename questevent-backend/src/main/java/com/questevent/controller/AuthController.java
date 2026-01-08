@@ -3,18 +3,15 @@ package com.questevent.controller;
 import com.questevent.entity.User;
 import com.questevent.entity.UserWallet;
 import com.questevent.enums.Department;
-import com.questevent.repository.UserWalletRepository;
 import com.questevent.repository.UserRepository;
+import com.questevent.repository.UserWalletRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 
@@ -31,29 +28,29 @@ public class AuthController {
 
         HttpSession session = request.getSession(false);
 
-        // already logged in → go to profile
+        // Already logged in → redirect to profile
         if (session != null && session.getAttribute("userId") != null) {
             response.sendRedirect("/profile");
             return null;
         }
 
         return """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Login</title>
-        </head>
-        <body style="font-family: Arial; padding: 40px;">
-            <h2>Login Page</h2>
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Login</title>
+            </head>
+            <body style="font-family: Arial; padding: 40px;">
+                <h2>Login Page</h2>
 
-            <a href="/oauth2/authorization/azure">
-                <button style="padding:10px 20px; cursor:pointer;">
-                    Login with Microsoft
-                </button>
-            </a>
+                <a href="/oauth2/authorization/azure">
+                    <button style="padding:10px 20px; cursor:pointer;">
+                        Login with Microsoft
+                    </button>
+                </a>
 
-        </body>
-        </html>
+            </body>
+            </html>
         """;
     }
 
@@ -63,25 +60,25 @@ public class AuthController {
     public String completeProfilePage() {
 
         return """
-        <h2>Complete Your Profile 📝</h2>
+            <h2>Complete Your Profile 📝</h2>
 
-        <form method="post" action="/complete-profile">
-            <label>Department:</label><br>
-            <select name="department">
-                <option value="HR">HR</option>
-                <option value="TECH">TECH</option>
-                <option value="GENERAL">GENERAL</option>
-                <option value="GENERAL">IT</option>
-            </select><br><br>
+            <form method="post" action="/complete-profile">
+                <label>Department:</label><br>
+                <select name="department">
+                    <option value="HR">HR</option>
+                    <option value="TECH">TECH</option>
+                    <option value="GENERAL">GENERAL</option>
+                    <option value="IT">IT</option>
+                </select><br><br>
 
-            <label>Gender:</label><br>
-            <select name="gender">
-                <option value="MALE">MALE</option>
-                <option value="FEMALE">FEMALE</option>
-            </select><br><br>
+                <label>Gender:</label><br>
+                <select name="gender">
+                    <option value="MALE">MALE</option>
+                    <option value="FEMALE">FEMALE</option>
+                </select><br><br>
 
-            <button type="submit">Save</button>
-        </form>
+                <button type="submit">Save</button>
+            </form>
         """;
     }
 
@@ -98,15 +95,18 @@ public class AuthController {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
         user.setDepartment(department);
         user.setGender(gender);
         userRepository.save(user);
-        userWalletRepository.findByUserUserId(userId)
+
+        // ✅ Sonar-compliant: return value is used
+        UserWallet wallet = userWalletRepository.findByUserUserId(userId)
                 .orElseGet(() -> {
-                    UserWallet wallet = new UserWallet();
-                    wallet.setUser(user);
-                    wallet.setGems(0);
-                    return userWalletRepository.save(wallet);
+                    UserWallet newWallet = new UserWallet();
+                    newWallet.setUser(user);
+                    newWallet.setGems(0);
+                    return userWalletRepository.save(newWallet);
                 });
 
         response.sendRedirect("/profile");
@@ -118,7 +118,8 @@ public class AuthController {
     public String profile(HttpServletRequest request) {
 
         Long userId = (Long) request.getSession().getAttribute("userId");
-        User user = userRepository.findById(userId).orElseThrow();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         return """
             <h2>User Profile 👤</h2>

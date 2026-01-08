@@ -33,10 +33,8 @@ public class SubmissionServiceImpl implements SubmissionService {
         }
 
         // 3️⃣ Extra safety check (service-level)
-        boolean alreadySubmitted = submissionRepository
-                .existsByActivityRegistration_ActivityRegistrationId(
-                        registration.getActivityRegistrationId()
-                );
+        boolean alreadySubmitted =
+                submissionRepository.existsByActivityRegistration(registration);
 
         if (alreadySubmitted) {
             throw new RuntimeException("Submission already exists for this registration");

@@ -24,7 +24,7 @@ public class LeaderboardController {
 
     private final LeaderboardService leaderboardService;
 
-    // 🌍 Global leaderboard
+
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/global")
     @Operation(
@@ -39,7 +39,7 @@ public class LeaderboardController {
         return leaderboardService.getGlobalLeaderboard();
     }
 
-    // 🏷 Program leaderboard
+
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/program/{programId}")
     @Operation(

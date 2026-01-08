@@ -4,17 +4,18 @@ import com.questevent.dto.JudgeSubmissionDTO;
 import com.questevent.entity.*;
 import com.questevent.enums.CompletionStatus;
 import com.questevent.enums.ReviewStatus;
+import com.questevent.enums.Role;
+import com.questevent.rbac.RbacService;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
-import com.questevent.repository.JudgeRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,8 +34,18 @@ class JudgeServiceImplTest {
     @Mock
     private ProgramWalletTransactionService programWalletTransactionService;
 
+    @Mock
+    private RbacService rbacService;
+
+    @Mock
+    private Authentication authentication;
+
     @InjectMocks
     private JudgeServiceImpl judgeService;
+
+    /* =====================================================
+       GET SUBMISSIONS
+       ===================================================== */
 
     @Test
     void getSubmissionsForActivity_shouldReturnMappedDtos() {
@@ -53,18 +64,30 @@ class JudgeServiceImplTest {
     }
 
     @Test
-    void getPendingSubmissions_shouldReturnOnlyPending() {
+    void getPendingSubmissionsForJudge_shouldReturnPendingOnly() {
         ActivitySubmission submission = mockSubmission();
+        User judgeUser = mockJudgeUser();
 
-        when(submissionRepository.findByReviewStatus(ReviewStatus.PENDING))
+        when(rbacService.currentUser(authentication))
+                .thenReturn(judgeUser);
+
+        when(submissionRepository
+                .findByReviewStatusAndActivityRegistrationActivityProgramJudgeUserUserId(
+                        ReviewStatus.PENDING,
+                        judgeUser.getUserId()
+                ))
                 .thenReturn(List.of(submission));
 
         List<JudgeSubmissionDTO> result =
-                judgeService.getPendingSubmissions();
+                judgeService.getPendingSubmissionsForJudge(authentication);
 
         assertEquals(1, result.size());
         assertEquals(ReviewStatus.PENDING, result.get(0).reviewStatus());
     }
+
+    /* =====================================================
+       REVIEW SUBMISSION
+       ===================================================== */
 
     @Test
     void reviewSubmission_shouldApproveSubmissionAndCreditWallet() {
@@ -75,9 +98,7 @@ class JudgeServiceImplTest {
 
         judgeService.reviewSubmission(10L);
 
-        assertEquals(ReviewStatus.APPROVED,
-                submission.getReviewStatus());
-
+        assertEquals(ReviewStatus.APPROVED, submission.getReviewStatus());
         assertEquals(CompletionStatus.COMPLETED,
                 submission.getActivityRegistration().getCompletionStatus());
 
@@ -95,8 +116,10 @@ class JudgeServiceImplTest {
         when(submissionRepository.findById(99L))
                 .thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> judgeService.reviewSubmission(99L));
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
+                () -> judgeService.reviewSubmission(99L)
+        );
 
         assertEquals("Submission not found", ex.getMessage());
     }
@@ -109,8 +132,10 @@ class JudgeServiceImplTest {
         when(submissionRepository.findById(10L))
                 .thenReturn(Optional.of(submission));
 
-        RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> judgeService.reviewSubmission(10L));
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
+                () -> judgeService.reviewSubmission(10L)
+        );
 
         assertEquals("Submission already reviewed", ex.getMessage());
     }
@@ -126,8 +151,10 @@ class JudgeServiceImplTest {
         when(submissionRepository.findById(10L))
                 .thenReturn(Optional.of(submission));
 
-        RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> judgeService.reviewSubmission(10L));
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
+                () -> judgeService.reviewSubmission(10L)
+        );
 
         assertEquals("Judge not assigned to this program", ex.getMessage());
     }
@@ -142,10 +169,23 @@ class JudgeServiceImplTest {
         when(submissionRepository.findById(10L))
                 .thenReturn(Optional.of(submission));
 
-        RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> judgeService.reviewSubmission(10L));
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
+                () -> judgeService.reviewSubmission(10L)
+        );
 
         assertEquals("Invalid reward configuration", ex.getMessage());
+    }
+
+    /* =====================================================
+       TEST DATA
+       ===================================================== */
+
+    private User mockJudgeUser() {
+        User user = new User();
+        user.setUserId(1L);
+        user.setRole(Role.JUDGE);
+        return user;
     }
 
     private ActivitySubmission mockSubmission() {
@@ -156,9 +196,13 @@ class JudgeServiceImplTest {
         Judge judge = new Judge();
         judge.setJudgeId(1L);
 
+        User judgeUser = new User();
+        judgeUser.setUserId(1L);
+        judge.setUser(judgeUser);
+
         Program program = new Program();
         program.setProgramId(3L);
-        program.setJudge(judge); // ✅ IMPORTANT
+        program.setJudge(judge);
 
         Activity activity = new Activity();
         activity.setActivityId(1L);
