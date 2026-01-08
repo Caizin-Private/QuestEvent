@@ -12,6 +12,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LeaderboardService {
 
+    //global service
     private final LeaderboardRepository leaderboardRepository;
 
     public List<LeaderboardDTO> getGlobalLeaderboard() {
@@ -26,6 +27,7 @@ public class LeaderboardService {
         return leaderboard;
     }
 
+    //program service
     public List<LeaderboardDTO> getProgramLeaderboard(Long programId) {
 
         if (programId == null || programId <= 0) {
