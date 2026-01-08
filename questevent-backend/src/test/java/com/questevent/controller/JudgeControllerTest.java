@@ -10,9 +10,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -23,6 +23,9 @@ class JudgeControllerTest {
 
     @Mock
     private JudgeService judgeService;
+
+    @Mock
+    private Authentication authentication;
 
     @InjectMocks
     private JudgeController judgeController;
@@ -43,11 +46,11 @@ class JudgeControllerTest {
                 ReviewStatus.PENDING
         );
 
-        when(judgeService.getPendingSubmissions())
+        when(judgeService.getPendingSubmissionsForJudge(authentication))
                 .thenReturn(List.of(dto));
 
         ResponseEntity<List<JudgeSubmissionDTO>> response =
-                judgeController.getPendingSubmissions();
+                judgeController.getPendingSubmissions(authentication);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -56,7 +59,7 @@ class JudgeControllerTest {
     }
 
     @Test
-    void getSubmissionsForActivity_shouldReturnSubmissions() {
+    void getPendingSubmissionsForActivity_shouldReturnSubmissions() {
 
         Long activityId = 10L;
 
@@ -73,11 +76,11 @@ class JudgeControllerTest {
                 ReviewStatus.PENDING
         );
 
-        when(judgeService.getSubmissionsForActivity(activityId))
+        when(judgeService.getPendingSubmissionsForActivity(activityId, authentication))
                 .thenReturn(List.of(dto));
 
         ResponseEntity<List<JudgeSubmissionDTO>> response =
-                judgeController.getSubmissionsForActivity(activityId);
+                judgeController.getPendingSubmissionsForActivity(activityId, authentication);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -86,34 +89,47 @@ class JudgeControllerTest {
     }
 
     @Test
-    void getSubmissionsForActivity_shouldThrowException_whenActivityNotFound() {
+    void getPendingSubmissionsForActivity_shouldThrowException_whenActivityNotFound() {
 
         Long activityId = 999L;
 
-        when(judgeService.getSubmissionsForActivity(activityId))
+        when(judgeService.getPendingSubmissionsForActivity(activityId, authentication))
                 .thenThrow(new RuntimeException("Activity not found"));
 
         RuntimeException exception = assertThrows(
                 RuntimeException.class,
-                () -> judgeController.getSubmissionsForActivity(activityId)
+                () -> judgeController.getPendingSubmissionsForActivity(activityId, authentication)
         );
 
         assertEquals("Activity not found", exception.getMessage());
     }
 
     @Test
-    void reviewSubmission_shouldReturnSuccessMessage() {
+    void getAllSubmissions_shouldReturnList() {
+
+        when(judgeService.getAllSubmissionsForJudge(authentication))
+                .thenReturn(List.of());
+
+        ResponseEntity<List<JudgeSubmissionDTO>> response =
+                judgeController.getAllSubmissions(authentication);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+    }
+
+    @Test
+    void reviewSubmission_shouldReturnOk() {
 
         Long submissionId = 1L;
 
         doNothing().when(judgeService)
                 .reviewSubmission(submissionId);
 
-        ResponseEntity<String> response =
+        ResponseEntity<Void> response =
                 judgeController.reviewSubmission(submissionId);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("Submission reviewed successfully", response.getBody());
+        assertNull(response.getBody());
 
         verify(judgeService, times(1))
                 .reviewSubmission(submissionId);

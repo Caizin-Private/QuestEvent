@@ -1,20 +1,26 @@
 package com.questevent.service;
 
 import com.questevent.dto.JudgeSubmissionDTO;
+import com.questevent.dto.UserPrincipal;
 import com.questevent.entity.*;
 import com.questevent.enums.CompletionStatus;
 import com.questevent.enums.ReviewStatus;
+import com.questevent.enums.Role;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
-import com.questevent.repository.JudgeRepository;
+import com.questevent.repository.UserRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,53 +39,70 @@ class JudgeServiceImplTest {
     @Mock
     private ProgramWalletTransactionService programWalletTransactionService;
 
+    @Mock
+    private UserRepository userRepository;
+
     @InjectMocks
     private JudgeServiceImpl judgeService;
 
+    @AfterEach
+    void clearContext() {
+        SecurityContextHolder.clearContext();
+    }
+
+    /* ================= PENDING ================= */
+
     @Test
-    void getSubmissionsForActivity_shouldReturnMappedDtos() {
-        ActivitySubmission submission = mockSubmission();
+    void getPendingSubmissionsForJudge_shouldReturnPendingForJudge() {
+
+        User judgeUser = mockJudgeUser();
+        ActivitySubmission submission = mockSubmission(judgeUser);
+
+        mockAuthenticatedUser(judgeUser);
+
+        when(userRepository.findById(judgeUser.getUserId()))
+                .thenReturn(Optional.of(judgeUser));
 
         when(submissionRepository
-                .findByActivityRegistrationActivityActivityId(1L))
+                .findByReviewStatusAndActivityRegistrationActivityProgramJudgeUserUserId(
+                        ReviewStatus.PENDING,
+                        judgeUser.getUserId()
+                ))
                 .thenReturn(List.of(submission));
 
         List<JudgeSubmissionDTO> result =
-                judgeService.getSubmissionsForActivity(1L);
-
-        assertEquals(1, result.size());
-        assertEquals(1L, result.get(0).activityId());
-        assertEquals(ReviewStatus.PENDING, result.get(0).reviewStatus());
-    }
-
-    @Test
-    void getPendingSubmissions_shouldReturnOnlyPending() {
-        ActivitySubmission submission = mockSubmission();
-
-        when(submissionRepository.findByReviewStatus(ReviewStatus.PENDING))
-                .thenReturn(List.of(submission));
-
-        List<JudgeSubmissionDTO> result =
-                judgeService.getPendingSubmissions();
+                judgeService.getPendingSubmissionsForJudge(null);
 
         assertEquals(1, result.size());
         assertEquals(ReviewStatus.PENDING, result.get(0).reviewStatus());
     }
+
+    /* ================= REVIEW ================= */
 
     @Test
     void reviewSubmission_shouldApproveSubmissionAndCreditWallet() {
-        ActivitySubmission submission = mockSubmission();
+
+        User judgeUser = mockJudgeUser();
+        ActivitySubmission submission = mockSubmission(judgeUser);
+
+
+        mockAuthenticatedUser(judgeUser);
+
 
         when(submissionRepository.findById(10L))
                 .thenReturn(Optional.of(submission));
 
         judgeService.reviewSubmission(10L);
 
-        assertEquals(ReviewStatus.APPROVED,
-                submission.getReviewStatus());
+        assertEquals(
+                ReviewStatus.APPROVED,
+                submission.getReviewStatus()
+        );
 
-        assertEquals(CompletionStatus.COMPLETED,
-                submission.getActivityRegistration().getCompletionStatus());
+        assertEquals(
+                CompletionStatus.COMPLETED,
+                submission.getActivityRegistration().getCompletionStatus()
+        );
 
         verify(programWalletTransactionService).creditGems(
                 submission.getActivityRegistration().getUser(),
@@ -92,73 +115,124 @@ class JudgeServiceImplTest {
 
     @Test
     void reviewSubmission_shouldThrowIfSubmissionNotFound() {
+
+        mockAuthenticatedUser(mockJudgeUser());
+
         when(submissionRepository.findById(99L))
                 .thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> judgeService.reviewSubmission(99L));
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> judgeService.reviewSubmission(99L)
+        );
 
-        assertEquals("Submission not found", ex.getMessage());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Submission not found", ex.getReason());
     }
 
     @Test
     void reviewSubmission_shouldThrowIfAlreadyReviewed() {
-        ActivitySubmission submission = mockSubmission();
+
+        User judgeUser = mockJudgeUser();
+        ActivitySubmission submission = mockSubmission(judgeUser);
         submission.setReviewStatus(ReviewStatus.APPROVED);
+
+        mockAuthenticatedUser(judgeUser);
 
         when(submissionRepository.findById(10L))
                 .thenReturn(Optional.of(submission));
 
-        RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> judgeService.reviewSubmission(10L));
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> judgeService.reviewSubmission(10L)
+        );
 
-        assertEquals("Submission already reviewed", ex.getMessage());
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("Submission already reviewed", ex.getReason());
     }
 
     @Test
-    void reviewSubmission_shouldThrowIfJudgeNotAssignedToProgram() {
-        ActivitySubmission submission = mockSubmission();
+    void reviewSubmission_shouldThrowIfJudgeNotAssigned() {
+
+        User judgeUser = mockJudgeUser();
+        ActivitySubmission submission = mockSubmission(judgeUser);
         submission.getActivityRegistration()
                 .getActivity()
                 .getProgram()
                 .setJudge(null);
 
+        mockAuthenticatedUser(judgeUser);
+
         when(submissionRepository.findById(10L))
                 .thenReturn(Optional.of(submission));
 
-        RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> judgeService.reviewSubmission(10L));
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> judgeService.reviewSubmission(10L)
+        );
 
-        assertEquals("Judge not assigned to this program", ex.getMessage());
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("Judge not assigned to this program", ex.getReason());
     }
 
     @Test
     void reviewSubmission_shouldThrowIfInvalidRewardGems() {
-        ActivitySubmission submission = mockSubmission();
+
+        User judgeUser = mockJudgeUser();
+        ActivitySubmission submission = mockSubmission(judgeUser);
         submission.getActivityRegistration()
                 .getActivity()
-                .setRewardGems(0);
+                .setRewardGems(-1);
+
+        mockAuthenticatedUser(judgeUser);
 
         when(submissionRepository.findById(10L))
                 .thenReturn(Optional.of(submission));
 
-        RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> judgeService.reviewSubmission(10L));
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> judgeService.reviewSubmission(10L)
+        );
 
-        assertEquals("Invalid reward configuration", ex.getMessage());
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("Invalid reward gems", ex.getReason());
     }
 
-    private ActivitySubmission mockSubmission() {
+    /* ================= HELPERS ================= */
+
+    private void mockAuthenticatedUser(User user) {
+        UserPrincipal principal =
+                new UserPrincipal(user.getUserId(), "judge@test.com", user.getRole());
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(
+                        principal,
+                        null,
+                        List.of()
+                )
+        );
+    }
+
+    private User mockJudgeUser() {
         User user = new User();
         user.setUserId(5L);
-        user.setName("User A");
+        user.setRole(Role.JUDGE);
+        return user;
+    }
+
+    private ActivitySubmission mockSubmission(User judgeUser) {
+
+        User participant = new User();
+        participant.setUserId(20L);
+        participant.setName("Participant");
 
         Judge judge = new Judge();
         judge.setJudgeId(1L);
+        judge.setUser(judgeUser);
 
         Program program = new Program();
         program.setProgramId(3L);
-        program.setJudge(judge); // ✅ IMPORTANT
+        program.setJudge(judge);
 
         Activity activity = new Activity();
         activity.setActivityId(1L);
@@ -168,7 +242,7 @@ class JudgeServiceImplTest {
 
         ActivityRegistration registration = new ActivityRegistration();
         registration.setActivity(activity);
-        registration.setUser(user);
+        registration.setUser(participant);
         registration.setCompletionStatus(CompletionStatus.NOT_COMPLETED);
 
         ActivitySubmission submission = new ActivitySubmission();
