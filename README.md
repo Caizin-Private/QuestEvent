@@ -96,3 +96,51 @@ git clone https://github.com/your-organization/QuestEvent.git
 cd QuestEvent/questevent-backend
 mvn clean install
 mvn spring-boot:run
+
+---
+
+## Testing
+
+The QuestEvent backend uses **JUnit 5** and **Mockito** for unit and integration testing.
+Test execution and coverage metrics are integrated with **JaCoCo** and **SonarQube**.
+
+### What Is Tested
+
+#### Service Layer
+- Core business logic
+- Validation rules
+- Edge cases and exception scenarios
+
+#### Controller Layer
+- API request and response handling
+- Exception mapping
+- Authorization and access control behavior
+
+
+
+Framework-managed layers such as **repositories, entities, and configuration**
+are intentionally lightweight and are not heavily unit-tested.
+
+---
+
+## Code Quality & Test Coverage
+
+QuestEvent uses **JaCoCo** and **SonarQube** together to maintain code quality
+and track test coverage.
+
+### JaCoCo – Test Coverage
+
+JaCoCo is integrated with the Maven build lifecycle to generate coverage reports
+during test execution.
+
+Coverage includes:
+- Instruction coverage
+- Branch coverage
+- Line coverage
+- Method coverage
+
+#### Generate Coverage Report Locally
+
+```bash
+mvn clean test
+
