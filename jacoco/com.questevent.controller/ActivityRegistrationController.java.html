@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ActivityRegistrationController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">questevent-backend</a> &gt; <a href="index.source.html" class="el_package">com.questevent.controller</a> &gt; <span class="el_source">ActivityRegistrationController.java</span></div><h1>ActivityRegistrationController.java</h1><pre class="source lang-java linenums">package com.questevent.controller;
 
 import com.questevent.dto.*;
-import com.questevent.entity.Activity;
-import com.questevent.entity.User;
 import com.questevent.enums.CompletionStatus;
-import com.questevent.repository.ActivityRepository;
-import com.questevent.repository.UserRepository;
 import com.questevent.service.ActivityRegistrationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -13,10 +9,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,164 +24,207 @@ import java.util.List;
 @Tag(name = &quot;Activity Registrations&quot;, description = &quot;Activity registration management APIs&quot;)
 public class ActivityRegistrationController {
 
+<span class="fc" id="L27">    private static final Logger log =</span>
+<span class="fc" id="L28">            LoggerFactory.getLogger(ActivityRegistrationController.class);</span>
+
     private final ActivityRegistrationService activityRegistrationService;
 
     @PreAuthorize(&quot;@rbac.canRegisterForActivity(authentication, #request.activityId, authentication.principal.userId)&quot;)
     @PostMapping
-    @Operation(summary = &quot;Register participant for activity&quot;, description = &quot;Registers a user for a specific activity (self-registration)&quot;)
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = &quot;201&quot;, description = &quot;Registration successful&quot;),
-            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Invalid input or user already registered&quot;)
-    })
     public ResponseEntity&lt;ActivityRegistrationResponseDTO&gt; registerParticipant(
             @RequestBody ActivityRegistrationRequestDTO request) {
+
+<span class="fc" id="L37">        log.info(&quot;Self activity registration: activityId={}&quot;,</span>
+<span class="fc" id="L38">                request.getActivityId());</span>
+
         try {
-<span class="fc" id="L42">            ActivityRegistrationResponseDTO response =</span>
-<span class="fc" id="L43">                    activityRegistrationService.registerParticipantForActivity(request);</span>
-<span class="fc" id="L44">            return ResponseEntity.status(HttpStatus.CREATED).body(response);</span>
-<span class="nc" id="L45">        } catch (RuntimeException e) {</span>
-<span class="nc" id="L46">            throw new RuntimeException(e.getMessage());</span>
+<span class="fc" id="L41">            ActivityRegistrationResponseDTO response =</span>
+<span class="fc" id="L42">                    activityRegistrationService.registerParticipantForActivity(request);</span>
+
+<span class="fc" id="L44">            log.info(&quot;Activity registration successful: activityId={}&quot;,</span>
+<span class="fc" id="L45">                    request.getActivityId());</span>
+
+<span class="fc" id="L47">            return ResponseEntity.status(HttpStatus.CREATED).body(response);</span>
+<span class="nc" id="L48">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L49">            log.warn(&quot;Activity registration failed: activityId={}, reason={}&quot;,</span>
+<span class="nc" id="L50">                    request.getActivityId(), e.getMessage());</span>
+<span class="nc" id="L51">            throw e;</span>
         }
     }
 
     @PreAuthorize(&quot;@rbac.canRegisterForActivity(authentication, #activityId, #request.userId)&quot;)
     @PostMapping(&quot;/activities/{activityId}/participants&quot;)
-    @Operation(summary = &quot;Add participant to activity (Host only)&quot;, description = &quot;Allows program host to register a user for an activity in their program&quot;)
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = &quot;201&quot;, description = &quot;Registration successful&quot;),
-            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Invalid input or user already registered&quot;),
-            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Permission denied - only program host can add participants&quot;),
-            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Activity or user not found&quot;)
-    })
     public ResponseEntity&lt;ActivityRegistrationResponseDTO&gt; addParticipantToActivity(
-            @Parameter(description = &quot;Activity ID&quot;, required = true) @PathVariable Long activityId,
+            @PathVariable Long activityId,
             @RequestBody AddParticipantInActivityRequestDTO request) {
+
+<span class="fc" id="L61">        log.info(&quot;Host adding participant to activity: activityId={}, userId={}&quot;,</span>
+<span class="fc" id="L62">                activityId, request.getUserId());</span>
+
         try {
-<span class="fc" id="L63">            ActivityRegistrationResponseDTO response =</span>
-<span class="fc" id="L64">                    activityRegistrationService.addParticipantToActivity(activityId, request);</span>
-<span class="fc" id="L65">            return ResponseEntity.status(HttpStatus.CREATED).body(response);</span>
-<span class="nc" id="L66">        } catch (RuntimeException e) {</span>
-<span class="nc" id="L67">            throw new RuntimeException(e.getMessage());</span>
+<span class="fc" id="L65">            ActivityRegistrationResponseDTO response =</span>
+<span class="fc" id="L66">                    activityRegistrationService.addParticipantToActivity(activityId, request);</span>
+
+<span class="fc" id="L68">            log.info(&quot;Participant added to activity: activityId={}, userId={}&quot;,</span>
+<span class="fc" id="L69">                    activityId, request.getUserId());</span>
+
+<span class="fc" id="L71">            return ResponseEntity.status(HttpStatus.CREATED).body(response);</span>
+<span class="nc" id="L72">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L73">            log.warn(&quot;Failed to add participant: activityId={}, userId={}, reason={}&quot;,</span>
+<span class="nc" id="L74">                    activityId, request.getUserId(), e.getMessage());</span>
+<span class="nc" id="L75">            throw e;</span>
         }
     }
+
     @PreAuthorize(&quot;@rbac.isPlatformOwner(authentication)&quot;)
     @GetMapping
-    @Operation(summary = &quot;Get all activity registrations&quot;, description = &quot;Retrieves all activity registrations (Platform Owner only)&quot;)
-    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Successfully retrieved registrations&quot;)
-    @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Forbidden - Platform Owner only&quot;)
     public ResponseEntity&lt;List&lt;ActivityRegistrationDTO&gt;&gt; getAllRegistrations() {
-<span class="fc" id="L76">        List&lt;ActivityRegistrationDTO&gt; registrations =</span>
-<span class="fc" id="L77">                activityRegistrationService.getAllRegistrations();</span>
-<span class="fc" id="L78">        return ResponseEntity.ok(registrations);</span>
+<span class="fc" id="L82">        log.info(&quot;Fetching all activity registrations (platform owner)&quot;);</span>
+
+<span class="fc" id="L84">        List&lt;ActivityRegistrationDTO&gt; registrations =</span>
+<span class="fc" id="L85">                activityRegistrationService.getAllRegistrations();</span>
+
+<span class="fc" id="L87">        log.debug(&quot;Total activity registrations fetched={}&quot;, registrations.size());</span>
+<span class="fc" id="L88">        return ResponseEntity.ok(registrations);</span>
     }
 
     @PreAuthorize(&quot;@rbac.canAccessActivityRegistration(authentication, #id)&quot;)
     @GetMapping(&quot;/{id}&quot;)
-    @Operation(summary = &quot;Get registration by ID&quot;, description = &quot;Retrieves a specific activity registration by ID&quot;)
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Registration found&quot;),
-            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Registration not found&quot;)
-    })
-    public ResponseEntity&lt;ActivityRegistrationDTO&gt; getRegistrationById(
-            @Parameter(description = &quot;Registration ID&quot;, required = true) @PathVariable Long id) {
+    public ResponseEntity&lt;ActivityRegistrationDTO&gt; getRegistrationById(@PathVariable Long id) {
+<span class="fc" id="L94">        log.info(&quot;Fetching activity registration id={}&quot;, id);</span>
+
         try {
-<span class="fc" id="L91">            ActivityRegistrationDTO registration =</span>
-<span class="fc" id="L92">                    activityRegistrationService.getRegistrationById(id);</span>
-<span class="fc" id="L93">            return ResponseEntity.ok(registration);</span>
-<span class="fc" id="L94">        } catch (RuntimeException e) {</span>
-<span class="fc" id="L95">            return ResponseEntity.notFound().build();</span>
+<span class="fc" id="L97">            ActivityRegistrationDTO registration =</span>
+<span class="fc" id="L98">                    activityRegistrationService.getRegistrationById(id);</span>
+
+<span class="fc" id="L100">            log.debug(&quot;Activity registration found id={}&quot;, id);</span>
+<span class="fc" id="L101">            return ResponseEntity.ok(registration);</span>
+<span class="fc" id="L102">        } catch (RuntimeException e) {</span>
+<span class="fc" id="L103">            log.warn(&quot;Activity registration not found id={}&quot;, id);</span>
+<span class="fc" id="L104">            return ResponseEntity.notFound().build();</span>
         }
     }
 
-    @PreAuthorize(&quot;@rbac.canManageProgram(authentication, @rbac.getProgramIdByActivityId(#activityId)) or @rbac.canJudgeAccessProgram(authentication, @rbac.getProgramIdByActivityId(#activityId))&quot;)
+    @PreAuthorize(&quot;@rbac.canManageProgram(authentication, @rbac.getProgramIdByActivityId(#activityId)) &quot;
+            + &quot;or @rbac.canJudgeAccessProgram(authentication, @rbac.getProgramIdByActivityId(#activityId))&quot;)
     @GetMapping(&quot;/activities/{activityId}&quot;)
-    @Operation(summary = &quot;Get registrations by activity&quot;, description = &quot;Retrieves all registrations for a specific activity&quot;)
-    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Successfully retrieved registrations&quot;)
     public ResponseEntity&lt;List&lt;ActivityRegistrationDTO&gt;&gt; getRegistrationsByActivity(
-            @Parameter(description = &quot;Activity ID&quot;, required = true) @PathVariable Long activityId) {
-<span class="fc" id="L105">        List&lt;ActivityRegistrationDTO&gt; registrations =</span>
-<span class="fc" id="L106">                activityRegistrationService.getRegistrationsByActivityId(activityId);</span>
-<span class="fc" id="L107">        return ResponseEntity.ok(registrations);</span>
+            @PathVariable Long activityId) {
+
+<span class="fc" id="L114">        log.info(&quot;Fetching registrations for activityId={}&quot;, activityId);</span>
+
+<span class="fc" id="L116">        List&lt;ActivityRegistrationDTO&gt; registrations =</span>
+<span class="fc" id="L117">                activityRegistrationService.getRegistrationsByActivityId(activityId);</span>
+
+<span class="fc" id="L119">        log.debug(&quot;Registrations fetched for activityId={}, count={}&quot;,</span>
+<span class="fc" id="L120">                activityId, registrations.size());</span>
+
+<span class="fc" id="L122">        return ResponseEntity.ok(registrations);</span>
     }
 
     @PreAuthorize(&quot;@rbac.canAccessUserProfile(authentication, #userId)&quot;)
     @GetMapping(&quot;/users/{userId}&quot;)
-    @Operation(summary = &quot;Get registrations by user&quot;, description = &quot;Retrieves all activity registrations for a specific user&quot;)
-    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Successfully retrieved registrations&quot;)
     public ResponseEntity&lt;List&lt;ActivityRegistrationDTO&gt;&gt; getRegistrationsByUser(
-            @Parameter(description = &quot;User ID&quot;, required = true) @PathVariable Long userId) {
-<span class="fc" id="L116">        List&lt;ActivityRegistrationDTO&gt; registrations =</span>
-<span class="fc" id="L117">                activityRegistrationService.getRegistrationsByUserId(userId);</span>
-<span class="fc" id="L118">        return ResponseEntity.ok(registrations);</span>
+            @PathVariable Long userId) {
+
+<span class="fc" id="L130">        log.info(&quot;Fetching activity registrations for userId={}&quot;, userId);</span>
+
+<span class="fc" id="L132">        List&lt;ActivityRegistrationDTO&gt; registrations =</span>
+<span class="fc" id="L133">                activityRegistrationService.getRegistrationsByUserId(userId);</span>
+
+<span class="fc" id="L135">        log.debug(&quot;Registrations fetched for userId={}, count={}&quot;,</span>
+<span class="fc" id="L136">                userId, registrations.size());</span>
+
+<span class="fc" id="L138">        return ResponseEntity.ok(registrations);</span>
     }
 
-    @PreAuthorize(&quot;@rbac.canManageProgram(authentication, @rbac.getProgramIdByActivityId(#activityId)) or @rbac.canJudgeAccessProgram(authentication, @rbac.getProgramIdByActivityId(#activityId))&quot;)
+    @PreAuthorize(&quot;@rbac.canManageProgram(authentication, @rbac.getProgramIdByActivityId(#activityId)) &quot;
+            + &quot;or @rbac.canJudgeAccessProgram(authentication, @rbac.getProgramIdByActivityId(#activityId))&quot;)
     @GetMapping(&quot;/activities/{activityId}/status/{status}&quot;)
-    @Operation(summary = &quot;Get registrations by activity and status&quot;, description = &quot;Retrieves registrations for an activity filtered by completion status&quot;)
-    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Successfully retrieved registrations&quot;)
     public ResponseEntity&lt;List&lt;ActivityRegistrationDTO&gt;&gt; getRegistrationsByActivityAndStatus(
-            @Parameter(description = &quot;Activity ID&quot;, required = true) @PathVariable Long activityId,
-            @Parameter(description = &quot;Completion status&quot;, required = true) @PathVariable CompletionStatus status) {
-<span class="nc" id="L128">        List&lt;ActivityRegistrationDTO&gt; registrations =</span>
-<span class="nc" id="L129">                activityRegistrationService.getRegistrationsByActivityIdAndStatus(activityId, status);</span>
-<span class="nc" id="L130">        return ResponseEntity.ok(registrations);</span>
+            @PathVariable Long activityId,
+            @PathVariable CompletionStatus status) {
+
+<span class="nc" id="L148">        log.info(&quot;Fetching registrations for activityId={} with status={}&quot;,</span>
+                activityId, status);
+
+<span class="nc" id="L151">        List&lt;ActivityRegistrationDTO&gt; registrations =</span>
+                activityRegistrationService
+<span class="nc" id="L153">                        .getRegistrationsByActivityIdAndStatus(activityId, status);</span>
+
+<span class="nc" id="L155">        log.debug(&quot;Registrations fetched for activityId={}, status={}, count={}&quot;,</span>
+<span class="nc" id="L156">                activityId, status, registrations.size());</span>
+
+<span class="nc" id="L158">        return ResponseEntity.ok(registrations);</span>
     }
 
     @PreAuthorize(&quot;isAuthenticated() and @rbac.canAccessUserProfile(authentication, #userId)&quot;)
     @GetMapping(&quot;/users/{userId}/status/{status}&quot;)
-    @Operation(summary = &quot;Get registrations by user and status&quot;, description = &quot;Retrieves activity registrations for a user filtered by completion status&quot;)
-    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Successfully retrieved registrations&quot;)
     public ResponseEntity&lt;List&lt;ActivityRegistrationDTO&gt;&gt; getRegistrationsByUserAndStatus(
-            @Parameter(description = &quot;User ID&quot;, required = true) @PathVariable Long userId,
-            @Parameter(description = &quot;Completion status&quot;, required = true) @PathVariable CompletionStatus status) {
-<span class="nc" id="L140">        List&lt;ActivityRegistrationDTO&gt; registrations =</span>
-<span class="nc" id="L141">                activityRegistrationService.getRegistrationsByUserIdAndStatus(userId, status);</span>
-<span class="nc" id="L142">        return ResponseEntity.ok(registrations);</span>
+            @PathVariable Long userId,
+            @PathVariable CompletionStatus status) {
+
+<span class="nc" id="L167">        log.info(&quot;Fetching registrations for userId={} with status={}&quot;,</span>
+                userId, status);
+
+<span class="nc" id="L170">        List&lt;ActivityRegistrationDTO&gt; registrations =</span>
+<span class="nc" id="L171">                activityRegistrationService.getRegistrationsByUserIdAndStatus(userId, status);</span>
+
+<span class="nc" id="L173">        log.debug(&quot;Registrations fetched for userId={}, status={}, count={}&quot;,</span>
+<span class="nc" id="L174">                userId, status, registrations.size());</span>
+
+<span class="nc" id="L176">        return ResponseEntity.ok(registrations);</span>
     }
 
     @PreAuthorize(&quot;@rbac.canAccessActivityRegistration(authentication, #id)&quot;)
     @PatchMapping(&quot;/{id}/status&quot;)
-    @Operation(summary = &quot;Update completion status&quot;, description = &quot;Updates the completion status of an activity registration&quot;)
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Status updated successfully&quot;),
-            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Registration not found&quot;)
-    })
     public ResponseEntity&lt;ActivityRegistrationDTO&gt; updateCompletionStatus(
-            @Parameter(description = &quot;Registration ID&quot;, required = true) @PathVariable Long id,
+            @PathVariable Long id,
             @RequestBody ActivityCompletionUpdateDTO updateDTO) {
+
+<span class="fc" id="L185">        log.info(&quot;Updating completion status for registrationId={}, newStatus={}&quot;,</span>
+<span class="fc" id="L186">                id, updateDTO.getCompletionStatus());</span>
+
         try {
-<span class="fc" id="L156">            ActivityRegistrationDTO updatedRegistration =</span>
-<span class="fc" id="L157">                    activityRegistrationService.updateCompletionStatus(id, updateDTO);</span>
-<span class="fc" id="L158">            return ResponseEntity.ok(updatedRegistration);</span>
-<span class="fc" id="L159">        } catch (RuntimeException e) {</span>
-<span class="fc" id="L160">            return ResponseEntity.notFound().build();</span>
+<span class="fc" id="L189">            ActivityRegistrationDTO updated =</span>
+<span class="fc" id="L190">                    activityRegistrationService.updateCompletionStatus(id, updateDTO);</span>
+
+<span class="fc" id="L192">            log.info(&quot;Completion status updated for registrationId={}&quot;, id);</span>
+<span class="fc" id="L193">            return ResponseEntity.ok(updated);</span>
+<span class="fc" id="L194">        } catch (RuntimeException e) {</span>
+<span class="fc" id="L195">            log.warn(&quot;Failed to update completion status registrationId={}, reason={}&quot;,</span>
+<span class="fc" id="L196">                    id, e.getMessage());</span>
+<span class="fc" id="L197">            return ResponseEntity.notFound().build();</span>
         }
     }
 
     @PreAuthorize(&quot;@rbac.canManageProgram(authentication, @rbac.getProgramIdByActivityId(#activityId))&quot;)
     @GetMapping(&quot;/activities/{activityId}/count&quot;)
-    @Operation(summary = &quot;Get participant count&quot;, description = &quot;Gets total number of participants registered for an activity&quot;)
-    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Successfully retrieved count&quot;)
-    public ResponseEntity&lt;Long&gt; getParticipantCount(
-            @Parameter(description = &quot;Activity ID&quot;, required = true) @PathVariable Long activityId) {
-<span class="nc" id="L170">        long count = activityRegistrationService.getParticipantCountForActivity(activityId);</span>
-<span class="nc" id="L171">        return ResponseEntity.ok(count);</span>
+    public ResponseEntity&lt;Long&gt; getParticipantCount(@PathVariable Long activityId) {
+
+<span class="nc" id="L205">        log.info(&quot;Fetching participant count for activityId={}&quot;, activityId);</span>
+
+<span class="nc" id="L207">        long count =</span>
+<span class="nc" id="L208">                activityRegistrationService.getParticipantCountForActivity(activityId);</span>
+
+<span class="nc" id="L210">        log.debug(&quot;Participant count for activityId={} is {}&quot;, activityId, count);</span>
+<span class="nc" id="L211">        return ResponseEntity.ok(count);</span>
     }
 
     @PreAuthorize(&quot;@rbac.canAccessActivityRegistration(authentication, #id)&quot;)
     @DeleteMapping(&quot;/{id}&quot;)
-    @Operation(summary = &quot;Delete registration&quot;, description = &quot;Deletes an activity registration&quot;)
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = &quot;204&quot;, description = &quot;Registration deleted successfully&quot;),
-            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Registration not found&quot;)
-    })
-    public ResponseEntity&lt;Void&gt; deleteRegistration(
-            @Parameter(description = &quot;Registration ID&quot;, required = true) @PathVariable Long id) {
+    public ResponseEntity&lt;Void&gt; deleteRegistration(@PathVariable Long id) {
+
+<span class="fc" id="L218">        log.warn(&quot;Deleting activity registration id={}&quot;, id);</span>
+
         try {
-<span class="fc" id="L184">            activityRegistrationService.deleteRegistration(id);</span>
-<span class="fc" id="L185">            return ResponseEntity.noContent().build();</span>
-<span class="fc" id="L186">        } catch (RuntimeException e) {</span>
-<span class="fc" id="L187">            return ResponseEntity.notFound().build();</span>
+<span class="fc" id="L221">            activityRegistrationService.deleteRegistration(id);</span>
+<span class="fc" id="L222">            log.info(&quot;Activity registration deleted successfully id={}&quot;, id);</span>
+<span class="fc" id="L223">            return ResponseEntity.noContent().build();</span>
+<span class="fc" id="L224">        } catch (RuntimeException e) {</span>
+<span class="fc" id="L225">            log.warn(&quot;Failed to delete activity registration id={}, reason={}&quot;,</span>
+<span class="fc" id="L226">                    id, e.getMessage());</span>
+<span class="fc" id="L227">            return ResponseEntity.notFound().build();</span>
         }
     }
 }

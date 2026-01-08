@@ -12,6 +12,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -29,8 +31,10 @@ import java.util.List;
 @SecurityRequirement(name = &quot;bearerAuth&quot;)
 public class JudgeController {
 
-    private final JudgeService judgeService;
+<span class="fc" id="L34">    private static final Logger log =</span>
+<span class="fc" id="L35">            LoggerFactory.getLogger(JudgeController.class);</span>
 
+    private final JudgeService judgeService;
 
     @Operation(
             summary = &quot;Get pending submissions for judge&quot;,
@@ -55,11 +59,14 @@ public class JudgeController {
     public ResponseEntity&lt;List&lt;JudgeSubmissionDTO&gt;&gt; getPendingSubmissions(
             Authentication authentication
     ) {
-<span class="fc" id="L58">        return ResponseEntity.ok(</span>
-<span class="fc" id="L59">                judgeService.getPendingSubmissionsForJudge(authentication)</span>
-        );
-    }
+<span class="fc" id="L62">        log.info(&quot;Fetching pending submissions for judge&quot;);</span>
 
+<span class="fc" id="L64">        List&lt;JudgeSubmissionDTO&gt; submissions =</span>
+<span class="fc" id="L65">                judgeService.getPendingSubmissionsForJudge(authentication);</span>
+
+<span class="fc" id="L67">        log.debug(&quot;Pending submissions fetched, count={}&quot;, submissions.size());</span>
+<span class="fc" id="L68">        return ResponseEntity.ok(submissions);</span>
+    }
 
     @Operation(
             summary = &quot;Get pending submissions for an activity&quot;,
@@ -91,14 +98,16 @@ public class JudgeController {
             @PathVariable Long activityId,
             Authentication authentication
     ) {
-<span class="fc" id="L94">        return ResponseEntity.ok(</span>
-<span class="fc" id="L95">                judgeService.getPendingSubmissionsForActivity(</span>
-                        activityId,
-                        authentication
-                )
-        );
-    }
+<span class="fc" id="L101">        log.info(&quot;Fetching pending submissions for activityId={}&quot;, activityId);</span>
 
+<span class="fc" id="L103">        List&lt;JudgeSubmissionDTO&gt; submissions =</span>
+<span class="fc" id="L104">                judgeService.getPendingSubmissionsForActivity(activityId, authentication);</span>
+
+<span class="fc" id="L106">        log.debug(&quot;Pending submissions fetched for activityId={}, count={}&quot;,</span>
+<span class="fc" id="L107">                activityId, submissions.size());</span>
+
+<span class="fc" id="L109">        return ResponseEntity.ok(submissions);</span>
+    }
 
     @Operation(
             summary = &quot;Get all submissions for judge&quot;,
@@ -120,11 +129,14 @@ public class JudgeController {
     public ResponseEntity&lt;List&lt;JudgeSubmissionDTO&gt;&gt; getAllSubmissions(
             Authentication authentication
     ) {
-<span class="fc" id="L123">        return ResponseEntity.ok(</span>
-<span class="fc" id="L124">                judgeService.getAllSubmissionsForJudge(authentication)</span>
-        );
-    }
+<span class="fc" id="L132">        log.info(&quot;Fetching all submissions for judge&quot;);</span>
 
+<span class="fc" id="L134">        List&lt;JudgeSubmissionDTO&gt; submissions =</span>
+<span class="fc" id="L135">                judgeService.getAllSubmissionsForJudge(authentication);</span>
+
+<span class="fc" id="L137">        log.debug(&quot;All submissions fetched, count={}&quot;, submissions.size());</span>
+<span class="fc" id="L138">        return ResponseEntity.ok(submissions);</span>
+    }
 
     @Operation(
             summary = &quot;Review a submission&quot;,
@@ -160,8 +172,12 @@ public class JudgeController {
             )
             @PathVariable Long submissionId
     ) {
-<span class="fc" id="L163">        judgeService.reviewSubmission(submissionId);</span>
-<span class="fc" id="L164">        return ResponseEntity.ok().build();</span>
+<span class="fc" id="L175">        log.info(&quot;Reviewing submission submissionId={}&quot;, submissionId);</span>
+
+<span class="fc" id="L177">        judgeService.reviewSubmission(submissionId);</span>
+
+<span class="fc" id="L179">        log.info(&quot;Submission reviewed successfully submissionId={}&quot;, submissionId);</span>
+<span class="fc" id="L180">        return ResponseEntity.ok().build();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

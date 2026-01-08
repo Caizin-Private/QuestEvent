@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,13 +23,15 @@ import java.util.List;
 @Tag(name = &quot;Users&quot;, description = &quot;User management APIs&quot;)
 public class UserController {
 
+<span class="fc" id="L26">    private static final Logger log = LoggerFactory.getLogger(UserController.class);</span>
+
     private final UserService userService;
 
-<span class="fc" id="L26">    public UserController(UserService userService) {</span>
-<span class="fc" id="L27">        this.userService = userService;</span>
-<span class="fc" id="L28">    }</span>
+<span class="fc" id="L30">    public UserController(UserService userService) {</span>
+<span class="fc" id="L31">        this.userService = userService;</span>
+<span class="fc" id="L32">    }</span>
 
-
+    // ================= CREATE USER =================
     @PreAuthorize(&quot;@rbac.isPlatformOwner(authentication)&quot;)
     @PostMapping
     @Operation(
@@ -42,13 +46,18 @@ public class UserController {
     public ResponseEntity&lt;UserResponseDto&gt; createUser(
             @Valid @RequestBody User user) {
 
-<span class="fc" id="L45">        User savedUser = userService.addUser(user);</span>
-<span class="fc" id="L46">        return ResponseEntity</span>
-<span class="fc" id="L47">                .status(HttpStatus.CREATED)</span>
-<span class="fc" id="L48">                .body(userService.convertToDto(savedUser));</span>
+<span class="fc" id="L49">        log.info(&quot;Received request to create a new user&quot;);</span>
+
+<span class="fc" id="L51">        User savedUser = userService.addUser(user);</span>
+
+<span class="fc" id="L53">        log.info(&quot;User created successfully with id={}&quot;, savedUser.getUserId());</span>
+
+<span class="fc" id="L55">        return ResponseEntity</span>
+<span class="fc" id="L56">                .status(HttpStatus.CREATED)</span>
+<span class="fc" id="L57">                .body(userService.convertToDto(savedUser));</span>
     }
 
-
+    // ================= GET ALL USERS =================
     @PreAuthorize(&quot;@rbac.isPlatformOwner(authentication)&quot;)
     @GetMapping
     @Operation(summary = &quot;Get all users&quot;, description = &quot;Retrieves a list of all users (Platform Owner only)&quot;)
@@ -56,15 +65,19 @@ public class UserController {
     @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Forbidden - Platform Owner only&quot;)
     public ResponseEntity&lt;List&lt;UserResponseDto&gt;&gt; getAllUsers() {
 
-<span class="fc" id="L59">        List&lt;UserResponseDto&gt; users = userService.getAllUsers()</span>
-<span class="fc" id="L60">                .stream()</span>
-<span class="fc" id="L61">                .map(userService::convertToDto)</span>
-<span class="fc" id="L62">                .toList();</span>
+<span class="fc" id="L68">        log.info(&quot;Fetching all users&quot;);</span>
 
-<span class="fc" id="L64">        return ResponseEntity.ok(users);</span>
+<span class="fc" id="L70">        List&lt;UserResponseDto&gt; users = userService.getAllUsers()</span>
+<span class="fc" id="L71">                .stream()</span>
+<span class="fc" id="L72">                .map(userService::convertToDto)</span>
+<span class="fc" id="L73">                .toList();</span>
+
+<span class="fc" id="L75">        log.debug(&quot;Total users fetched: {}&quot;, users.size());</span>
+
+<span class="fc" id="L77">        return ResponseEntity.ok(users);</span>
     }
 
-
+    // ================= GET USER BY ID =================
     @PreAuthorize(&quot;@rbac.canAccessUserProfile(authentication, #id)&quot;)
     @GetMapping(&quot;/{id}&quot;)
     @Operation(summary = &quot;Get user by ID&quot;, description = &quot;Retrieves a specific user by ID (Owner or self)&quot;)
@@ -77,11 +90,16 @@ public class UserController {
             @Parameter(description = &quot;User ID&quot;, required = true)
             @PathVariable Long id) {
 
-<span class="fc" id="L80">        User user = userService.getUserById(id);</span>
-<span class="fc" id="L81">        return ResponseEntity.ok(userService.convertToDto(user));</span>
+<span class="fc" id="L93">        log.info(&quot;Fetching user with id={}&quot;, id);</span>
+
+<span class="fc" id="L95">        User user = userService.getUserById(id);</span>
+
+<span class="fc" id="L97">        log.debug(&quot;User fetched successfully with id={}&quot;, id);</span>
+
+<span class="fc" id="L99">        return ResponseEntity.ok(userService.convertToDto(user));</span>
     }
 
-
+    // ================= UPDATE USER =================
     @PreAuthorize(&quot;@rbac.canAccessUserProfile(authentication, #id)&quot;)
     @PutMapping(&quot;/{id}&quot;)
     @Operation(summary = &quot;Update user&quot;, description = &quot;Updates user information (Owner or self)&quot;)
@@ -94,10 +112,16 @@ public class UserController {
             @PathVariable Long id,
             @Valid @RequestBody User user) {
 
-<span class="fc" id="L97">        User updatedUser = userService.updateUser(id, user);</span>
-<span class="fc" id="L98">        return ResponseEntity.ok(userService.convertToDto(updatedUser));</span>
+<span class="fc" id="L115">        log.info(&quot;Updating user with id={}&quot;, id);</span>
+
+<span class="fc" id="L117">        User updatedUser = userService.updateUser(id, user);</span>
+
+<span class="fc" id="L119">        log.info(&quot;User updated successfully with id={}&quot;, id);</span>
+
+<span class="fc" id="L121">        return ResponseEntity.ok(userService.convertToDto(updatedUser));</span>
     }
 
+    // ================= DELETE USER =================
     @PreAuthorize(&quot;@rbac.isPlatformOwner(authentication)&quot;)
     @DeleteMapping(&quot;/{id}&quot;)
     @Operation(summary = &quot;Delete user&quot;, description = &quot;Deletes a user (Platform Owner only)&quot;)
@@ -109,8 +133,13 @@ public class UserController {
     public ResponseEntity&lt;Void&gt; deleteUser(
             @PathVariable Long id) {
 
-<span class="fc" id="L112">        userService.deleteUser(id);</span>
-<span class="fc" id="L113">        return ResponseEntity.noContent().build();</span>
+<span class="fc" id="L136">        log.warn(&quot;Deleting user with id={}&quot;, id);</span>
+
+<span class="fc" id="L138">        userService.deleteUser(id);</span>
+
+<span class="fc" id="L140">        log.info(&quot;User deleted successfully with id={}&quot;, id);</span>
+
+<span class="fc" id="L142">        return ResponseEntity.noContent().build();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
