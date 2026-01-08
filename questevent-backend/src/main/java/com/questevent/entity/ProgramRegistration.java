@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 
 @Data
 @Entity
@@ -39,6 +38,5 @@ public class ProgramRegistration {
 
     @Column(name = "registered_at", updatable = false)
     private Instant registeredAt = Instant.now();
-
 
 }
