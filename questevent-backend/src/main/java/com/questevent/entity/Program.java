@@ -51,13 +51,14 @@ public class Program {
     @OneToMany(mappedBy = "program", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProgramRegistration> programRegistrations;
 
-    @OneToOne(fetch = FetchType.LAZY,cascade = CascadeType.ALL, optional = false )
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(
             name = "judge_id",
-            unique = true,
             nullable = false,
             foreignKey = @ForeignKey(name = "fk_program_judge")
     )
     private Judge judge;
+
+
 }
 
