@@ -12,6 +12,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -29,8 +31,10 @@ import java.util.List;
 @SecurityRequirement(name = "bearerAuth")
 public class JudgeController {
 
-    private final JudgeService judgeService;
+    private static final Logger log =
+            LoggerFactory.getLogger(JudgeController.class);
 
+    private final JudgeService judgeService;
 
     @Operation(
             summary = "Get pending submissions for judge",
@@ -55,11 +59,14 @@ public class JudgeController {
     public ResponseEntity<List<JudgeSubmissionDTO>> getPendingSubmissions(
             Authentication authentication
     ) {
-        return ResponseEntity.ok(
-                judgeService.getPendingSubmissionsForJudge(authentication)
-        );
-    }
+        log.info("Fetching pending submissions for judge");
 
+        List<JudgeSubmissionDTO> submissions =
+                judgeService.getPendingSubmissionsForJudge(authentication);
+
+        log.debug("Pending submissions fetched, count={}", submissions.size());
+        return ResponseEntity.ok(submissions);
+    }
 
     @Operation(
             summary = "Get pending submissions for an activity",
@@ -91,14 +98,16 @@ public class JudgeController {
             @PathVariable Long activityId,
             Authentication authentication
     ) {
-        return ResponseEntity.ok(
-                judgeService.getPendingSubmissionsForActivity(
-                        activityId,
-                        authentication
-                )
-        );
-    }
+        log.info("Fetching pending submissions for activityId={}", activityId);
 
+        List<JudgeSubmissionDTO> submissions =
+                judgeService.getPendingSubmissionsForActivity(activityId, authentication);
+
+        log.debug("Pending submissions fetched for activityId={}, count={}",
+                activityId, submissions.size());
+
+        return ResponseEntity.ok(submissions);
+    }
 
     @Operation(
             summary = "Get all submissions for judge",
@@ -120,11 +129,14 @@ public class JudgeController {
     public ResponseEntity<List<JudgeSubmissionDTO>> getAllSubmissions(
             Authentication authentication
     ) {
-        return ResponseEntity.ok(
-                judgeService.getAllSubmissionsForJudge(authentication)
-        );
-    }
+        log.info("Fetching all submissions for judge");
 
+        List<JudgeSubmissionDTO> submissions =
+                judgeService.getAllSubmissionsForJudge(authentication);
+
+        log.debug("All submissions fetched, count={}", submissions.size());
+        return ResponseEntity.ok(submissions);
+    }
 
     @Operation(
             summary = "Review a submission",
@@ -160,7 +172,11 @@ public class JudgeController {
             )
             @PathVariable Long submissionId
     ) {
+        log.info("Reviewing submission submissionId={}", submissionId);
+
         judgeService.reviewSubmission(submissionId);
+
+        log.info("Submission reviewed successfully submissionId={}", submissionId);
         return ResponseEntity.ok().build();
     }
 }
