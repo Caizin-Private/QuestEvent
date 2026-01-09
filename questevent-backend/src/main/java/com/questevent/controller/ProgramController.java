@@ -40,6 +40,15 @@ public class ProgramController {
     }
 
     @PreAuthorize("isAuthenticated()")
+    @Operation(
+            summary = "Create a new program",
+            description = "Creates a new program with the provided details"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Program created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @PostMapping
     public ResponseEntity<ProgramResponseDTO> createProgram(@RequestBody ProgramRequestDTO dto) {
         log.info("Creating new program with title='{}'", dto.getProgramTitle());
@@ -54,6 +63,8 @@ public class ProgramController {
 
     @PreAuthorize("isAuthenticated()")
     @GetMapping
+    @Operation(summary = "Get all programs", description = "Retrieves a list of all programs")
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved list of programs")
     public ResponseEntity<List<ProgramResponseDTO>> getAllPrograms() {
         log.info("Fetching all programs");
 
@@ -67,7 +78,12 @@ public class ProgramController {
 
     @PreAuthorize("isAuthenticated() and @rbac.canViewProgram(authentication, #programId)")
     @GetMapping("/{programId}")
-    public ResponseEntity<ProgramResponseDTO> getProgramById(@PathVariable Long programId) {
+    @Operation(summary = "Get program by ID", description = "Retrieves a specific program by its ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Program found"),
+            @ApiResponse(responseCode = "404", description = "Program not found")
+    })
+    public ResponseEntity<ProgramResponseDTO> getProgramById(@Parameter(description = "Program ID", required = true) @PathVariable Long programId) {
         log.info("Fetching program with programId={}", programId);
 
         Program program = programService.getProgramById(programId);
@@ -80,6 +96,11 @@ public class ProgramController {
 
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/my-programs")
+    @Operation(summary = "Get all my hosted programs", description = "Retrieves all programs hosted by the current user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved programs"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
     public ResponseEntity<List<ProgramResponseDTO>> getMyPrograms() {
         log.info("Fetching programs hosted by current user");
 
@@ -93,6 +114,14 @@ public class ProgramController {
 
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/my-completed-registrations")
+    @Operation(
+            summary = "Get completed programs where user is registered",
+            description = "Retrieves all programs where the user has registered and program status is COMPLETED"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved programs"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
     public ResponseEntity<List<ProgramResponseDTO>> getCompletedProgramsForUser() {
         log.info("Fetching completed programs for current user");
 
@@ -106,6 +135,14 @@ public class ProgramController {
 
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/my-judge-programs")
+    @Operation(
+            summary = "Get programs where user is assigned as judge",
+            description = "Retrieves all programs where the current user is assigned as a judge"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved programs"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
     public ResponseEntity<List<ProgramResponseDTO>> getProgramsWhereUserIsJudge() {
         log.info("Fetching programs where current user is judge");
 
@@ -119,7 +156,14 @@ public class ProgramController {
 
     @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @PutMapping("/{programId}")
+    @Operation(summary = "Update program", description = "Updates an existing program's information")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Program updated successfully"),
+            @ApiResponse(responseCode = "403", description = "Permission denied"),
+            @ApiResponse(responseCode = "404", description = "Program not found")
+    })
     public ResponseEntity<ProgramResponseDTO> updateProgram(
+            @Parameter(description = "Program ID", required = true)
             @PathVariable Long programId,
             @RequestBody ProgramRequestDTO dto
     ) {
@@ -133,7 +177,14 @@ public class ProgramController {
 
     @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @PostMapping("/{programId}/settle")
-    public ResponseEntity<String> settleProgram(@PathVariable Long programId) {
+    @Operation(summary = "Settle program wallets", description = "Settles all program wallets for a specific program")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Program wallets settled successfully"),
+            @ApiResponse(responseCode = "404", description = "Program not found")
+    })
+    public ResponseEntity<String> settleProgram(
+            @Parameter(description = "Program ID", required = true)
+            @PathVariable Long programId) {
         log.info("Manually settling wallets for programId={}", programId);
 
         programWalletTransactionService.manuallySettleExpiredProgramWallets(programId);
@@ -144,7 +195,15 @@ public class ProgramController {
 
     @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @DeleteMapping("/{programId}")
-    public ResponseEntity<Void> deleteProgram(@PathVariable Long programId) {
+    @Operation(summary = "Delete program", description = "Deletes a program from the system")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Program deleted successfully"),
+            @ApiResponse(responseCode = "403", description = "Permission denied"),
+            @ApiResponse(responseCode = "404", description = "Program not found")
+    })
+    public ResponseEntity<Void> deleteProgram(
+            @Parameter(description = "Program ID", required = true)
+            @PathVariable Long programId) {
         log.warn("Deleting program programId={}", programId);
 
         programService.deleteProgram(programId);
@@ -155,6 +214,14 @@ public class ProgramController {
 
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/active-by-department")
+    @Operation(
+            summary = "Get active programs by user's department",
+            description = "Retrieves all programs with ACTIVE status that match the user's department"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved programs"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
     public ResponseEntity<List<ProgramResponseDTO>> getActiveProgramsByUserDepartment() {
         log.info("Fetching active programs by user's department");
 
@@ -168,6 +235,14 @@ public class ProgramController {
 
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/my-draft-programs")
+    @Operation(
+            summary = "Get draft programs hosted by user",
+            description = "Retrieves all programs with DRAFT status that are hosted by the current user"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved programs"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
     public ResponseEntity<List<ProgramResponseDTO>> getDraftProgramsByHost() {
         log.info("Fetching draft programs hosted by current user");
 
@@ -181,6 +256,16 @@ public class ProgramController {
 
     @PreAuthorize("isAuthenticated()")
     @PatchMapping("/{programId}/status-to-active")
+    @Operation(
+            summary = "Change program status from ACTIVE to DRAFT",
+            description = "Changes the status of a program from ACTIVE to DRAFT. Only works for programs hosted by the current user."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Program status changed successfully"),
+            @ApiResponse(responseCode = "400", description = "Program status must be ACTIVE"),
+            @ApiResponse(responseCode = "403", description = "Permission denied"),
+            @ApiResponse(responseCode = "404", description = "Program or user not found")
+    })
     public ResponseEntity<ProgramResponseDTO> changeProgramStatusToActive(
             @PathVariable Long programId
     ) {

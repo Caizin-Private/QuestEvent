@@ -34,7 +34,17 @@ public class ActivityController {
 
     @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @PostMapping
+    @Operation(
+            summary = "Create a new activity",
+            description = "Creates a new activity for a specific program"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Activity created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input"),
+            @ApiResponse(responseCode = "404", description = "Program not found")
+    })
     public ResponseEntity<ActivityResponseDTO> createActivity(
+            @Parameter(description = "Program ID", required = true)
             @PathVariable Long programId,
             @RequestBody ActivityRequestDTO dto) {
 
@@ -53,7 +63,16 @@ public class ActivityController {
 
     @PreAuthorize("@rbac.canViewProgram(authentication, #programId)")
     @GetMapping
+    @Operation(
+            summary = "Get all activities for a program",
+            description = "Retrieves all activities associated with a specific program"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved activities"),
+            @ApiResponse(responseCode = "404", description = "Program not found")
+    })
     public ResponseEntity<List<ActivityResponseDTO>> getActivities(
+            @Parameter(description = "Program ID", required = true)
             @PathVariable Long programId) {
 
         log.info("Fetching activities for programId={}", programId);
@@ -72,8 +91,18 @@ public class ActivityController {
 
     @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @PutMapping("/{activityId}")
+    @Operation(
+            summary = "Update activity",
+            description = "Updates an existing activity's information"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Activity updated successfully"),
+            @ApiResponse(responseCode = "404", description = "Activity or program not found")
+    })
     public ResponseEntity<ActivityResponseDTO> updateActivity(
+            @Parameter(description = "Program ID", required = true)
             @PathVariable Long programId,
+            @Parameter(description = "Activity ID", required = true)
             @PathVariable Long activityId,
             @RequestBody ActivityRequestDTO dto) {
 
@@ -91,8 +120,18 @@ public class ActivityController {
 
     @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
     @DeleteMapping("/{activityId}")
+    @Operation(
+            summary = "Delete activity",
+            description = "Deletes an activity from a program"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Activity deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Activity or program not found")
+    })
     public ResponseEntity<Void> deleteActivity(
+            @Parameter(description = "Program ID", required = true)
             @PathVariable Long programId,
+            @Parameter(description = "Activity ID", required = true)
             @PathVariable Long activityId) {
 
         log.warn("Deleting activity activityId={}, programId={}",
@@ -108,7 +147,16 @@ public class ActivityController {
 
     @PreAuthorize("@rbac.canViewProgram(authentication, #programId)")
     @GetMapping("/compulsory")
+    @Operation(
+            summary = "Get compulsory activities for a program",
+            description = "Retrieves all compulsory activities (isCompulsory=true) associated with a specific program"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved activities"),
+            @ApiResponse(responseCode = "404", description = "Program not found")
+    })
     public ResponseEntity<List<ActivityResponseDTO>> getCompulsoryActivities(
+            @Parameter(description = "Program ID", required = true)
             @PathVariable Long programId) {
 
         log.info("Fetching compulsory activities for programId={}", programId);

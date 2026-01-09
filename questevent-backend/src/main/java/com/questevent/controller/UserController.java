@@ -31,7 +31,6 @@ public class UserController {
         this.userService = userService;
     }
 
-    // ================= CREATE USER =================
     @PreAuthorize("@rbac.isPlatformOwner(authentication)")
     @PostMapping
     @Operation(
@@ -57,7 +56,6 @@ public class UserController {
                 .body(userService.convertToDto(savedUser));
     }
 
-    // ================= GET ALL USERS =================
     @PreAuthorize("@rbac.isPlatformOwner(authentication)")
     @GetMapping
     @Operation(summary = "Get all users", description = "Retrieves a list of all users (Platform Owner only)")
@@ -77,7 +75,6 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
-    // ================= GET USER BY ID =================
     @PreAuthorize("@rbac.canAccessUserProfile(authentication, #id)")
     @GetMapping("/{id}")
     @Operation(summary = "Get user by ID", description = "Retrieves a specific user by ID (Owner or self)")
@@ -99,7 +96,6 @@ public class UserController {
         return ResponseEntity.ok(userService.convertToDto(user));
     }
 
-    // ================= UPDATE USER =================
     @PreAuthorize("@rbac.canAccessUserProfile(authentication, #id)")
     @PutMapping("/{id}")
     @Operation(summary = "Update user", description = "Updates user information (Owner or self)")
@@ -121,7 +117,6 @@ public class UserController {
         return ResponseEntity.ok(userService.convertToDto(updatedUser));
     }
 
-    // ================= DELETE USER =================
     @PreAuthorize("@rbac.isPlatformOwner(authentication)")
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete user", description = "Deletes a user (Platform Owner only)")
