@@ -88,16 +88,24 @@ import java.util.Map;
 <span class="nc" id="L88">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
     }
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity&lt;ApiErrorDTO&gt; handleResourceNotFound(ResourceNotFoundException ex) {
+<span class="nc" id="L93">        return build(HttpStatus.NOT_FOUND, ex.getMessage());    }</span>
+
+    @ExceptionHandler(InvalidOperationException.class)
+    public ResponseEntity&lt;ApiErrorDTO&gt; handleInvalidOperation(InvalidOperationException ex) {
+<span class="nc" id="L97">        return build(HttpStatus.CONFLICT, ex.getMessage());</span>
+    }
 
     private ResponseEntity&lt;ApiErrorDTO&gt; build(HttpStatus status, String message) {
 
-<span class="nc" id="L94">        ApiErrorDTO error = new ApiErrorDTO(</span>
-<span class="nc" id="L95">                status.value(),</span>
+<span class="nc" id="L102">        ApiErrorDTO error = new ApiErrorDTO(</span>
+<span class="nc" id="L103">                status.value(),</span>
                 message,
-<span class="nc" id="L97">                Instant.now()</span>
+<span class="nc" id="L105">                Instant.now()</span>
         );
 
-<span class="nc" id="L100">        return ResponseEntity.status(status).body(error);</span>
+<span class="nc" id="L108">        return ResponseEntity.status(status).body(error);</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
