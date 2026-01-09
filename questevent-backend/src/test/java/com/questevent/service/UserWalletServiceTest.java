@@ -5,6 +5,10 @@ import com.questevent.dto.UserWalletBalanceDTO;
 import com.questevent.entity.User;
 import com.questevent.entity.UserWallet;
 import com.questevent.enums.Role;
+import com.questevent.exception.ResourceConflictException;
+import com.questevent.exception.UnauthorizedException;
+import com.questevent.exception.UserNotFoundException;
+import com.questevent.exception.WalletNotFoundException;
 import com.questevent.repository.UserRepository;
 import com.questevent.repository.UserWalletRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -15,7 +19,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -68,8 +71,8 @@ class UserWalletServiceTest {
         when(userWalletRepository.findByUserUserId(userId))
                 .thenReturn(Optional.of(new UserWallet()));
 
-        RuntimeException exception = assertThrows(
-                RuntimeException.class,
+        ResourceConflictException exception = assertThrows(
+                ResourceConflictException.class,
                 () -> userWalletService.createWalletForUser(user)
         );
 
@@ -108,7 +111,7 @@ class UserWalletServiceTest {
 
         assertNotNull(dto);
         assertEquals(walletId, dto.getWalletId());
-        assertEquals(100, dto.getGems());
+        assertEquals(100L, dto.getGems());
     }
 
     @Test
@@ -127,12 +130,12 @@ class UserWalletServiceTest {
         when(userRepository.findById(userId))
                 .thenReturn(Optional.empty());
 
-        ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
+        UserNotFoundException exception = assertThrows(
+                UserNotFoundException.class,
                 () -> userWalletService.getMyWalletBalance()
         );
 
-        assertEquals("User not found", exception.getReason());
+        assertEquals("User not found", exception.getMessage());
     }
 
     @Test
@@ -155,12 +158,12 @@ class UserWalletServiceTest {
         when(userRepository.findById(userId))
                 .thenReturn(Optional.of(user));
 
-        ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
+        WalletNotFoundException exception = assertThrows(
+                WalletNotFoundException.class,
                 () -> userWalletService.getMyWalletBalance()
         );
 
-        assertEquals("Wallet not found", exception.getReason());
+        assertEquals("Wallet not found", exception.getMessage());
     }
 
     @Test
@@ -168,11 +171,11 @@ class UserWalletServiceTest {
 
         SecurityContextHolder.clearContext();
 
-        ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
+        UnauthorizedException exception = assertThrows(
+                UnauthorizedException.class,
                 () -> userWalletService.getMyWalletBalance()
         );
 
-        assertEquals("Unauthenticated request", exception.getReason());
+        assertEquals("Unauthenticated request", exception.getMessage());
     }
 }

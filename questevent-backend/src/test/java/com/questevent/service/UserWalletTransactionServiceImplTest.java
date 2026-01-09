@@ -2,6 +2,7 @@ package com.questevent.service;
 
 import com.questevent.entity.User;
 import com.questevent.entity.UserWallet;
+import com.questevent.exception.WalletNotFoundException;
 import com.questevent.repository.UserWalletRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,7 +44,7 @@ class UserWalletTransactionServiceImplTest {
 
         userWalletTransactionService.creditGems(user, 50L);
 
-        assertEquals(150, wallet.getGems());
+        assertEquals(150L, wallet.getGems());
         verify(userWalletRepository, times(1)).save(wallet);
     }
 
@@ -88,8 +89,8 @@ class UserWalletTransactionServiceImplTest {
         when(userWalletRepository.findByUserUserId(userId))
                 .thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
+        WalletNotFoundException ex = assertThrows(
+                WalletNotFoundException.class,
                 () -> userWalletTransactionService.creditGems(user, 20L)
         );
 

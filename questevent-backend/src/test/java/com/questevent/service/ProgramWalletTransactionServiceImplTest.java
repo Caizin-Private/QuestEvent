@@ -5,6 +5,9 @@ import com.questevent.entity.ProgramWallet;
 import com.questevent.entity.User;
 import com.questevent.entity.UserWallet;
 import com.questevent.enums.ProgramStatus;
+import com.questevent.exception.ProgramNotFoundException;
+import com.questevent.exception.ResourceConflictException;
+import com.questevent.exception.WalletNotFoundException;
 import com.questevent.repository.ProgramRepository;
 import com.questevent.repository.ProgramWalletRepository;
 import com.questevent.repository.UserWalletRepository;
@@ -115,8 +118,8 @@ class ProgramWalletTransactionServiceImplTest {
                 .findByUserUserIdAndProgramProgramId(userId, programId))
                 .thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
+        WalletNotFoundException ex = assertThrows(
+                WalletNotFoundException.class,
                 () -> service.creditGems(user, program, 10L)
         );
 
@@ -271,8 +274,8 @@ class ProgramWalletTransactionServiceImplTest {
         when(programRepository.findById(programId))
                 .thenReturn(Optional.of(program));
 
-        IllegalStateException ex = assertThrows(
-                IllegalStateException.class,
+        ResourceConflictException ex = assertThrows(
+                ResourceConflictException.class,
                 () -> service.manuallySettleExpiredProgramWallets(programId)
         );
 

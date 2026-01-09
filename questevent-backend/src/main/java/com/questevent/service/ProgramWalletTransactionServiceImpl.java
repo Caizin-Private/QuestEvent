@@ -5,6 +5,9 @@ import com.questevent.entity.ProgramWallet;
 import com.questevent.entity.User;
 import com.questevent.entity.UserWallet;
 import com.questevent.enums.ProgramStatus;
+import com.questevent.exception.ProgramNotFoundException;
+import com.questevent.exception.ResourceConflictException;
+import com.questevent.exception.WalletNotFoundException;
 import com.questevent.repository.ProgramRepository;
 import com.questevent.repository.ProgramWalletRepository;
 import com.questevent.repository.UserWalletRepository;
@@ -71,7 +74,7 @@ public class ProgramWalletTransactionServiceImpl
                             user.getUserId(),
                             program.getProgramId()
                     );
-                    return new IllegalStateException("Program wallet not found");
+                    return new WalletNotFoundException("Program wallet not found");
                 });
 
         Long before = wallet.getGems();
@@ -129,7 +132,7 @@ public class ProgramWalletTransactionServiceImpl
                                     "User wallet not found during auto-settlement | userId={}",
                                     programWallet.getUser().getUserId()
                             );
-                            return new IllegalStateException("User wallet not found");
+                            return new WalletNotFoundException("User wallet not found");
                         });
 
                 userWallet.setGems(userWallet.getGems() + gems);
@@ -165,7 +168,7 @@ public class ProgramWalletTransactionServiceImpl
 
         log.debug("Manual settlement requested | programId={}", programId);
 
-        if (programId == null ) {
+        if (programId == null) {
             log.warn("Invalid programId supplied for manual settlement");
             throw new IllegalArgumentException("Invalid programId");
         }
@@ -173,12 +176,12 @@ public class ProgramWalletTransactionServiceImpl
         Program program = programRepository.findById(programId)
                 .orElseThrow(() -> {
                     log.error("Program not found | programId={}", programId);
-                    return new IllegalStateException("Program not found");
+                    return new ProgramNotFoundException("Program not found");
                 });
 
         if (program.getStatus() == ProgramStatus.COMPLETED) {
             log.warn("Program already completed | programId={}", programId);
-            throw new IllegalStateException("Program already completed");
+            throw new ResourceConflictException("Program already completed");
         }
 
         List<ProgramWallet> wallets =
@@ -197,7 +200,7 @@ public class ProgramWalletTransactionServiceImpl
                         "User wallet missing during manual settlement | userId={}",
                         programWallet.getUser().getUserId()
                 );
-                throw new IllegalStateException("User wallet not found");
+                throw new WalletNotFoundException("User wallet not found");
             }
 
             userWallet.setGems(userWallet.getGems() + gems);
