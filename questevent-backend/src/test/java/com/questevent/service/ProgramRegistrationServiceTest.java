@@ -8,6 +8,11 @@ import com.questevent.entity.Program;
 import com.questevent.entity.ProgramRegistration;
 import com.questevent.entity.User;
 import com.questevent.enums.Role;
+import com.questevent.exception.ProgramNotFoundException;
+import com.questevent.exception.ResourceConflictException;
+import com.questevent.exception.ResourceNotFoundException;
+import com.questevent.exception.UnauthorizedException;
+import com.questevent.exception.UserNotFoundException;
 import com.questevent.repository.ProgramRegistrationRepository;
 import com.questevent.repository.ProgramRepository;
 import com.questevent.repository.UserRepository;
@@ -67,10 +72,6 @@ class ProgramRegistrationServiceTest {
         context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);
     }
-
-    // --------------------------------------------------------
-    // REGISTER
-    // --------------------------------------------------------
 
     @Test
     void registerParticipantForProgram_success() {
@@ -137,8 +138,8 @@ class ProgramRegistrationServiceTest {
         when(userRepository.findById(userId))
                 .thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
+        UserNotFoundException ex = assertThrows(
+                UserNotFoundException.class,
                 () -> programRegistrationService.registerParticipantForProgram(request)
         );
 
@@ -165,17 +166,13 @@ class ProgramRegistrationServiceTest {
         when(programRepository.findById(programId))
                 .thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
+        ProgramNotFoundException ex = assertThrows(
+                ProgramNotFoundException.class,
                 () -> programRegistrationService.registerParticipantForProgram(request)
         );
 
         assertEquals("Program not found", ex.getMessage());
     }
-
-    // --------------------------------------------------------
-    // READ
-    // --------------------------------------------------------
 
     @Test
     void getAllRegistrations_success() {
@@ -245,8 +242,8 @@ class ProgramRegistrationServiceTest {
         when(programRegistrationRepository.findById(registrationId))
                 .thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
+        ResourceNotFoundException ex = assertThrows(
+                ResourceNotFoundException.class,
                 () -> programRegistrationService.getRegistrationById(registrationId)
         );
 
@@ -255,10 +252,6 @@ class ProgramRegistrationServiceTest {
                 ex.getMessage()
         );
     }
-
-    // --------------------------------------------------------
-    // DELETE
-    // --------------------------------------------------------
 
     @Test
     void deleteRegistration_success() {
@@ -283,8 +276,8 @@ class ProgramRegistrationServiceTest {
         when(programRegistrationRepository.existsById(registrationId))
                 .thenReturn(false);
 
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
+        ResourceNotFoundException ex = assertThrows(
+                ResourceNotFoundException.class,
                 () -> programRegistrationService.deleteRegistration(registrationId)
         );
 
@@ -293,10 +286,6 @@ class ProgramRegistrationServiceTest {
                 ex.getMessage()
         );
     }
-
-    // --------------------------------------------------------
-    // COUNT
-    // --------------------------------------------------------
 
     @Test
     void getParticipantCountForProgram_success() {

@@ -4,6 +4,10 @@ import com.questevent.dto.*;
 import com.questevent.entity.*;
 import com.questevent.enums.CompletionStatus;
 import com.questevent.enums.Role;
+import com.questevent.exception.ActivityNotFoundException;
+import com.questevent.exception.ResourceConflictException;
+import com.questevent.exception.ResourceNotFoundException;
+import com.questevent.exception.UserNotFoundException;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivityRepository;
 import com.questevent.repository.UserRepository;
@@ -59,20 +63,6 @@ class ActivityRegistrationServiceTest {
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);
-    }
-
-    private Activity createNonCompulsoryActivity(UUID activityId, UUID programId) {
-        Program program = new Program();
-        program.setProgramId(programId);
-
-        Activity activity = new Activity();
-        activity.setActivityId(activityId);
-        activity.setActivityName("Test Activity");
-        activity.setRewardGems(100L);
-        activity.setIsCompulsory(false);
-        activity.setProgram(program);
-
-        return activity;
     }
 
     /* =====================================================
@@ -137,8 +127,8 @@ class ActivityRegistrationServiceTest {
 
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
+        UserNotFoundException ex = assertThrows(
+                UserNotFoundException.class,
                 () -> activityRegistrationService.registerParticipantForActivity(request)
         );
 
@@ -162,8 +152,8 @@ class ActivityRegistrationServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(activityRepository.findById(activityId)).thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
+        ActivityNotFoundException ex = assertThrows(
+                ActivityNotFoundException.class,
                 () -> activityRegistrationService.registerParticipantForActivity(request)
         );
 
@@ -193,8 +183,8 @@ class ActivityRegistrationServiceTest {
                 .existsByActivity_ActivityIdAndUser_UserId(activityId, userId))
                 .thenReturn(true);
 
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
+        ResourceConflictException ex = assertThrows(
+                ResourceConflictException.class,
                 () -> activityRegistrationService.registerParticipantForActivity(request)
         );
 
@@ -263,8 +253,8 @@ class ActivityRegistrationServiceTest {
         when(activityRegistrationRepository.existsById(registrationId))
                 .thenReturn(false);
 
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
+        ResourceNotFoundException ex = assertThrows(
+                ResourceNotFoundException.class,
                 () -> activityRegistrationService.deleteRegistration(registrationId)
         );
 
