@@ -7,8 +7,10 @@ import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SubmissionServiceImpl implements SubmissionService {
@@ -20,37 +22,63 @@ public class SubmissionServiceImpl implements SubmissionService {
     @Transactional
     public void submitActivity(Long activityId, Long userId, String submissionUrl) {
 
+        log.debug(
+                "Submit activity requested | activityId={} | userId={}",
+                activityId,
+                userId
+        );
 
-        // 1️⃣ Validate registration
         ActivityRegistration registration = registrationRepository
                 .findByActivityActivityIdAndUserUserId(activityId, userId)
-                .orElseThrow(() ->
-                        new RuntimeException("User is not registered for this activity"));
+                .orElseThrow(() -> {
+                    log.error(
+                            "User not registered for activity | activityId={} | userId={}",
+                            activityId,
+                            userId
+                    );
+                    return new RuntimeException("User is not registered for this activity");
+                });
 
-        // 2️⃣ Prevent resubmission
         if (registration.getCompletionStatus() == CompletionStatus.COMPLETED) {
+            log.warn(
+                    "Resubmission attempt blocked | activityId={} | userId={} | registrationId={}",
+                    activityId,
+                    userId,
+                    registration.getActivityRegistrationId()
+            );
             throw new RuntimeException("Activity already completed. Submission not allowed.");
         }
 
-        // 3️⃣ Extra safety check (service-level)
         boolean alreadySubmitted = submissionRepository
                 .existsByActivityRegistration_ActivityRegistrationId(
                         registration.getActivityRegistrationId()
                 );
 
         if (alreadySubmitted) {
+            log.warn(
+                    "Duplicate submission detected | activityId={} | userId={} | registrationId={}",
+                    activityId,
+                    userId,
+                    registration.getActivityRegistrationId()
+            );
             throw new RuntimeException("Submission already exists for this registration");
         }
 
-        // 4️⃣ Create submission
         ActivitySubmission submission = new ActivitySubmission();
         submission.setActivityRegistration(registration);
         submission.setSubmissionUrl(submissionUrl);
-        // 5️⃣ Mark registration as completed
+
         registration.setCompletionStatus(CompletionStatus.COMPLETED);
 
-        // 6️⃣ Persist (transaction ensures atomicity)
         submissionRepository.save(submission);
         registrationRepository.save(registration);
+
+        log.info(
+                "Activity submitted successfully | activityId={} | userId={} | registrationId={} | submissionId={}",
+                activityId,
+                userId,
+                registration.getActivityRegistrationId(),
+                submission.getSubmissionId()
+        );
     }
 }
