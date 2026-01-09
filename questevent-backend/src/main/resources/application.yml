@@ -4,6 +4,16 @@ spring:
     username: postgres
     password: DXWzjkShsEIUdlwQnEMjrRfvPKjDEmsg
 
+  hikari:
+    pool-name: HikariPool
+    maximum-pool-size: 5
+    minimum-idle: 1
+    max-lifetime: 240000        # 4 minutes (MUST be < Railway idle timeout)
+    idle-timeout: 120000        # 2 minutes
+    connection-timeout: 30000
+    validation-timeout: 5000
+    connection-test-query: SELECT 1
+
   jpa:
     hibernate:
       ddl-auto: update

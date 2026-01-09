@@ -18,7 +18,6 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.io.IOException;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -61,7 +60,7 @@ class OAuthSuccessServiceTest {
         when(userRepository.findByEmail("new@test.com"))
                 .thenReturn(Optional.empty());
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
 
         User savedUser = new User();
         savedUser.setUserId(userId);
@@ -83,7 +82,7 @@ class OAuthSuccessServiceTest {
 
         when(oauth2User.getAttribute("email")).thenReturn("user@test.com");
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 2L;
 
         User user = new User();
         user.setUserId(userId);
@@ -105,7 +104,7 @@ class OAuthSuccessServiceTest {
 
         when(oauth2User.getAttribute("email")).thenReturn("user2@test.com");
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 3L;
 
         User user = new User();
         user.setUserId(userId);
@@ -129,7 +128,7 @@ class OAuthSuccessServiceTest {
         when(oauth2User.getAttribute("preferred_username"))
                 .thenReturn("alt@test.com");
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 4L;
 
         User user = new User();
         user.setUserId(userId);
@@ -151,7 +150,7 @@ class OAuthSuccessServiceTest {
         when(oauth2User.getAttribute("preferred_username")).thenReturn(null);
         when(oauth2User.getAttribute("upn")).thenReturn("upn@test.com");
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 5L;
 
         User user = new User();
         user.setUserId(userId);

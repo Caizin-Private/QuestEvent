@@ -28,8 +28,8 @@ class LeaderboardServiceTest {
     void getGlobalLeaderboard_shouldReturnGlobalLeaderboard() {
 
         // Arrange
-        UUID userId1 = UUID.randomUUID();
-        UUID userId2 = UUID.randomUUID();
+        Long userId1 = 1L;
+        Long userId2 = 2L;
 
         List<LeaderboardDTO> mockLeaderboard = List.of(
                 new LeaderboardDTO(userId1, "Alice", 6L, 200L, 98.5),
@@ -62,8 +62,8 @@ class LeaderboardServiceTest {
         // Arrange
         UUID programId = UUID.randomUUID();
 
-        UUID userId3 = UUID.randomUUID();
-        UUID userId4 = UUID.randomUUID();
+        Long userId3 = 3L;
+        Long userId4 = 4L;
 
         List<LeaderboardDTO> mockLeaderboard = List.of(
                 new LeaderboardDTO(userId3, "User3", 5L, 150L, 95.5),

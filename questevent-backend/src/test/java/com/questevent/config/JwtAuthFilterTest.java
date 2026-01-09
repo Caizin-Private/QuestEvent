@@ -56,10 +56,9 @@ class JwtAuthFilterTest {
 
         when(jwtService.validateToken("valid-token")).thenReturn(true);
 
-        UUID userId = UUID.randomUUID();
 
         UserPrincipal principal =
-                new UserPrincipal(userId, "test@user.com", Role.USER);
+                new UserPrincipal(1L, "test@user.com", Role.USER);
 
         when(jwtService.extractUserPrincipal("valid-token"))
                 .thenReturn(principal);

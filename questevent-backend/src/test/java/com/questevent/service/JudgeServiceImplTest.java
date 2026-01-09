@@ -165,7 +165,7 @@ class JudgeServiceImplTest {
     private ActivitySubmission mockSubmission(UUID activityId) {
 
         User user = new User();
-        user.setUserId(UUID.randomUUID());
+        user.setUserId(1L);
         user.setName("User A");
 
         Judge judge = new Judge();

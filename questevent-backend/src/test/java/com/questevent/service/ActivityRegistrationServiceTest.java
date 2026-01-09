@@ -47,7 +47,9 @@ class ActivityRegistrationServiceTest {
         SecurityContextHolder.clearContext();
     }
 
-    private void mockAuthenticatedUser(UUID userId) {
+    // -------------------- SECURITY MOCK --------------------
+
+    private void mockAuthenticatedUser(Long userId) {
         UserPrincipal principal = new UserPrincipal(
                 userId,
                 "test@questevent.com",
@@ -55,21 +57,19 @@ class ActivityRegistrationServiceTest {
         );
 
         Authentication authentication =
-                new UsernamePasswordAuthenticationToken(
-                        principal,
-                        null,
-                        List.of()
-                );
+                new UsernamePasswordAuthenticationToken(principal, null, List.of());
 
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);
     }
 
+    // -------------------- REGISTER --------------------
+
     @Test
     void registerParticipantForActivity_success() {
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         UUID activityId = UUID.randomUUID();
         UUID registrationId = UUID.randomUUID();
 
@@ -114,7 +114,7 @@ class ActivityRegistrationServiceTest {
     @Test
     void registerParticipantForActivity_userNotFound() {
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         UUID activityId = UUID.randomUUID();
 
         mockAuthenticatedUser(userId);
@@ -135,7 +135,7 @@ class ActivityRegistrationServiceTest {
     @Test
     void registerParticipantForActivity_activityNotFound() {
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         UUID activityId = UUID.randomUUID();
 
         mockAuthenticatedUser(userId);
@@ -160,7 +160,7 @@ class ActivityRegistrationServiceTest {
     @Test
     void registerParticipantForActivity_alreadyRegistered() {
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         UUID activityId = UUID.randomUUID();
 
         mockAuthenticatedUser(userId);
@@ -188,11 +188,13 @@ class ActivityRegistrationServiceTest {
         assertEquals("User already registered for this activity", ex.getMessage());
     }
 
+    // -------------------- ADD PARTICIPANT --------------------
+
     @Test
     void addParticipantToActivity_success() {
 
         UUID activityId = UUID.randomUUID();
-        UUID targetUserId = UUID.randomUUID();
+        Long targetUserId = 2L;
         UUID registrationId = UUID.randomUUID();
 
         AddParticipantInActivityRequestDTO request =
@@ -225,6 +227,8 @@ class ActivityRegistrationServiceTest {
         assertEquals(targetUserId, result.getUserId());
         verify(activityRegistrationRepository).save(any());
     }
+
+    // -------------------- DELETE --------------------
 
     @Test
     void deleteRegistration_success() {

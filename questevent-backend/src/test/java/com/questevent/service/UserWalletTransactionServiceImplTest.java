@@ -10,7 +10,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -31,7 +30,7 @@ class UserWalletTransactionServiceImplTest {
     @Test
     void creditGems_success() {
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
 
         User user = new User();
         user.setUserId(userId);
@@ -52,7 +51,7 @@ class UserWalletTransactionServiceImplTest {
     void creditGems_amountZero_shouldThrowException() {
 
         User user = new User();
-        user.setUserId(UUID.randomUUID());
+        user.setUserId(1L);
 
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
@@ -67,7 +66,7 @@ class UserWalletTransactionServiceImplTest {
     void creditGems_amountNegative_shouldThrowException() {
 
         User user = new User();
-        user.setUserId(UUID.randomUUID());
+        user.setUserId(1L);
 
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
@@ -81,7 +80,7 @@ class UserWalletTransactionServiceImplTest {
     @Test
     void creditGems_walletNotFound_shouldThrowException() {
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
 
         User user = new User();
         user.setUserId(userId);

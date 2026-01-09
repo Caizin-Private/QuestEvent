@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class ProgramWalletTransactionServiceImplTest {
+class ProgramWalletTransactionServiceImplTest {
 
     @Mock
     private ProgramWalletRepository programWalletRepository;
@@ -39,7 +39,7 @@ public class ProgramWalletTransactionServiceImplTest {
     @Test
     void creditGems_shouldIncreaseBalance_whenValidInput() {
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         UUID programId = UUID.randomUUID();
 
         User user = new User();
@@ -68,7 +68,7 @@ public class ProgramWalletTransactionServiceImplTest {
     void creditGems_shouldThrowException_whenAmountIsZero() {
 
         User user = new User();
-        user.setUserId(UUID.randomUUID());
+        user.setUserId(1L);
 
         Program program = new Program();
         program.setProgramId(UUID.randomUUID());
@@ -86,7 +86,7 @@ public class ProgramWalletTransactionServiceImplTest {
     void creditGems_shouldThrowException_whenAmountIsNegative() {
 
         User user = new User();
-        user.setUserId(UUID.randomUUID());
+        user.setUserId(1L);
 
         Program program = new Program();
         program.setProgramId(UUID.randomUUID());
@@ -102,7 +102,7 @@ public class ProgramWalletTransactionServiceImplTest {
     @Test
     void creditGems_shouldThrowException_whenWalletNotFound() {
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         UUID programId = UUID.randomUUID();
 
         User user = new User();
@@ -127,7 +127,7 @@ public class ProgramWalletTransactionServiceImplTest {
     @Test
     void creditGems_shouldHandleLargeAmount() {
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         UUID programId = UUID.randomUUID();
 
         User user = new User();
@@ -156,7 +156,7 @@ public class ProgramWalletTransactionServiceImplTest {
     void autoSettleExpiredProgramWallets_shouldTransferGemsAndCompleteProgram() {
 
         UUID programId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
 
         Program program = new Program();
         program.setProgramId(programId);
@@ -235,6 +235,7 @@ public class ProgramWalletTransactionServiceImplTest {
         userWallet.setGems(200L);
 
         User user = new User();
+        user.setUserId(1L);
         user.setWallet(userWallet);
 
         ProgramWallet programWallet = new ProgramWallet();

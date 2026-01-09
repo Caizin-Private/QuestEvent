@@ -31,15 +31,15 @@ class SubmissionServiceImplTest {
     @InjectMocks
     private SubmissionServiceImpl submissionService;
 
-
     @Test
     void submitActivity_shouldSaveSubmissionSuccessfully() {
 
         UUID activityId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         UUID registrationId = UUID.randomUUID();
 
-        ActivityRegistration registration = mockRegistration(activityId, userId, registrationId);
+        ActivityRegistration registration =
+                mockRegistration(activityId, userId, registrationId);
         registration.setCompletionStatus(CompletionStatus.NOT_COMPLETED);
 
         when(registrationRepository
@@ -63,12 +63,11 @@ class SubmissionServiceImplTest {
         );
     }
 
-
     @Test
     void submitActivity_shouldThrowIfUserNotRegistered() {
 
         UUID activityId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
 
         when(registrationRepository
                 .findByActivityActivityIdAndUserUserId(activityId, userId))
@@ -89,15 +88,15 @@ class SubmissionServiceImplTest {
         );
     }
 
-
     @Test
     void submitActivity_shouldThrowIfActivityAlreadyCompleted() {
 
         UUID activityId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         UUID registrationId = UUID.randomUUID();
 
-        ActivityRegistration registration = mockRegistration(activityId, userId, registrationId);
+        ActivityRegistration registration =
+                mockRegistration(activityId, userId, registrationId);
         registration.setCompletionStatus(CompletionStatus.COMPLETED);
 
         when(registrationRepository
@@ -119,15 +118,15 @@ class SubmissionServiceImplTest {
         );
     }
 
-
     @Test
     void submitActivity_shouldThrowIfSubmissionAlreadyExists() {
 
         UUID activityId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         UUID registrationId = UUID.randomUUID();
 
-        ActivityRegistration registration = mockRegistration(activityId, userId, registrationId);
+        ActivityRegistration registration =
+                mockRegistration(activityId, userId, registrationId);
         registration.setCompletionStatus(CompletionStatus.NOT_COMPLETED);
 
         when(registrationRepository
@@ -153,12 +152,11 @@ class SubmissionServiceImplTest {
         );
     }
 
-
     /* ===================== helper ===================== */
 
     private ActivityRegistration mockRegistration(
             UUID activityId,
-            UUID userId,
+            Long userId,
             UUID registrationId
     ) {
 

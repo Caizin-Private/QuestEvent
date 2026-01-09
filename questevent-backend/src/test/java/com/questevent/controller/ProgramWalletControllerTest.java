@@ -1,8 +1,6 @@
 package com.questevent.controller;
 
 import com.questevent.dto.ProgramWalletBalanceDTO;
-import com.questevent.dto.ProgramWalletCreateRequestDTO;
-import com.questevent.entity.ProgramWallet;
 import com.questevent.service.ProgramWalletService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,7 +23,6 @@ class ProgramWalletControllerTest {
     @InjectMocks
     private ProgramWalletController programWalletController;
 
-
     @Test
     void getProgramWalletBalance_shouldReturnWallet() {
         UUID walletId = UUID.randomUUID();
@@ -38,7 +35,9 @@ class ProgramWalletControllerTest {
                 .thenReturn(dto);
 
         ProgramWalletBalanceDTO result =
-                programWalletController.getProgramWalletBalanceByProgramWalletId(walletId).getBody();
+                programWalletController
+                        .getProgramWalletBalanceByProgramWalletId(walletId)
+                        .getBody();
 
         assertNotNull(result);
         assertEquals(walletId, result.getProgramWalletId());
@@ -47,16 +46,20 @@ class ProgramWalletControllerTest {
 
     @Test
     void getProgramWalletsByProgramId_shouldReturnList() {
+        UUID programId = UUID.randomUUID();
+
         ProgramWalletBalanceDTO dto = new ProgramWalletBalanceDTO();
         dto.setProgramWalletId(UUID.randomUUID());
         dto.setUserId(1L);
         dto.setGems(300L);
 
-        when(programWalletService.getProgramWalletsByProgramId(10L))
+        when(programWalletService.getProgramWalletsByProgramId(programId))
                 .thenReturn(List.of(dto));
 
         List<ProgramWalletBalanceDTO> result =
-                programWalletController.getProgramWalletsByProgramId(10L).getBody();
+                programWalletController
+                        .getProgramWalletsByProgramId(programId)
+                        .getBody();
 
         assertNotNull(result);
         assertEquals(1, result.size());
@@ -66,11 +69,15 @@ class ProgramWalletControllerTest {
 
     @Test
     void getProgramWalletsByProgramId_whenNoWallets_shouldReturnEmptyList() {
-        when(programWalletService.getProgramWalletsByProgramId(10L))
+        UUID programId = UUID.randomUUID();
+
+        when(programWalletService.getProgramWalletsByProgramId(programId))
                 .thenReturn(List.of());
 
         List<ProgramWalletBalanceDTO> result =
-                programWalletController.getProgramWalletsByProgramId(10L).getBody();
+                programWalletController
+                        .getProgramWalletsByProgramId(programId)
+                        .getBody();
 
         assertNotNull(result);
         assertTrue(result.isEmpty());
@@ -78,6 +85,8 @@ class ProgramWalletControllerTest {
 
     @Test
     void getProgramWalletsByProgramId_shouldReturnMultipleWallets() {
+        UUID programId = UUID.randomUUID();
+
         ProgramWalletBalanceDTO dto1 = new ProgramWalletBalanceDTO();
         dto1.setProgramWalletId(UUID.randomUUID());
         dto1.setUserId(1L);
@@ -88,11 +97,13 @@ class ProgramWalletControllerTest {
         dto2.setUserId(2L);
         dto2.setGems(200L);
 
-        when(programWalletService.getProgramWalletsByProgramId(10L))
+        when(programWalletService.getProgramWalletsByProgramId(programId))
                 .thenReturn(List.of(dto1, dto2));
 
         List<ProgramWalletBalanceDTO> result =
-                programWalletController.getProgramWalletsByProgramId(10L).getBody();
+                programWalletController
+                        .getProgramWalletsByProgramId(programId)
+                        .getBody();
 
         assertNotNull(result);
         assertEquals(2, result.size());
@@ -100,38 +111,42 @@ class ProgramWalletControllerTest {
         assertEquals(200, result.get(1).getGems());
     }
 
-
-
     @Test
     void getMyProgramWallet_shouldReturnWallet() {
+        UUID programId = UUID.randomUUID();
+
         ProgramWalletBalanceDTO dto = new ProgramWalletBalanceDTO();
         dto.setProgramWalletId(UUID.randomUUID());
-        dto.setProgramId(9L);
+        dto.setProgramId(programId);
         dto.setUserId(1L);
         dto.setGems(50L);
 
-        when(programWalletService.getMyProgramWallet(9L))
+        when(programWalletService.getMyProgramWallet(programId))
                 .thenReturn(dto);
 
         ProgramWalletBalanceDTO result =
-                programWalletController.getMyProgramWallet(9L).getBody();
+                programWalletController
+                        .getMyProgramWallet(programId)
+                        .getBody();
 
         assertNotNull(result);
-        assertEquals(9L, result.getProgramId());
+        assertEquals(programId, result.getProgramId());
         assertEquals(1L, result.getUserId());
         assertEquals(50, result.getGems());
     }
+
     @Test
     void getMyProgramWallet_whenWalletNotFound_shouldThrowException() {
-        when(programWalletService.getMyProgramWallet(9L))
+        UUID programId = UUID.randomUUID();
+
+        when(programWalletService.getMyProgramWallet(programId))
                 .thenThrow(new RuntimeException("Program wallet not found"));
 
         RuntimeException ex = assertThrows(
                 RuntimeException.class,
-                () -> programWalletController.getMyProgramWallet(9L)
+                () -> programWalletController.getMyProgramWallet(programId)
         );
 
         assertEquals("Program wallet not found", ex.getMessage());
     }
-
 }

@@ -43,7 +43,7 @@ class UserWalletServiceTest {
     @Test
     void createWalletForUser_success() {
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
 
         User user = new User();
         user.setUserId(userId);
@@ -60,7 +60,7 @@ class UserWalletServiceTest {
     @Test
     void createWalletForUser_walletAlreadyExists() {
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
 
         User user = new User();
         user.setUserId(userId);
@@ -80,7 +80,7 @@ class UserWalletServiceTest {
     @Test
     void getMyWalletBalance_success() {
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
 
         UserPrincipal principal =
                 new UserPrincipal(userId, "test@example.com", Role.USER);
@@ -114,7 +114,7 @@ class UserWalletServiceTest {
     @Test
     void getMyWalletBalance_userNotFound() {
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
 
         UserPrincipal principal =
                 new UserPrincipal(userId, "test@example.com", Role.USER);
@@ -138,7 +138,7 @@ class UserWalletServiceTest {
     @Test
     void getMyWalletBalance_walletNotFound() {
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
 
         UserPrincipal principal =
                 new UserPrincipal(userId, "test@example.com", Role.USER);

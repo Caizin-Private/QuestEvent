@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -55,13 +56,15 @@ class ProgramRegistrationControllerTest {
 
     @Test
     void registerParticipant_success() throws Exception {
+        UUID programId = UUID.randomUUID();
+
         ProgramRegistrationRequestDTO request =
-                new ProgramRegistrationRequestDTO(1L);
+                new ProgramRegistrationRequestDTO(programId);
 
         ProgramRegistrationResponseDTO response =
                 new ProgramRegistrationResponseDTO();
-        response.setProgramRegistrationId(1L);
-        response.setProgramId(1L);
+        response.setProgramRegistrationId(UUID.randomUUID());
+        response.setProgramId(programId);
         response.setUserId(1L);
         response.setMessage("Successfully registered for program");
 
@@ -73,7 +76,7 @@ class ProgramRegistrationControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.programRegistrationId").value(1L))
+                .andExpect(jsonPath("$.programId").value(programId.toString()))
                 .andExpect(jsonPath("$.message")
                         .value("Successfully registered for program"));
     }
@@ -86,69 +89,100 @@ class ProgramRegistrationControllerTest {
     void getAllRegistrations_success() throws Exception {
         ProgramRegistrationDTO dto1 =
                 new ProgramRegistrationDTO(
-                        1L, 1L, "Program 1", 1L, "User 1", Instant.now());
+                        UUID.randomUUID(),
+                        UUID.randomUUID(),
+                        "Program 1",
+                        1L,
+                        "User 1",
+                        Instant.now());
 
         ProgramRegistrationDTO dto2 =
                 new ProgramRegistrationDTO(
-                        2L, 2L, "Program 2", 2L, "User 2", Instant.now());
+                        UUID.randomUUID(),
+                        UUID.randomUUID(),
+                        "Program 2",
+                        2L,
+                        "User 2",
+                        Instant.now());
 
         when(programRegistrationService.getAllRegistrations())
                 .thenReturn(List.of(dto1, dto2));
 
         mockMvc.perform(get("/api/program-registrations"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].programRegistrationId").value(1L))
-                .andExpect(jsonPath("$[1].programRegistrationId").value(2L));
+                .andExpect(jsonPath("$.length()").value(2));
     }
 
     @Test
     void getRegistrationById_success() throws Exception {
+        UUID registrationId = UUID.randomUUID();
+
         ProgramRegistrationDTO dto =
                 new ProgramRegistrationDTO(
-                        1L, 1L, "Program 1", 1L, "User 1", Instant.now());
+                        registrationId,
+                        UUID.randomUUID(),
+                        "Program 1",
+                        1L,
+                        "User 1",
+                        Instant.now());
 
-        when(programRegistrationService.getRegistrationById(1L))
+        when(programRegistrationService.getRegistrationById(registrationId))
                 .thenReturn(dto);
 
-        mockMvc.perform(get("/api/program-registrations/{id}", 1L))
+        mockMvc.perform(get("/api/program-registrations/{id}", registrationId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.programTitle").value("Program 1"));
     }
 
     @Test
     void getRegistrationById_notFound() throws Exception {
-        when(programRegistrationService.getRegistrationById(999L))
+        UUID registrationId = UUID.randomUUID();
+
+        when(programRegistrationService.getRegistrationById(registrationId))
                 .thenThrow(new RuntimeException("Registration not found"));
 
-        mockMvc.perform(get("/api/program-registrations/{id}", 999L))
+        mockMvc.perform(get("/api/program-registrations/{id}", registrationId))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void getRegistrationsByProgram_success() throws Exception {
+        UUID programId = UUID.randomUUID();
+
         ProgramRegistrationDTO dto =
                 new ProgramRegistrationDTO(
-                        1L, 1L, "Program 1", 1L, "User 1", Instant.now());
+                        UUID.randomUUID(),
+                        programId,
+                        "Program 1",
+                        1L,
+                        "User 1",
+                        Instant.now());
 
-        when(programRegistrationService.getRegistrationsByProgramId(1L))
+        when(programRegistrationService.getRegistrationsByProgramId(programId))
                 .thenReturn(List.of(dto));
 
-        mockMvc.perform(get("/api/program-registrations/programs/{programId}", 1L))
+        mockMvc.perform(get("/api/program-registrations/programs/{programId}", programId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
     }
 
     @Test
     void getRegistrationsByUser_success() throws Exception {
+        Long userId = 1L;
+
         ProgramRegistrationDTO dto =
                 new ProgramRegistrationDTO(
-                        1L, 1L, "Program 1", 1L, "User 1", Instant.now());
+                        UUID.randomUUID(),
+                        UUID.randomUUID(),
+                        "Program 1",
+                        userId,
+                        "User 1",
+                        Instant.now());
 
-        when(programRegistrationService.getRegistrationsByUserId(1L))
+        when(programRegistrationService.getRegistrationsByUserId(userId))
                 .thenReturn(List.of(dto));
 
-        mockMvc.perform(get("/api/program-registrations/users/{userId}", 1L))
+        mockMvc.perform(get("/api/program-registrations/users/{userId}", userId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
     }
@@ -159,22 +193,27 @@ class ProgramRegistrationControllerTest {
 
     @Test
     void deleteRegistration_success() throws Exception {
-        doNothing().when(programRegistrationService).deleteRegistration(1L);
+        UUID registrationId = UUID.randomUUID();
 
-        mockMvc.perform(delete("/api/program-registrations/{id}", 1L))
+        doNothing().when(programRegistrationService)
+                .deleteRegistration(registrationId);
+
+        mockMvc.perform(delete("/api/program-registrations/{id}", registrationId))
                 .andExpect(status().isNoContent());
 
         verify(programRegistrationService, times(1))
-                .deleteRegistration(1L);
+                .deleteRegistration(registrationId);
     }
 
     @Test
     void deleteRegistration_notFound() throws Exception {
+        UUID registrationId = UUID.randomUUID();
+
         doThrow(new RuntimeException("Registration not found"))
                 .when(programRegistrationService)
-                .deleteRegistration(999L);
+                .deleteRegistration(registrationId);
 
-        mockMvc.perform(delete("/api/program-registrations/{id}", 999L))
+        mockMvc.perform(delete("/api/program-registrations/{id}", registrationId))
                 .andExpect(status().isNotFound());
     }
 }

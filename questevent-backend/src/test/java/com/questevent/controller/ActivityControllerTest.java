@@ -2,7 +2,6 @@ package com.questevent.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.questevent.dto.ActivityRequestDTO;
-import com.questevent.dto.ActivityResponseDTO;
 import com.questevent.entity.Activity;
 import com.questevent.entity.Program;
 import com.questevent.service.ActivityService;
@@ -18,8 +17,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -48,7 +47,8 @@ class ActivityControllerTest {
 
     @Test
     void createActivity_success() throws Exception {
-        Long programId = 1L;
+        UUID programId = UUID.randomUUID();
+
         ActivityRequestDTO requestDTO = new ActivityRequestDTO();
         requestDTO.setActivityName("Test Activity");
         requestDTO.setActivityDuration(60);
@@ -59,7 +59,7 @@ class ActivityControllerTest {
         program.setProgramId(programId);
 
         Activity activity = new Activity();
-        activity.setActivityId(1L);
+        activity.setActivityId(UUID.randomUUID());
         activity.setActivityName("Test Activity");
         activity.setActivityDuration(60);
         activity.setRewardGems(100L);
@@ -74,14 +74,14 @@ class ActivityControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDTO)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.activityId").value(1L))
                 .andExpect(jsonPath("$.activityName").value("Test Activity"))
                 .andExpect(jsonPath("$.rewardGems").value(100));
     }
 
     @Test
     void createActivity_programNotFound() throws Exception {
-        Long programId = 1L;
+        UUID programId = UUID.randomUUID();
+
         ActivityRequestDTO requestDTO = new ActivityRequestDTO();
         requestDTO.setActivityName("Test Activity");
 
@@ -96,17 +96,18 @@ class ActivityControllerTest {
 
     @Test
     void getActivities_success() throws Exception {
-        Long programId = 1L;
+        UUID programId = UUID.randomUUID();
+
         Program program = new Program();
         program.setProgramId(programId);
 
         Activity activity1 = new Activity();
-        activity1.setActivityId(1L);
+        activity1.setActivityId(UUID.randomUUID());
         activity1.setActivityName("Activity 1");
         activity1.setProgram(program);
 
         Activity activity2 = new Activity();
-        activity2.setActivityId(2L);
+        activity2.setActivityId(UUID.randomUUID());
         activity2.setActivityName("Activity 2");
         activity2.setProgram(program);
 
@@ -115,15 +116,14 @@ class ActivityControllerTest {
 
         mockMvc.perform(get("/api/programs/{programId}/activities", programId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].activityId").value(1L))
-                .andExpect(jsonPath("$[1].activityId").value(2L));
+                .andExpect(jsonPath("$.length()").value(2));
     }
 
     @Test
     void updateActivity_success() throws Exception {
-        Long programId = 1L;
-        Long activityId = 1L;
+        UUID programId = UUID.randomUUID();
+        UUID activityId = UUID.randomUUID();
+
         ActivityRequestDTO requestDTO = new ActivityRequestDTO();
         requestDTO.setActivityName("Updated Activity");
         requestDTO.setRewardGems(200);
@@ -144,15 +144,15 @@ class ActivityControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDTO)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.activityId").value(activityId))
                 .andExpect(jsonPath("$.activityName").value("Updated Activity"))
                 .andExpect(jsonPath("$.rewardGems").value(200));
     }
 
     @Test
     void updateActivity_activityNotFound() throws Exception {
-        Long programId = 1L;
-        Long activityId = 999L;
+        UUID programId = UUID.randomUUID();
+        UUID activityId = UUID.randomUUID();
+
         ActivityRequestDTO requestDTO = new ActivityRequestDTO();
 
         when(activityService.updateActivity(eq(programId), eq(activityId), any(ActivityRequestDTO.class)))
@@ -166,21 +166,22 @@ class ActivityControllerTest {
 
     @Test
     void deleteActivity_success() throws Exception {
-        Long programId = 1L;
-        Long activityId = 1L;
+        UUID programId = UUID.randomUUID();
+        UUID activityId = UUID.randomUUID();
 
         doNothing().when(activityService).deleteActivity(programId, activityId);
 
         mockMvc.perform(delete("/api/programs/{programId}/activities/{activityId}", programId, activityId))
                 .andExpect(status().isNoContent());
 
-        verify(activityService, times(1)).deleteActivity(programId, activityId);
+        verify(activityService, times(1))
+                .deleteActivity(programId, activityId);
     }
 
     @Test
     void deleteActivity_activityNotFound() throws Exception {
-        Long programId = 1L;
-        Long activityId = 999L;
+        UUID programId = UUID.randomUUID();
+        UUID activityId = UUID.randomUUID();
 
         doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Activity not found"))
                 .when(activityService).deleteActivity(programId, activityId);

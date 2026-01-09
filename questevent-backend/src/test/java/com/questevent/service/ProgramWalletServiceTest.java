@@ -44,7 +44,7 @@ class ProgramWalletServiceTest {
     @Test
     void createWallet_shouldCreateWallet() {
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         UUID programId = UUID.randomUUID();
 
         User user = new User();
@@ -74,7 +74,7 @@ class ProgramWalletServiceTest {
     @Test
     void createWallet_shouldFail_whenUserNotFound() {
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         UUID programId = UUID.randomUUID();
 
         when(userRepository.findById(userId))
@@ -91,7 +91,7 @@ class ProgramWalletServiceTest {
     @Test
     void createWallet_shouldFail_whenProgramNotFound() {
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         UUID programId = UUID.randomUUID();
 
         User user = new User();
@@ -113,7 +113,7 @@ class ProgramWalletServiceTest {
     @Test
     void createWallet_shouldFail_whenWalletAlreadyExists() {
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         UUID programId = UUID.randomUUID();
 
         User user = new User();
@@ -142,7 +142,7 @@ class ProgramWalletServiceTest {
     void getWalletBalanceByWalletId_shouldReturnBalance() {
 
         UUID walletId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         UUID programId = UUID.randomUUID();
 
         User user = new User();
@@ -178,8 +178,7 @@ class ProgramWalletServiceTest {
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> programWalletService
-                        .getWalletBalanceByWalletId(UUID.randomUUID())
+                () -> programWalletService.getWalletBalanceByWalletId(UUID.randomUUID())
         );
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
@@ -189,7 +188,7 @@ class ProgramWalletServiceTest {
     void getProgramWalletsByProgramId_shouldReturnWallets() {
 
         UUID programId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
 
         Program program = new Program();
         program.setProgramId(programId);
@@ -203,13 +202,11 @@ class ProgramWalletServiceTest {
         wallet.setUser(user);
         wallet.setGems(300L);
 
-        when(programWalletRepository
-                .findByProgramProgramId(programId))
+        when(programWalletRepository.findByProgramProgramId(programId))
                 .thenReturn(List.of(wallet));
 
         List<ProgramWalletBalanceDTO> result =
-                programWalletService
-                        .getProgramWalletsByProgramId(programId);
+                programWalletService.getProgramWalletsByProgramId(programId);
 
         assertEquals(1, result.size());
         assertEquals(programId, result.get(0).getProgramId());
@@ -222,14 +219,12 @@ class ProgramWalletServiceTest {
 
         UUID programId = UUID.randomUUID();
 
-        when(programWalletRepository
-                .findByProgramProgramId(programId))
+        when(programWalletRepository.findByProgramProgramId(programId))
                 .thenReturn(List.of());
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> programWalletService
-                        .getProgramWalletsByProgramId(programId)
+                () -> programWalletService.getProgramWalletsByProgramId(programId)
         );
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
@@ -238,7 +233,7 @@ class ProgramWalletServiceTest {
     @Test
     void getMyProgramWallet_shouldReturnWallet() {
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         UUID programId = UUID.randomUUID();
 
         UserPrincipal principal =
@@ -280,7 +275,7 @@ class ProgramWalletServiceTest {
     @Test
     void getMyProgramWallet_shouldThrowNotFound_whenUserMissing() {
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         UUID programId = UUID.randomUUID();
 
         UserPrincipal principal =
@@ -307,7 +302,7 @@ class ProgramWalletServiceTest {
     @Test
     void getMyProgramWallet_shouldThrowNotFound_whenWalletMissing() {
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         UUID programId = UUID.randomUUID();
 
         UserPrincipal principal =

@@ -14,7 +14,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -32,11 +31,11 @@ class UserServiceTest {
     private UserService userService;
 
     private User user;
-    private UUID userId;
+    private Long userId;
 
     @BeforeEach
     void setUp() {
-        userId = UUID.randomUUID();
+        userId = 1L;
 
         user = new User();
         user.setUserId(userId);

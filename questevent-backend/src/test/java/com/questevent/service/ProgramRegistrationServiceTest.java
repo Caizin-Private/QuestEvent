@@ -3,10 +3,10 @@ package com.questevent.service;
 import com.questevent.dto.ProgramRegistrationDTO;
 import com.questevent.dto.ProgramRegistrationRequestDTO;
 import com.questevent.dto.ProgramRegistrationResponseDTO;
+import com.questevent.dto.UserPrincipal;
 import com.questevent.entity.Program;
 import com.questevent.entity.ProgramRegistration;
 import com.questevent.entity.User;
-import com.questevent.dto.UserPrincipal;
 import com.questevent.enums.Role;
 import com.questevent.repository.ProgramRegistrationRepository;
 import com.questevent.repository.ProgramRepository;
@@ -56,7 +56,7 @@ class ProgramRegistrationServiceTest {
     // --------------------------------------------------------
     // Utility: mock authenticated user
     // --------------------------------------------------------
-    private void mockAuthenticatedUser(UUID userId) {
+    private void mockAuthenticatedUser(Long userId) {
         UserPrincipal principal =
                 new UserPrincipal(userId, "test@questevent.com", Role.USER);
 
@@ -75,7 +75,7 @@ class ProgramRegistrationServiceTest {
     @Test
     void registerParticipantForProgram_success() {
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         UUID programId = UUID.randomUUID();
         UUID registrationId = UUID.randomUUID();
 
@@ -119,13 +119,13 @@ class ProgramRegistrationServiceTest {
         assertEquals(userId, result.getUserId());
 
         verify(programWalletService)
-                .createWallet(programId, userId);
+                .createWallet(userId, programId);
     }
 
     @Test
     void registerParticipantForProgram_userNotFound() {
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         UUID programId = UUID.randomUUID();
 
         mockAuthenticatedUser(userId);
@@ -139,8 +139,7 @@ class ProgramRegistrationServiceTest {
 
         RuntimeException ex = assertThrows(
                 RuntimeException.class,
-                () -> programRegistrationService
-                        .registerParticipantForProgram(request)
+                () -> programRegistrationService.registerParticipantForProgram(request)
         );
 
         assertEquals("User not found", ex.getMessage());
@@ -149,7 +148,7 @@ class ProgramRegistrationServiceTest {
     @Test
     void registerParticipantForProgram_programNotFound() {
 
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         UUID programId = UUID.randomUUID();
 
         mockAuthenticatedUser(userId);
@@ -168,8 +167,7 @@ class ProgramRegistrationServiceTest {
 
         RuntimeException ex = assertThrows(
                 RuntimeException.class,
-                () -> programRegistrationService
-                        .registerParticipantForProgram(request)
+                () -> programRegistrationService.registerParticipantForProgram(request)
         );
 
         assertEquals("Program not found", ex.getMessage());
@@ -183,7 +181,7 @@ class ProgramRegistrationServiceTest {
     void getAllRegistrations_success() {
 
         UUID programId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         UUID registrationId = UUID.randomUUID();
 
         Program program = new Program();
@@ -213,7 +211,7 @@ class ProgramRegistrationServiceTest {
     void getRegistrationById_success() {
 
         UUID programId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         UUID registrationId = UUID.randomUUID();
 
         Program program = new Program();
@@ -249,8 +247,7 @@ class ProgramRegistrationServiceTest {
 
         RuntimeException ex = assertThrows(
                 RuntimeException.class,
-                () -> programRegistrationService
-                        .getRegistrationById(registrationId)
+                () -> programRegistrationService.getRegistrationById(registrationId)
         );
 
         assertEquals(
@@ -288,8 +285,7 @@ class ProgramRegistrationServiceTest {
 
         RuntimeException ex = assertThrows(
                 RuntimeException.class,
-                () -> programRegistrationService
-                        .deleteRegistration(registrationId)
+                () -> programRegistrationService.deleteRegistration(registrationId)
         );
 
         assertEquals(
@@ -312,8 +308,7 @@ class ProgramRegistrationServiceTest {
                 .thenReturn(5L);
 
         long count =
-                programRegistrationService
-                        .getParticipantCountForProgram(programId);
+                programRegistrationService.getParticipantCountForProgram(programId);
 
         assertEquals(5L, count);
     }
