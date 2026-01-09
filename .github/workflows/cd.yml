@@ -1,15 +1,18 @@
-name: Beanstalk JAR Deploy
+name: Beanstalk CD Deploy
 
 on:
-  push:
-    branches: [ "release-*" ]
+  workflow_run:
+    workflows: ["Backend CI"]
+    types:
+      - completed
+    branches:
+      - master
+      - release-*
   workflow_dispatch:
-
-permissions:
-  contents: read
 
 jobs:
   deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -38,7 +41,7 @@ jobs:
           aws s3 cp "$JAR_FILE" s3://questevent-versions/questevent-backend.jar
 
       - name: Generate Version Label
-        run: echo "VERSION_LABEL=questevent-v1.0-${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
+        run: echo "VERSION_LABEL=questevent-${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
 
       - name: Create Beanstalk Version
         run: |
@@ -47,21 +50,6 @@ jobs:
             --version-label "$VERSION_LABEL" \
             --source-bundle S3Bucket="questevent-versions",S3Key="questevent-backend.jar" \
             --process
-
-      - name: Wait for Version to be PROCESSED
-        run: |
-          while true; do
-            STATUS=$(aws elasticbeanstalk describe-application-versions \
-              --application-name "QuestEventTest" \
-              --version-labels "$VERSION_LABEL" \
-              --query "ApplicationVersions[0].Status" \
-              --output text)
-
-            if [ "$STATUS" == "PROCESSED" ]; then
-              break
-            fi
-            sleep 5
-          done
 
       - name: Deploy to Beanstalk
         run: |
