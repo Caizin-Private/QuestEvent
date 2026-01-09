@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.questevent.service.RbacServiceTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-01-09T14:23:58.829Z" hostname="LF2XK776W2" time="0.012">
+  <properties/>
+  <testcase name="judge_paths()" classname="com.questevent.service.RbacServiceTest" time="0.002"/>
+  <testcase name="jwtAuthentication_branch_covered()" classname="com.questevent.service.RbacServiceTest" time="0.002"/>
+  <testcase name="user_profile_paths()" classname="com.questevent.service.RbacServiceTest" time="0.001"/>
+  <testcase name="manage_program_paths()" classname="com.questevent.service.RbacServiceTest" time="0.001"/>
+  <testcase name="unauthenticated_user_denied_everywhere()" classname="com.questevent.service.RbacServiceTest" time="0.0"/>
+  <testcase name="oauth2User_email_branch_covered()" classname="com.questevent.service.RbacServiceTest" time="0.001"/>
+  <testcase name="getProgramIdByActivityId_paths()" classname="com.questevent.service.RbacServiceTest" time="0.001"/>
+  <testcase name="oauth2User_preferredUsername_fallback_covered()" classname="com.questevent.service.RbacServiceTest" time="0.001"/>
+  <testcase name="owner_short_circuit_paths()" classname="com.questevent.service.RbacServiceTest" time="0.001"/>
+  <testcase name="submission_paths()" classname="com.questevent.service.RbacServiceTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

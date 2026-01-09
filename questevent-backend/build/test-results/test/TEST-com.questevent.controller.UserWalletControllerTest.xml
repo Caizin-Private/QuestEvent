@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.questevent.controller.UserWalletControllerTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-01-09T14:23:58.467Z" hostname="LF2XK776W2" time="0.028">
+  <properties/>
+  <testcase name="getMyWalletBalance_userNotFound()" classname="com.questevent.controller.UserWalletControllerTest" time="0.017"/>
+  <testcase name="getMyWalletBalance_success()" classname="com.questevent.controller.UserWalletControllerTest" time="0.003"/>
+  <testcase name="getMyWalletBalance_walletNotFound()" classname="com.questevent.controller.UserWalletControllerTest" time="0.008"/>
+  <system-out><![CDATA[2026-01-09 19:53:58.483 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-09 19:53:58.483 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-09 19:53:58.484 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-01-09 19:53:58.486 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-09 19:53:58.486 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-09 19:53:58.486 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-01-09 19:53:58.489 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-09 19:53:58.489 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-09 19:53:58.489 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

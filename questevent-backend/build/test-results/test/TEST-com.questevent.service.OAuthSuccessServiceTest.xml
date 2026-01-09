@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.questevent.service.OAuthSuccessServiceTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-01-09T14:23:58.715Z" hostname="LF2XK776W2" time="0.024">
+  <properties/>
+  <testcase name="shouldResolveEmailFromPreferredUsername_whenEmailIsNull()" classname="com.questevent.service.OAuthSuccessServiceTest" time="0.02"/>
+  <testcase name="shouldCreateNewUserAndRedirectToCompleteProfile_whenUserNotExists()" classname="com.questevent.service.OAuthSuccessServiceTest" time="0.001"/>
+  <testcase name="shouldResolveEmailFromUpn_whenOthersAreNull()" classname="com.questevent.service.OAuthSuccessServiceTest" time="0.001"/>
+  <testcase name="shouldRedirectToProfile_whenExistingUserProfileComplete()" classname="com.questevent.service.OAuthSuccessServiceTest" time="0.001"/>
+  <testcase name="shouldRedirectToCompleteProfile_whenExistingUserProfileIncomplete()" classname="com.questevent.service.OAuthSuccessServiceTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

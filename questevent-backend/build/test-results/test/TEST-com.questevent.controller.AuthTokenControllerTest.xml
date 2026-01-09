@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.questevent.controller.AuthTokenControllerTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-01-09T14:23:58.214Z" hostname="LF2XK776W2" time="0.018">
+  <properties/>
+  <testcase name="authInfo_shouldReturnApiInfo()" classname="com.questevent.controller.AuthTokenControllerTest" time="0.005"/>
+  <testcase name="testJwt_withAuth_shouldWork()" classname="com.questevent.controller.AuthTokenControllerTest" time="0.002"/>
+  <testcase name="refreshToken_valid_shouldReturnNewAccessToken()" classname="com.questevent.controller.AuthTokenControllerTest" time="0.003"/>
+  <testcase name="getCurrentUser_withAuth_shouldReturnUserInfo()" classname="com.questevent.controller.AuthTokenControllerTest" time="0.002"/>
+  <testcase name="generateTokens_withAuth_shouldReturnTokens()" classname="com.questevent.controller.AuthTokenControllerTest" time="0.002"/>
+  <testcase name="refreshToken_missingToken_shouldReturn401()" classname="com.questevent.controller.AuthTokenControllerTest" time="0.002"/>
+  <testcase name="refreshToken_invalidToken_shouldReturn401()" classname="com.questevent.controller.AuthTokenControllerTest" time="0.001"/>
+  <system-out><![CDATA[2026-01-09 19:53:57.987 INFO  [Test worker] o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.questevent.controller.AuthTokenControllerTest]: AuthTokenControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-01-09 19:53:57.989 INFO  [Test worker] o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.questevent.QuestEventApplication for test class com.questevent.controller.AuthTokenControllerTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.5)
+
+2026-01-09 19:53:58.212 INFO  [Test worker] o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-09 19:53:58.212 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-09 19:53:58.212 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

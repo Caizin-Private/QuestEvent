@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.questevent.controller.AuthControllerTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-01-09T14:23:57.969Z" hostname="LF2XK776W2" time="0.017">
+  <properties/>
+  <testcase name="shouldReturnProfilePage()" classname="com.questevent.controller.AuthControllerTest" time="0.008"/>
+  <testcase name="shouldShowLoginPageWhenNotLoggedIn()" classname="com.questevent.controller.AuthControllerTest" time="0.002"/>
+  <testcase name="shouldRedirectToProfileIfAlreadyLoggedIn()" classname="com.questevent.controller.AuthControllerTest" time="0.001"/>
+  <testcase name="shouldShowLogoutSuccessPage()" classname="com.questevent.controller.AuthControllerTest" time="0.001"/>
+  <testcase name="shouldSaveProfileAndRedirect()" classname="com.questevent.controller.AuthControllerTest" time="0.004"/>
+  <system-out><![CDATA[2026-01-09 19:53:57.768 INFO  [Test worker] o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.questevent.controller.AuthControllerTest]: AuthControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-01-09 19:53:57.779 INFO  [Test worker] o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.questevent.QuestEventApplication for test class com.questevent.controller.AuthControllerTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.5)
+
+2026-01-09 19:53:57.967 INFO  [Test worker] o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-09 19:53:57.967 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-09 19:53:57.968 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 1 ms
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.questevent.service.ProgramRegistrationServiceTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-01-09T14:23:58.739Z" hostname="LF2XK776W2" time="0.027">
+  <properties/>
+  <testcase name="getParticipantCountForProgram_success()" classname="com.questevent.service.ProgramRegistrationServiceTest" time="0.022"/>
+  <testcase name="getRegistrationById_success()" classname="com.questevent.service.ProgramRegistrationServiceTest" time="0.001"/>
+  <testcase name="registerParticipantForProgram_programNotFound()" classname="com.questevent.service.ProgramRegistrationServiceTest" time="0.0"/>
+  <testcase name="deleteRegistration_notFound()" classname="com.questevent.service.ProgramRegistrationServiceTest" time="0.0"/>
+  <testcase name="getAllRegistrations_success()" classname="com.questevent.service.ProgramRegistrationServiceTest" time="0.001"/>
+  <testcase name="deleteRegistration_success()" classname="com.questevent.service.ProgramRegistrationServiceTest" time="0.0"/>
+  <testcase name="registerParticipantForProgram_success()" classname="com.questevent.service.ProgramRegistrationServiceTest" time="0.001"/>
+  <testcase name="getRegistrationById_notFound()" classname="com.questevent.service.ProgramRegistrationServiceTest" time="0.0"/>
+  <testcase name="registerParticipantForProgram_userNotFound()" classname="com.questevent.service.ProgramRegistrationServiceTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

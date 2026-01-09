@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.questevent.service.UserServiceTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-01-09T14:23:58.843Z" hostname="LF2XK776W2" time="0.004">
+  <properties/>
+  <testcase name="shouldReturnUserRoleAuthority()" classname="com.questevent.service.UserServiceTest" time="0.001"/>
+  <testcase name="shouldDeleteUser_whenDeleteUserCalled()" classname="com.questevent.service.UserServiceTest" time="0.0"/>
+  <testcase name="shouldReturnUser_whenValidIdProvided()" classname="com.questevent.service.UserServiceTest" time="0.001"/>
+  <testcase name="shouldConvertUserToDtoCorrectly()" classname="com.questevent.service.UserServiceTest" time="0.0"/>
+  <testcase name="shouldSaveUserAndCreateWallet_whenAddUserCalled()" classname="com.questevent.service.UserServiceTest" time="0.0"/>
+  <testcase name="shouldReturnAllUsers_whenUsersExist()" classname="com.questevent.service.UserServiceTest" time="0.001"/>
+  <testcase name="shouldThrowException_whenUserNotFoundById()" classname="com.questevent.service.UserServiceTest" time="0.0"/>
+  <testcase name="shouldUpdateUserFields_whenValidUpdateProvided()" classname="com.questevent.service.UserServiceTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

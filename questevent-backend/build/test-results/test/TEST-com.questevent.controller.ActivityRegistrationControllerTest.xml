@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.questevent.controller.ActivityRegistrationControllerTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-01-09T14:23:57.691Z" hostname="LF2XK776W2" time="0.075">
+  <properties/>
+  <testcase name="updateCompletionStatus_success()" classname="com.questevent.controller.ActivityRegistrationControllerTest" time="0.027"/>
+  <testcase name="getRegistrationById_success()" classname="com.questevent.controller.ActivityRegistrationControllerTest" time="0.004"/>
+  <testcase name="getRegistrationsByActivity_success()" classname="com.questevent.controller.ActivityRegistrationControllerTest" time="0.005"/>
+  <testcase name="deleteRegistration_notFound()" classname="com.questevent.controller.ActivityRegistrationControllerTest" time="0.003"/>
+  <testcase name="getRegistrationsByUser_success()" classname="com.questevent.controller.ActivityRegistrationControllerTest" time="0.006"/>
+  <testcase name="getAllRegistrations_success()" classname="com.questevent.controller.ActivityRegistrationControllerTest" time="0.005"/>
+  <testcase name="registerParticipant_success()" classname="com.questevent.controller.ActivityRegistrationControllerTest" time="0.007"/>
+  <testcase name="updateCompletionStatus_notFound()" classname="com.questevent.controller.ActivityRegistrationControllerTest" time="0.004"/>
+  <testcase name="addParticipantToActivity_success()" classname="com.questevent.controller.ActivityRegistrationControllerTest" time="0.006"/>
+  <testcase name="deleteRegistration_success()" classname="com.questevent.controller.ActivityRegistrationControllerTest" time="0.003"/>
+  <testcase name="getRegistrationById_notFound()" classname="com.questevent.controller.ActivityRegistrationControllerTest" time="0.004"/>
+  <system-out><![CDATA[2026-01-09 19:53:57.712 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-09 19:53:57.713 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-09 19:53:57.713 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-01-09 19:53:57.722 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-09 19:53:57.722 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-09 19:53:57.722 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-01-09 19:53:57.726 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-09 19:53:57.726 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-09 19:53:57.726 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-01-09 19:53:57.731 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-09 19:53:57.731 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-09 19:53:57.731 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-01-09 19:53:57.734 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-09 19:53:57.734 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-09 19:53:57.734 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-01-09 19:53:57.741 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-09 19:53:57.741 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-09 19:53:57.741 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-01-09 19:53:57.745 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-09 19:53:57.745 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-09 19:53:57.745 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-01-09 19:53:57.751 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-09 19:53:57.752 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-09 19:53:57.752 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-01-09 19:53:57.756 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-09 19:53:57.757 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-09 19:53:57.757 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-01-09 19:53:57.762 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-09 19:53:57.762 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-09 19:53:57.762 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-01-09 19:53:57.765 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-09 19:53:57.765 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-09 19:53:57.765 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">questevent-backend</a> &gt; <a href="index.source.html" class="el_package">com.questevent.controller</a> &gt; <span class="el_source">AuthController.java</span></div><h1>AuthController.java</h1><pre class="source lang-java linenums">package com.questevent.controller;
+
+import com.questevent.entity.User;
+import com.questevent.entity.UserWallet;
+import com.questevent.enums.Department;
+import com.questevent.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+import java.util.UUID;
+
+@Controller
+public class AuthController {
+
+<span class="fc" id="L21">    private static final Logger log =</span>
+<span class="fc" id="L22">            LoggerFactory.getLogger(AuthController.class);</span>
+
+    private final AuthService authService;
+
+<span class="fc" id="L26">    public AuthController(AuthService authService) {</span>
+<span class="fc" id="L27">        this.authService = authService;</span>
+<span class="fc" id="L28">    }</span>
+
+    @GetMapping({&quot;/&quot;, &quot;/login&quot;})
+    @ResponseBody
+    public String loginPage(HttpServletRequest request,
+                            HttpServletResponse response) throws IOException {
+
+<span class="fc" id="L35">        log.info(&quot;Login page requested&quot;);</span>
+
+<span class="fc bfc" id="L37" title="All 2 branches covered.">        if (authService.isLoggedIn(request)) {</span>
+<span class="fc" id="L38">            log.info(&quot;User already logged in, redirecting to /profile&quot;);</span>
+<span class="fc" id="L39">            response.sendRedirect(&quot;/profile&quot;);</span>
+<span class="fc" id="L40">            return null;</span>
+        }
+
+<span class="fc" id="L43">        return &quot;&quot;&quot;</span>
+        &lt;!DOCTYPE html&gt;
+        &lt;html&gt;
+        &lt;head&gt;&lt;title&gt;Login&lt;/title&gt;&lt;/head&gt;
+        &lt;body style=&quot;font-family: Arial; padding: 40px;&quot;&gt;
+            &lt;h2&gt;Login Page&lt;/h2&gt;
+            &lt;a href=&quot;/oauth2/authorization/azure&quot;&gt;
+                &lt;button style=&quot;padding:10px 20px;&quot;&gt;Login with Microsoft&lt;/button&gt;
+            &lt;/a&gt;
+        &lt;/body&gt;
+        &lt;/html&gt;
+        &quot;&quot;&quot;;
+    }
+
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @GetMapping(&quot;/complete-profile&quot;)
+    @ResponseBody
+    public String completeProfilePage() {
+
+<span class="nc" id="L62">        log.info(&quot;Complete profile page opened&quot;);</span>
+<span class="nc" id="L63">        return &quot;&quot;&quot;</span>
+        &lt;h2&gt;Complete Your Profile 📝&lt;/h2&gt;
+
+        &lt;form method=&quot;post&quot; action=&quot;/complete-profile&quot;&gt;
+
+            &lt;label&gt;Department:&lt;/label&gt;&lt;br&gt;
+            &lt;select name=&quot;department&quot;&gt;
+                &lt;option value=&quot;HR&quot;&gt;HR&lt;/option&gt;
+                &lt;option value=&quot;TECH&quot;&gt;TECH&lt;/option&gt;
+                &lt;option value=&quot;GENERAL&quot;&gt;GENERAL&lt;/option&gt;
+                &lt;option value=&quot;IT&quot;&gt;IT&lt;/option&gt;
+            &lt;/select&gt;&lt;br&gt;&lt;br&gt;
+
+            &lt;label&gt;Gender:&lt;/label&gt;&lt;br&gt;
+            &lt;select name=&quot;gender&quot;&gt;
+                &lt;option value=&quot;MALE&quot;&gt;MALE&lt;/option&gt;
+                &lt;option value=&quot;FEMALE&quot;&gt;FEMALE&lt;/option&gt;
+            &lt;/select&gt;&lt;br&gt;&lt;br&gt;
+
+            &lt;button type=&quot;submit&quot;&gt;Save&lt;/button&gt;
+        &lt;/form&gt;
+        &quot;&quot;&quot;;
+    }
+
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @PostMapping(&quot;/complete-profile&quot;)
+    public void saveProfile(HttpServletRequest request,
+                            HttpServletResponse response,
+                            @RequestParam Department department,
+                            @RequestParam String gender) throws IOException {
+
+<span class="fc" id="L94">        log.info(&quot;Profile submission received department={}, gender={}&quot;,</span>
+                department, gender);
+
+<span class="fc" id="L97">        Long userId = authService.getLoggedInUserId(request);</span>
+<span class="fc" id="L98">        authService.completeProfile(userId, department, gender);</span>
+
+<span class="fc" id="L100">        log.info(&quot;Profile completed successfully, redirecting to /profile&quot;);</span>
+<span class="fc" id="L101">        response.sendRedirect(&quot;/profile&quot;);</span>
+<span class="fc" id="L102">    }</span>
+
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @GetMapping(&quot;/profile&quot;)
+    @ResponseBody
+    public String profile(HttpServletRequest request) {
+
+<span class="fc" id="L109">        log.info(&quot;Profile page requested&quot;);</span>
+
+<span class="fc" id="L111">        User user = authService.getLoggedInUser(request);</span>
+
+<span class="fc" id="L113">        log.debug(&quot;Rendering profile page userId={}&quot;, user.getUserId());</span>
+
+<span class="fc" id="L115">        return &quot;&quot;&quot;</span>
+            &lt;h2&gt;User Profile 👤&lt;/h2&gt;
+
+            &lt;p&gt;&lt;b&gt;User ID:&lt;/b&gt; %d&lt;/p&gt;
+            &lt;p&gt;&lt;b&gt;Name:&lt;/b&gt; %s&lt;/p&gt;
+            &lt;p&gt;&lt;b&gt;Email:&lt;/b&gt; %s&lt;/p&gt;
+            &lt;p&gt;&lt;b&gt;Department:&lt;/b&gt; %s&lt;/p&gt;
+            &lt;p&gt;&lt;b&gt;Gender:&lt;/b&gt; %s&lt;/p&gt;
+            &lt;p&gt;&lt;b&gt;Role:&lt;/b&gt; %s&lt;/p&gt;
+
+            &lt;form method=&quot;post&quot; action=&quot;/logout&quot;&gt;
+                &lt;button style=&quot;padding:8px 15px; margin-top:20px;&quot;&gt;
+                    Logout
+                &lt;/button&gt;
+            &lt;/form&gt;
+<span class="fc" id="L130">        &quot;&quot;&quot;.formatted(</span>
+<span class="fc" id="L131">                user.getUserId(),</span>
+<span class="fc" id="L132">                user.getName(),</span>
+<span class="fc" id="L133">                user.getEmail(),</span>
+<span class="fc" id="L134">                user.getDepartment(),</span>
+<span class="fc" id="L135">                user.getGender(),</span>
+<span class="fc" id="L136">                user.getRole()</span>
+        );
+    }
+
+    @GetMapping(&quot;/logout-success&quot;)
+    @ResponseBody
+    public String logoutSuccess() {
+<span class="fc" id="L143">        log.info(&quot;Logout success page requested&quot;);</span>
+<span class="fc" id="L144">        return &quot;&quot;&quot;</span>
+            &lt;h2&gt;Logged out successfully &lt;/h2&gt;
+            &lt;a href=&quot;/login&quot;&gt;Login again&lt;/a&gt;
+        &quot;&quot;&quot;;
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

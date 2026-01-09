@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.questevent.service.ProgramServiceTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-01-09T14:23:58.766Z" hostname="LF2XK776W2" time="0.028">
+  <properties/>
+  <testcase name="updateProgram_success()" classname="com.questevent.service.ProgramServiceTest" time="0.023"/>
+  <testcase name="getProgramById_success()" classname="com.questevent.service.ProgramServiceTest" time="0.0"/>
+  <testcase name="getMyPrograms_success()" classname="com.questevent.service.ProgramServiceTest" time="0.001"/>
+  <testcase name="createProgram_userNotFound()" classname="com.questevent.service.ProgramServiceTest" time="0.001"/>
+  <testcase name="updateProgram_permissionDenied()" classname="com.questevent.service.ProgramServiceTest" time="0.0"/>
+  <testcase name="updateProgram_programNotFound()" classname="com.questevent.service.ProgramServiceTest" time="0.001"/>
+  <testcase name="getCompletedProgramsForUser_success()" classname="com.questevent.service.ProgramServiceTest" time="0.0"/>
+  <testcase name="deleteProgram_success()" classname="com.questevent.service.ProgramServiceTest" time="0.001"/>
+  <testcase name="createProgram_success()" classname="com.questevent.service.ProgramServiceTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

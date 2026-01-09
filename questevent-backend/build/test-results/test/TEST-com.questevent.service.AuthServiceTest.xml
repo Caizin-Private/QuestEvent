@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.questevent.service.AuthServiceTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-01-09T14:23:58.576Z" hostname="LF2XK776W2" time="0.045">
+  <properties/>
+  <testcase name="shouldReturnLoggedInUser()" classname="com.questevent.service.AuthServiceTest" time="0.038"/>
+  <testcase name="shouldReturnFalseWhenSessionIsNull()" classname="com.questevent.service.AuthServiceTest" time="0.0"/>
+  <testcase name="shouldReturnTrueWhenUserIsLoggedIn()" classname="com.questevent.service.AuthServiceTest" time="0.001"/>
+  <testcase name="shouldThrowWhenSessionMissingInGetUserId()" classname="com.questevent.service.AuthServiceTest" time="0.001"/>
+  <testcase name="shouldUpdateProfileAndCreateWalletIfMissing()" classname="com.questevent.service.AuthServiceTest" time="0.001"/>
+  <testcase name="shouldReturnFalseWhenUserIdNotInSession()" classname="com.questevent.service.AuthServiceTest" time="0.0"/>
+  <testcase name="shouldReturnUserIdWhenLoggedIn()" classname="com.questevent.service.AuthServiceTest" time="0.001"/>
+  <testcase name="shouldUpdateProfileWithoutCreatingWalletIfExists()" classname="com.questevent.service.AuthServiceTest" time="0.0"/>
+  <testcase name="shouldThrowWhenUserNotFoundDuringProfileUpdate()" classname="com.questevent.service.AuthServiceTest" time="0.001"/>
+  <testcase name="shouldThrowWhenUserNotFound()" classname="com.questevent.service.AuthServiceTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

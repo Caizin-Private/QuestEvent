@@ -1,5 +1,6 @@
 package com.questevent.controller;
 
+import com.questevent.dto.JudgeRejectionRequestDTO;
 import com.questevent.dto.JudgeSubmissionDTO;
 import com.questevent.service.JudgeService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -68,6 +69,34 @@ public class JudgeController {
         log.debug("Pending submissions fetched, count={}", submissions.size());
         return ResponseEntity.ok(submissions);
     }
+
+
+    @Operation(
+            summary = "Reject a submission",
+            description = "Rejects a submission with a reason. Only assigned judge can reject."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Submission rejected"),
+            @ApiResponse(responseCode = "400", description = "Already reviewed"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "Submission not found")
+    })
+    @PostMapping("/submissions/{submissionId}/reject")
+    public ResponseEntity<Void> rejectSubmission(
+            @PathVariable UUID submissionId,
+            @RequestBody JudgeRejectionRequestDTO request
+    ) {
+        log.info("Rejecting submissionId={}", submissionId);
+
+        judgeService.rejectSubmission(
+                submissionId,
+                request.rejectionReason()
+        );
+
+        log.info("Submission rejected submissionId={}", submissionId);
+        return ResponseEntity.ok().build();
+    }
+
 
     @Operation(
             summary = "Get pending submissions for an activity",

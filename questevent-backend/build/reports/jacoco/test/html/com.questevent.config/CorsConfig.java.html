@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CorsConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">questevent-backend</a> &gt; <a href="index.source.html" class="el_package">com.questevent.config</a> &gt; <span class="el_source">CorsConfig.java</span></div><h1>CorsConfig.java</h1><pre class="source lang-java linenums">package com.questevent.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
+
+@Configuration
+<span class="fc" id="L13">public class CorsConfig {</span>
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+<span class="fc" id="L17">        CorsConfiguration configuration = new CorsConfiguration();</span>
+<span class="fc" id="L18">        configuration.setAllowedOrigins(List.of(&quot;http://localhost:8080&quot;,</span>
+                &quot;http://localhost:3000&quot;,
+                &quot;http://d33m3dyxosqoxf.cloudfront.net&quot;,
+                &quot;https://d33m3dyxosqoxf.cloudfront.net&quot;,
+                &quot;http://questeventutest-env.eba-k6h77htc.us-west-2.elasticbeanstalk.com&quot;,
+                &quot;https://questeventutest-env.eba-k6h77htc.us-west-2.elasticbeanstalk.com&quot;
+
+        ));
+<span class="fc" id="L26">        configuration.setAllowedMethods(Arrays.asList(&quot;GET&quot;, &quot;POST&quot;, &quot;PUT&quot;, &quot;DELETE&quot;, &quot;OPTIONS&quot;, &quot;PATCH&quot;));</span>
+<span class="fc" id="L27">        configuration.setAllowedHeaders(Arrays.asList(&quot;*&quot;));</span>
+<span class="fc" id="L28">        configuration.setAllowCredentials(true);</span>
+<span class="fc" id="L29">        configuration.setExposedHeaders(Arrays.asList(&quot;Authorization&quot;));</span>
+
+<span class="fc" id="L31">        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();</span>
+<span class="fc" id="L32">        source.registerCorsConfiguration(&quot;/**&quot;, configuration);</span>
+<span class="fc" id="L33">        return source;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

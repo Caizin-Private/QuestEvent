@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.questevent.controller.JudgeControllerTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-01-09T14:23:58.233Z" hostname="LF2XK776W2" time="0.039">
+  <properties/>
+  <testcase name="getAllSubmissions_shouldReturnList()" classname="com.questevent.controller.JudgeControllerTest" time="0.035"/>
+  <testcase name="reviewSubmission_shouldReturnOk()" classname="com.questevent.controller.JudgeControllerTest" time="0.001"/>
+  <testcase name="getPendingSubmissionsForActivity_shouldThrowException_whenActivityNotFound()" classname="com.questevent.controller.JudgeControllerTest" time="0.001"/>
+  <testcase name="getPendingSubmissions_shouldReturnList()" classname="com.questevent.controller.JudgeControllerTest" time="0.0"/>
+  <testcase name="getPendingSubmissionsForActivity_shouldReturnSubmissions()" classname="com.questevent.controller.JudgeControllerTest" time="0.001"/>
+  <testcase name="reviewSubmission_shouldThrowException_whenAlreadyReviewed()" classname="com.questevent.controller.JudgeControllerTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
