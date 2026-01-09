@@ -2,50 +2,64 @@ package com.questevent.config;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.test.web.servlet.MockMvc;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
+@AutoConfigureMockMvc
 class CorsConfigTest {
 
     @Autowired
-    private CorsConfigurationSource corsConfigurationSource;
+    private MockMvc mockMvc;
 
     @Test
-    void corsConfigurationSourceBeanShouldLoad() {
-        assertNotNull(corsConfigurationSource);
+    void shouldAllowCorsForValidOrigin() throws Exception {
+
+        mockMvc.perform(
+                        options("/api/test")
+                                .header(HttpHeaders.ORIGIN, "http://localhost:3000")
+                                .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET")
+                )
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN,
+                        "http://localhost:3000"))
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true"))
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS,
+                        org.hamcrest.Matchers.containsString("GET")))
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS,
+                        org.hamcrest.Matchers.containsString("POST")))
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS,
+                        org.hamcrest.Matchers.containsString("PUT")))
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS,
+                        org.hamcrest.Matchers.containsString("DELETE")));
     }
 
     @Test
-    void corsConfigurationShouldContainExpectedValues() {
+    void shouldExposeAuthorizationHeader() throws Exception {
 
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setRequestURI("/api/test");
-        request.setContextPath("");
-        request.setServletPath("");
+        mockMvc.perform(
+                        options("/api/test")
+                                .header(HttpHeaders.ORIGIN, "http://localhost:3000")
+                                .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET")
+                )
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS,
+                        org.hamcrest.Matchers.containsString("Authorization")));
+    }
 
-        CorsConfiguration config =
-                corsConfigurationSource.getCorsConfiguration(request);
+    @Test
+    void shouldRejectUnknownOrigin() throws Exception {
 
-        assertNotNull(config);
-
-        assertTrue(config.getAllowedOrigins().contains("http://localhost:8080"));
-
-        assertTrue(config.getAllowedMethods().contains("GET"));
-        assertTrue(config.getAllowedMethods().contains("POST"));
-        assertTrue(config.getAllowedMethods().contains("PUT"));
-        assertTrue(config.getAllowedMethods().contains("DELETE"));
-        assertTrue(config.getAllowedMethods().contains("OPTIONS"));
-        assertTrue(config.getAllowedMethods().contains("PATCH"));
-
-        assertTrue(config.getAllowedHeaders().contains("*"));
-
-        assertTrue(config.getAllowCredentials());
-
-        assertTrue(config.getExposedHeaders().contains("Authorization"));
+        mockMvc.perform(
+                        options("/api/test")
+                                .header(HttpHeaders.ORIGIN, "http://evil.com")
+                                .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET")
+                )
+                .andExpect(status().isForbidden());
     }
 }

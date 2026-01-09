@@ -18,6 +18,8 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -59,36 +61,22 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-
-        // Frontend / public routes (no auth logs)
-        boolean isFrontendRoute =
-                path.equals("/") ||
-                        path.startsWith("/profile") ||
-                        path.startsWith("/assets") ||
-                        path.startsWith("/static") ||
-                        path.startsWith("/favicon");
-
         boolean isApiEndpoint = path.startsWith("/api/");
-        boolean isPublicApiEndpoint = path.startsWith("/api/auth");
+        boolean isAuthInfoEndpoint = path.equals("/api/auth") || path.equals("/api/auth/");
         boolean isTokenGenerationEndpoint = path.equals("/api/auth/token");
-        boolean allowOAuth2ForApi = isTokenGenerationEndpoint;
+        boolean allowOAuth2ForApi = isTokenGenerationEndpoint; // Only allow OAuth2 for token generation
+        boolean isPublicApiEndpoint = isAuthInfoEndpoint; // Public API endpoints that don't require auth
 
         String authHeader = request.getHeader("Authorization");
         boolean hasBearerToken = authHeader != null && authHeader.startsWith("Bearer ");
-
-        /* =========================
-           JWT AUTHENTICATION FLOW
-           ========================= */
         if (hasBearerToken) {
             String token = authHeader.substring(7);
             try {
                 if (jwtService.validateToken(token)) {
                     UserPrincipal userPrincipal = jwtService.extractUserPrincipal(token);
 
-                    logger.info(
-                            "✅ JWT TOKEN AUTHENTICATION - Path: {}, User: {} (ID: {})",
-                            path, userPrincipal.email(), userPrincipal.userId()
-                    );
+                    logger.info("✅ JWT TOKEN AUTHENTICATION - Path: {}, User: {} (ID: {}), Token used: YES",
+                            path, userPrincipal.email(), userPrincipal.userId());
 
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(
@@ -119,11 +107,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 }
             }
         }
-
-        /* =========================
-           API WITHOUT TOKEN
-           ========================= */
         if (isApiEndpoint && !isPublicApiEndpoint && !allowOAuth2ForApi && !hasBearerToken) {
+            logger.error("❌ API endpoint requires JWT Bearer token - Path: {}, No Authorization header found", path);
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
             response.getWriter().write(
@@ -137,21 +122,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        Authentication currentAuth = SecurityContextHolder.getContext().getAuthentication();
-
-        /* =========================
-           EXISTING JWT AUTH
-           ========================= */
-        if (currentAuth instanceof UsernamePasswordAuthenticationToken tokenAuth &&
-                tokenAuth.getPrincipal() instanceof UserPrincipal) {
+        Authentication currentAuth =
+                SecurityContextHolder.getContext().getAuthentication();
+        if (currentAuth instanceof UsernamePasswordAuthenticationToken token &&
+                token.getPrincipal() instanceof UserPrincipal) {
+            String authSource = (String) request.getAttribute("AUTH_SOURCE");
+            if (authSource == null && authHeader != null && authHeader.startsWith("Bearer ")) {
+                logger.debug("Authentication already set for path: {}", path);
+            }
 
             filterChain.doFilter(request, response);
             return;
         }
-
-        /* =========================
-           OAUTH2 SESSION FLOW
-           ========================= */
         if (currentAuth instanceof OAuth2AuthenticationToken oauthToken) {
 
             if (isApiEndpoint && !allowOAuth2ForApi) {
@@ -164,6 +146,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
 
             OAuth2User oauthUser = oauthToken.getPrincipal();
+
             String email = resolveEmail(oauthUser);
 
             if (email != null) {
@@ -191,7 +174,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                             "ROLE_" + user.getRole().name()
                                     ))
                             );
-
                     request.setAttribute("AUTH_SOURCE", "OAUTH2_SESSION");
                     request.setAttribute("OAUTH2_USER_ID", user.getUserId());
 
@@ -200,9 +182,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
         }
 
-        /* =========================
-           FINAL SAFETY CHECK
-           ========================= */
         if (isApiEndpoint && !isPublicApiEndpoint && !allowOAuth2ForApi) {
             Authentication finalAuth = SecurityContextHolder.getContext().getAuthentication();
             if (finalAuth == null || !finalAuth.isAuthenticated()) {
@@ -213,19 +192,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 );
                 return;
             }
-        } else if (!isFrontendRoute &&
-                (SecurityContextHolder.getContext().getAuthentication() == null ||
-                        !SecurityContextHolder.getContext().getAuthentication().isAuthenticated())) {
-
-            logger.warn(
-                    "⚠️ NO AUTHENTICATION - Path: {}, Authorization header present: {}",
-                    path, authHeader != null
-            );
+        } else {
+            if (SecurityContextHolder.getContext().getAuthentication() == null ||
+                    !SecurityContextHolder.getContext().getAuthentication().isAuthenticated()) {
+                logger.warn("⚠️ NO AUTHENTICATION - Path: {}, Authorization header present: {}",
+                        path, authHeader != null);
+            }
         }
 
         filterChain.doFilter(request, response);
     }
-
     private String resolveEmail(OAuth2User oauthUser) {
         String email = oauthUser.getAttribute("email");
         if (email == null) email = oauthUser.getAttribute("preferred_username");
