@@ -2,61 +2,58 @@
 
 import com.questevent.entity.User;
 import com.questevent.entity.UserWallet;
+import com.questevent.exception.WalletNotFoundException;
 import com.questevent.repository.UserWalletRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-<span class="fc" id="L10">@Slf4j</span>
 @Service
+<span class="fc" id="L12">@Slf4j</span>
 public class UserWalletTransactionServiceImpl implements UserWalletTransactionService {
 
     private final UserWalletRepository userWalletRepository;
 
-<span class="fc" id="L16">    public UserWalletTransactionServiceImpl(UserWalletRepository userWalletRepository) {</span>
-<span class="fc" id="L17">        this.userWalletRepository = userWalletRepository;</span>
-<span class="fc" id="L18">    }</span>
+<span class="fc" id="L17">    public UserWalletTransactionServiceImpl(UserWalletRepository userWalletRepository) {</span>
+<span class="fc" id="L18">        this.userWalletRepository = userWalletRepository;</span>
+<span class="fc" id="L19">    }</span>
 
     @Override
     @Transactional
     public void creditGems(User user, Long amount) {
 
-<span class="fc" id="L24">        log.debug(&quot;Credit gems requested | user={} | amount={}&quot;, user, amount);</span>
+<span class="fc" id="L25">        log.debug(&quot;Credit gems requested | user={} | amount={}&quot;, user, amount);</span>
 
-<span class="pc bpc" id="L26" title="2 of 4 branches missed.">        if (user == null || user.getUserId() == null) {</span>
-<span class="nc" id="L27">            log.warn(&quot;Invalid user provided for gem credit&quot;);</span>
-<span class="nc" id="L28">            throw new IllegalArgumentException(&quot;Invalid user&quot;);</span>
+<span class="pc bpc" id="L27" title="2 of 4 branches missed.">        if (user == null || user.getUserId() == null) {</span>
+<span class="nc" id="L28">            log.warn(&quot;Invalid user provided for gem credit&quot;);</span>
+<span class="nc" id="L29">            throw new IllegalArgumentException(&quot;Invalid user&quot;);</span>
         }
 
-<span class="fc bfc" id="L31" title="All 2 branches covered.">        if (amount &lt;= 0) {</span>
-<span class="fc" id="L32">            log.warn(</span>
-                    &quot;Invalid credit amount={} for userId={}&quot;,
-                    amount,
-<span class="fc" id="L35">                    user.getUserId()</span>
-            );
-<span class="fc" id="L37">            throw new IllegalArgumentException(&quot;Amount must be greater than zero&quot;);</span>
+<span class="fc bfc" id="L32" title="All 2 branches covered.">        if (amount &lt;= 0) {</span>
+<span class="fc" id="L33">            log.warn(&quot;Invalid credit amount={} for userId={}&quot;, amount, user.getUserId());</span>
+<span class="fc" id="L34">            throw new IllegalArgumentException(&quot;Amount must be greater than zero&quot;);</span>
         }
 
-<span class="fc" id="L40">        UserWallet wallet = userWalletRepository</span>
-<span class="fc" id="L41">                .findByUserUserId(user.getUserId())</span>
-<span class="fc" id="L42">                .orElseThrow(() -&gt; {</span>
-<span class="fc" id="L43">                    log.error(&quot;Wallet not found for userId={}&quot;, user.getUserId());</span>
-<span class="fc" id="L44">                    return new IllegalStateException(&quot;Wallet not found&quot;);</span>
+<span class="fc" id="L37">        UserWallet wallet = userWalletRepository</span>
+<span class="fc" id="L38">                .findByUserUserId(user.getUserId())</span>
+<span class="fc" id="L39">                .orElseThrow(() -&gt; {</span>
+<span class="fc" id="L40">                    log.error(&quot;Wallet not found for userId={}&quot;, user.getUserId());</span>
+<span class="fc" id="L41">                    return new WalletNotFoundException(&quot;Wallet not found&quot;);</span>
                 });
 
-<span class="fc" id="L47">        Long before = wallet.getGems();</span>
-<span class="fc" id="L48">        wallet.setGems(before + amount);</span>
+<span class="fc" id="L44">        Long before = wallet.getGems();</span>
+<span class="fc" id="L45">        wallet.setGems(before + amount);</span>
 
-<span class="fc" id="L50">        userWalletRepository.save(wallet);</span>
+<span class="fc" id="L47">        userWalletRepository.save(wallet);</span>
 
-<span class="fc" id="L52">        log.info(</span>
+<span class="fc" id="L49">        log.info(</span>
                 &quot;Gems credited successfully | userId={} | walletId={} | before={} | credited={} | after={}&quot;,
-<span class="fc" id="L54">                user.getUserId(),</span>
-<span class="fc" id="L55">                wallet.getWalletId(),</span>
+<span class="fc" id="L51">                user.getUserId(),</span>
+<span class="fc" id="L52">                wallet.getWalletId(),</span>
                 before,
                 amount,
-<span class="fc" id="L58">                wallet.getGems()</span>
+<span class="fc" id="L55">                wallet.getGems()</span>
         );
-<span class="fc" id="L60">    }</span>
+<span class="fc" id="L57">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
