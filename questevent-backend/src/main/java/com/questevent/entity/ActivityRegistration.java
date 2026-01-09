@@ -7,6 +7,7 @@ import lombok.Data;
 import jakarta.persistence.Id;
 
 import java.util.List;
+import java.util.UUID;
 
 
 @Entity
@@ -14,11 +15,11 @@ import java.util.List;
 uniqueConstraints = @UniqueConstraint(columnNames = {"activity_id","user_id"}))
 @Data
 public class ActivityRegistration {
- 
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "activity_registration_id")
-    private long activityRegistrationId;
+    @GeneratedValue
+    @Column(name = "activity_registration_id", nullable = false, updatable = false)
+    private UUID activityRegistrationId;
 
     @ManyToOne
     @JoinColumn(

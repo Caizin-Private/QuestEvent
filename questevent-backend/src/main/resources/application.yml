@@ -1,11 +1,22 @@
 spring:
   datasource:
-    url: jdbc:postgresql://nozomi.proxy.rlwy.net:24684/railway
+    url: jdbc:postgresql://trolley.proxy.rlwy.net:50091/railway
     username: postgres
-    password: PfrEGYINXOsMmzLIrjLVUMJJAQuhZxHo
+    password: DXWzjkShsEIUdlwQnEMjrRfvPKjDEmsg
+
+  hikari:
+    pool-name: HikariPool
+    maximum-pool-size: 5
+    minimum-idle: 1
+    max-lifetime: 240000        # 4 minutes (MUST be < Railway idle timeout)
+    idle-timeout: 120000        # 2 minutes
+    connection-timeout: 30000
+    validation-timeout: 5000
+    connection-test-query: SELECT 1
 
   jpa:
     hibernate:
+      ddl-auto: update
     show-sql: true
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 
@@ -21,7 +32,8 @@ spring:
               - profile
               - email
 
-            redirect-uri: "https://d33m3dyxosqoxf.cloudfront.net/login/oauth2/code/azure"
+            # ✅ REQUIRED for CloudFront
+            redirect-uri: "{baseUrl}/login/oauth2/code/azure"
             client-name: Azure AD
 
         provider:

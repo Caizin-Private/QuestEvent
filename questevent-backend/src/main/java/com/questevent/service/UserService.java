@@ -9,6 +9,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -138,6 +139,9 @@ public class UserService {
         userDto.setDepartment(user.getDepartment());
         userDto.setGender(user.getGender());
         userDto.setRole(user.getRole());
+        userDto.setCreatedAt(user.getCreatedAt());
+        userDto.setUpdatedAt(user.getUpdatedAt());
+
         return userDto;
     }
 }

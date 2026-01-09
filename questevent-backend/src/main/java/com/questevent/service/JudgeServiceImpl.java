@@ -19,7 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -102,7 +104,7 @@ public class JudgeServiceImpl implements JudgeService {
     @Override
     @Transactional(readOnly = true)
     public List<JudgeSubmissionDTO> getPendingSubmissionsForActivity(
-            Long activityId,
+            UUID activityId,
             Authentication ignored
     ) {
         User user = resolveCurrentUser();
@@ -186,7 +188,7 @@ public class JudgeServiceImpl implements JudgeService {
 
     @Override
     @Transactional
-    public void reviewSubmission(Long submissionId) {
+    public void reviewSubmission(UUID submissionId) {
 
         log.debug("Review submission requested | submissionId={}", submissionId);
 
@@ -212,6 +214,7 @@ public class JudgeServiceImpl implements JudgeService {
         Activity activity = registration.getActivity();
         Program program = activity.getProgram();
 
+        // ✅ Judge already decided at program creation
         Judge judge = program.getJudge();
         if (judge == null) {
             log.error(
@@ -223,7 +226,7 @@ public class JudgeServiceImpl implements JudgeService {
                     "Judge not assigned to this program");
         }
 
-        Integer rewardGems = activity.getRewardGems();
+        Long rewardGems = activity.getRewardGems();
         if (rewardGems == null || rewardGems < 0) {
             log.error(
                     "Invalid reward gems | activityId={} | rewardGems={}",
@@ -249,7 +252,6 @@ public class JudgeServiceImpl implements JudgeService {
                 program,
                 rewardGems
         );
-
         log.info(
                 "Submission reviewed & approved | submissionId={} | programId={} | userId={} | awardedGems={}",
                 submissionId,
@@ -258,7 +260,6 @@ public class JudgeServiceImpl implements JudgeService {
                 rewardGems
         );
     }
-
     private JudgeSubmissionDTO mapToDto(ActivitySubmission submission) {
         ActivityRegistration reg = submission.getActivityRegistration();
 
@@ -276,3 +277,4 @@ public class JudgeServiceImpl implements JudgeService {
         );
     }
 }
+

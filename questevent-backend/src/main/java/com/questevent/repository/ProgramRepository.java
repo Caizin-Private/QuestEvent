@@ -9,8 +9,9 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
-public interface ProgramRepository extends JpaRepository<Program, Long> {
+public interface ProgramRepository extends JpaRepository<Program, UUID> {
 
     List<Program> findByUser_UserId(Long userId);
 

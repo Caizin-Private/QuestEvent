@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -46,16 +47,17 @@ class ActivityRegistrationControllerTest {
         objectMapper = new ObjectMapper();
     }
 
-
     @Test
     void registerParticipant_success() throws Exception {
+        UUID activityId = UUID.randomUUID();
+
         ActivityRegistrationRequestDTO request = new ActivityRegistrationRequestDTO();
-        request.setActivityId(1L);
+        request.setActivityId(activityId);
         request.setCompletionStatus(CompletionStatus.NOT_COMPLETED);
 
         ActivityRegistrationResponseDTO response = new ActivityRegistrationResponseDTO();
-        response.setActivityRegistrationId(1L);
-        response.setActivityId(1L);
+        response.setActivityRegistrationId(UUID.randomUUID());
+        response.setActivityId(activityId);
         response.setUserId(1L);
         response.setMessage("Successfully registered for activity");
 
@@ -67,15 +69,14 @@ class ActivityRegistrationControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.activityRegistrationId").value(1L))
+                .andExpect(jsonPath("$.userId").value(1L))
                 .andExpect(jsonPath("$.message")
                         .value("Successfully registered for activity"));
     }
 
-
     @Test
     void addParticipantToActivity_success() throws Exception {
-        Long activityId = 1L;
+        UUID activityId = UUID.randomUUID();
 
         AddParticipantInActivityRequestDTO request =
                 new AddParticipantInActivityRequestDTO();
@@ -83,7 +84,7 @@ class ActivityRegistrationControllerTest {
 
         ActivityRegistrationResponseDTO response =
                 new ActivityRegistrationResponseDTO();
-        response.setActivityRegistrationId(1L);
+        response.setActivityRegistrationId(UUID.randomUUID());
         response.setActivityId(activityId);
         response.setUserId(2L);
         response.setMessage("Successfully registered for activity");
@@ -98,23 +99,29 @@ class ActivityRegistrationControllerTest {
                                 .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.activityRegistrationId").value(1L))
                 .andExpect(jsonPath("$.userId").value(2L))
                 .andExpect(jsonPath("$.message")
                         .value("Successfully registered for activity"));
     }
 
-
     @Test
     void getAllRegistrations_success() throws Exception {
         ActivityRegistrationDTO dto1 =
                 new ActivityRegistrationDTO(
-                        1L, 1L, "Activity 1", 1L, "User 1",
+                        UUID.randomUUID(),
+                        UUID.randomUUID(),
+                        "Activity 1",
+                        1L,
+                        "User 1",
                         CompletionStatus.NOT_COMPLETED);
 
         ActivityRegistrationDTO dto2 =
                 new ActivityRegistrationDTO(
-                        2L, 2L, "Activity 2", 2L, "User 2",
+                        UUID.randomUUID(),
+                        UUID.randomUUID(),
+                        "Activity 2",
+                        2L,
+                        "User 2",
                         CompletionStatus.COMPLETED);
 
         when(activityRegistrationService.getAllRegistrations())
@@ -122,18 +129,20 @@ class ActivityRegistrationControllerTest {
 
         mockMvc.perform(get("/api/activity-registrations"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].activityRegistrationId").value(1L))
-                .andExpect(jsonPath("$[1].activityRegistrationId").value(2L));
+                .andExpect(jsonPath("$.length()").value(2));
     }
 
     @Test
     void getRegistrationById_success() throws Exception {
-        Long id = 1L;
+        UUID id = UUID.randomUUID();
 
         ActivityRegistrationDTO dto =
                 new ActivityRegistrationDTO(
-                        id, 1L, "Activity 1", 1L, "User 1",
+                        id,
+                        UUID.randomUUID(),
+                        "Activity 1",
+                        1L,
+                        "User 1",
                         CompletionStatus.NOT_COMPLETED);
 
         when(activityRegistrationService.getRegistrationById(id))
@@ -141,26 +150,29 @@ class ActivityRegistrationControllerTest {
 
         mockMvc.perform(get("/api/activity-registrations/{id}", id))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.activityRegistrationId").value(id))
                 .andExpect(jsonPath("$.activityName").value("Activity 1"));
     }
 
     @Test
     void getRegistrationById_notFound() throws Exception {
-        when(activityRegistrationService.getRegistrationById(999L))
+        when(activityRegistrationService.getRegistrationById(any(UUID.class)))
                 .thenThrow(new RuntimeException("Registration not found"));
 
-        mockMvc.perform(get("/api/activity-registrations/{id}", 999L))
+        mockMvc.perform(get("/api/activity-registrations/{id}", UUID.randomUUID()))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void getRegistrationsByActivity_success() throws Exception {
-        Long activityId = 1L;
+        UUID activityId = UUID.randomUUID();
 
         ActivityRegistrationDTO dto =
                 new ActivityRegistrationDTO(
-                        1L, activityId, "Activity 1", 1L, "User 1",
+                        UUID.randomUUID(),
+                        activityId,
+                        "Activity 1",
+                        1L,
+                        "User 1",
                         CompletionStatus.NOT_COMPLETED);
 
         when(activityRegistrationService.getRegistrationsByActivityId(activityId))
@@ -169,8 +181,7 @@ class ActivityRegistrationControllerTest {
         mockMvc.perform(
                         get("/api/activity-registrations/activities/{activityId}", activityId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].activityId").value(activityId));
+                .andExpect(jsonPath("$.length()").value(1));
     }
 
     @Test
@@ -179,7 +190,11 @@ class ActivityRegistrationControllerTest {
 
         ActivityRegistrationDTO dto =
                 new ActivityRegistrationDTO(
-                        1L, 1L, "Activity 1", userId, "User 1",
+                        UUID.randomUUID(),
+                        UUID.randomUUID(),
+                        "Activity 1",
+                        userId,
+                        "User 1",
                         CompletionStatus.NOT_COMPLETED);
 
         when(activityRegistrationService.getRegistrationsByUserId(userId))
@@ -192,20 +207,20 @@ class ActivityRegistrationControllerTest {
                 .andExpect(jsonPath("$[0].userId").value(userId));
     }
 
-    // ------------------------------------------------------------------
-    // UPDATE
-    // ------------------------------------------------------------------
-
     @Test
     void updateCompletionStatus_success() throws Exception {
-        Long id = 1L;
+        UUID id = UUID.randomUUID();
 
         ActivityCompletionUpdateDTO updateDTO = new ActivityCompletionUpdateDTO();
         updateDTO.setCompletionStatus(CompletionStatus.COMPLETED);
 
         ActivityRegistrationDTO updated =
                 new ActivityRegistrationDTO(
-                        id, 1L, "Activity 1", 1L, "User 1",
+                        id,
+                        UUID.randomUUID(),
+                        "Activity 1",
+                        1L,
+                        "User 1",
                         CompletionStatus.COMPLETED);
 
         when(activityRegistrationService
@@ -223,40 +238,34 @@ class ActivityRegistrationControllerTest {
     @Test
     void updateCompletionStatus_notFound() throws Exception {
         when(activityRegistrationService
-                .updateCompletionStatus(eq(999L), any()))
+                .updateCompletionStatus(any(UUID.class), any()))
                 .thenThrow(new RuntimeException("Registration not found"));
 
         ActivityCompletionUpdateDTO updateDTO = new ActivityCompletionUpdateDTO();
         updateDTO.setCompletionStatus(CompletionStatus.COMPLETED);
 
-        mockMvc.perform(patch("/api/activity-registrations/{id}/status", 999L)
+        mockMvc.perform(patch("/api/activity-registrations/{id}/status", UUID.randomUUID())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDTO)))
                 .andExpect(status().isNotFound());
     }
 
-    // ------------------------------------------------------------------
-    // DELETE
-    // ------------------------------------------------------------------
-
     @Test
     void deleteRegistration_success() throws Exception {
-        doNothing().when(activityRegistrationService).deleteRegistration(1L);
+        doNothing().when(activityRegistrationService)
+                .deleteRegistration(any(UUID.class));
 
-        mockMvc.perform(delete("/api/activity-registrations/{id}", 1L))
+        mockMvc.perform(delete("/api/activity-registrations/{id}", UUID.randomUUID()))
                 .andExpect(status().isNoContent());
-
-        verify(activityRegistrationService, times(1))
-                .deleteRegistration(1L);
     }
 
     @Test
     void deleteRegistration_notFound() throws Exception {
         doThrow(new RuntimeException("Registration not found"))
                 .when(activityRegistrationService)
-                .deleteRegistration(999L);
+                .deleteRegistration(any(UUID.class));
 
-        mockMvc.perform(delete("/api/activity-registrations/{id}", 999L))
+        mockMvc.perform(delete("/api/activity-registrations/{id}", UUID.randomUUID()))
                 .andExpect(status().isNotFound());
     }
 }

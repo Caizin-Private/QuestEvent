@@ -3,10 +3,10 @@ package com.questevent.service;
 import com.questevent.dto.ProgramRegistrationDTO;
 import com.questevent.dto.ProgramRegistrationRequestDTO;
 import com.questevent.dto.ProgramRegistrationResponseDTO;
+import com.questevent.dto.UserPrincipal;
 import com.questevent.entity.Program;
 import com.questevent.entity.ProgramRegistration;
 import com.questevent.entity.User;
-import com.questevent.dto.UserPrincipal;
 import com.questevent.enums.Role;
 import com.questevent.repository.ProgramRegistrationRepository;
 import com.questevent.repository.ProgramRepository;
@@ -24,6 +24,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -73,31 +74,38 @@ class ProgramRegistrationServiceTest {
 
     @Test
     void registerParticipantForProgram_success() {
-        mockAuthenticatedUser(1L);
+
+        Long userId = 1L;
+        UUID programId = UUID.randomUUID();
+        UUID registrationId = UUID.randomUUID();
+
+        mockAuthenticatedUser(userId);
 
         ProgramRegistrationRequestDTO request =
                 new ProgramRegistrationRequestDTO();
-        request.setProgramId(1L);
+        request.setProgramId(programId);
 
         User user = new User();
-        user.setUserId(1L);
+        user.setUserId(userId);
         user.setName("Test User");
         user.setEmail("test@example.com");
 
         Program program = new Program();
-        program.setProgramId(1L);
+        program.setProgramId(programId);
         program.setProgramTitle("Test Program");
 
         ProgramRegistration saved = new ProgramRegistration();
-        saved.setProgramRegistrationId(1L);
+        saved.setProgramRegistrationId(registrationId);
         saved.setProgram(program);
         saved.setUser(user);
         saved.setRegisteredAt(Instant.now());
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(programRepository.findById(1L)).thenReturn(Optional.of(program));
+        when(userRepository.findById(userId))
+                .thenReturn(Optional.of(user));
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.of(program));
         when(programRegistrationRepository
-                .existsByProgram_ProgramIdAndUser_UserId(1L, 1L))
+                .existsByProgram_ProgramIdAndUser_UserId(programId, userId))
                 .thenReturn(false);
         when(programRegistrationRepository.save(any()))
                 .thenReturn(saved);
@@ -106,29 +114,32 @@ class ProgramRegistrationServiceTest {
                 programRegistrationService.registerParticipantForProgram(request);
 
         assertNotNull(result);
-        assertEquals(1L, result.getProgramRegistrationId());
-        assertEquals(1L, result.getProgramId());
-        assertEquals(1L, result.getUserId());
+        assertEquals(registrationId, result.getProgramRegistrationId());
+        assertEquals(programId, result.getProgramId());
+        assertEquals(userId, result.getUserId());
 
         verify(programWalletService)
-                .createWallet(1L, 1L);
+                .createWallet(userId, programId);
     }
 
     @Test
     void registerParticipantForProgram_userNotFound() {
-        mockAuthenticatedUser(1L);
+
+        Long userId = 1L;
+        UUID programId = UUID.randomUUID();
+
+        mockAuthenticatedUser(userId);
 
         ProgramRegistrationRequestDTO request =
                 new ProgramRegistrationRequestDTO();
-        request.setProgramId(1L);
+        request.setProgramId(programId);
 
-        when(userRepository.findById(1L))
+        when(userRepository.findById(userId))
                 .thenReturn(Optional.empty());
 
         RuntimeException ex = assertThrows(
                 RuntimeException.class,
-                () -> programRegistrationService
-                        .registerParticipantForProgram(request)
+                () -> programRegistrationService.registerParticipantForProgram(request)
         );
 
         assertEquals("User not found", ex.getMessage());
@@ -136,24 +147,27 @@ class ProgramRegistrationServiceTest {
 
     @Test
     void registerParticipantForProgram_programNotFound() {
-        mockAuthenticatedUser(1L);
+
+        Long userId = 1L;
+        UUID programId = UUID.randomUUID();
+
+        mockAuthenticatedUser(userId);
 
         ProgramRegistrationRequestDTO request =
                 new ProgramRegistrationRequestDTO();
-        request.setProgramId(99L);
+        request.setProgramId(programId);
 
         User user = new User();
-        user.setUserId(1L);
+        user.setUserId(userId);
 
-        when(userRepository.findById(1L))
+        when(userRepository.findById(userId))
                 .thenReturn(Optional.of(user));
-        when(programRepository.findById(99L))
+        when(programRepository.findById(programId))
                 .thenReturn(Optional.empty());
 
         RuntimeException ex = assertThrows(
                 RuntimeException.class,
-                () -> programRegistrationService
-                        .registerParticipantForProgram(request)
+                () -> programRegistrationService.registerParticipantForProgram(request)
         );
 
         assertEquals("Program not found", ex.getMessage());
@@ -165,16 +179,21 @@ class ProgramRegistrationServiceTest {
 
     @Test
     void getAllRegistrations_success() {
+
+        UUID programId = UUID.randomUUID();
+        Long userId = 1L;
+        UUID registrationId = UUID.randomUUID();
+
         Program program = new Program();
-        program.setProgramId(1L);
+        program.setProgramId(programId);
         program.setProgramTitle("Program 1");
 
         User user = new User();
-        user.setUserId(1L);
+        user.setUserId(userId);
         user.setName("User 1");
 
         ProgramRegistration reg = new ProgramRegistration();
-        reg.setProgramRegistrationId(1L);
+        reg.setProgramRegistrationId(registrationId);
         reg.setProgram(program);
         reg.setUser(user);
         reg.setRegisteredAt(Instant.now());
@@ -190,40 +209,51 @@ class ProgramRegistrationServiceTest {
 
     @Test
     void getRegistrationById_success() {
+
+        UUID programId = UUID.randomUUID();
+        Long userId = 1L;
+        UUID registrationId = UUID.randomUUID();
+
         Program program = new Program();
-        program.setProgramId(1L);
+        program.setProgramId(programId);
         program.setProgramTitle("Program");
 
         User user = new User();
-        user.setUserId(1L);
+        user.setUserId(userId);
         user.setName("User");
 
         ProgramRegistration reg = new ProgramRegistration();
-        reg.setProgramRegistrationId(1L);
+        reg.setProgramRegistrationId(registrationId);
         reg.setProgram(program);
         reg.setUser(user);
         reg.setRegisteredAt(Instant.now());
 
-        when(programRegistrationRepository.findById(1L))
+        when(programRegistrationRepository.findById(registrationId))
                 .thenReturn(Optional.of(reg));
 
         ProgramRegistrationDTO dto =
-                programRegistrationService.getRegistrationById(1L);
+                programRegistrationService.getRegistrationById(registrationId);
 
-        assertEquals(1L, dto.getProgramRegistrationId());
+        assertEquals(registrationId, dto.getProgramRegistrationId());
     }
 
     @Test
     void getRegistrationById_notFound() {
-        when(programRegistrationRepository.findById(99L))
+
+        UUID registrationId = UUID.randomUUID();
+
+        when(programRegistrationRepository.findById(registrationId))
                 .thenReturn(Optional.empty());
 
         RuntimeException ex = assertThrows(
                 RuntimeException.class,
-                () -> programRegistrationService.getRegistrationById(99L)
+                () -> programRegistrationService.getRegistrationById(registrationId)
         );
 
-        assertEquals("Registration not found with id: 99", ex.getMessage());
+        assertEquals(
+                "Registration not found with id: " + registrationId,
+                ex.getMessage()
+        );
     }
 
     // --------------------------------------------------------
@@ -232,27 +262,36 @@ class ProgramRegistrationServiceTest {
 
     @Test
     void deleteRegistration_success() {
-        when(programRegistrationRepository.existsById(1L))
+
+        UUID registrationId = UUID.randomUUID();
+
+        when(programRegistrationRepository.existsById(registrationId))
                 .thenReturn(true);
 
         assertDoesNotThrow(() ->
-                programRegistrationService.deleteRegistration(1L));
+                programRegistrationService.deleteRegistration(registrationId));
 
         verify(programRegistrationRepository)
-                .deleteById(1L);
+                .deleteById(registrationId);
     }
 
     @Test
     void deleteRegistration_notFound() {
-        when(programRegistrationRepository.existsById(99L))
+
+        UUID registrationId = UUID.randomUUID();
+
+        when(programRegistrationRepository.existsById(registrationId))
                 .thenReturn(false);
 
         RuntimeException ex = assertThrows(
                 RuntimeException.class,
-                () -> programRegistrationService.deleteRegistration(99L)
+                () -> programRegistrationService.deleteRegistration(registrationId)
         );
 
-        assertEquals("Registration not found with id: 99", ex.getMessage());
+        assertEquals(
+                "Registration not found with id: " + registrationId,
+                ex.getMessage()
+        );
     }
 
     // --------------------------------------------------------
@@ -261,13 +300,15 @@ class ProgramRegistrationServiceTest {
 
     @Test
     void getParticipantCountForProgram_success() {
+
+        UUID programId = UUID.randomUUID();
+
         when(programRegistrationRepository
-                .countByProgramProgramId(1L))
+                .countByProgramProgramId(programId))
                 .thenReturn(5L);
 
         long count =
-                programRegistrationService
-                        .getParticipantCountForProgram(1L);
+                programRegistrationService.getParticipantCountForProgram(programId);
 
         assertEquals(5L, count);
     }

@@ -17,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/programs/{programId}/activities")
@@ -44,8 +45,7 @@ public class ActivityController {
             @ApiResponse(responseCode = "404", description = "Program not found")
     })
     public ResponseEntity<ActivityResponseDTO> createActivity(
-            @Parameter(description = "Program ID", required = true)
-            @PathVariable Long programId,
+            @Parameter(description = "Program ID", required = true) @PathVariable UUID programId,
             @RequestBody ActivityRequestDTO dto) {
 
         log.info("Creating activity for programId={}, activityName={}",
@@ -73,7 +73,7 @@ public class ActivityController {
     })
     public ResponseEntity<List<ActivityResponseDTO>> getActivities(
             @Parameter(description = "Program ID", required = true)
-            @PathVariable Long programId) {
+            @PathVariable UUID programId) {
 
         log.info("Fetching activities for programId={}", programId);
 
@@ -100,10 +100,8 @@ public class ActivityController {
             @ApiResponse(responseCode = "404", description = "Activity or program not found")
     })
     public ResponseEntity<ActivityResponseDTO> updateActivity(
-            @Parameter(description = "Program ID", required = true)
-            @PathVariable Long programId,
-            @Parameter(description = "Activity ID", required = true)
-            @PathVariable Long activityId,
+            @Parameter(description = "Program ID", required = true) @PathVariable UUID programId,
+            @Parameter(description = "Activity ID", required = true) @PathVariable UUID activityId,
             @RequestBody ActivityRequestDTO dto) {
 
         log.info("Updating activity activityId={}, programId={}",
@@ -130,9 +128,9 @@ public class ActivityController {
     })
     public ResponseEntity<Void> deleteActivity(
             @Parameter(description = "Program ID", required = true)
-            @PathVariable Long programId,
+            @PathVariable UUID programId,
             @Parameter(description = "Activity ID", required = true)
-            @PathVariable Long activityId) {
+            @PathVariable UUID activityId) {
 
         log.warn("Deleting activity activityId={}, programId={}",
                 activityId, programId);
@@ -157,7 +155,7 @@ public class ActivityController {
     })
     public ResponseEntity<List<ActivityResponseDTO>> getCompulsoryActivities(
             @Parameter(description = "Program ID", required = true)
-            @PathVariable Long programId) {
+            @PathVariable UUID programId) {
 
         log.info("Fetching compulsory activities for programId={}", programId);
 

@@ -15,10 +15,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 class ActivityServiceTest {
@@ -39,7 +39,8 @@ class ActivityServiceTest {
 
     @Test
     void createActivity_success() {
-        Long programId = 1L;
+        UUID programId = UUID.randomUUID();
+
         Program program = new Program();
         program.setProgramId(programId);
 
@@ -50,15 +51,18 @@ class ActivityServiceTest {
         dto.setIsCompulsory(true);
 
         Activity savedActivity = new Activity();
-        savedActivity.setActivityId(1L);
+        savedActivity.setActivityId(UUID.randomUUID());
         savedActivity.setActivityName("Test Activity");
         savedActivity.setActivityDuration(60);
-        savedActivity.setRewardGems(100);
+        savedActivity.setRewardGems(100L);
         savedActivity.setIsCompulsory(true);
         savedActivity.setProgram(program);
 
-        when(programRepository.findById(programId)).thenReturn(Optional.of(program));
-        when(activityRepository.save(any(Activity.class))).thenReturn(savedActivity);
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.of(program));
+
+        when(activityRepository.save(any(Activity.class)))
+                .thenReturn(savedActivity);
 
         Activity result = activityService.createActivity(programId, dto);
 
@@ -71,10 +75,11 @@ class ActivityServiceTest {
 
     @Test
     void createActivity_programNotFound() {
-        Long programId = 999L;
+        UUID programId = UUID.randomUUID();
         ActivityRequestDTO dto = new ActivityRequestDTO();
 
-        when(programRepository.findById(programId)).thenReturn(Optional.empty());
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.empty());
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
@@ -88,8 +93,8 @@ class ActivityServiceTest {
 
     @Test
     void updateActivity_success() {
-        Long programId = 1L;
-        Long activityId = 1L;
+        UUID programId = UUID.randomUUID();
+        UUID activityId = UUID.randomUUID();
 
         Program program = new Program();
         program.setProgramId(programId);
@@ -106,13 +111,17 @@ class ActivityServiceTest {
         Activity updatedActivity = new Activity();
         updatedActivity.setActivityId(activityId);
         updatedActivity.setActivityName("New Name");
-        updatedActivity.setRewardGems(200);
+        updatedActivity.setRewardGems(200L);
         updatedActivity.setProgram(program);
 
-        when(activityRepository.findById(activityId)).thenReturn(Optional.of(existingActivity));
-        when(activityRepository.save(any(Activity.class))).thenReturn(updatedActivity);
+        when(activityRepository.findById(activityId))
+                .thenReturn(Optional.of(existingActivity));
 
-        Activity result = activityService.updateActivity(programId, activityId, dto);
+        when(activityRepository.save(any(Activity.class)))
+                .thenReturn(updatedActivity);
+
+        Activity result =
+                activityService.updateActivity(programId, activityId, dto);
 
         assertNotNull(result);
         assertEquals("New Name", result.getActivityName());
@@ -122,11 +131,13 @@ class ActivityServiceTest {
 
     @Test
     void updateActivity_activityNotFound() {
-        Long programId = 1L;
-        Long activityId = 999L;
+        UUID programId = UUID.randomUUID();
+        UUID activityId = UUID.randomUUID();
+
         ActivityRequestDTO dto = new ActivityRequestDTO();
 
-        when(activityRepository.findById(activityId)).thenReturn(Optional.empty());
+        when(activityRepository.findById(activityId))
+                .thenReturn(Optional.empty());
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
@@ -139,9 +150,9 @@ class ActivityServiceTest {
 
     @Test
     void updateActivity_activityDoesNotBelongToProgram() {
-        Long programId = 1L;
-        Long activityId = 1L;
-        Long differentProgramId = 2L;
+        UUID programId = UUID.randomUUID();
+        UUID activityId = UUID.randomUUID();
+        UUID differentProgramId = UUID.randomUUID();
 
         Program differentProgram = new Program();
         differentProgram.setProgramId(differentProgramId);
@@ -152,7 +163,8 @@ class ActivityServiceTest {
 
         ActivityRequestDTO dto = new ActivityRequestDTO();
 
-        when(activityRepository.findById(activityId)).thenReturn(Optional.of(existingActivity));
+        when(activityRepository.findById(activityId))
+                .thenReturn(Optional.of(existingActivity));
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
@@ -166,11 +178,13 @@ class ActivityServiceTest {
 
     @Test
     void getActivitiesByProgramId_success() {
-        Long programId = 1L;
+        UUID programId = UUID.randomUUID();
+
         Activity activity1 = new Activity();
-        activity1.setActivityId(1L);
+        activity1.setActivityId(UUID.randomUUID());
+
         Activity activity2 = new Activity();
-        activity2.setActivityId(2L);
+        activity2.setActivityId(UUID.randomUUID());
 
         when(programRepository.existsById(programId))
                 .thenReturn(true);
@@ -178,19 +192,19 @@ class ActivityServiceTest {
         when(activityRepository.findByProgram_ProgramId(programId))
                 .thenReturn(List.of(activity1, activity2));
 
-        List<Activity> result = activityService.getActivitiesByProgramId(programId);
+        List<Activity> result =
+                activityService.getActivitiesByProgramId(programId);
 
         assertEquals(2, result.size());
 
-        verify(programRepository, times(1)).existsById(programId);
-        verify(activityRepository, times(1))
-                .findByProgram_ProgramId(programId);
+        verify(programRepository).existsById(programId);
+        verify(activityRepository).findByProgram_ProgramId(programId);
     }
 
     @Test
     void deleteActivity_success() {
-        Long programId = 1L;
-        Long activityId = 1L;
+        UUID programId = UUID.randomUUID();
+        UUID activityId = UUID.randomUUID();
 
         Program program = new Program();
         program.setProgramId(programId);
@@ -199,20 +213,24 @@ class ActivityServiceTest {
         activity.setActivityId(activityId);
         activity.setProgram(program);
 
-        when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
+        when(activityRepository.findById(activityId))
+                .thenReturn(Optional.of(activity));
+
         doNothing().when(activityRepository).delete(activity);
 
-        assertDoesNotThrow(() -> activityService.deleteActivity(programId, activityId));
+        assertDoesNotThrow(() ->
+                activityService.deleteActivity(programId, activityId));
 
-        verify(activityRepository, times(1)).delete(activity);
+        verify(activityRepository).delete(activity);
     }
 
     @Test
     void deleteActivity_activityNotFound() {
-        Long programId = 1L;
-        Long activityId = 999L;
+        UUID programId = UUID.randomUUID();
+        UUID activityId = UUID.randomUUID();
 
-        when(activityRepository.findById(activityId)).thenReturn(Optional.empty());
+        when(activityRepository.findById(activityId))
+                .thenReturn(Optional.empty());
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
@@ -226,9 +244,9 @@ class ActivityServiceTest {
 
     @Test
     void deleteActivity_mismatchBetweenProgramAndActivity() {
-        Long programId = 1L;
-        Long activityId = 1L;
-        Long differentProgramId = 2L;
+        UUID programId = UUID.randomUUID();
+        UUID activityId = UUID.randomUUID();
+        UUID differentProgramId = UUID.randomUUID();
 
         Program differentProgram = new Program();
         differentProgram.setProgramId(differentProgramId);
@@ -237,7 +255,8 @@ class ActivityServiceTest {
         activity.setActivityId(activityId);
         activity.setProgram(differentProgram);
 
-        when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
+        when(activityRepository.findById(activityId))
+                .thenReturn(Optional.of(activity));
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,

@@ -16,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/program-registrations")
@@ -73,7 +74,7 @@ public class ProgramRegistrationController {
     })
     public ResponseEntity<ProgramRegistrationResponseDTO> addParticipantByHost(
             @Parameter(description = "Program ID", required = true)
-            @PathVariable Long programId,
+            @PathVariable UUID programId,
             @RequestBody AddParticipantInProgramRequestDTO request) {
 
         log.info("Host adding participant: programId={}, userId={}",
@@ -121,7 +122,7 @@ public class ProgramRegistrationController {
     })
     public ResponseEntity<ProgramRegistrationDTO> getRegistrationById(
             @Parameter(description = "Registration ID", required = true)
-            @PathVariable Long id) {
+            @PathVariable UUID id) {
 
         log.info("Fetching program registration id={}", id);
 
@@ -147,7 +148,7 @@ public class ProgramRegistrationController {
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
     public ResponseEntity<List<ProgramRegistrationDTO>> getRegistrationsByProgram(
             @Parameter(description = "Program ID", required = true)
-            @PathVariable Long programId) {
+            @PathVariable UUID programId) {
 
         log.info("Fetching registrations for programId={}", programId);
 
@@ -192,7 +193,7 @@ public class ProgramRegistrationController {
     @ApiResponse(responseCode = "200", description = "Successfully retrieved count")
     public ResponseEntity<Long> getParticipantCount(
             @Parameter(description = "Program ID", required = true)
-            @PathVariable Long programId) {
+            @PathVariable UUID programId) {
 
         log.info("Fetching participant count for programId={}", programId);
 
@@ -215,7 +216,7 @@ public class ProgramRegistrationController {
     })
     public ResponseEntity<Void> deleteRegistration(
             @Parameter(description = "Registration ID", required = true)
-            @PathVariable Long id) {
+            @PathVariable UUID id) {
 
         log.warn("Deleting program registration id={}", id);
 
@@ -243,7 +244,7 @@ public class ProgramRegistrationController {
     })
     public ResponseEntity<Void> removeParticipantByHost(
             @Parameter(description = "Program ID", required = true)
-            @PathVariable Long programId,
+            @PathVariable UUID programId,
             @Parameter(description = "User ID to remove", required = true)
             @PathVariable Long userId) {
 

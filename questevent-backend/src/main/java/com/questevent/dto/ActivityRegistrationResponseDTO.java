@@ -5,17 +5,19 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class ActivityRegistrationResponseDTO {
-    private Long activityRegistrationId;
-    private Long activityId;
+    private UUID activityRegistrationId;
+    private UUID activityId;
     private String activityName;
     private Long userId;
     private String userName;
     private String userEmail;
     private CompletionStatus completionStatus;
-    private Integer rewardGems;
+    private Long rewardGems;
     private String message;
 }

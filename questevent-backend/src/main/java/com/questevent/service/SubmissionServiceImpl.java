@@ -9,6 +9,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -20,7 +21,7 @@ public class SubmissionServiceImpl implements SubmissionService {
 
     @Override
     @Transactional
-    public void submitActivity(Long activityId, Long userId, String submissionUrl) {
+    public void submitActivity(UUID activityId, Long userId, String submissionUrl) {
 
         log.debug(
                 "Submit activity requested | activityId={} | userId={}",

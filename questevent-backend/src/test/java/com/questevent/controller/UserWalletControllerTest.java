@@ -62,7 +62,7 @@ class UserWalletControllerTest {
 
         UserWalletBalanceDTO dto = new UserWalletBalanceDTO();
         dto.setWalletId(walletId);
-        dto.setGems(150);
+        dto.setGems(150L);
 
         when(userWalletService.getMyWalletBalance())
                 .thenReturn(dto);

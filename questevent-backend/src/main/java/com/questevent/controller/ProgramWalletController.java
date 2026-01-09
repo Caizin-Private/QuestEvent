@@ -68,7 +68,7 @@ public class ProgramWalletController {
     })
     public ResponseEntity<ProgramWalletBalanceDTO> getMyProgramWallet(
             @Parameter(description = "Program ID", required = true)
-            @PathVariable Long programId
+            @PathVariable UUID programId
     ) {
         log.info("Fetching my program wallet for programId={}", programId);
 
@@ -93,7 +93,7 @@ public class ProgramWalletController {
     })
     public ResponseEntity<List<ProgramWalletBalanceDTO>> getProgramWalletsByProgramId(
             @Parameter(description = "Program ID", required = true)
-            @PathVariable Long programId
+            @PathVariable UUID programId
     ) {
         log.info("Fetching all program wallets for programId={}", programId);
 

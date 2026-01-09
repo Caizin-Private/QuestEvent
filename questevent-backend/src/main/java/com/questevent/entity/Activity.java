@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "activities")
@@ -14,9 +15,9 @@ import java.util.List;
 public class Activity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "activity_id")
-    private Long activityId;
+    @GeneratedValue
+    @Column(name = "activity_id", nullable = false, updatable = false)
+    private UUID activityId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
@@ -39,7 +40,7 @@ public class Activity {
     private String activityDescription;
 
     @Column(name = "reward_gems",nullable = false)
-    private Integer rewardGems;
+    private Long rewardGems;
 
     @Column(name = "created_at",updatable = false)
     private Instant createdAt;

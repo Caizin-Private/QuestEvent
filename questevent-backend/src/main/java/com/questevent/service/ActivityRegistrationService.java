@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -106,7 +107,7 @@ public class ActivityRegistrationService {
     }
 
     @Transactional(readOnly = true)
-    public ActivityRegistrationDTO getRegistrationById(Long id) {
+    public ActivityRegistrationDTO getRegistrationById(UUID id) {
 
         log.debug("Fetching activity registration | registrationId={}", id);
 
@@ -121,7 +122,7 @@ public class ActivityRegistrationService {
     }
 
     @Transactional(readOnly = true)
-    public List<ActivityRegistrationDTO> getRegistrationsByActivityId(Long activityId) {
+    public List<ActivityRegistrationDTO> getRegistrationsByActivityId(UUID activityId) {
 
         log.debug("Fetching registrations by activity | activityId={}", activityId);
 
@@ -144,7 +145,7 @@ public class ActivityRegistrationService {
 
     @Transactional(readOnly = true)
     public List<ActivityRegistrationDTO> getRegistrationsByActivityIdAndStatus(
-            Long activityId,
+            UUID activityId,
             CompletionStatus status) {
 
         log.debug(
@@ -180,7 +181,7 @@ public class ActivityRegistrationService {
 
     @Transactional
     public ActivityRegistrationDTO updateCompletionStatus(
-            Long id,
+            UUID id,
             ActivityCompletionUpdateDTO updateDTO) {
 
         log.debug(
@@ -211,7 +212,7 @@ public class ActivityRegistrationService {
     }
 
     @Transactional
-    public void deleteRegistration(Long id) {
+    public void deleteRegistration(UUID id) {
 
         log.debug("Delete activity registration requested | registrationId={}", id);
 
@@ -226,7 +227,7 @@ public class ActivityRegistrationService {
     }
 
     @Transactional(readOnly = true)
-    public long getParticipantCountForActivity(Long activityId) {
+    public long getParticipantCountForActivity(UUID activityId) {
 
         long count =
                 activityRegistrationRepository.countByActivityActivityId(activityId);
@@ -251,7 +252,7 @@ public class ActivityRegistrationService {
             return;
         }
 
-        Long programId = program.getProgramId();
+        UUID programId = program.getProgramId();
 
         List<Activity> compulsoryActivities =
                 activityRepository.findByProgram_ProgramIdAndIsCompulsoryTrue(programId);
@@ -313,7 +314,7 @@ public class ActivityRegistrationService {
 
     @Transactional
     public ActivityRegistrationResponseDTO addParticipantToActivity(
-            Long activityId,
+            UUID activityId,
             AddParticipantInActivityRequestDTO request) {
 
         log.debug(
