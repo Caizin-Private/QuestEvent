@@ -109,7 +109,7 @@ public class ProgramRegistrationController {
     @Operation(summary = "Get registrations by user", description = "Retrieves all program registrations for a specific user")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
     public ResponseEntity<List<ProgramRegistrationDTO>> getRegistrationsByUser(
-            @Parameter(description = "User ID", required = true) @PathVariable UUID userId) {
+            @Parameter(description = "User ID", required = true) @PathVariable Long userId) {
         List<ProgramRegistrationDTO> registrations =
                 programRegistrationService.getRegistrationsByUserId(userId);
         return ResponseEntity.ok(registrations);
@@ -152,7 +152,7 @@ public class ProgramRegistrationController {
     })
     public ResponseEntity<Void> removeParticipantByHost(
             @Parameter(description = "Program ID", required = true) @PathVariable UUID programId,
-            @Parameter(description = "User ID to remove", required = true) @PathVariable UUID userId) {
+            @Parameter(description = "User ID to remove", required = true) @PathVariable Long userId) {
         try {
             programRegistrationService.deleteRegistrationByProgramAndUser(programId, userId);
             return ResponseEntity.noContent().build();

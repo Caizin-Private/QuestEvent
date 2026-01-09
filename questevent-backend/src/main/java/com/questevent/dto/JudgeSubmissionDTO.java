@@ -10,7 +10,7 @@ public record JudgeSubmissionDTO(
         UUID submissionId,
         UUID activityId,
         String activityName,
-        UUID userId,
+        Long userId,
         String userName,
         String submissionUrl,
         Long awardedGems,

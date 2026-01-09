@@ -15,7 +15,7 @@ public class ProgramRegistrationDTO {
     private UUID programRegistrationId;
     private UUID programId;
     private String programTitle;
-    private UUID userId;
+    private Long userId;
     private String userName;
     private Instant registeredAt;
 }

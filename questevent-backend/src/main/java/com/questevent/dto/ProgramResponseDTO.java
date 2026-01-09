@@ -17,8 +17,8 @@ public class ProgramResponseDTO {
     private Instant startDate;
     private Instant endDate;
     private ProgramStatus status;
-    private UUID hostUserId;
-    private UUID judgeUserId;
+    private Long hostUserId;
+    private Long judgeUserId;
     private Instant createdAt;
     private Instant updatedAt;
 }

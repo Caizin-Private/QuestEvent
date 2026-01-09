@@ -103,7 +103,7 @@ public class RbacService {
         return user != null && user.getRole() == Role.OWNER;
     }
 
-    public boolean canAccessUserProfile(Authentication authentication, UUID userId) {
+    public boolean canAccessUserProfile(Authentication authentication, Long userId) {
         User user = currentUser(authentication);
         if (user == null) return false;
 
@@ -275,7 +275,7 @@ public class RbacService {
         return judgeRepository.findByUserUserId(user.getUserId()).isPresent();
     }
 
-    public boolean canAccessUserWallet(Authentication authentication, UUID userId) {
+    public boolean canAccessUserWallet(Authentication authentication, Long userId) {
         User user = currentUser(authentication);
         if (user == null) return false;
 
@@ -353,7 +353,7 @@ public class RbacService {
     public boolean canRegisterForProgram(
             Authentication authentication,
             UUID programId,
-            UUID userId
+            Long userId
     ) {
         User user = currentUser(authentication);
         if (user == null) return false;
@@ -381,7 +381,7 @@ public class RbacService {
     public boolean canRegisterForActivity(
             Authentication authentication,
             UUID activityId,
-            UUID userId
+            Long userId
     ) {
         User user = currentUser(authentication);
         if (user == null) return false;
@@ -419,7 +419,7 @@ public class RbacService {
     public boolean canSubmitActivity(
             Authentication authentication,
             UUID activityId,
-            UUID requestUserId
+            Long requestUserId
     ) {
         User user = currentUser(authentication);
         if (user == null) {

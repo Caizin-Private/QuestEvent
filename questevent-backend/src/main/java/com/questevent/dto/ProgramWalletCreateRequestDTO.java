@@ -11,6 +11,6 @@ import java.util.UUID;
 @AllArgsConstructor
 public class ProgramWalletCreateRequestDTO {
 
-    private UUID userId;
+    private Long userId;
     private UUID programId;
 }

@@ -76,7 +76,7 @@ public class UserController {
     })
     public ResponseEntity<UserResponseDto> getUser(
             @Parameter(description = "User ID", required = true)
-            @PathVariable UUID id) {
+            @PathVariable Long id) {
 
         User user = userService.getUserById(id);
         return ResponseEntity.ok(userService.convertToDto(user));
@@ -92,7 +92,7 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = "Forbidden - Access denied")
     })
     public ResponseEntity<UserResponseDto> updateUser(
-            @PathVariable UUID id,
+            @PathVariable Long id,
             @Valid @RequestBody User user) {
 
         User updatedUser = userService.updateUser(id, user);
@@ -108,7 +108,7 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = "Forbidden - Platform Owner only")
     })
     public ResponseEntity<Void> deleteUser(
-            @PathVariable UUID id) {
+            @PathVariable Long id) {
 
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();

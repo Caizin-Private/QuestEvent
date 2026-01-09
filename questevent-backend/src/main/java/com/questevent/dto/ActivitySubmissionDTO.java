@@ -7,7 +7,7 @@ import java.util.UUID;
 public record ActivitySubmissionDTO(
         UUID submissionId,
         UUID activityId,
-        UUID userId,
+        Long userId,
         String submissionUrl,
         Long awardedGems,
         Instant submittedAt,

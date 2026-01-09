@@ -38,7 +38,7 @@ public class ProgramWalletService {
         this.programRepository = programRepository;
     }
 
-    public ProgramWallet createWallet(UUID userId, UUID programId) {
+    public ProgramWallet createWallet(Long userId, UUID programId) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));

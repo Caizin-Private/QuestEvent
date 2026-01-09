@@ -95,7 +95,7 @@ public class AuthController {
             @RequestParam String gender
     ) throws IOException {
 
-        UUID userId = (UUID) request.getSession().getAttribute("userId");
+        Long userId = (Long) request.getSession().getAttribute("userId");
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -118,7 +118,7 @@ public class AuthController {
     @ResponseBody
     public String profile(HttpServletRequest request) {
 
-        UUID userId = (UUID) request.getSession().getAttribute("userId");
+        Long userId = (Long) request.getSession().getAttribute("userId");
         User user = userRepository.findById(userId).orElseThrow();
 
         return """

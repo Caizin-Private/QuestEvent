@@ -3,7 +3,7 @@ package com.questevent.dto;
 import java.util.UUID;
 
 public record LeaderboardDTO(
-        UUID userId,
+        Long userId,
         String userName,
         Long completedActivitiesCount,
         Long gems,

@@ -20,7 +20,7 @@ public class SubmissionServiceImpl implements SubmissionService {
 
     @Override
     @Transactional
-    public void submitActivity(UUID activityId, UUID userId, String submissionUrl) {
+    public void submitActivity(UUID activityId, Long userId, String submissionUrl) {
 
 
         // 1️⃣ Validate registration

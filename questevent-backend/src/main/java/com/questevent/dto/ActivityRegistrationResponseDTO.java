@@ -14,7 +14,7 @@ public class ActivityRegistrationResponseDTO {
     private UUID activityRegistrationId;
     private UUID activityId;
     private String activityName;
-    private UUID userId;
+    private Long userId;
     private String userName;
     private String userEmail;
     private CompletionStatus completionStatus;

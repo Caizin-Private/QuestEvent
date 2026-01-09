@@ -34,7 +34,7 @@ public class ActivityRegistrationService {
                         .getAuthentication()
                         .getPrincipal();
 
-        UUID userId = principal.userId();
+        Long userId = principal.userId();
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() ->
@@ -93,7 +93,7 @@ public class ActivityRegistrationService {
     }
 
     @Transactional(readOnly = true)
-    public List<ActivityRegistrationDTO> getRegistrationsByUserId(UUID userId) {
+    public List<ActivityRegistrationDTO> getRegistrationsByUserId(Long userId) {
         return activityRegistrationRepository.findByUserUserId(userId)
                 .stream()
                 .map(this::mapToDTO)
@@ -113,7 +113,7 @@ public class ActivityRegistrationService {
 
     @Transactional(readOnly = true)
     public List<ActivityRegistrationDTO> getRegistrationsByUserIdAndStatus(
-            UUID userId, CompletionStatus status) {
+            Long userId, CompletionStatus status) {
 
         return activityRegistrationRepository
                 .findByUserUserIdAndCompletionStatus(userId, status)

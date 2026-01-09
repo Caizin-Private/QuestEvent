@@ -10,7 +10,7 @@ public class ActivitySubmissionRequestDTO {
 
     private UUID activityId;
 
-    private UUID userId;
+    private Long userId;
 
     private String submissionUrl;
 

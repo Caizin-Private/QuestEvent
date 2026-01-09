@@ -6,6 +6,6 @@ import java.util.UUID;
 
 @Data
 public class AddParticipantInActivityRequestDTO {
-    private UUID userId;
+    private Long userId;
     private UUID activityId;
 }

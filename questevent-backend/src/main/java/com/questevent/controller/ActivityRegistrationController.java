@@ -113,7 +113,7 @@ public class ActivityRegistrationController {
     @Operation(summary = "Get registrations by user", description = "Retrieves all activity registrations for a specific user")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
     public ResponseEntity<List<ActivityRegistrationDTO>> getRegistrationsByUser(
-            @Parameter(description = "User ID", required = true) @PathVariable UUID userId) {
+            @Parameter(description = "User ID", required = true) @PathVariable Long userId) {
         List<ActivityRegistrationDTO> registrations =
                 activityRegistrationService.getRegistrationsByUserId(userId);
         return ResponseEntity.ok(registrations);
@@ -136,7 +136,7 @@ public class ActivityRegistrationController {
     @Operation(summary = "Get registrations by user and status", description = "Retrieves activity registrations for a user filtered by completion status")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved registrations")
     public ResponseEntity<List<ActivityRegistrationDTO>> getRegistrationsByUserAndStatus(
-            @Parameter(description = "User ID", required = true) @PathVariable UUID userId,
+            @Parameter(description = "User ID", required = true) @PathVariable Long userId,
             @Parameter(description = "Completion status", required = true) @PathVariable CompletionStatus status) {
         List<ActivityRegistrationDTO> registrations =
                 activityRegistrationService.getRegistrationsByUserIdAndStatus(userId, status);

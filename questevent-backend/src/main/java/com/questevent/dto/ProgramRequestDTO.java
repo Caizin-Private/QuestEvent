@@ -16,5 +16,5 @@ public class ProgramRequestDTO {
     private Instant startDate;
     private Instant endDate;
     private ProgramStatus status;
-    private UUID judgeUserId;
+    private Long judgeUserId;
 }

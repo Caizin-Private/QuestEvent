@@ -35,7 +35,7 @@ public class ProgramRegistrationService {
                         .getAuthentication()
                         .getPrincipal();
 
-        UUID userId = principal.userId();
+        Long userId = principal.userId();
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -114,7 +114,7 @@ public class ProgramRegistrationService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProgramRegistrationDTO> getRegistrationsByUserId(UUID userId) {
+    public List<ProgramRegistrationDTO> getRegistrationsByUserId(Long userId) {
         return programRegistrationRepository.findByUserUserId(userId).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
@@ -134,7 +134,7 @@ public class ProgramRegistrationService {
     }
 
     @Transactional
-    public void deleteRegistrationByProgramAndUser(UUID programId, UUID userId) {
+    public void deleteRegistrationByProgramAndUser(UUID programId, Long userId) {
         ProgramRegistration registration = programRegistrationRepository
                 .findByProgramProgramIdAndUserUserId(programId, userId)
                 .orElseThrow(() -> new RuntimeException("Registration not found for program id: " + programId + " and user id: " + userId));

@@ -14,7 +14,7 @@ public interface ProgramWalletRepository extends JpaRepository<ProgramWallet, UU
     Optional<ProgramWallet> findByUserAndProgram(User user, Program program);
 
     Optional<ProgramWallet> findByUserUserIdAndProgramProgramId(
-            UUID userId,
+            Long userId,
             UUID programId
     );
 

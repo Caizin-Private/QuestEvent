@@ -10,13 +10,13 @@ import java.util.UUID;
 
 public interface ProgramRegistrationRepository extends JpaRepository<ProgramRegistration, UUID> {
 
-    boolean existsByProgram_ProgramIdAndUser_UserId(UUID programId, UUID userId);
+    boolean existsByProgram_ProgramIdAndUser_UserId(UUID programId, Long userId);
 
     List<ProgramRegistration> findByProgramProgramId(UUID programId);
 
-    List<ProgramRegistration> findByUserUserId(UUID userId);
+    List<ProgramRegistration> findByUserUserId(Long userId);
 
-    Optional<ProgramRegistration> findByProgramProgramIdAndUserUserId(UUID programId, UUID userId);
+    Optional<ProgramRegistration> findByProgramProgramIdAndUserUserId(UUID programId, Long userId);
 
     long countByProgramProgramId(UUID programId);
 }

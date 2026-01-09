@@ -6,7 +6,7 @@ public interface SubmissionService {
 
     void submitActivity(
             UUID activityId,
-            UUID userId,
+            Long userId,
             String submissionUrl
     );
 }

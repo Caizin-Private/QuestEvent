@@ -3,6 +3,7 @@ package com.questevent.service;
 import com.questevent.dto.UserPrincipal;
 import com.questevent.enums.Role;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -108,16 +109,17 @@ public class JwtService {
     public UserPrincipal extractUserPrincipal(String token) {
         Claims claims = extractAllClaims(token);
 
-        UUID userId = claims.get("userId", UUID.class);
+
+
+        Long userId =  claims.get("userId", Long.class);
         String email = claims.get("email", String.class);
         String roleStr = claims.get("role", String.class);
 
-        if (userId == null || email == null || roleStr == null) {
-            throw new RuntimeException("Invalid ACCESS token: missing required claims");
-        }
-
-        Role role = Role.valueOf(roleStr);
-
-        return new UserPrincipal(userId, email, role);
+        return new UserPrincipal(
+                userId,
+                email,
+                Role.valueOf(roleStr)
+        );
     }
+
 }
