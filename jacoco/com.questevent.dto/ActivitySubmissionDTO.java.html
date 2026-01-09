@@ -2,13 +2,14 @@
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
-<span class="nc" id="L6">public record ActivitySubmissionDTO(</span>
-        Long submissionId,
-        Long activityId,
+<span class="nc" id="L7">public record ActivitySubmissionDTO(</span>
+        UUID submissionId,
+        UUID activityId,
         Long userId,
         String submissionUrl,
-        Integer awardedGems,
+        Long awardedGems,
         Instant submittedAt,
         Instant reviewedAt
 ) {}

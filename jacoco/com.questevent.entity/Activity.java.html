@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = &quot;activities&quot;)
@@ -14,9 +15,9 @@ import java.util.List;
 public class Activity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = &quot;activity_id&quot;)
-    private Long activityId;
+    @GeneratedValue
+    @Column(name = &quot;activity_id&quot;, nullable = false, updatable = false)
+    private UUID activityId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
@@ -39,15 +40,15 @@ public class Activity {
     private String activityDescription;
 
     @Column(name = &quot;reward_gems&quot;,nullable = false)
-    private Integer rewardGems;
+    private Long rewardGems;
 
     @Column(name = &quot;created_at&quot;,updatable = false)
     private Instant createdAt;
 
     @PrePersist
     public void onCreate() {
-<span class="nc" id="L49">        this.createdAt = Instant.now();</span>
-<span class="nc" id="L50">    }</span>
+<span class="nc" id="L50">        this.createdAt = Instant.now();</span>
+<span class="nc" id="L51">    }</span>
 
     @Column(name = &quot;is_compulsory&quot;, nullable = false)
     private Boolean isCompulsory;

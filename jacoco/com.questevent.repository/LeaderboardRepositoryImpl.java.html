@@ -6,16 +6,17 @@ import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Repository
-<span class="fc" id="L11">public class LeaderboardRepositoryImpl implements LeaderboardRepository {</span>
+<span class="fc" id="L12">public class LeaderboardRepositoryImpl implements LeaderboardRepository {</span>
 
     @PersistenceContext
     private EntityManager em;
 
     @Override
     public List&lt;LeaderboardDTO&gt; getGlobalLeaderboard() {
-<span class="nc" id="L18">        return em.createQuery(&quot;&quot;&quot;</span>
+<span class="nc" id="L19">        return em.createQuery(&quot;&quot;&quot;</span>
             SELECT new com.questevent.dto.LeaderboardDTO(
                 u.userId,
                 u.name,
@@ -58,12 +59,12 @@ import java.util.List;
                 ON s.activityRegistration.activityRegistrationId = ar.activityRegistrationId
             GROUP BY u.userId, u.name, w.gems
             ORDER BY 5 DESC
-<span class="nc" id="L61">        &quot;&quot;&quot;, LeaderboardDTO.class).getResultList();</span>
+<span class="nc" id="L62">        &quot;&quot;&quot;, LeaderboardDTO.class).getResultList();</span>
     }
 
     @Override
-    public List&lt;LeaderboardDTO&gt; getProgramLeaderboard(Long programId) {
-<span class="nc" id="L66">        return em.createQuery(&quot;&quot;&quot;</span>
+    public List&lt;LeaderboardDTO&gt; getProgramLeaderboard(UUID programId) {
+<span class="nc" id="L67">        return em.createQuery(&quot;&quot;&quot;</span>
             SELECT new com.questevent.dto.LeaderboardDTO(
                 pw.user.userId,
                 pw.user.name,
@@ -96,8 +97,8 @@ import java.util.List;
             GROUP BY pw.user.userId, pw.user.name, pw.gems
             ORDER BY 5 DESC
         &quot;&quot;&quot;, LeaderboardDTO.class)
-<span class="nc" id="L99">                .setParameter(&quot;programId&quot;, programId)</span>
-<span class="nc" id="L100">                .getResultList();</span>
+<span class="nc" id="L100">                .setParameter(&quot;programId&quot;, programId)</span>
+<span class="nc" id="L101">                .getResultList();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

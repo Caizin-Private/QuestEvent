@@ -19,7 +19,7 @@ public class UserWalletTransactionServiceImpl implements UserWalletTransactionSe
 
     @Override
     @Transactional
-    public void creditGems(User user, int amount) {
+    public void creditGems(User user, Long amount) {
 
 <span class="fc" id="L24">        log.debug(&quot;Credit gems requested | user={} | amount={}&quot;, user, amount);</span>
 
@@ -31,7 +31,7 @@ public class UserWalletTransactionServiceImpl implements UserWalletTransactionSe
 <span class="fc bfc" id="L31" title="All 2 branches covered.">        if (amount &lt;= 0) {</span>
 <span class="fc" id="L32">            log.warn(</span>
                     &quot;Invalid credit amount={} for userId={}&quot;,
-<span class="fc" id="L34">                    amount,</span>
+                    amount,
 <span class="fc" id="L35">                    user.getUserId()</span>
             );
 <span class="fc" id="L37">            throw new IllegalArgumentException(&quot;Amount must be greater than zero&quot;);</span>
@@ -44,7 +44,7 @@ public class UserWalletTransactionServiceImpl implements UserWalletTransactionSe
 <span class="fc" id="L44">                    return new IllegalStateException(&quot;Wallet not found&quot;);</span>
                 });
 
-<span class="fc" id="L47">        int before = wallet.getGems();</span>
+<span class="fc" id="L47">        Long before = wallet.getGems();</span>
 <span class="fc" id="L48">        wallet.setGems(before + amount);</span>
 
 <span class="fc" id="L50">        userWalletRepository.save(wallet);</span>
@@ -53,8 +53,8 @@ public class UserWalletTransactionServiceImpl implements UserWalletTransactionSe
                 &quot;Gems credited successfully | userId={} | walletId={} | before={} | credited={} | after={}&quot;,
 <span class="fc" id="L54">                user.getUserId(),</span>
 <span class="fc" id="L55">                wallet.getWalletId(),</span>
-<span class="fc" id="L56">                before,</span>
-<span class="fc" id="L57">                amount,</span>
+                before,
+                amount,
 <span class="fc" id="L58">                wallet.getGems()</span>
         );
 <span class="fc" id="L60">    }</span>

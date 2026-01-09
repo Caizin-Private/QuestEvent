@@ -14,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping(&quot;/api/leaderboard&quot;)
@@ -24,8 +25,8 @@ import java.util.List;
 )
 public class LeaderboardController {
 
-<span class="fc" id="L27">    private static final Logger log =</span>
-<span class="fc" id="L28">            LoggerFactory.getLogger(LeaderboardController.class);</span>
+<span class="fc" id="L28">    private static final Logger log =</span>
+<span class="fc" id="L29">            LoggerFactory.getLogger(LeaderboardController.class);</span>
 
     private final LeaderboardService leaderboardService;
 
@@ -40,15 +41,15 @@ public class LeaderboardController {
             @ApiResponse(responseCode = &quot;500&quot;, description = &quot;Internal server error&quot;)
     })
     public List&lt;LeaderboardDTO&gt; globalLeaderboard() {
-<span class="fc" id="L43">        log.info(&quot;Fetching global leaderboard&quot;);</span>
+<span class="fc" id="L44">        log.info(&quot;Fetching global leaderboard&quot;);</span>
 
-<span class="fc" id="L45">        List&lt;LeaderboardDTO&gt; leaderboard =</span>
-<span class="fc" id="L46">                leaderboardService.getGlobalLeaderboard();</span>
+<span class="fc" id="L46">        List&lt;LeaderboardDTO&gt; leaderboard =</span>
+<span class="fc" id="L47">                leaderboardService.getGlobalLeaderboard();</span>
 
-<span class="fc" id="L48">        log.debug(&quot;Global leaderboard fetched, totalEntries={}&quot;,</span>
-<span class="fc" id="L49">                leaderboard.size());</span>
+<span class="fc" id="L49">        log.debug(&quot;Global leaderboard fetched, totalEntries={}&quot;,</span>
+<span class="fc" id="L50">                leaderboard.size());</span>
 
-<span class="fc" id="L51">        return leaderboard;</span>
+<span class="fc" id="L52">        return leaderboard;</span>
     }
 
     @PreAuthorize(&quot;isAuthenticated()&quot;)
@@ -67,17 +68,17 @@ public class LeaderboardController {
                     description = &quot;Program ID for which leaderboard is required&quot;,
                     required = true
             )
-            @PathVariable Long programId
+            @PathVariable UUID programId
     ) {
-<span class="fc" id="L72">        log.info(&quot;Fetching program leaderboard for programId={}&quot;, programId);</span>
+<span class="fc" id="L73">        log.info(&quot;Fetching program leaderboard for programId={}&quot;, programId);</span>
 
-<span class="fc" id="L74">        List&lt;LeaderboardDTO&gt; leaderboard =</span>
-<span class="fc" id="L75">                leaderboardService.getProgramLeaderboard(programId);</span>
+<span class="fc" id="L75">        List&lt;LeaderboardDTO&gt; leaderboard =</span>
+<span class="fc" id="L76">                leaderboardService.getProgramLeaderboard(programId);</span>
 
-<span class="fc" id="L77">        log.debug(&quot;Program leaderboard fetched for programId={}, totalEntries={}&quot;,</span>
-<span class="fc" id="L78">                programId, leaderboard.size());</span>
+<span class="fc" id="L78">        log.debug(&quot;Program leaderboard fetched for programId={}, totalEntries={}&quot;,</span>
+<span class="fc" id="L79">                programId, leaderboard.size());</span>
 
-<span class="fc" id="L80">        return leaderboard;</span>
+<span class="fc" id="L81">        return leaderboard;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -40,7 +40,7 @@ public class ProgramWalletService {
 <span class="fc" id="L40">        this.programRepository = programRepository;</span>
 <span class="fc" id="L41">    }</span>
 
-    public ProgramWallet createWallet(Long userId, Long programId) {
+    public ProgramWallet createWallet(Long userId, UUID programId) {
 
 <span class="fc" id="L45">        log.debug(</span>
                 &quot;Create program wallet requested | userId={} | programId={}&quot;,
@@ -72,7 +72,7 @@ public class ProgramWalletService {
 <span class="fc" id="L72">        ProgramWallet programWallet = new ProgramWallet();</span>
 <span class="fc" id="L73">        programWallet.setUser(user);</span>
 <span class="fc" id="L74">        programWallet.setProgram(program);</span>
-<span class="fc" id="L75">        programWallet.setGems(0);</span>
+<span class="fc" id="L75">        programWallet.setGems(0L);</span>
 
 <span class="fc" id="L77">        ProgramWallet saved = programWalletRepository.save(programWallet);</span>
 
@@ -113,7 +113,7 @@ public class ProgramWalletService {
 <span class="fc" id="L113">        return dto;</span>
     }
 
-    public List&lt;ProgramWalletBalanceDTO&gt; getProgramWalletsByProgramId(Long programId) {
+    public List&lt;ProgramWalletBalanceDTO&gt; getProgramWalletsByProgramId(UUID programId) {
 
 <span class="fc" id="L118">        log.debug(&quot;Fetching all program wallets | programId={}&quot;, programId);</span>
 
@@ -143,7 +143,7 @@ public class ProgramWalletService {
 <span class="fc" id="L143">        }).toList();</span>
     }
 
-    public ProgramWalletBalanceDTO getMyProgramWallet(Long programId) {
+    public ProgramWalletBalanceDTO getMyProgramWallet(UUID programId) {
 
 <span class="fc" id="L148">        log.debug(&quot;Fetching my program wallet | programId={}&quot;, programId);</span>
 

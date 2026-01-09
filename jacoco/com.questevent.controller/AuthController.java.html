@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.io.IOException;
+import java.util.UUID;
 
 @Controller
 @RequiredArgsConstructor
@@ -29,15 +30,15 @@ public class AuthController {
     @ResponseBody
     public String loginPage(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
-<span class="fc" id="L32">        HttpSession session = request.getSession(false);</span>
+<span class="fc" id="L33">        HttpSession session = request.getSession(false);</span>
 
         // already logged in → go to profile
-<span class="pc bpc" id="L35" title="1 of 4 branches missed.">        if (session != null &amp;&amp; session.getAttribute(&quot;userId&quot;) != null) {</span>
-<span class="fc" id="L36">            response.sendRedirect(&quot;/profile&quot;);</span>
-<span class="fc" id="L37">            return null;</span>
+<span class="pc bpc" id="L36" title="1 of 4 branches missed.">        if (session != null &amp;&amp; session.getAttribute(&quot;userId&quot;) != null) {</span>
+<span class="fc" id="L37">            response.sendRedirect(&quot;/profile&quot;);</span>
+<span class="fc" id="L38">            return null;</span>
         }
 
-<span class="fc" id="L40">        return &quot;&quot;&quot;</span>
+<span class="fc" id="L41">        return &quot;&quot;&quot;</span>
         &lt;!DOCTYPE html&gt;
         &lt;html&gt;
         &lt;head&gt;
@@ -62,7 +63,7 @@ public class AuthController {
     @ResponseBody
     public String completeProfilePage() {
 
-<span class="fc" id="L65">        return &quot;&quot;&quot;</span>
+<span class="fc" id="L66">        return &quot;&quot;&quot;</span>
         &lt;h2&gt;Complete Your Profile 📝&lt;/h2&gt;
 
         &lt;form method=&quot;post&quot; action=&quot;/complete-profile&quot;&gt;
@@ -94,33 +95,33 @@ public class AuthController {
             @RequestParam String gender
     ) throws IOException {
 
-<span class="fc" id="L97">        Long userId = (Long) request.getSession().getAttribute(&quot;userId&quot;);</span>
+<span class="fc" id="L98">        Long userId = (Long) request.getSession().getAttribute(&quot;userId&quot;);</span>
 
-<span class="fc" id="L99">        User user = userRepository.findById(userId)</span>
-<span class="pc" id="L100">                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));</span>
-<span class="fc" id="L101">        user.setDepartment(department);</span>
-<span class="fc" id="L102">        user.setGender(gender);</span>
-<span class="fc" id="L103">        userRepository.save(user);</span>
-<span class="fc" id="L104">        userWalletRepository.findByUserUserId(userId)</span>
-<span class="fc" id="L105">                .orElseGet(() -&gt; {</span>
-<span class="fc" id="L106">                    UserWallet wallet = new UserWallet();</span>
-<span class="fc" id="L107">                    wallet.setUser(user);</span>
-<span class="fc" id="L108">                    wallet.setGems(0);</span>
-<span class="fc" id="L109">                    return userWalletRepository.save(wallet);</span>
+<span class="fc" id="L100">        User user = userRepository.findById(userId)</span>
+<span class="pc" id="L101">                .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));</span>
+<span class="fc" id="L102">        user.setDepartment(department);</span>
+<span class="fc" id="L103">        user.setGender(gender);</span>
+<span class="fc" id="L104">        userRepository.save(user);</span>
+<span class="fc" id="L105">        userWalletRepository.findByUserUserId(userId)</span>
+<span class="fc" id="L106">                .orElseGet(() -&gt; {</span>
+<span class="fc" id="L107">                    UserWallet wallet = new UserWallet();</span>
+<span class="fc" id="L108">                    wallet.setUser(user);</span>
+<span class="fc" id="L109">                    wallet.setGems(0L);</span>
+<span class="fc" id="L110">                    return userWalletRepository.save(wallet);</span>
                 });
 
-<span class="fc" id="L112">        response.sendRedirect(&quot;/profile&quot;);</span>
-<span class="fc" id="L113">    }</span>
+<span class="fc" id="L113">        response.sendRedirect(&quot;/profile&quot;);</span>
+<span class="fc" id="L114">    }</span>
 
     @PreAuthorize(&quot;isAuthenticated()&quot;)
     @GetMapping(&quot;/profile&quot;)
     @ResponseBody
     public String profile(HttpServletRequest request) {
 
-<span class="fc" id="L120">        Long userId = (Long) request.getSession().getAttribute(&quot;userId&quot;);</span>
-<span class="fc" id="L121">        User user = userRepository.findById(userId).orElseThrow();</span>
+<span class="fc" id="L121">        Long userId = (Long) request.getSession().getAttribute(&quot;userId&quot;);</span>
+<span class="fc" id="L122">        User user = userRepository.findById(userId).orElseThrow();</span>
 
-<span class="fc" id="L123">        return &quot;&quot;&quot;</span>
+<span class="fc" id="L124">        return &quot;&quot;&quot;</span>
             &lt;h2&gt;User Profile 👤&lt;/h2&gt;
 
             &lt;p&gt;&lt;b&gt;User ID:&lt;/b&gt; %d&lt;/p&gt;
@@ -135,20 +136,20 @@ public class AuthController {
                     Logout
                 &lt;/button&gt;
             &lt;/form&gt;
-<span class="fc" id="L138">        &quot;&quot;&quot;.formatted(</span>
-<span class="fc" id="L139">                user.getUserId(),</span>
-<span class="fc" id="L140">                user.getName(),</span>
-<span class="fc" id="L141">                user.getEmail(),</span>
-<span class="fc" id="L142">                user.getDepartment(),</span>
-<span class="fc" id="L143">                user.getGender(),</span>
-<span class="fc" id="L144">                user.getRole()</span>
+<span class="fc" id="L139">        &quot;&quot;&quot;.formatted(</span>
+<span class="fc" id="L140">                user.getUserId(),</span>
+<span class="fc" id="L141">                user.getName(),</span>
+<span class="fc" id="L142">                user.getEmail(),</span>
+<span class="fc" id="L143">                user.getDepartment(),</span>
+<span class="fc" id="L144">                user.getGender(),</span>
+<span class="fc" id="L145">                user.getRole()</span>
         );
     }
 
     @GetMapping(&quot;/logout-success&quot;)
     @ResponseBody
     public String logoutSuccess() {
-<span class="fc" id="L151">        return &quot;&quot;&quot;</span>
+<span class="fc" id="L152">        return &quot;&quot;&quot;</span>
             &lt;h2&gt;Logged out successfully ✅&lt;/h2&gt;
             &lt;a href=&quot;/login&quot;&gt;Login again&lt;/a&gt;
         &quot;&quot;&quot;;

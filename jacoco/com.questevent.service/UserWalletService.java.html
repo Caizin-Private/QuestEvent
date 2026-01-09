@@ -49,7 +49,7 @@ public class UserWalletService {
 
 <span class="fc" id="L50">        UserWallet userWallet = new UserWallet();</span>
 <span class="fc" id="L51">        userWallet.setUser(user);</span>
-<span class="fc" id="L52">        userWallet.setGems(0);</span>
+<span class="fc" id="L52">        userWallet.setGems(0L);</span>
 
 <span class="fc" id="L54">        userWalletRepository.save(userWallet);</span>
 
@@ -101,15 +101,17 @@ public class UserWalletService {
 <span class="fc" id="L101">        UserWalletBalanceDTO dto = new UserWalletBalanceDTO();</span>
 <span class="fc" id="L102">        dto.setWalletId(wallet.getWalletId());</span>
 <span class="fc" id="L103">        dto.setGems(wallet.getGems());</span>
+<span class="fc" id="L104">        dto.setCreatedAt(wallet.getCreatedAt());</span>
+<span class="fc" id="L105">        dto.setUpdatedAt(wallet.getUpdatedAt());</span>
 
-<span class="fc" id="L105">        log.info(</span>
+<span class="fc" id="L107">        log.info(</span>
                 &quot;Wallet balance fetched for userId={}, walletId={}, gems={}&quot;,
-<span class="fc" id="L107">                p.userId(),</span>
-<span class="fc" id="L108">                wallet.getWalletId(),</span>
-<span class="fc" id="L109">                wallet.getGems()</span>
+<span class="fc" id="L109">                p.userId(),</span>
+<span class="fc" id="L110">                wallet.getWalletId(),</span>
+<span class="fc" id="L111">                wallet.getGems()</span>
         );
 
-<span class="fc" id="L112">        return dto;</span>
+<span class="fc" id="L114">        return dto;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
