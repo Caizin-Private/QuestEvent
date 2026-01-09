@@ -19,6 +19,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/judge")
@@ -95,7 +96,7 @@ public class JudgeController {
                     required = true,
                     in = ParameterIn.PATH
             )
-            @PathVariable Long activityId,
+            @PathVariable UUID activityId,
             Authentication authentication
     ) {
         log.info("Fetching pending submissions for activityId={}", activityId);
@@ -170,7 +171,7 @@ public class JudgeController {
                     required = true,
                     in = ParameterIn.PATH
             )
-            @PathVariable Long submissionId
+            @PathVariable UUID submissionId
     ) {
         log.info("Reviewing submission submissionId={}", submissionId);
 

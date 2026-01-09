@@ -49,7 +49,7 @@ public class UserWalletService {
 
         UserWallet userWallet = new UserWallet();
         userWallet.setUser(user);
-        userWallet.setGems(0);
+        userWallet.setGems(0L);
 
         userWalletRepository.save(userWallet);
 
@@ -101,6 +101,8 @@ public class UserWalletService {
         UserWalletBalanceDTO dto = new UserWalletBalanceDTO();
         dto.setWalletId(wallet.getWalletId());
         dto.setGems(wallet.getGems());
+        dto.setCreatedAt(wallet.getCreatedAt());
+        dto.setUpdatedAt(wallet.getUpdatedAt());
 
         log.info(
                 "Wallet balance fetched for userId={}, walletId={}, gems={}",

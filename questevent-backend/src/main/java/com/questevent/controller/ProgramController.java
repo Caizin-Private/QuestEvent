@@ -19,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/programs")
@@ -83,7 +84,7 @@ public class ProgramController {
             @ApiResponse(responseCode = "200", description = "Program found"),
             @ApiResponse(responseCode = "404", description = "Program not found")
     })
-    public ResponseEntity<ProgramResponseDTO> getProgramById(@Parameter(description = "Program ID", required = true) @PathVariable Long programId) {
+    public ResponseEntity<ProgramResponseDTO> getProgramById(@Parameter(description = "Program ID", required = true) @PathVariable UUID programId) {
         log.info("Fetching program with programId={}", programId);
 
         Program program = programService.getProgramById(programId);
@@ -164,7 +165,7 @@ public class ProgramController {
     })
     public ResponseEntity<ProgramResponseDTO> updateProgram(
             @Parameter(description = "Program ID", required = true)
-            @PathVariable Long programId,
+            @PathVariable UUID programId,
             @RequestBody ProgramRequestDTO dto
     ) {
         log.info("Updating program programId={}", programId);
@@ -184,7 +185,7 @@ public class ProgramController {
     })
     public ResponseEntity<String> settleProgram(
             @Parameter(description = "Program ID", required = true)
-            @PathVariable Long programId) {
+            @PathVariable UUID programId) {
         log.info("Manually settling wallets for programId={}", programId);
 
         programWalletTransactionService.manuallySettleExpiredProgramWallets(programId);
@@ -203,7 +204,7 @@ public class ProgramController {
     })
     public ResponseEntity<Void> deleteProgram(
             @Parameter(description = "Program ID", required = true)
-            @PathVariable Long programId) {
+            @PathVariable UUID programId) {
         log.warn("Deleting program programId={}", programId);
 
         programService.deleteProgram(programId);
@@ -267,7 +268,7 @@ public class ProgramController {
             @ApiResponse(responseCode = "404", description = "Program or user not found")
     })
     public ResponseEntity<ProgramResponseDTO> changeProgramStatusToActive(
-            @PathVariable Long programId
+            @PathVariable UUID programId
     ) {
         log.info("Changing program status to ACTIVE for programId={}", programId);
 
@@ -294,6 +295,8 @@ public class ProgramController {
         if (program.getJudge() != null && program.getJudge().getUser() != null) {
             response.setJudgeUserId(program.getJudge().getUser().getUserId());
         }
+        response.setCreatedAt(program.getCreatedAt());
+        response.setUpdatedAt(program.getUpdatedAt());
 
         return response;
     }

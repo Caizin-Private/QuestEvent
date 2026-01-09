@@ -19,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -44,30 +45,30 @@ class ActivityRegistrationServiceTest {
         SecurityContextHolder.clearContext();
     }
 
-    /* =====================================================
-       HELPERS
-       ===================================================== */
-
     private void mockAuthenticatedUser(Long userId) {
         UserPrincipal principal =
                 new UserPrincipal(userId, "test@questevent.com", Role.USER);
 
         Authentication authentication =
-                new UsernamePasswordAuthenticationToken(principal, null, List.of());
+                new UsernamePasswordAuthenticationToken(
+                        principal,
+                        null,
+                        List.of()
+                );
 
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);
     }
 
-    private Activity createNonCompulsoryActivity(Long activityId, Long programId) {
+    private Activity createNonCompulsoryActivity(UUID activityId, UUID programId) {
         Program program = new Program();
         program.setProgramId(programId);
 
         Activity activity = new Activity();
         activity.setActivityId(activityId);
         activity.setActivityName("Test Activity");
-        activity.setRewardGems(100);
+        activity.setRewardGems(100L);
         activity.setIsCompulsory(false);
         activity.setProgram(program);
 
@@ -80,51 +81,61 @@ class ActivityRegistrationServiceTest {
 
     @Test
     void registerParticipantForActivity_success() {
-        mockAuthenticatedUser(1L);
+
+        Long userId = 1L;
+        UUID activityId = UUID.randomUUID();
+        UUID registrationId = UUID.randomUUID();
+
+        mockAuthenticatedUser(userId);
 
         ActivityRegistrationRequestDTO request = new ActivityRegistrationRequestDTO();
-        request.setActivityId(1L);
+        request.setActivityId(activityId);
+        request.setCompletionStatus(CompletionStatus.NOT_COMPLETED);
 
         User user = new User();
-        user.setUserId(1L);
+        user.setUserId(userId);
         user.setName("Test User");
         user.setEmail("test@example.com");
 
-        Activity activity = createNonCompulsoryActivity(1L, 10L);
+        Activity activity = new Activity();
+        activity.setActivityId(activityId);
+        activity.setActivityName("Test Activity");
+        activity.setRewardGems(100L);
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(activityRepository.findById(1L)).thenReturn(Optional.of(activity));
-        when(activityRepository
-                .findByProgram_ProgramIdAndIsCompulsoryTrue(10L))
-                .thenReturn(List.of());
+        ActivityRegistration saved = new ActivityRegistration();
+        saved.setActivityRegistrationId(registrationId);
+        saved.setActivity(activity);
+        saved.setUser(user);
+        saved.setCompletionStatus(CompletionStatus.NOT_COMPLETED);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
         when(activityRegistrationRepository
-                .existsByActivity_ActivityIdAndUser_UserId(1L, 1L))
+                .existsByActivity_ActivityIdAndUser_UserId(activityId, userId))
                 .thenReturn(false);
-
-        when(activityRegistrationRepository.save(any()))
-                .thenAnswer(invocation -> {
-                    ActivityRegistration reg = invocation.getArgument(0);
-                    reg.setActivityRegistrationId(1L);
-                    return reg;
-                });
+        when(activityRegistrationRepository.save(any())).thenReturn(saved);
 
         ActivityRegistrationResponseDTO result =
                 activityRegistrationService.registerParticipantForActivity(request);
 
         assertNotNull(result);
-        assertEquals(1L, result.getUserId());
-        assertEquals(1L, result.getActivityId());
-        assertEquals("Successfully registered for activity", result.getMessage());
+        assertEquals(userId, result.getUserId());
+        assertEquals(activityId, result.getActivityId());
+        verify(activityRegistrationRepository).save(any());
     }
 
     @Test
     void registerParticipantForActivity_userNotFound() {
-        mockAuthenticatedUser(1L);
+
+        Long userId = 1L;
+        UUID activityId = UUID.randomUUID();
+
+        mockAuthenticatedUser(userId);
 
         ActivityRegistrationRequestDTO request = new ActivityRegistrationRequestDTO();
-        request.setActivityId(1L);
+        request.setActivityId(activityId);
 
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         RuntimeException ex = assertThrows(
                 RuntimeException.class,
@@ -136,16 +147,20 @@ class ActivityRegistrationServiceTest {
 
     @Test
     void registerParticipantForActivity_activityNotFound() {
-        mockAuthenticatedUser(1L);
+
+        Long userId = 1L;
+        UUID activityId = UUID.randomUUID();
+
+        mockAuthenticatedUser(userId);
 
         ActivityRegistrationRequestDTO request = new ActivityRegistrationRequestDTO();
-        request.setActivityId(99L);
+        request.setActivityId(activityId);
 
         User user = new User();
-        user.setUserId(1L);
+        user.setUserId(userId);
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(activityRepository.findById(99L)).thenReturn(Optional.empty());
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(activityRepository.findById(activityId)).thenReturn(Optional.empty());
 
         RuntimeException ex = assertThrows(
                 RuntimeException.class,
@@ -157,23 +172,25 @@ class ActivityRegistrationServiceTest {
 
     @Test
     void registerParticipantForActivity_alreadyRegistered() {
-        mockAuthenticatedUser(1L);
+
+        Long userId = 1L;
+        UUID activityId = UUID.randomUUID();
+
+        mockAuthenticatedUser(userId);
 
         ActivityRegistrationRequestDTO request = new ActivityRegistrationRequestDTO();
-        request.setActivityId(1L);
+        request.setActivityId(activityId);
 
         User user = new User();
-        user.setUserId(1L);
+        user.setUserId(userId);
 
-        Activity activity = createNonCompulsoryActivity(1L, 10L);
+        Activity activity = new Activity();
+        activity.setActivityId(activityId);
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(activityRepository.findById(1L)).thenReturn(Optional.of(activity));
-        when(activityRepository
-                .findByProgram_ProgramIdAndIsCompulsoryTrue(10L))
-                .thenReturn(List.of());
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
         when(activityRegistrationRepository
-                .existsByActivity_ActivityIdAndUser_UserId(1L, 1L))
+                .existsByActivity_ActivityIdAndUser_UserId(activityId, userId))
                 .thenReturn(true);
 
         RuntimeException ex = assertThrows(
@@ -182,5 +199,75 @@ class ActivityRegistrationServiceTest {
         );
 
         assertEquals("User already registered for this activity", ex.getMessage());
+    }
+
+    // -------------------- ADD PARTICIPANT --------------------
+
+    @Test
+    void addParticipantToActivity_success() {
+
+        UUID activityId = UUID.randomUUID();
+        Long targetUserId = 2L;
+        UUID registrationId = UUID.randomUUID();
+
+        AddParticipantInActivityRequestDTO request =
+                new AddParticipantInActivityRequestDTO();
+        request.setUserId(targetUserId);
+
+        Activity activity = new Activity();
+        activity.setActivityId(activityId);
+
+        User user = new User();
+        user.setUserId(targetUserId);
+        user.setName("Target User");
+
+        ActivityRegistration saved = new ActivityRegistration();
+        saved.setActivityRegistrationId(registrationId);
+        saved.setActivity(activity);
+        saved.setUser(user);
+
+        when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
+        when(userRepository.findById(targetUserId)).thenReturn(Optional.of(user));
+        when(activityRegistrationRepository
+                .existsByActivity_ActivityIdAndUser_UserId(activityId, targetUserId))
+                .thenReturn(false);
+        when(activityRegistrationRepository.save(any())).thenReturn(saved);
+
+        ActivityRegistrationResponseDTO result =
+                activityRegistrationService.addParticipantToActivity(activityId, request);
+
+        assertNotNull(result);
+        assertEquals(targetUserId, result.getUserId());
+        verify(activityRegistrationRepository).save(any());
+    }
+
+    // -------------------- DELETE --------------------
+
+    @Test
+    void deleteRegistration_success() {
+
+        UUID registrationId = UUID.randomUUID();
+
+        when(activityRegistrationRepository.existsById(registrationId))
+                .thenReturn(true);
+
+        assertDoesNotThrow(() ->
+                activityRegistrationService.deleteRegistration(registrationId));
+    }
+
+    @Test
+    void deleteRegistration_notFound() {
+
+        UUID registrationId = UUID.randomUUID();
+
+        when(activityRegistrationRepository.existsById(registrationId))
+                .thenReturn(false);
+
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
+                () -> activityRegistrationService.deleteRegistration(registrationId)
+        );
+
+        assertEquals("Registration not found", ex.getMessage());
     }
 }

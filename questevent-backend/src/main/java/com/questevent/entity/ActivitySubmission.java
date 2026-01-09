@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 @Entity
@@ -20,11 +20,9 @@ import java.time.LocalDateTime;
 )
 public class ActivitySubmission {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "submission_id")
-
-    private Long submissionId;
-
+    @GeneratedValue
+    @Column(name = "submission_id", nullable = false, updatable = false)
+    private UUID submissionId;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
@@ -47,7 +45,7 @@ public class ActivitySubmission {
     private Instant submittedAt;
 
     @Column(name = "awarded_gems")
-    private Integer awardedGems;
+    private Long awardedGems;
 
     @Column(name = "reviewed_at")
     private Instant reviewedAt;

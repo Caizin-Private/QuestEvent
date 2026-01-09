@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -35,14 +36,14 @@ public class LeaderboardService {
         return leaderboard;
     }
 
-    public List<LeaderboardDTO> getProgramLeaderboard(Long programId) {
+    public List<LeaderboardDTO> getProgramLeaderboard(UUID programId) {
 
         log.debug(
                 "Fetching program leaderboard | programId={}",
                 programId
         );
 
-        if (programId == null || programId <= 0) {
+        if (programId == null ) {
             log.error("Invalid programId supplied for leaderboard | programId={}", programId);
             throw new IllegalArgumentException("Program ID must be greater than zero");
         }

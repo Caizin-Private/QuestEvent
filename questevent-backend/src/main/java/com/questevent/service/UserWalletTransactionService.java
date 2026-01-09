@@ -6,5 +6,5 @@ import org.springframework.stereotype.Service;
 @Service
 public interface UserWalletTransactionService {
 
-    void creditGems(User user, int amount);
+    void creditGems(User user, Long amount);
 }

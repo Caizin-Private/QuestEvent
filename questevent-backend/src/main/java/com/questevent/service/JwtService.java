@@ -3,6 +3,7 @@ package com.questevent.service;
 import com.questevent.dto.UserPrincipal;
 import com.questevent.enums.Role;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Slf4j
@@ -160,7 +162,9 @@ public class JwtService {
 
         Claims claims = extractAllClaims(token);
 
-        Long userId = claims.get("userId", Long.class);
+
+
+        Long userId =  claims.get("userId", Long.class);
         String email = claims.get("email", String.class);
         String roleStr = claims.get("role", String.class);
 

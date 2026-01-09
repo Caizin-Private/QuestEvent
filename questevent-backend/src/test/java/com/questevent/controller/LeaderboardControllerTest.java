@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -76,7 +77,7 @@ class LeaderboardControllerTest {
     @Test
     void shouldReturnProgramLeaderboard() {
 
-        Long programId = 1L;
+        UUID programId = UUID.randomUUID();
 
         List<LeaderboardDTO> mockResponse = List.of(
                 new LeaderboardDTO(1L, "Alice", 6L, 30L, 18.0),
@@ -102,7 +103,7 @@ class LeaderboardControllerTest {
     @Test
     void shouldReturnEmptyProgramLeaderboard() {
 
-        Long programId = 99L;
+        UUID programId = UUID.randomUUID();
 
         when(leaderboardService.getProgramLeaderboard(programId))
                 .thenReturn(List.of());
@@ -119,7 +120,7 @@ class LeaderboardControllerTest {
     @Test
     void shouldCallServiceWithCorrectProgramId() {
 
-        Long programId = 5L;
+        UUID programId = UUID.randomUUID();
 
         leaderboardController.programLeaderboard(programId);
 

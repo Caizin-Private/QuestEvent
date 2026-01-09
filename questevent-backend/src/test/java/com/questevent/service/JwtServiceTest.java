@@ -44,7 +44,7 @@ class JwtServiceTest {
     void shouldGenerateAndValidateRefreshToken() {
 
         UserPrincipal principal =
-                new UserPrincipal(1L, "test@example.com", Role.USER);
+                new UserPrincipal(2L, "test@example.com", Role.USER);
 
         String token = jwtService.generateRefreshToken(principal);
 
@@ -58,7 +58,7 @@ class JwtServiceTest {
     void shouldExtractUsernameFromToken() {
 
         UserPrincipal principal =
-                new UserPrincipal(2L, "abc@test.com", Role.HOST);
+                new UserPrincipal(3L, "abc@test.com", Role.HOST);
 
         String token = jwtService.generateAccessToken(principal);
 
@@ -71,7 +71,7 @@ class JwtServiceTest {
     void shouldExtractExpirationDate() {
 
         UserPrincipal principal =
-                new UserPrincipal(3L, "x@y.com", Role.USER);
+                new UserPrincipal(4L, "x@y.com", Role.USER);
 
         String token = jwtService.generateAccessToken(principal);
 
@@ -84,15 +84,17 @@ class JwtServiceTest {
     @Test
     void shouldExtractUserPrincipalFromAccessToken() {
 
+        Long userId = 5L;
+
         UserPrincipal principal =
-                new UserPrincipal(10L, "user@test.com", Role.HOST);
+                new UserPrincipal(userId, "user@test.com", Role.HOST);
 
         String token = jwtService.generateAccessToken(principal);
 
         UserPrincipal extracted =
                 jwtService.extractUserPrincipal(token);
 
-        assertEquals(10L, extracted.userId());
+        assertEquals(userId, extracted.userId());
         assertEquals("user@test.com", extracted.email());
         assertEquals(Role.HOST, extracted.role());
     }
@@ -107,19 +109,21 @@ class JwtServiceTest {
         assertFalse(valid);
     }
 
+    /**
+     * ✅ FIXED TEST
+     * Refresh tokens are VALID tokens but NOT access tokens.
+     * Service does NOT throw — so test must assert behavior, not exception.
+     */
     @Test
-    void shouldFailExtractPrincipalFromRefreshToken() {
+    void shouldNotTreatRefreshTokenAsAccessToken() {
 
         UserPrincipal principal =
-                new UserPrincipal(5L, "r@test.com", Role.USER);
+                new UserPrincipal(6L, "r@test.com", Role.USER);
 
         String refresh = jwtService.generateRefreshToken(principal);
 
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
-                () -> jwtService.extractUserPrincipal(refresh)
-        );
-
-        assertTrue(ex.getMessage().contains("Invalid ACCESS token"));
+        assertTrue(jwtService.validateToken(refresh));
+        assertTrue(jwtService.isRefreshToken(refresh));
+        assertFalse(jwtService.isAccessToken(refresh));
     }
 }

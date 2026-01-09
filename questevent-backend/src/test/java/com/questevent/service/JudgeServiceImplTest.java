@@ -23,6 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -85,20 +86,16 @@ class JudgeServiceImplTest {
         User judgeUser = mockJudgeUser();
         ActivitySubmission submission = mockSubmission(judgeUser);
 
-
         mockAuthenticatedUser(judgeUser);
 
+        UUID submissionId = submission.getSubmissionId();
 
-        when(submissionRepository.findById(10L))
+        when(submissionRepository.findById(submissionId))
                 .thenReturn(Optional.of(submission));
 
-        judgeService.reviewSubmission(10L);
+        judgeService.reviewSubmission(submissionId);
 
-        assertEquals(
-                ReviewStatus.APPROVED,
-                submission.getReviewStatus()
-        );
-
+        assertEquals(ReviewStatus.APPROVED, submission.getReviewStatus());
         assertEquals(
                 CompletionStatus.COMPLETED,
                 submission.getActivityRegistration().getCompletionStatus()
@@ -106,10 +103,8 @@ class JudgeServiceImplTest {
 
         verify(programWalletTransactionService).creditGems(
                 submission.getActivityRegistration().getUser(),
-                submission.getActivityRegistration()
-                        .getActivity()
-                        .getProgram(),
-                50
+                submission.getActivityRegistration().getActivity().getProgram(),
+                50L
         );
     }
 
@@ -118,12 +113,14 @@ class JudgeServiceImplTest {
 
         mockAuthenticatedUser(mockJudgeUser());
 
-        when(submissionRepository.findById(99L))
+        UUID submissionId = UUID.randomUUID();
+
+        when(submissionRepository.findById(submissionId))
                 .thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> judgeService.reviewSubmission(99L)
+                () -> judgeService.reviewSubmission(submissionId)
         );
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
@@ -139,12 +136,12 @@ class JudgeServiceImplTest {
 
         mockAuthenticatedUser(judgeUser);
 
-        when(submissionRepository.findById(10L))
+        when(submissionRepository.findById(submission.getSubmissionId()))
                 .thenReturn(Optional.of(submission));
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> judgeService.reviewSubmission(10L)
+                () -> judgeService.reviewSubmission(submission.getSubmissionId())
         );
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
@@ -156,6 +153,7 @@ class JudgeServiceImplTest {
 
         User judgeUser = mockJudgeUser();
         ActivitySubmission submission = mockSubmission(judgeUser);
+
         submission.getActivityRegistration()
                 .getActivity()
                 .getProgram()
@@ -163,12 +161,12 @@ class JudgeServiceImplTest {
 
         mockAuthenticatedUser(judgeUser);
 
-        when(submissionRepository.findById(10L))
+        when(submissionRepository.findById(submission.getSubmissionId()))
                 .thenReturn(Optional.of(submission));
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> judgeService.reviewSubmission(10L)
+                () -> judgeService.reviewSubmission(submission.getSubmissionId())
         );
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
@@ -180,18 +178,19 @@ class JudgeServiceImplTest {
 
         User judgeUser = mockJudgeUser();
         ActivitySubmission submission = mockSubmission(judgeUser);
+
         submission.getActivityRegistration()
                 .getActivity()
-                .setRewardGems(-1);
+                .setRewardGems(-1L);
 
         mockAuthenticatedUser(judgeUser);
 
-        when(submissionRepository.findById(10L))
+        when(submissionRepository.findById(submission.getSubmissionId()))
                 .thenReturn(Optional.of(submission));
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> judgeService.reviewSubmission(10L)
+                () -> judgeService.reviewSubmission(submission.getSubmissionId())
         );
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
@@ -205,17 +204,13 @@ class JudgeServiceImplTest {
                 new UserPrincipal(user.getUserId(), "judge@test.com", user.getRole());
 
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(
-                        principal,
-                        null,
-                        List.of()
-                )
+                new UsernamePasswordAuthenticationToken(principal, null, List.of())
         );
     }
 
     private User mockJudgeUser() {
         User user = new User();
-        user.setUserId(5L);
+        user.setUserId(5L);              // ONLY userId is Long
         user.setRole(Role.JUDGE);
         return user;
     }
@@ -227,26 +222,27 @@ class JudgeServiceImplTest {
         participant.setName("Participant");
 
         Judge judge = new Judge();
-        judge.setJudgeId(1L);
+        judge.setJudgeId(UUID.randomUUID());
         judge.setUser(judgeUser);
 
         Program program = new Program();
-        program.setProgramId(3L);
+        program.setProgramId(UUID.randomUUID());
         program.setJudge(judge);
 
         Activity activity = new Activity();
-        activity.setActivityId(1L);
+        activity.setActivityId(UUID.randomUUID());
         activity.setActivityName("Hackathon");
-        activity.setRewardGems(50);
+        activity.setRewardGems(50L);
         activity.setProgram(program);
 
         ActivityRegistration registration = new ActivityRegistration();
+        registration.setActivityRegistrationId(UUID.randomUUID());
         registration.setActivity(activity);
         registration.setUser(participant);
         registration.setCompletionStatus(CompletionStatus.NOT_COMPLETED);
 
         ActivitySubmission submission = new ActivitySubmission();
-        submission.setSubmissionId(10L);
+        submission.setSubmissionId(UUID.randomUUID());
         submission.setActivityRegistration(registration);
         submission.setSubmissionUrl("http://link");
         submission.setSubmittedAt(Instant.now());

@@ -14,6 +14,7 @@ import org.springframework.security.core.Authentication;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -34,10 +35,10 @@ class JudgeControllerTest {
     void getPendingSubmissions_shouldReturnList() {
 
         JudgeSubmissionDTO dto = new JudgeSubmissionDTO(
-                1L,
-                10L,
+                UUID.randomUUID(),          // submissionId
+                UUID.randomUUID(),          // activityId
                 "Code Challenge",
-                3L,
+                3L,                         // userId
                 "Abhinash",
                 "https://github.com/solution",
                 null,
@@ -61,13 +62,13 @@ class JudgeControllerTest {
     @Test
     void getPendingSubmissionsForActivity_shouldReturnSubmissions() {
 
-        Long activityId = 10L;
+        UUID activityId = UUID.randomUUID();
 
         JudgeSubmissionDTO dto = new JudgeSubmissionDTO(
-                2L,
+                UUID.randomUUID(),          // submissionId
                 activityId,
                 "Hackathon",
-                4L,
+                4L,                         // userId
                 "User A",
                 "https://drive.link",
                 null,
@@ -91,7 +92,7 @@ class JudgeControllerTest {
     @Test
     void getPendingSubmissionsForActivity_shouldThrowException_whenActivityNotFound() {
 
-        Long activityId = 999L;
+        UUID activityId = UUID.randomUUID();
 
         when(judgeService.getPendingSubmissionsForActivity(activityId, authentication))
                 .thenThrow(new RuntimeException("Activity not found"));
@@ -120,7 +121,7 @@ class JudgeControllerTest {
     @Test
     void reviewSubmission_shouldReturnOk() {
 
-        Long submissionId = 1L;
+        UUID submissionId = UUID.randomUUID();
 
         doNothing().when(judgeService)
                 .reviewSubmission(submissionId);
@@ -138,13 +139,15 @@ class JudgeControllerTest {
     @Test
     void reviewSubmission_shouldThrowException_whenAlreadyReviewed() {
 
+        UUID submissionId = UUID.randomUUID();
+
         doThrow(new RuntimeException("Submission already reviewed"))
                 .when(judgeService)
-                .reviewSubmission(1L);
+                .reviewSubmission(submissionId);
 
         RuntimeException exception = assertThrows(
                 RuntimeException.class,
-                () -> judgeController.reviewSubmission(1L)
+                () -> judgeController.reviewSubmission(submissionId)
         );
 
         assertEquals("Submission already reviewed", exception.getMessage());

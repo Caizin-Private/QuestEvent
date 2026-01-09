@@ -4,15 +4,16 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "judges")
 @Data
 public class Judge {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "judge_id")
-    private Long judgeId;
+    @GeneratedValue
+    @Column(name = "judge_id", nullable = false, updatable = false)
+    private UUID judgeId;
 
     @OneToOne
     @JoinColumn(

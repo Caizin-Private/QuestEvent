@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -92,7 +93,7 @@ public class ProgramRegistrationService {
 
     @Transactional
     public ProgramRegistrationResponseDTO addParticipantToProgram(
-            Long programId,
+            UUID programId,
             AddParticipantInProgramRequestDTO request) {
 
         log.debug(
@@ -156,7 +157,7 @@ public class ProgramRegistrationService {
     }
 
     @Transactional(readOnly = true)
-    public ProgramRegistrationDTO getRegistrationById(Long id) {
+    public ProgramRegistrationDTO getRegistrationById(UUID id) {
 
         log.debug("Fetching registration by id | registrationId={}", id);
 
@@ -172,7 +173,7 @@ public class ProgramRegistrationService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProgramRegistrationDTO> getRegistrationsByProgramId(Long programId) {
+    public List<ProgramRegistrationDTO> getRegistrationsByProgramId(UUID programId) {
 
         log.debug("Fetching registrations by program | programId={}", programId);
 
@@ -192,7 +193,7 @@ public class ProgramRegistrationService {
     }
 
     @Transactional
-    public void deleteRegistration(Long id) {
+    public void deleteRegistration(UUID id) {
 
         log.debug("Delete registration requested | registrationId={}", id);
 
@@ -207,7 +208,7 @@ public class ProgramRegistrationService {
     }
 
     @Transactional(readOnly = true)
-    public long getParticipantCountForProgram(Long programId) {
+    public long getParticipantCountForProgram(UUID programId) {
 
         long count =
                 programRegistrationRepository.countByProgramProgramId(programId);
@@ -222,7 +223,7 @@ public class ProgramRegistrationService {
     }
 
     @Transactional
-    public void deleteRegistrationByProgramAndUser(Long programId, Long userId) {
+    public void deleteRegistrationByProgramAndUser(UUID programId, Long userId) {
 
         log.debug(
                 "Delete registration by program and user | programId={} | userId={}",

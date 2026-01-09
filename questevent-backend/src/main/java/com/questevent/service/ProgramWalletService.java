@@ -40,7 +40,7 @@ public class ProgramWalletService {
         this.programRepository = programRepository;
     }
 
-    public ProgramWallet createWallet(Long userId, Long programId) {
+    public ProgramWallet createWallet(Long userId, UUID programId) {
 
         log.debug(
                 "Create program wallet requested | userId={} | programId={}",
@@ -72,7 +72,7 @@ public class ProgramWalletService {
         ProgramWallet programWallet = new ProgramWallet();
         programWallet.setUser(user);
         programWallet.setProgram(program);
-        programWallet.setGems(0);
+        programWallet.setGems(0L);
 
         ProgramWallet saved = programWalletRepository.save(programWallet);
 
@@ -113,7 +113,7 @@ public class ProgramWalletService {
         return dto;
     }
 
-    public List<ProgramWalletBalanceDTO> getProgramWalletsByProgramId(Long programId) {
+    public List<ProgramWalletBalanceDTO> getProgramWalletsByProgramId(UUID programId) {
 
         log.debug("Fetching all program wallets | programId={}", programId);
 
@@ -143,7 +143,7 @@ public class ProgramWalletService {
         }).toList();
     }
 
-    public ProgramWalletBalanceDTO getMyProgramWallet(Long programId) {
+    public ProgramWalletBalanceDTO getMyProgramWallet(UUID programId) {
 
         log.debug("Fetching my program wallet | programId={}", programId);
 

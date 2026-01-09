@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -35,7 +36,7 @@ public class ProgramWalletTransactionServiceImpl
 
     @Override
     @Transactional
-    public void creditGems(User user, Program program, int amount) {
+    public void creditGems(User user, Program program, Long amount) {
 
         log.debug(
                 "Credit gems requested | userId={} | programId={} | amount={}",
@@ -73,7 +74,7 @@ public class ProgramWalletTransactionServiceImpl
                     return new IllegalStateException("Program wallet not found");
                 });
 
-        int before = wallet.getGems();
+        Long before = wallet.getGems();
         wallet.setGems(before + amount);
         programWalletRepository.save(wallet);
 
@@ -114,7 +115,7 @@ public class ProgramWalletTransactionServiceImpl
 
             for (ProgramWallet programWallet : wallets) {
 
-                int gems = programWallet.getGems();
+                Long gems = programWallet.getGems();
                 if (gems <= 0) {
                     continue;
                 }
@@ -131,9 +132,8 @@ public class ProgramWalletTransactionServiceImpl
                             return new IllegalStateException("User wallet not found");
                         });
 
-                int before = userWallet.getGems();
-                userWallet.setGems(before + gems);
-                programWallet.setGems(0);
+                userWallet.setGems(userWallet.getGems() + gems);
+                programWallet.setGems(0L);
 
                 userWalletRepository.save(userWallet);
                 programWalletRepository.save(programWallet);
@@ -143,7 +143,6 @@ public class ProgramWalletTransactionServiceImpl
                         program.getProgramId(),
                         programWallet.getUser().getUserId(),
                         gems,
-                        before,
                         userWallet.getGems()
                 );
             }
@@ -162,11 +161,11 @@ public class ProgramWalletTransactionServiceImpl
 
     @Override
     @Transactional
-    public void manuallySettleExpiredProgramWallets(Long programId) {
+    public void manuallySettleExpiredProgramWallets(UUID programId) {
 
         log.debug("Manual settlement requested | programId={}", programId);
 
-        if (programId == null || programId <= 0) {
+        if (programId == null ) {
             log.warn("Invalid programId supplied for manual settlement");
             throw new IllegalArgumentException("Invalid programId");
         }
@@ -187,7 +186,7 @@ public class ProgramWalletTransactionServiceImpl
 
         for (ProgramWallet programWallet : wallets) {
 
-            int gems = programWallet.getGems();
+            Long gems = programWallet.getGems();
             if (gems <= 0) {
                 continue;
             }
@@ -201,9 +200,8 @@ public class ProgramWalletTransactionServiceImpl
                 throw new IllegalStateException("User wallet not found");
             }
 
-            int before = userWallet.getGems();
-            userWallet.setGems(before + gems);
-            programWallet.setGems(0);
+            userWallet.setGems(userWallet.getGems() + gems);
+            programWallet.setGems(0L);
 
             userWalletRepository.save(userWallet);
             programWalletRepository.save(programWallet);
@@ -213,7 +211,6 @@ public class ProgramWalletTransactionServiceImpl
                     programId,
                     programWallet.getUser().getUserId(),
                     gems,
-                    before,
                     userWallet.getGems()
             );
         }

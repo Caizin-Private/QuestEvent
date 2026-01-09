@@ -6,10 +6,13 @@ import com.questevent.enums.ProgramStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.Cascade;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Data
@@ -17,8 +20,9 @@ import java.util.List;
 public class Program {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long programId;
+    @GeneratedValue
+    @Column(name = "program_id", nullable = false, updatable = false)
+    private UUID programId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
@@ -60,6 +64,26 @@ public class Program {
     )
     @Cascade(org.hibernate.annotations.CascadeType.PERSIST)
     private Judge judge;
+
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @LastModifiedDate
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        Instant now = Instant.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = Instant.now();
+    }
 
 }
 

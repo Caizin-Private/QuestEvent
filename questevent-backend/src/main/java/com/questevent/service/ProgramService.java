@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
@@ -90,7 +91,7 @@ public class ProgramService {
                 .orElseGet(() -> {
                     Judge j = new Judge();
                     j.setUser(judgeUser);
-                    return j;
+                    return j; // persisted via CascadeType.PERSIST
                 });
 
         program.setJudge(judge);
@@ -108,7 +109,7 @@ public class ProgramService {
     }
 
     @Transactional
-    public Program updateProgram(Long programId, ProgramRequestDTO dto) {
+    public Program updateProgram(UUID programId, ProgramRequestDTO dto) {
 
         log.debug("Update program requested | programId={}", programId);
 
@@ -211,7 +212,7 @@ public class ProgramService {
         return programRepository.findByUser_UserId(hostUser.getUserId());
     }
 
-    public Program getProgramById(Long programId) {
+    public Program getProgramById(UUID programId) {
         log.debug("Fetching program by id | programId={}", programId);
         return programRepository.findById(programId)
                 .orElseThrow(() -> {
@@ -228,7 +229,7 @@ public class ProgramService {
         return programRepository.findAll();
     }
 
-    public void deleteProgram(Long programId) {
+    public void deleteProgram(UUID programId) {
 
         log.debug("Delete program requested | programId={}", programId);
 
@@ -300,6 +301,7 @@ public class ProgramService {
                 return userRepository.findById(p.userId()).orElse(null);
             }
         }
+
         return null;
     }
 
@@ -346,7 +348,7 @@ public class ProgramService {
         );
     }
 
-    public Program changeProgramStatusToActive(Long programId) {
+    public Program changeProgramStatusToActive(UUID programId) {
 
         log.debug("Change program status to ACTIVE requested | programId={}", programId);
 

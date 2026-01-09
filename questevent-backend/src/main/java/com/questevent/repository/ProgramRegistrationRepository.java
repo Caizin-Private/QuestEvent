@@ -6,16 +6,17 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
-public interface ProgramRegistrationRepository extends JpaRepository<ProgramRegistration, Long> {
+public interface ProgramRegistrationRepository extends JpaRepository<ProgramRegistration, UUID> {
 
-    boolean existsByProgram_ProgramIdAndUser_UserId(Long programId, Long userId);
+    boolean existsByProgram_ProgramIdAndUser_UserId(UUID programId, Long userId);
 
-    List<ProgramRegistration> findByProgramProgramId(Long programId);
+    List<ProgramRegistration> findByProgramProgramId(UUID programId);
 
     List<ProgramRegistration> findByUserUserId(Long userId);
 
-    Optional<ProgramRegistration> findByProgramProgramIdAndUserUserId(Long programId, Long userId);
+    Optional<ProgramRegistration> findByProgramProgramIdAndUserUserId(UUID programId, Long userId);
 
-    long countByProgramProgramId(Long programId);
+    long countByProgramProgramId(UUID programId);
 }

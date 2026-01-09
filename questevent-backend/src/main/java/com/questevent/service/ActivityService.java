@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -27,7 +28,7 @@ public class ActivityService {
         this.programRepository = programRepository;
     }
 
-    public Activity createActivity(Long programId, ActivityRequestDTO dto) {
+    public Activity createActivity(UUID programId, ActivityRequestDTO dto) {
 
         log.debug("Create activity requested | programId={}", programId);
 
@@ -55,7 +56,7 @@ public class ActivityService {
         return saved;
     }
 
-    public Activity updateActivity(Long programId, Long activityId, ActivityRequestDTO dto) {
+    public Activity updateActivity(UUID programId, UUID activityId, ActivityRequestDTO dto) {
 
         log.debug(
                 "Update activity requested | programId={} | activityId={}",
@@ -98,7 +99,7 @@ public class ActivityService {
         return updated;
     }
 
-    public List<Activity> getActivitiesByProgramId(Long programId) {
+    public List<Activity> getActivitiesByProgramId(UUID programId) {
 
         log.debug("Fetching activities by program | programId={}", programId);
 
@@ -122,7 +123,7 @@ public class ActivityService {
         return activities;
     }
 
-    public void deleteActivity(Long programId, Long activityId) {
+    public void deleteActivity(UUID programId, UUID activityId) {
 
         log.debug(
                 "Delete activity requested | programId={} | activityId={}",
@@ -160,7 +161,7 @@ public class ActivityService {
         );
     }
 
-    public List<Activity> getCompulsoryActivitiesByProgramId(Long programId) {
+    public List<Activity> getCompulsoryActivitiesByProgramId(UUID programId) {
 
         log.debug(
                 "Fetching compulsory activities | programId={}",
@@ -196,7 +197,7 @@ public class ActivityService {
         activity.setActivityDuration(dto.getActivityDuration());
         activity.setActivityRulebook(dto.getActivityRulebook());
         activity.setActivityDescription(dto.getActivityDescription());
-        activity.setRewardGems(dto.getRewardGems());
+        activity.setRewardGems(Long.valueOf(dto.getRewardGems()));
         activity.setIsCompulsory(dto.getIsCompulsory());
     }
 }

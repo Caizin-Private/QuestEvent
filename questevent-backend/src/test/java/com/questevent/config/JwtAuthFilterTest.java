@@ -15,6 +15,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Optional;
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -53,6 +55,7 @@ class JwtAuthFilterTest {
                 .thenReturn("Bearer valid-token");
 
         when(jwtService.validateToken("valid-token")).thenReturn(true);
+
 
         UserPrincipal principal =
                 new UserPrincipal(1L, "test@user.com", Role.USER);

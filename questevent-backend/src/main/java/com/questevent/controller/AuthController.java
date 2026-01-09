@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.io.IOException;
+import java.util.UUID;
 
 @Controller
 @RequiredArgsConstructor
@@ -105,7 +106,7 @@ public class AuthController {
                 .orElseGet(() -> {
                     UserWallet wallet = new UserWallet();
                     wallet.setUser(user);
-                    wallet.setGems(0);
+                    wallet.setGems(0L);
                     return userWalletRepository.save(wallet);
                 });
 

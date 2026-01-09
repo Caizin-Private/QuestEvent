@@ -19,7 +19,7 @@ public class UserWalletTransactionServiceImpl implements UserWalletTransactionSe
 
     @Override
     @Transactional
-    public void creditGems(User user, int amount) {
+    public void creditGems(User user, Long amount) {
 
         log.debug("Credit gems requested | user={} | amount={}", user, amount);
 
@@ -44,7 +44,7 @@ public class UserWalletTransactionServiceImpl implements UserWalletTransactionSe
                     return new IllegalStateException("Wallet not found");
                 });
 
-        int before = wallet.getGems();
+        Long before = wallet.getGems();
         wallet.setGems(before + amount);
 
         userWalletRepository.save(wallet);

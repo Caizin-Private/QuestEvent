@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 public class ProgramRequestDTO {

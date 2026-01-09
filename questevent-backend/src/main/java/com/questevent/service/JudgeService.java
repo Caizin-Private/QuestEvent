@@ -4,6 +4,7 @@ import com.questevent.dto.JudgeSubmissionDTO;
 import org.springframework.security.core.Authentication;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface JudgeService {
 
@@ -14,7 +15,7 @@ public interface JudgeService {
 
 
     List<JudgeSubmissionDTO> getPendingSubmissionsForActivity(
-            Long activityId,
+            UUID activityId,
             Authentication authentication
     );
 
@@ -24,5 +25,5 @@ public interface JudgeService {
     );
 
 
-    void reviewSubmission(Long submissionId);
+    void reviewSubmission(UUID submissionId);
 }

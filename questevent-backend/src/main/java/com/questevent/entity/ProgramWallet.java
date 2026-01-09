@@ -38,7 +38,7 @@ public class ProgramWallet {
     private User user;
 
     @Column(name = "gems", nullable = false)
-    private int gems;
+    private Long gems;
 
     @Enumerated(EnumType.STRING)
     private ProgramStatus status;
