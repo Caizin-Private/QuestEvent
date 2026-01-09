@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ActivityService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">questevent-backend</a> &gt; <a href="index.source.html" class="el_package">com.questevent.service</a> &gt; <span class="el_source">ActivityService.java</span></div><h1>ActivityService.java</h1><pre class="source lang-java linenums">package com.questevent.service;
+
+import com.questevent.dto.ActivityRequestDTO;
+import com.questevent.entity.Activity;
+import com.questevent.entity.Program;
+import com.questevent.repository.ActivityRepository;
+import com.questevent.repository.ProgramRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
+import java.util.UUID;
+
+<span class="fc" id="L16">@Slf4j</span>
+@Service
+public class ActivityService {
+
+    private final ActivityRepository activityRepository;
+    private final ProgramRepository programRepository;
+
+    public ActivityService(
+            ActivityRepository activityRepository,
+            ProgramRepository programRepository
+<span class="fc" id="L26">    ) {</span>
+<span class="fc" id="L27">        this.activityRepository = activityRepository;</span>
+<span class="fc" id="L28">        this.programRepository = programRepository;</span>
+<span class="fc" id="L29">    }</span>
+
+    public Activity createActivity(UUID programId, ActivityRequestDTO dto) {
+
+<span class="fc" id="L33">        log.debug(&quot;Create activity requested | programId={}&quot;, programId);</span>
+
+<span class="fc" id="L35">        Program program = programRepository.findById(programId)</span>
+<span class="fc" id="L36">                .orElseThrow(() -&gt; {</span>
+<span class="fc" id="L37">                    log.error(&quot;Program not found while creating activity | programId={}&quot;, programId);</span>
+<span class="fc" id="L38">                    return new ResponseStatusException(</span>
+                            HttpStatus.NOT_FOUND,
+                            &quot;Program not found&quot;
+                    );
+                });
+
+<span class="fc" id="L44">        Activity activity = new Activity();</span>
+<span class="fc" id="L45">        mapDtoToEntity(dto, activity);</span>
+<span class="fc" id="L46">        activity.setProgram(program);</span>
+
+<span class="fc" id="L48">        Activity saved = activityRepository.save(activity);</span>
+
+<span class="fc" id="L50">        log.info(</span>
+                &quot;Activity created | activityId={} | programId={}&quot;,
+<span class="fc" id="L52">                saved.getActivityId(),</span>
+                programId
+        );
+
+<span class="fc" id="L56">        return saved;</span>
+    }
+
+    public Activity updateActivity(UUID programId, UUID activityId, ActivityRequestDTO dto) {
+
+<span class="fc" id="L61">        log.debug(</span>
+                &quot;Update activity requested | programId={} | activityId={}&quot;,
+                programId,
+                activityId
+        );
+
+<span class="fc" id="L67">        Activity existingActivity = activityRepository.findById(activityId)</span>
+<span class="fc" id="L68">                .orElseThrow(() -&gt; {</span>
+<span class="fc" id="L69">                    log.error(&quot;Activity not found | activityId={}&quot;, activityId);</span>
+<span class="fc" id="L70">                    return new ResponseStatusException(</span>
+                            HttpStatus.NOT_FOUND,
+                            &quot;Activity not found&quot;
+                    );
+                });
+
+<span class="fc bfc" id="L76" title="All 2 branches covered.">        if (!existingActivity.getProgram().getProgramId().equals(programId)) {</span>
+<span class="fc" id="L77">            log.warn(</span>
+                    &quot;Activity-program mismatch | activityId={} | expectedProgramId={} | actualProgramId={}&quot;,
+                    activityId,
+                    programId,
+<span class="fc" id="L81">                    existingActivity.getProgram().getProgramId()</span>
+            );
+<span class="fc" id="L83">            throw new ResponseStatusException(</span>
+                    HttpStatus.BAD_REQUEST,
+                    &quot;Activity does not belong to this program&quot;
+            );
+        }
+
+<span class="fc" id="L89">        mapDtoToEntity(dto, existingActivity);</span>
+
+<span class="fc" id="L91">        Activity updated = activityRepository.save(existingActivity);</span>
+
+<span class="fc" id="L93">        log.info(</span>
+                &quot;Activity updated | activityId={} | programId={}&quot;,
+                activityId,
+                programId
+        );
+
+<span class="fc" id="L99">        return updated;</span>
+    }
+
+    public List&lt;Activity&gt; getActivitiesByProgramId(UUID programId) {
+
+<span class="fc" id="L104">        log.debug(&quot;Fetching activities by program | programId={}&quot;, programId);</span>
+
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">        if (!programRepository.existsById(programId)) {</span>
+<span class="nc" id="L107">            log.warn(&quot;Program not found while fetching activities | programId={}&quot;, programId);</span>
+<span class="nc" id="L108">            throw new ResponseStatusException(</span>
+                    HttpStatus.NOT_FOUND,
+                    &quot;Program not found&quot;
+            );
+        }
+
+<span class="fc" id="L114">        List&lt;Activity&gt; activities =</span>
+<span class="fc" id="L115">                activityRepository.findByProgram_ProgramId(programId);</span>
+
+<span class="fc" id="L117">        log.info(</span>
+                &quot;Activities fetched | programId={} | count={}&quot;,
+                programId,
+<span class="fc" id="L120">                activities.size()</span>
+        );
+
+<span class="fc" id="L123">        return activities;</span>
+    }
+
+    public void deleteActivity(UUID programId, UUID activityId) {
+
+<span class="fc" id="L128">        log.debug(</span>
+                &quot;Delete activity requested | programId={} | activityId={}&quot;,
+                programId,
+                activityId
+        );
+
+<span class="fc" id="L134">        Activity activity = activityRepository.findById(activityId)</span>
+<span class="fc" id="L135">                .orElseThrow(() -&gt; {</span>
+<span class="fc" id="L136">                    log.warn(&quot;Activity not found while deleting | activityId={}&quot;, activityId);</span>
+<span class="fc" id="L137">                    return new ResponseStatusException(</span>
+                            HttpStatus.NOT_FOUND,
+                            &quot;Activity not found&quot;
+                    );
+                });
+
+<span class="fc bfc" id="L143" title="All 2 branches covered.">        if (!activity.getProgram().getProgramId().equals(programId)) {</span>
+<span class="fc" id="L144">            log.warn(</span>
+                    &quot;Delete forbidden due to program mismatch | activityId={} | programId={}&quot;,
+                    activityId,
+                    programId
+            );
+<span class="fc" id="L149">            throw new ResponseStatusException(</span>
+                    HttpStatus.FORBIDDEN,
+                    &quot;Mismatch between Program and Activity&quot;
+            );
+        }
+
+<span class="fc" id="L155">        activityRepository.delete(activity);</span>
+
+<span class="fc" id="L157">        log.info(</span>
+                &quot;Activity deleted | activityId={} | programId={}&quot;,
+                activityId,
+                programId
+        );
+<span class="fc" id="L162">    }</span>
+
+    public List&lt;Activity&gt; getCompulsoryActivitiesByProgramId(UUID programId) {
+
+<span class="nc" id="L166">        log.debug(</span>
+                &quot;Fetching compulsory activities | programId={}&quot;,
+                programId
+        );
+
+<span class="nc bnc" id="L171" title="All 2 branches missed.">        if (!programRepository.existsById(programId)) {</span>
+<span class="nc" id="L172">            log.warn(</span>
+                    &quot;Program not found while fetching compulsory activities | programId={}&quot;,
+                    programId
+            );
+<span class="nc" id="L176">            throw new ResponseStatusException(</span>
+                    HttpStatus.NOT_FOUND,
+                    &quot;Program not found&quot;
+            );
+        }
+
+<span class="nc" id="L182">        List&lt;Activity&gt; activities =</span>
+                activityRepository
+<span class="nc" id="L184">                        .findByProgram_ProgramIdAndIsCompulsoryTrue(programId);</span>
+
+<span class="nc" id="L186">        log.info(</span>
+                &quot;Compulsory activities fetched | programId={} | count={}&quot;,
+                programId,
+<span class="nc" id="L189">                activities.size()</span>
+        );
+
+<span class="nc" id="L192">        return activities;</span>
+    }
+
+    private void mapDtoToEntity(ActivityRequestDTO dto, Activity activity) {
+<span class="fc" id="L196">        activity.setActivityName(dto.getActivityName());</span>
+<span class="fc" id="L197">        activity.setActivityDuration(dto.getActivityDuration());</span>
+<span class="fc" id="L198">        activity.setActivityRulebook(dto.getActivityRulebook());</span>
+<span class="fc" id="L199">        activity.setActivityDescription(dto.getActivityDescription());</span>
+<span class="fc" id="L200">        activity.setRewardGems(Long.valueOf(dto.getRewardGems()));</span>
+<span class="fc" id="L201">        activity.setIsCompulsory(dto.getIsCompulsory());</span>
+<span class="fc" id="L202">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
