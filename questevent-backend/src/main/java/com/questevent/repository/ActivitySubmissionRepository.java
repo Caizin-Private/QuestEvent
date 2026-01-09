@@ -12,42 +12,38 @@ import java.util.UUID;
 public interface ActivitySubmissionRepository
         extends JpaRepository<ActivitySubmission, UUID> {
 
-    // Existing (keep)
+
     boolean existsByActivityRegistration_ActivityRegistrationId(
             UUID activityRegistrationId
     );
 
-    // Existing (keep)
+
     List<ActivitySubmission>
     findByActivityRegistrationActivityActivityId(
             UUID activityId
     );
 
-    // Existing (keep)
+
     List<ActivitySubmission>
     findByReviewStatus(
             ReviewStatus reviewStatus
     );
 
-    /* =====================================================
-       🔑 REQUIRED FOR JUDGE APIs (ADD THESE)
-       ===================================================== */
 
-    // ✅ Pending submissions for a judge (judge-scoped)
     List<ActivitySubmission>
     findByReviewStatusAndActivityRegistrationActivityProgramJudgeUserUserId(
             ReviewStatus reviewStatus,
             Long judgeUserId
     );
 
-    // ✅ Pending submissions for an activity (all judges / owner)
+
     List<ActivitySubmission>
     findByReviewStatusAndActivityRegistrationActivityActivityId(
             ReviewStatus reviewStatus,
             UUID activityId
     );
 
-    // ✅ Pending submissions for an activity AND judge
+
     List<ActivitySubmission>
     findByReviewStatusAndActivityRegistrationActivityActivityIdAndActivityRegistrationActivityProgramJudgeUserUserId(
             ReviewStatus reviewStatus,

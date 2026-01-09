@@ -260,6 +260,38 @@ public class JudgeServiceImpl implements JudgeService {
                 rewardGems
         );
     }
+
+    @Override
+    @Transactional
+    public void rejectSubmission(
+            UUID submissionId,
+            String rejectionReason
+    ) {
+        ActivitySubmission submission =
+                submissionRepository.findById(submissionId)
+                        .orElseThrow(() ->
+                                new RuntimeException("Submission not found"));
+
+        if (submission.getReviewStatus() != ReviewStatus.PENDING) {
+            throw new RuntimeException("Submission already reviewed");
+        }
+
+        ActivityRegistration registration = submission.getActivityRegistration();
+        Program program = registration.getActivity().getProgram();
+
+        Judge judge = program.getJudge();
+        if (judge == null) {
+            throw new RuntimeException("Judge not assigned to this program");
+        }
+
+        submission.setReviewStatus(ReviewStatus.REJECTED);
+        submission.setReviewedBy(judge);
+        submission.setReviewedAt(Instant.now());
+        submission.setRejectionReason(rejectionReason);
+
+        submissionRepository.save(submission);
+    }
+
     private JudgeSubmissionDTO mapToDto(ActivitySubmission submission) {
         ActivityRegistration reg = submission.getActivityRegistration();
 
