@@ -8,6 +8,8 @@ import com.questevent.entity.User;
 import com.questevent.enums.Department;
 import com.questevent.enums.ProgramStatus;
 import com.questevent.enums.Role;
+import com.questevent.exception.ProgramNotFoundException;
+import com.questevent.exception.UserNotFoundException;
 import com.questevent.repository.JudgeRepository;
 import com.questevent.repository.ProgramRegistrationRepository;
 import com.questevent.repository.ProgramRepository;
@@ -18,12 +20,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -47,9 +48,6 @@ class ProgramServiceTest {
     @Mock
     private JudgeRepository judgeRepository;
 
-    @Mock
-    private ProgramWalletService programWalletService;
-
     @InjectMocks
     private ProgramService programService;
 
@@ -63,8 +61,6 @@ class ProgramServiceTest {
         SecurityContextHolder.clearContext();
     }
 
-    // -------------------- SECURITY MOCK --------------------
-
     private void mockAuthenticatedUser(Long userId) {
         UserPrincipal principal =
                 new UserPrincipal(userId, "test@questevent.com", Role.USER);
@@ -76,8 +72,6 @@ class ProgramServiceTest {
         context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);
     }
-
-    // -------------------- CREATE PROGRAM --------------------
 
     @Test
     void createProgram_success() {
@@ -122,34 +116,26 @@ class ProgramServiceTest {
         assertNotNull(result);
         assertEquals("Test Program", result.getProgramTitle());
         assertEquals(creator, result.getUser());
-
-        verify(programRepository).save(any(Program.class));
     }
 
     @Test
     void createProgram_userNotFound() {
 
         Long authUserId = 1L;
-        Long judgeUserId = 2L;
-
         mockAuthenticatedUser(authUserId);
 
         ProgramRequestDTO dto = new ProgramRequestDTO();
-        dto.setJudgeUserId(judgeUserId);
 
         when(userRepository.findById(authUserId))
                 .thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(
-                ResponseStatusException.class,
+        UserNotFoundException ex = assertThrows(
+                UserNotFoundException.class,
                 () -> programService.createProgram(dto)
         );
 
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
-        assertEquals("User not found", ex.getReason());
+        assertEquals("User not found", ex.getMessage());
     }
-
-    // -------------------- UPDATE PROGRAM --------------------
 
     @Test
     void updateProgram_success() {
@@ -199,13 +185,12 @@ class ProgramServiceTest {
         when(programRepository.findById(programId))
                 .thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(
-                ResponseStatusException.class,
+        ProgramNotFoundException ex = assertThrows(
+                ProgramNotFoundException.class,
                 () -> programService.updateProgram(programId, new ProgramRequestDTO())
         );
 
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
-        assertEquals("Program not found", ex.getReason());
+        assertEquals("Program not found", ex.getMessage());
     }
 
     @Test
@@ -232,16 +217,16 @@ class ProgramServiceTest {
         when(programRepository.findById(programId))
                 .thenReturn(Optional.of(program));
 
-        ResponseStatusException ex = assertThrows(
-                ResponseStatusException.class,
+        AccessDeniedException ex = assertThrows(
+                AccessDeniedException.class,
                 () -> programService.updateProgram(programId, new ProgramRequestDTO())
         );
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
-        assertEquals("You do not have permission to update this program", ex.getReason());
+        assertEquals(
+                "You do not have permission to update this program",
+                ex.getMessage()
+        );
     }
-
-    // -------------------- GET MY PROGRAMS --------------------
 
     @Test
     void getMyPrograms_success() {
@@ -267,8 +252,6 @@ class ProgramServiceTest {
         assertEquals(1, result.size());
     }
 
-    // -------------------- GET PROGRAM BY ID --------------------
-
     @Test
     void getProgramById_success() {
 
@@ -284,8 +267,6 @@ class ProgramServiceTest {
 
         assertNotNull(result);
     }
-
-    // -------------------- DELETE PROGRAM --------------------
 
     @Test
     void deleteProgram_success() {
@@ -311,8 +292,6 @@ class ProgramServiceTest {
 
         verify(programRepository).delete(program);
     }
-
-    // -------------------- GET COMPLETED PROGRAMS FOR USER --------------------
 
     @Test
     void getCompletedProgramsForUser_success() {

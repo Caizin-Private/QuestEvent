@@ -8,6 +8,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.access.AccessDeniedException;
+
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -65,6 +67,27 @@ public class GlobalExceptionHandler {
         ex.printStackTrace();
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong");
     }
+
+    @ExceptionHandler(ProgramNotFoundException.class)
+    public ResponseEntity<ApiErrorDTO> handleProgramNotFound(ProgramNotFoundException ex) {
+        return build(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(ActivityNotFoundException.class)
+    public ResponseEntity<ApiErrorDTO> handleActivityNotFound(ActivityNotFoundException ex) {
+        return build(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(ResourceConflictException.class)
+    public ResponseEntity<ApiErrorDTO> handleResourceConflict(ResourceConflictException ex) {
+        return build(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(WalletNotFoundException.class)
+    public ResponseEntity<ApiErrorDTO> handleWalletNotFound(WalletNotFoundException ex) {
+        return build(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
 
     private ResponseEntity<ApiErrorDTO> build(HttpStatus status, String message) {
 
