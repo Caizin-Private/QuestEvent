@@ -1,24 +1,24 @@
-name: Beanstalk JAR Deploy
+name: Beanstalk CD Deploy
 
 on:
-  push:
-    branches: [  ]
+  workflow_run:
+    workflows: ["Backend CI"]
+    types:
+      - completed
+    branches:
+      - master
+      - release-*
   workflow_dispatch:
-
-permissions:
-  contents: read
 
 jobs:
   deploy:
-    name: Deploy to Elastic Beanstalk
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 21
@@ -28,8 +28,7 @@ jobs:
         working-directory: questevent-backend
         run: mvn -U clean package -DskipTests
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v3
+      - uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -39,21 +38,20 @@ jobs:
         working-directory: questevent-backend
         run: |
           JAR_FILE=$(ls target/*.jar | head -n 1)
-          aws s3 cp "$JAR_FILE" "s3://questevent-versions/questevent-backend.jar"
+          aws s3 cp "$JAR_FILE" s3://questevent-versions/questevent-backend.jar
 
-      - name: Create Elastic Beanstalk Application Version
-        working-directory: questevent-backend
+      - name: Generate Version Label
+        run: echo "VERSION_LABEL=questevent-${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
+
+      - name: Create Beanstalk Version
         run: |
-          VERSION_LABEL="v-${{ github.sha }}"
           aws elasticbeanstalk create-application-version \
             --application-name "QuestEventTest" \
             --version-label "$VERSION_LABEL" \
             --source-bundle S3Bucket="questevent-versions",S3Key="questevent-backend.jar" \
             --process
-          echo "VERSION_LABEL=$VERSION_LABEL" >> $GITHUB_ENV
 
-      - name: Deploy to Elastic Beanstalk Environment
-        working-directory: questevent-backend
+      - name: Deploy to Beanstalk
         run: |
           aws elasticbeanstalk update-environment \
             --application-name "QuestEventTest" \
