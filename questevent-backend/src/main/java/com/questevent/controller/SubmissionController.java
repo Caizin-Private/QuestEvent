@@ -20,7 +20,8 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Activity Submissions", description = "APIs for submitting activity work")
 public class SubmissionController {
 
-    private static final Logger log = LoggerFactory.getLogger(SubmissionController.class);
+    private static final Logger log =
+            LoggerFactory.getLogger(SubmissionController.class);
 
     private final SubmissionService submissionService;
 
@@ -30,6 +31,12 @@ public class SubmissionController {
             summary = "Submit activity work",
             description = "Allows a registered user to submit work for an activity"
     )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Submission successful"),
+            @ApiResponse(responseCode = "400", description = "Invalid request or submission already exists"),
+            @ApiResponse(responseCode = "403", description = "Activity already completed, submission not allowed"),
+            @ApiResponse(responseCode = "404", description = "User is not registered for the activity")
+    })
     public ResponseEntity<String> submitActivity(
             @RequestBody ActivitySubmissionRequestDTO request
     ) {
