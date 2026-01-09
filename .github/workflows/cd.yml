@@ -2,7 +2,7 @@ name: Beanstalk JAR Deploy
 
 on:
   push:
-    branches: [ release-v1 ]
+    branches: [  ]
   workflow_dispatch:
 
 permissions:
