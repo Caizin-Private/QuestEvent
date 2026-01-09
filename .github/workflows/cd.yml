@@ -16,33 +16,62 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      # -----------------------------
+      # Checkout
+      # -----------------------------
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+      # -----------------------------
+      # Setup Java
+      # -----------------------------
+      - name: Set up Java
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 21
-          cache: maven
+          cache: gradle
 
+      # -----------------------------
+      # Grant Gradle permission
+      # -----------------------------
+      - name: Make Gradle wrapper executable
+        run: chmod +x questevent-backend/gradlew
+
+      # -----------------------------
+      # Build JAR (skip tests)
+      # -----------------------------
       - name: Build JAR
         working-directory: questevent-backend
-        run: mvn -U clean package -DskipTests
+        run: ./gradlew clean bootJar -x test
 
+      # -----------------------------
+      # Configure AWS credentials
+      # -----------------------------
       - uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      # -----------------------------
+      # Upload JAR to S3
+      # -----------------------------
       - name: Upload JAR to S3
         working-directory: questevent-backend
         run: |
-          JAR_FILE=$(ls target/*.jar | head -n 1)
+          JAR_FILE=$(ls build/libs/*.jar | head -n 1)
           aws s3 cp "$JAR_FILE" s3://questevent-versions/questevent-backend.jar
 
+      # -----------------------------
+      # Generate Version Label
+      # -----------------------------
       - name: Generate Version Label
         run: echo "VERSION_LABEL=questevent-${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
 
+      # -----------------------------
+      # Create Beanstalk Version
+      # -----------------------------
       - name: Create Beanstalk Version
         run: |
           aws elasticbeanstalk create-application-version \
@@ -51,6 +80,9 @@ jobs:
             --source-bundle S3Bucket="questevent-versions",S3Key="questevent-backend.jar" \
             --process
 
+      # -----------------------------
+      # Deploy to Beanstalk
+      # -----------------------------
       - name: Deploy to Beanstalk
         run: |
           aws elasticbeanstalk update-environment \
