@@ -3,6 +3,9 @@ package com.questevent.service;
 import com.questevent.dto.ActivityRequestDTO;
 import com.questevent.entity.Activity;
 import com.questevent.entity.Program;
+import com.questevent.exception.ActivityNotFoundException;
+import com.questevent.exception.ProgramNotFoundException;
+import com.questevent.exception.ResourceConflictException;
 import com.questevent.repository.ActivityRepository;
 import com.questevent.repository.ProgramRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,8 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.List;
 import java.util.Optional;
@@ -81,13 +83,12 @@ class ActivityServiceTest {
         when(programRepository.findById(programId))
                 .thenReturn(Optional.empty());
 
-        ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
+        ProgramNotFoundException exception = assertThrows(
+                ProgramNotFoundException.class,
                 () -> activityService.createActivity(programId, dto)
         );
 
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
-        assertEquals("Program not found", exception.getReason());
+        assertEquals("Program not found", exception.getMessage());
         verify(activityRepository, never()).save(any());
     }
 
@@ -139,13 +140,12 @@ class ActivityServiceTest {
         when(activityRepository.findById(activityId))
                 .thenReturn(Optional.empty());
 
-        ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
+        ActivityNotFoundException exception = assertThrows(
+                ActivityNotFoundException.class,
                 () -> activityService.updateActivity(programId, activityId, dto)
         );
 
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
-        assertEquals("Activity not found", exception.getReason());
+        assertEquals("Activity not found", exception.getMessage());
     }
 
     @Test
@@ -166,13 +166,15 @@ class ActivityServiceTest {
         when(activityRepository.findById(activityId))
                 .thenReturn(Optional.of(existingActivity));
 
-        ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
+        ResourceConflictException exception = assertThrows(
+                ResourceConflictException.class,
                 () -> activityService.updateActivity(programId, activityId, dto)
         );
 
-        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
-        assertEquals("Activity does not belong to this program", exception.getReason());
+        assertEquals(
+                "Activity does not belong to this program",
+                exception.getMessage()
+        );
         verify(activityRepository, never()).save(any());
     }
 
@@ -216,8 +218,6 @@ class ActivityServiceTest {
         when(activityRepository.findById(activityId))
                 .thenReturn(Optional.of(activity));
 
-        doNothing().when(activityRepository).delete(activity);
-
         assertDoesNotThrow(() ->
                 activityService.deleteActivity(programId, activityId));
 
@@ -232,13 +232,12 @@ class ActivityServiceTest {
         when(activityRepository.findById(activityId))
                 .thenReturn(Optional.empty());
 
-        ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
+        ActivityNotFoundException exception = assertThrows(
+                ActivityNotFoundException.class,
                 () -> activityService.deleteActivity(programId, activityId)
         );
 
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
-        assertEquals("Activity not found", exception.getReason());
+        assertEquals("Activity not found", exception.getMessage());
         verify(activityRepository, never()).delete(any());
     }
 
@@ -258,13 +257,15 @@ class ActivityServiceTest {
         when(activityRepository.findById(activityId))
                 .thenReturn(Optional.of(activity));
 
-        ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
+        ResourceConflictException exception = assertThrows(
+                ResourceConflictException.class,
                 () -> activityService.deleteActivity(programId, activityId)
         );
 
-        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
-        assertEquals("Mismatch between Program and Activity", exception.getReason());
+        assertEquals(
+                "Activity does not belong to this program",
+                exception.getMessage()
+        );
         verify(activityRepository, never()).delete(any());
     }
 }
