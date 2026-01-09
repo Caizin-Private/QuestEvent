@@ -5,6 +5,7 @@ import com.questevent.enums.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+@Slf4j
 @Service
 public class JwtService {
 
@@ -32,20 +34,49 @@ public class JwtService {
     }
 
     public String generateAccessToken(UserPrincipal userPrincipal) {
+
+        log.debug(
+                "Generating ACCESS token | userId={} | role={}",
+                userPrincipal.userId(),
+                userPrincipal.role()
+        );
+
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userPrincipal.userId());
         claims.put("email", userPrincipal.email());
         claims.put("role", userPrincipal.role().name());
         claims.put("tokenType", "ACCESS");
 
-        return createToken(claims, userPrincipal.email(), accessExpiration);
+        String token =
+                createToken(claims, userPrincipal.email(), accessExpiration);
+
+        log.info(
+                "ACCESS token generated | userId={}",
+                userPrincipal.userId()
+        );
+
+        return token;
     }
 
     public String generateRefreshToken(UserPrincipal userPrincipal) {
+
+        log.debug(
+                "Generating REFRESH token | userId={}",
+                userPrincipal.userId()
+        );
+
         Map<String, Object> claims = new HashMap<>();
         claims.put("tokenType", "REFRESH");
 
-        return createToken(claims, userPrincipal.email(), refreshExpiration);
+        String token =
+                createToken(claims, userPrincipal.email(), refreshExpiration);
+
+        log.info(
+                "REFRESH token generated | userId={}",
+                userPrincipal.userId()
+        );
+
+        return token;
     }
 
     private String createToken(
@@ -67,20 +98,39 @@ public class JwtService {
 
     public boolean validateToken(String token) {
         try {
-            return extractExpiration(token).after(new Date());
+            boolean valid =
+                    extractExpiration(token).after(new Date());
+
+            if (!valid) {
+                log.warn("JWT validation failed: token expired");
+            }
+
+            return valid;
         } catch (Exception e) {
+            log.warn(
+                    "JWT validation failed: {}",
+                    e.getClass().getSimpleName()
+            );
             return false;
         }
     }
 
     public boolean isRefreshToken(String token) {
         Claims claims = extractAllClaims(token);
-        return "REFRESH".equals(claims.get("tokenType", String.class));
+        boolean isRefresh =
+                "REFRESH".equals(claims.get("tokenType", String.class));
+
+        log.debug("Token type check | isRefresh={}", isRefresh);
+        return isRefresh;
     }
 
     public boolean isAccessToken(String token) {
         Claims claims = extractAllClaims(token);
-        return "ACCESS".equals(claims.get("tokenType", String.class));
+        boolean isAccess =
+                "ACCESS".equals(claims.get("tokenType", String.class));
+
+        log.debug("Token type check | isAccess={}", isAccess);
+        return isAccess;
     }
 
     public String extractUsername(String token) {
@@ -105,6 +155,9 @@ public class JwtService {
     }
 
     public UserPrincipal extractUserPrincipal(String token) {
+
+        log.debug("Extracting UserPrincipal from ACCESS token");
+
         Claims claims = extractAllClaims(token);
 
         Long userId = claims.get("userId", Long.class);
@@ -112,10 +165,17 @@ public class JwtService {
         String roleStr = claims.get("role", String.class);
 
         if (userId == null || email == null || roleStr == null) {
+            log.error("Invalid ACCESS token: missing required claims");
             throw new RuntimeException("Invalid ACCESS token: missing required claims");
         }
 
         Role role = Role.valueOf(roleStr);
+
+        log.info(
+                "UserPrincipal extracted | userId={} | role={}",
+                userId,
+                role
+        );
 
         return new UserPrincipal(userId, email, role);
     }

@@ -10,11 +10,12 @@ import com.questevent.repository.ActivitySubmissionRepository;
 import com.questevent.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.jspecify.annotations.Nullable;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SubmissionServiceImpl implements SubmissionService {
@@ -26,50 +27,77 @@ public class SubmissionServiceImpl implements SubmissionService {
     @Override
     @Transactional
     public void submitActivity(Long activityId, String submissionUrl) {
-        @Nullable Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
 
-        User hostUser = null;
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (authentication != null && authentication.isAuthenticated()) {
-            Object principal = authentication.getPrincipal();
-            if (principal instanceof UserPrincipal p) {
-                hostUser = userRepository.findById(p.userId()).orElse(null);
-            }
+        if (authentication == null || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof UserPrincipal principal)) {
+            throw new RuntimeException("Unauthorized submission attempt");
         }
 
+        User hostUser = userRepository.findById(principal.userId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 1️⃣ Validate registration
-        assert hostUser != null;
+        log.debug(
+                "Submit activity requested | activityId={} | userId={}",
+                activityId,
+                hostUser.getUserId()
+        );
+
         ActivityRegistration registration = registrationRepository
-                .findByActivityActivityIdAndUserUserId(activityId, hostUser.getUserId())
-                .orElseThrow(() ->
-                        new RuntimeException("User is not registered for this activity"));
+                .findByActivityActivityIdAndUserUserId(
+                        activityId,
+                        hostUser.getUserId()
+                )
+                .orElseThrow(() -> {
+                    log.error(
+                            "User not registered for activity | activityId={} | userId={}",
+                            activityId,
+                            hostUser.getUserId()
+                    );
+                    return new RuntimeException("User is not registered for this activity");
+                });
 
-        // 2️⃣ Prevent resubmission
         if (registration.getCompletionStatus() == CompletionStatus.COMPLETED) {
+            log.warn(
+                    "Resubmission attempt blocked | activityId={} | userId={} | registrationId={}",
+                    activityId,
+                    hostUser.getUserId(),
+                    registration.getActivityRegistrationId()
+            );
             throw new RuntimeException("Activity already completed. Submission not allowed.");
         }
 
-        // 3️⃣ Extra safety check (service-level)
         boolean alreadySubmitted = submissionRepository
                 .existsByActivityRegistration_ActivityRegistrationId(
                         registration.getActivityRegistrationId()
                 );
 
         if (alreadySubmitted) {
+            log.warn(
+                    "Duplicate submission detected | activityId={} | userId={} | registrationId={}",
+                    activityId,
+                    hostUser.getUserId(),
+                    registration.getActivityRegistrationId()
+            );
             throw new RuntimeException("Submission already exists for this registration");
         }
 
-        // 4️⃣ Create submission
         ActivitySubmission submission = new ActivitySubmission();
         submission.setActivityRegistration(registration);
         submission.setSubmissionUrl(submissionUrl);
-        // 5️⃣ Mark registration as completed
+
         registration.setCompletionStatus(CompletionStatus.COMPLETED);
 
-        // 6️⃣ Persist (transaction ensures atomicity)
         submissionRepository.save(submission);
         registrationRepository.save(registration);
+
+        log.info(
+                "Activity submitted successfully | activityId={} | userId={} | registrationId={} | submissionId={}",
+                activityId,
+                hostUser.getUserId(),
+                registration.getActivityRegistrationId(),
+                submission.getSubmissionId()
+        );
     }
 }

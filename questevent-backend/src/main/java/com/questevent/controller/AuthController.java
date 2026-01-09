@@ -31,7 +31,7 @@ public class AuthController {
 
         HttpSession session = request.getSession(false);
 
-        // already logged in → go to profile
+
         if (session != null && session.getAttribute("userId") != null) {
             response.sendRedirect("/profile");
             return null;
@@ -71,7 +71,7 @@ public class AuthController {
                 <option value="HR">HR</option>
                 <option value="TECH">TECH</option>
                 <option value="GENERAL">GENERAL</option>
-                <option value="GENERAL">IT</option>
+                <option value="IT">IT</option>
             </select><br><br>
 
             <label>Gender:</label><br>
@@ -97,16 +97,16 @@ public class AuthController {
         Long userId = (Long) request.getSession().getAttribute("userId");
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new IllegalStateException("User not found"));
         user.setDepartment(department);
         user.setGender(gender);
         userRepository.save(user);
-        userWalletRepository.findByUserUserId(userId)
+        UserWallet wallet = userWalletRepository.findByUserUserId(userId)
                 .orElseGet(() -> {
-                    UserWallet wallet = new UserWallet();
-                    wallet.setUser(user);
-                    wallet.setGems(0);
-                    return userWalletRepository.save(wallet);
+                    UserWallet newWallet = new UserWallet();
+                    newWallet.setUser(user);
+                    newWallet.setGems(0);
+                    return userWalletRepository.save(newWallet);
                 });
 
         response.sendRedirect("/profile");

@@ -192,10 +192,6 @@ class ActivityRegistrationControllerTest {
                 .andExpect(jsonPath("$[0].userId").value(userId));
     }
 
-    // ------------------------------------------------------------------
-    // UPDATE
-    // ------------------------------------------------------------------
-
     @Test
     void updateCompletionStatus_success() throws Exception {
         Long id = 1L;
@@ -235,9 +231,6 @@ class ActivityRegistrationControllerTest {
                 .andExpect(status().isNotFound());
     }
 
-    // ------------------------------------------------------------------
-    // DELETE
-    // ------------------------------------------------------------------
 
     @Test
     void deleteRegistration_success() throws Exception {

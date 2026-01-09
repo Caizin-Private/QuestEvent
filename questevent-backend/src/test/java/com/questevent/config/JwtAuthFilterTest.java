@@ -112,4 +112,22 @@ class JwtAuthFilterTest {
 
         verify(filterChain).doFilter(request, response);
     }
+
+    @Test
+    void shouldAllowTokenEndpointWithoutJwt() throws Exception {
+        when(request.getRequestURI()).thenReturn("/api/auth/token");
+
+        jwtAuthFilter.doFilterInternal(request, response, filterChain);
+
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    void shouldAllowLoginPage() throws Exception {
+        when(request.getRequestURI()).thenReturn("/login");
+
+        jwtAuthFilter.doFilterInternal(request, response, filterChain);
+
+        verify(filterChain).doFilter(request, response);
+    }
 }

@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class OAuthSuccessService extends SavedRequestAwareAuthenticationSuccessHandler {
@@ -28,12 +30,18 @@ public class OAuthSuccessService extends SavedRequestAwareAuthenticationSuccessH
             Authentication authentication
     ) throws IOException {
 
+        log.debug("OAuth2 authentication success triggered");
+
         OAuth2User oauthUser = (OAuth2User) authentication.getPrincipal();
         HttpSession session = request.getSession();
 
         String email = resolveEmail(oauthUser);
 
+        log.debug("Resolved OAuth email | email={}", email);
+
         User user = userRepository.findByEmail(email).orElseGet(() -> {
+
+            log.info("New OAuth user detected | email={}", email);
 
             User u = new User();
             u.setEmail(email);
@@ -46,6 +54,11 @@ public class OAuthSuccessService extends SavedRequestAwareAuthenticationSuccessH
             return userRepository.save(u);
         });
 
+        log.info(
+                "OAuth login successful | userId={} | email={}",
+                user.getUserId(),
+                user.getEmail()
+        );
 
         session.setAttribute("userId", user.getUserId());
 
@@ -54,16 +67,32 @@ public class OAuthSuccessService extends SavedRequestAwareAuthenticationSuccessH
                         user.getGender() == "PENDING";
 
         if (profileIncomplete) {
-            response.sendRedirect("/complete-profile"); // FIRST LOGIN
+
+            log.info(
+                    "Redirecting OAuth user to profile completion | userId={}",
+                    user.getUserId()
+            );
+
+            response.sendRedirect("/complete-profile");
         } else {
-            response.sendRedirect("/profile"); // NORMAL LOGIN
+
+            log.info(
+                    "Redirecting OAuth user to profile | userId={}",
+                    user.getUserId()
+            );
+
+            response.sendRedirect("/profile");
         }
     }
 
     private String resolveEmail(OAuth2User oauthUser) {
+
+        log.debug("Resolving email from OAuth2User attributes");
+
         String email = oauthUser.getAttribute("email");
         if (email == null) email = oauthUser.getAttribute("preferred_username");
         if (email == null) email = oauthUser.getAttribute("upn");
+
         return email;
     }
 }
