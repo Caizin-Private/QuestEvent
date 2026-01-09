@@ -109,11 +109,6 @@ class JwtServiceTest {
         assertFalse(valid);
     }
 
-    /**
-     * ✅ FIXED TEST
-     * Refresh tokens are VALID tokens but NOT access tokens.
-     * Service does NOT throw — so test must assert behavior, not exception.
-     */
     @Test
     void shouldNotTreatRefreshTokenAsAccessToken() {
 
