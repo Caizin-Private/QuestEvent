@@ -20,7 +20,8 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = &quot;Activity Submissions&quot;, description = &quot;APIs for submitting activity work&quot;)
 public class SubmissionController {
 
-<span class="fc" id="L23">    private static final Logger log = LoggerFactory.getLogger(SubmissionController.class);</span>
+<span class="fc" id="L23">    private static final Logger log =</span>
+<span class="fc" id="L24">            LoggerFactory.getLogger(SubmissionController.class);</span>
 
     private final SubmissionService submissionService;
 
@@ -30,24 +31,30 @@ public class SubmissionController {
             summary = &quot;Submit activity work&quot;,
             description = &quot;Allows a registered user to submit work for an activity&quot;
     )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;201&quot;, description = &quot;Submission successful&quot;),
+            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Invalid request or submission already exists&quot;),
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Activity already completed, submission not allowed&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;User is not registered for the activity&quot;)
+    })
     public ResponseEntity&lt;String&gt; submitActivity(
             @RequestBody ActivitySubmissionRequestDTO request
     ) {
-<span class="fc" id="L36">        log.info(&quot;Submitting activity work: activityId={}, userId={}&quot;,</span>
-<span class="fc" id="L37">                request.getActivityId(), request.getUserId());</span>
+<span class="fc" id="L43">        log.info(&quot;Submitting activity work: activityId={}, userId={}&quot;,</span>
+<span class="fc" id="L44">                request.getActivityId(), request.getUserId());</span>
 
-<span class="fc" id="L39">        submissionService.submitActivity(</span>
-<span class="fc" id="L40">                request.getActivityId(),</span>
-<span class="fc" id="L41">                request.getUserId(),</span>
-<span class="fc" id="L42">                request.getSubmissionUrl()</span>
+<span class="fc" id="L46">        submissionService.submitActivity(</span>
+<span class="fc" id="L47">                request.getActivityId(),</span>
+<span class="fc" id="L48">                request.getUserId(),</span>
+<span class="fc" id="L49">                request.getSubmissionUrl()</span>
         );
 
-<span class="fc" id="L45">        log.info(&quot;Activity submission successful: activityId={}, userId={}&quot;,</span>
-<span class="fc" id="L46">                request.getActivityId(), request.getUserId());</span>
+<span class="fc" id="L52">        log.info(&quot;Activity submission successful: activityId={}, userId={}&quot;,</span>
+<span class="fc" id="L53">                request.getActivityId(), request.getUserId());</span>
 
-<span class="fc" id="L48">        return ResponseEntity</span>
-<span class="fc" id="L49">                .status(HttpStatus.CREATED)</span>
-<span class="fc" id="L50">                .body(&quot;Submission successful&quot;);</span>
+<span class="fc" id="L55">        return ResponseEntity</span>
+<span class="fc" id="L56">                .status(HttpStatus.CREATED)</span>
+<span class="fc" id="L57">                .body(&quot;Submission successful&quot;);</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

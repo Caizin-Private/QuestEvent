@@ -31,32 +31,53 @@ public class LeaderboardController {
 
     @PreAuthorize(&quot;isAuthenticated()&quot;)
     @GetMapping(&quot;/global&quot;)
+    @Operation(
+            summary = &quot;Get global leaderboard&quot;,
+            description = &quot;Returns a ranked leaderboard of all users based on gems and program participation&quot;
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Global leaderboard fetched successfully&quot;),
+            @ApiResponse(responseCode = &quot;500&quot;, description = &quot;Internal server error&quot;)
+    })
     public List&lt;LeaderboardDTO&gt; globalLeaderboard() {
-<span class="fc" id="L35">        log.info(&quot;Fetching global leaderboard&quot;);</span>
+<span class="fc" id="L43">        log.info(&quot;Fetching global leaderboard&quot;);</span>
 
-<span class="fc" id="L37">        List&lt;LeaderboardDTO&gt; leaderboard =</span>
-<span class="fc" id="L38">                leaderboardService.getGlobalLeaderboard();</span>
+<span class="fc" id="L45">        List&lt;LeaderboardDTO&gt; leaderboard =</span>
+<span class="fc" id="L46">                leaderboardService.getGlobalLeaderboard();</span>
 
-<span class="fc" id="L40">        log.debug(&quot;Global leaderboard fetched, totalEntries={}&quot;,</span>
-<span class="fc" id="L41">                leaderboard.size());</span>
+<span class="fc" id="L48">        log.debug(&quot;Global leaderboard fetched, totalEntries={}&quot;,</span>
+<span class="fc" id="L49">                leaderboard.size());</span>
 
-<span class="fc" id="L43">        return leaderboard;</span>
+<span class="fc" id="L51">        return leaderboard;</span>
     }
 
     @PreAuthorize(&quot;isAuthenticated()&quot;)
     @GetMapping(&quot;/program/{programId}&quot;)
+    @Operation(
+            summary = &quot;Get program leaderboard&quot;,
+            description = &quot;Returns a ranked leaderboard for a specific program&quot;
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Program leaderboard fetched successfully&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Program not found&quot;),
+            @ApiResponse(responseCode = &quot;500&quot;, description = &quot;Internal server error&quot;)
+    })
     public List&lt;LeaderboardDTO&gt; programLeaderboard(
+            @Parameter(
+                    description = &quot;Program ID for which leaderboard is required&quot;,
+                    required = true
+            )
             @PathVariable Long programId
     ) {
-<span class="fc" id="L51">        log.info(&quot;Fetching program leaderboard for programId={}&quot;, programId);</span>
+<span class="fc" id="L72">        log.info(&quot;Fetching program leaderboard for programId={}&quot;, programId);</span>
 
-<span class="fc" id="L53">        List&lt;LeaderboardDTO&gt; leaderboard =</span>
-<span class="fc" id="L54">                leaderboardService.getProgramLeaderboard(programId);</span>
+<span class="fc" id="L74">        List&lt;LeaderboardDTO&gt; leaderboard =</span>
+<span class="fc" id="L75">                leaderboardService.getProgramLeaderboard(programId);</span>
 
-<span class="fc" id="L56">        log.debug(&quot;Program leaderboard fetched for programId={}, totalEntries={}&quot;,</span>
-<span class="fc" id="L57">                programId, leaderboard.size());</span>
+<span class="fc" id="L77">        log.debug(&quot;Program leaderboard fetched for programId={}, totalEntries={}&quot;,</span>
+<span class="fc" id="L78">                programId, leaderboard.size());</span>
 
-<span class="fc" id="L59">        return leaderboard;</span>
+<span class="fc" id="L80">        return leaderboard;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -34,112 +34,160 @@ public class ActivityController {
 
     @PreAuthorize(&quot;@rbac.canManageProgram(authentication, #programId)&quot;)
     @PostMapping
+    @Operation(
+            summary = &quot;Create a new activity&quot;,
+            description = &quot;Creates a new activity for a specific program&quot;
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;201&quot;, description = &quot;Activity created successfully&quot;),
+            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Invalid input&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Program not found&quot;)
+    })
     public ResponseEntity&lt;ActivityResponseDTO&gt; createActivity(
+            @Parameter(description = &quot;Program ID&quot;, required = true)
             @PathVariable Long programId,
             @RequestBody ActivityRequestDTO dto) {
 
-<span class="fc" id="L41">        log.info(&quot;Creating activity for programId={}, activityName={}&quot;,</span>
-<span class="fc" id="L42">                programId, dto.getActivityName());</span>
+<span class="fc" id="L51">        log.info(&quot;Creating activity for programId={}, activityName={}&quot;,</span>
+<span class="fc" id="L52">                programId, dto.getActivityName());</span>
 
-<span class="fc" id="L44">        Activity activity = activityService.createActivity(programId, dto);</span>
+<span class="fc" id="L54">        Activity activity = activityService.createActivity(programId, dto);</span>
 
-<span class="fc" id="L46">        log.info(&quot;Activity created successfully activityId={}, programId={}&quot;,</span>
-<span class="fc" id="L47">                activity.getActivityId(), programId);</span>
+<span class="fc" id="L56">        log.info(&quot;Activity created successfully activityId={}, programId={}&quot;,</span>
+<span class="fc" id="L57">                activity.getActivityId(), programId);</span>
 
-<span class="fc" id="L49">        return ResponseEntity</span>
-<span class="fc" id="L50">                .status(HttpStatus.CREATED)</span>
-<span class="fc" id="L51">                .body(convertToResponseDTO(activity));</span>
+<span class="fc" id="L59">        return ResponseEntity</span>
+<span class="fc" id="L60">                .status(HttpStatus.CREATED)</span>
+<span class="fc" id="L61">                .body(convertToResponseDTO(activity));</span>
     }
 
     @PreAuthorize(&quot;@rbac.canViewProgram(authentication, #programId)&quot;)
     @GetMapping
+    @Operation(
+            summary = &quot;Get all activities for a program&quot;,
+            description = &quot;Retrieves all activities associated with a specific program&quot;
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Successfully retrieved activities&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Program not found&quot;)
+    })
     public ResponseEntity&lt;List&lt;ActivityResponseDTO&gt;&gt; getActivities(
+            @Parameter(description = &quot;Program ID&quot;, required = true)
             @PathVariable Long programId) {
 
-<span class="fc" id="L59">        log.info(&quot;Fetching activities for programId={}&quot;, programId);</span>
+<span class="fc" id="L78">        log.info(&quot;Fetching activities for programId={}&quot;, programId);</span>
 
-<span class="fc" id="L61">        List&lt;ActivityResponseDTO&gt; response =</span>
-<span class="fc" id="L62">                activityService.getActivitiesByProgramId(programId)</span>
-<span class="fc" id="L63">                        .stream()</span>
-<span class="fc" id="L64">                        .map(this::convertToResponseDTO)</span>
-<span class="fc" id="L65">                        .toList();</span>
+<span class="fc" id="L80">        List&lt;ActivityResponseDTO&gt; response =</span>
+<span class="fc" id="L81">                activityService.getActivitiesByProgramId(programId)</span>
+<span class="fc" id="L82">                        .stream()</span>
+<span class="fc" id="L83">                        .map(this::convertToResponseDTO)</span>
+<span class="fc" id="L84">                        .toList();</span>
 
-<span class="fc" id="L67">        log.debug(&quot;Activities fetched for programId={}, count={}&quot;,</span>
-<span class="fc" id="L68">                programId, response.size());</span>
+<span class="fc" id="L86">        log.debug(&quot;Activities fetched for programId={}, count={}&quot;,</span>
+<span class="fc" id="L87">                programId, response.size());</span>
 
-<span class="fc" id="L70">        return ResponseEntity.ok(response);</span>
+<span class="fc" id="L89">        return ResponseEntity.ok(response);</span>
     }
 
     @PreAuthorize(&quot;@rbac.canManageProgram(authentication, #programId)&quot;)
     @PutMapping(&quot;/{activityId}&quot;)
+    @Operation(
+            summary = &quot;Update activity&quot;,
+            description = &quot;Updates an existing activity's information&quot;
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Activity updated successfully&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Activity or program not found&quot;)
+    })
     public ResponseEntity&lt;ActivityResponseDTO&gt; updateActivity(
+            @Parameter(description = &quot;Program ID&quot;, required = true)
             @PathVariable Long programId,
+            @Parameter(description = &quot;Activity ID&quot;, required = true)
             @PathVariable Long activityId,
             @RequestBody ActivityRequestDTO dto) {
 
-<span class="fc" id="L80">        log.info(&quot;Updating activity activityId={}, programId={}&quot;,</span>
+<span class="fc" id="L109">        log.info(&quot;Updating activity activityId={}, programId={}&quot;,</span>
                 activityId, programId);
 
-<span class="fc" id="L83">        Activity updated =</span>
-<span class="fc" id="L84">                activityService.updateActivity(programId, activityId, dto);</span>
+<span class="fc" id="L112">        Activity updated =</span>
+<span class="fc" id="L113">                activityService.updateActivity(programId, activityId, dto);</span>
 
-<span class="fc" id="L86">        log.info(&quot;Activity updated successfully activityId={}, programId={}&quot;,</span>
+<span class="fc" id="L115">        log.info(&quot;Activity updated successfully activityId={}, programId={}&quot;,</span>
                 activityId, programId);
 
-<span class="fc" id="L89">        return ResponseEntity.ok(convertToResponseDTO(updated));</span>
+<span class="fc" id="L118">        return ResponseEntity.ok(convertToResponseDTO(updated));</span>
     }
 
     @PreAuthorize(&quot;@rbac.canManageProgram(authentication, #programId)&quot;)
     @DeleteMapping(&quot;/{activityId}&quot;)
+    @Operation(
+            summary = &quot;Delete activity&quot;,
+            description = &quot;Deletes an activity from a program&quot;
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;204&quot;, description = &quot;Activity deleted successfully&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Activity or program not found&quot;)
+    })
     public ResponseEntity&lt;Void&gt; deleteActivity(
+            @Parameter(description = &quot;Program ID&quot;, required = true)
             @PathVariable Long programId,
+            @Parameter(description = &quot;Activity ID&quot;, required = true)
             @PathVariable Long activityId) {
 
-<span class="fc" id="L98">        log.warn(&quot;Deleting activity activityId={}, programId={}&quot;,</span>
+<span class="fc" id="L137">        log.warn(&quot;Deleting activity activityId={}, programId={}&quot;,</span>
                 activityId, programId);
 
-<span class="fc" id="L101">        activityService.deleteActivity(programId, activityId);</span>
+<span class="fc" id="L140">        activityService.deleteActivity(programId, activityId);</span>
 
-<span class="fc" id="L103">        log.info(&quot;Activity deleted successfully activityId={}, programId={}&quot;,</span>
+<span class="fc" id="L142">        log.info(&quot;Activity deleted successfully activityId={}, programId={}&quot;,</span>
                 activityId, programId);
 
-<span class="fc" id="L106">        return ResponseEntity.noContent().build();</span>
+<span class="fc" id="L145">        return ResponseEntity.noContent().build();</span>
     }
 
     @PreAuthorize(&quot;@rbac.canViewProgram(authentication, #programId)&quot;)
     @GetMapping(&quot;/compulsory&quot;)
+    @Operation(
+            summary = &quot;Get compulsory activities for a program&quot;,
+            description = &quot;Retrieves all compulsory activities (isCompulsory=true) associated with a specific program&quot;
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Successfully retrieved activities&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Program not found&quot;)
+    })
     public ResponseEntity&lt;List&lt;ActivityResponseDTO&gt;&gt; getCompulsoryActivities(
+            @Parameter(description = &quot;Program ID&quot;, required = true)
             @PathVariable Long programId) {
 
-<span class="nc" id="L114">        log.info(&quot;Fetching compulsory activities for programId={}&quot;, programId);</span>
+<span class="nc" id="L162">        log.info(&quot;Fetching compulsory activities for programId={}&quot;, programId);</span>
 
-<span class="nc" id="L116">        List&lt;ActivityResponseDTO&gt; response =</span>
-<span class="nc" id="L117">                activityService.getCompulsoryActivitiesByProgramId(programId)</span>
-<span class="nc" id="L118">                        .stream()</span>
-<span class="nc" id="L119">                        .map(this::convertToResponseDTO)</span>
-<span class="nc" id="L120">                        .toList();</span>
+<span class="nc" id="L164">        List&lt;ActivityResponseDTO&gt; response =</span>
+<span class="nc" id="L165">                activityService.getCompulsoryActivitiesByProgramId(programId)</span>
+<span class="nc" id="L166">                        .stream()</span>
+<span class="nc" id="L167">                        .map(this::convertToResponseDTO)</span>
+<span class="nc" id="L168">                        .toList();</span>
 
-<span class="nc" id="L122">        log.debug(&quot;Compulsory activities fetched for programId={}, count={}&quot;,</span>
-<span class="nc" id="L123">                programId, response.size());</span>
+<span class="nc" id="L170">        log.debug(&quot;Compulsory activities fetched for programId={}, count={}&quot;,</span>
+<span class="nc" id="L171">                programId, response.size());</span>
 
-<span class="nc" id="L125">        return ResponseEntity.ok(response);</span>
+<span class="nc" id="L173">        return ResponseEntity.ok(response);</span>
     }
 
     private ActivityResponseDTO convertToResponseDTO(Activity activity) {
-<span class="fc" id="L129">        log.debug(&quot;Converting Activity entity to DTO activityId={}&quot;,</span>
-<span class="fc" id="L130">                activity.getActivityId());</span>
+<span class="fc" id="L177">        log.debug(&quot;Converting Activity entity to DTO activityId={}&quot;,</span>
+<span class="fc" id="L178">                activity.getActivityId());</span>
 
-<span class="fc" id="L132">        ActivityResponseDTO response = new ActivityResponseDTO();</span>
-<span class="fc" id="L133">        response.setActivityId(activity.getActivityId());</span>
-<span class="fc" id="L134">        response.setProgramId(activity.getProgram().getProgramId());</span>
-<span class="fc" id="L135">        response.setActivityName(activity.getActivityName());</span>
-<span class="fc" id="L136">        response.setActivityDuration(activity.getActivityDuration());</span>
-<span class="fc" id="L137">        response.setActivityRulebook(activity.getActivityRulebook());</span>
-<span class="fc" id="L138">        response.setActivityDescription(activity.getActivityDescription());</span>
-<span class="fc" id="L139">        response.setRewardGems(activity.getRewardGems());</span>
-<span class="fc" id="L140">        response.setCreatedAt(activity.getCreatedAt());</span>
-<span class="fc" id="L141">        response.setIsCompulsory(activity.getIsCompulsory());</span>
-<span class="fc" id="L142">        return response;</span>
+<span class="fc" id="L180">        ActivityResponseDTO response = new ActivityResponseDTO();</span>
+<span class="fc" id="L181">        response.setActivityId(activity.getActivityId());</span>
+<span class="fc" id="L182">        response.setProgramId(activity.getProgram().getProgramId());</span>
+<span class="fc" id="L183">        response.setActivityName(activity.getActivityName());</span>
+<span class="fc" id="L184">        response.setActivityDuration(activity.getActivityDuration());</span>
+<span class="fc" id="L185">        response.setActivityRulebook(activity.getActivityRulebook());</span>
+<span class="fc" id="L186">        response.setActivityDescription(activity.getActivityDescription());</span>
+<span class="fc" id="L187">        response.setRewardGems(activity.getRewardGems());</span>
+<span class="fc" id="L188">        response.setCreatedAt(activity.getCreatedAt());</span>
+<span class="fc" id="L189">        response.setIsCompulsory(activity.getIsCompulsory());</span>
+<span class="fc" id="L190">        return response;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
