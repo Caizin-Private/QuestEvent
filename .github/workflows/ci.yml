@@ -3,7 +3,8 @@ name: Backend CI
 on:
   pull_request:
     branches: [ master ]
-
+  push:
+    branches: [ release-v1 ]
 
 permissions:
   contents: write
@@ -63,4 +64,4 @@ jobs:
         uses: madrapps/jacoco-report@v1.6.1
         with:
           paths: questevent-backend/target/site/jacoco/jacoco.xml
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }} this is ci ...hence expalin me all the flow
