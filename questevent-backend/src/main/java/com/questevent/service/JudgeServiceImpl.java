@@ -10,6 +10,7 @@ import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
 import com.questevent.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.Instant;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class JudgeServiceImpl implements JudgeService {
@@ -29,14 +31,13 @@ public class JudgeServiceImpl implements JudgeService {
     private final ProgramWalletTransactionService programWalletTransactionService;
     private final UserRepository userRepository;
 
-    /* ================= USER RESOLUTION ================= */
-
     private User resolveCurrentUser() {
 
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
+            log.warn("Unauthorized access attempt to judge service");
             throw new ResponseStatusException(
                     HttpStatus.UNAUTHORIZED, "Unauthorized");
         }
@@ -45,16 +46,17 @@ public class JudgeServiceImpl implements JudgeService {
 
         if (principal instanceof UserPrincipal p) {
             return userRepository.findById(p.userId())
-                    .orElseThrow(() ->
-                            new ResponseStatusException(
-                                    HttpStatus.NOT_FOUND, "User not found"));
+                    .orElseThrow(() -> {
+                        log.error("Authenticated user not found | userId={}", p.userId());
+                        return new ResponseStatusException(
+                                HttpStatus.NOT_FOUND, "User not found");
+                    });
         }
 
+        log.warn("Invalid authentication principal in judge service");
         throw new ResponseStatusException(
                 HttpStatus.UNAUTHORIZED, "Invalid authentication");
     }
-
-    /* ================= PENDING (JUDGE-SCOPED) ================= */
 
     @Override
     @Transactional(readOnly = true)
@@ -63,25 +65,39 @@ public class JudgeServiceImpl implements JudgeService {
     ) {
         User user = resolveCurrentUser();
 
+        log.debug(
+                "Fetching pending submissions for judge | userId={} | role={}",
+                user.getUserId(),
+                user.getRole()
+        );
+
+        List<JudgeSubmissionDTO> result;
+
         if (user.getRole() == Role.OWNER) {
-            return submissionRepository
+            result = submissionRepository
                     .findByReviewStatus(ReviewStatus.PENDING)
+                    .stream()
+                    .map(this::mapToDto)
+                    .toList();
+        } else {
+            result = submissionRepository
+                    .findByReviewStatusAndActivityRegistrationActivityProgramJudgeUserUserId(
+                            ReviewStatus.PENDING,
+                            user.getUserId()
+                    )
                     .stream()
                     .map(this::mapToDto)
                     .toList();
         }
 
-        return submissionRepository
-                .findByReviewStatusAndActivityRegistrationActivityProgramJudgeUserUserId(
-                        ReviewStatus.PENDING,
-                        user.getUserId()
-                )
-                .stream()
-                .map(this::mapToDto)
-                .toList();
-    }
+        log.info(
+                "Pending submissions fetched | userId={} | count={}",
+                user.getUserId(),
+                result.size()
+        );
 
-    /* ================= PENDING BY ACTIVITY ================= */
+        return result;
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -91,8 +107,16 @@ public class JudgeServiceImpl implements JudgeService {
     ) {
         User user = resolveCurrentUser();
 
+        log.debug(
+                "Fetching pending submissions for activity | activityId={} | userId={}",
+                activityId,
+                user.getUserId()
+        );
+
+        List<JudgeSubmissionDTO> result;
+
         if (user.getRole() == Role.OWNER) {
-            return submissionRepository
+            result = submissionRepository
                     .findByReviewStatusAndActivityRegistrationActivityActivityId(
                             ReviewStatus.PENDING,
                             activityId
@@ -100,20 +124,26 @@ public class JudgeServiceImpl implements JudgeService {
                     .stream()
                     .map(this::mapToDto)
                     .toList();
+        } else {
+            result = submissionRepository
+                    .findByReviewStatusAndActivityRegistrationActivityActivityIdAndActivityRegistrationActivityProgramJudgeUserUserId(
+                            ReviewStatus.PENDING,
+                            activityId,
+                            user.getUserId()
+                    )
+                    .stream()
+                    .map(this::mapToDto)
+                    .toList();
         }
 
-        return submissionRepository
-                .findByReviewStatusAndActivityRegistrationActivityActivityIdAndActivityRegistrationActivityProgramJudgeUserUserId(
-                        ReviewStatus.PENDING,
-                        activityId,
-                        user.getUserId()
-                )
-                .stream()
-                .map(this::mapToDto)
-                .toList();
-    }
+        log.info(
+                "Pending submissions fetched for activity | activityId={} | count={}",
+                activityId,
+                result.size()
+        );
 
-    /* ================= ALL SUBMISSIONS ================= */
+        return result;
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -122,34 +152,57 @@ public class JudgeServiceImpl implements JudgeService {
     ) {
         User user = resolveCurrentUser();
 
+        log.debug(
+                "Fetching all submissions for judge | userId={} | role={}",
+                user.getUserId(),
+                user.getRole()
+        );
+
+        List<JudgeSubmissionDTO> result;
+
         if (user.getRole() == Role.OWNER) {
-            return submissionRepository.findAll()
+            result = submissionRepository.findAll()
+                    .stream()
+                    .map(this::mapToDto)
+                    .toList();
+        } else {
+            result = submissionRepository
+                    .findByActivityRegistrationActivityProgramJudgeUserUserId(
+                            user.getUserId()
+                    )
                     .stream()
                     .map(this::mapToDto)
                     .toList();
         }
 
-        return submissionRepository
-                .findByActivityRegistrationActivityProgramJudgeUserUserId(
-                        user.getUserId()
-                )
-                .stream()
-                .map(this::mapToDto)
-                .toList();
-    }
+        log.info(
+                "All submissions fetched | userId={} | count={}",
+                user.getUserId(),
+                result.size()
+        );
 
-    /* ================= REVIEW ================= */
+        return result;
+    }
 
     @Override
     @Transactional
     public void reviewSubmission(Long submissionId) {
 
+        log.debug("Review submission requested | submissionId={}", submissionId);
+
         ActivitySubmission submission = submissionRepository.findById(submissionId)
-                .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.NOT_FOUND, "Submission not found"));
+                .orElseThrow(() -> {
+                    log.warn("Submission not found | submissionId={}", submissionId);
+                    return new ResponseStatusException(
+                            HttpStatus.NOT_FOUND, "Submission not found");
+                });
 
         if (submission.getReviewStatus() != ReviewStatus.PENDING) {
+            log.warn(
+                    "Submission already reviewed | submissionId={} | status={}",
+                    submissionId,
+                    submission.getReviewStatus()
+            );
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Submission already reviewed");
@@ -161,6 +214,10 @@ public class JudgeServiceImpl implements JudgeService {
 
         Judge judge = program.getJudge();
         if (judge == null) {
+            log.error(
+                    "Judge not assigned to program | programId={}",
+                    program.getProgramId()
+            );
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Judge not assigned to this program");
@@ -168,6 +225,11 @@ public class JudgeServiceImpl implements JudgeService {
 
         Integer rewardGems = activity.getRewardGems();
         if (rewardGems == null || rewardGems < 0) {
+            log.error(
+                    "Invalid reward gems | activityId={} | rewardGems={}",
+                    activity.getActivityId(),
+                    rewardGems
+            );
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Invalid reward gems");
@@ -187,9 +249,15 @@ public class JudgeServiceImpl implements JudgeService {
                 program,
                 rewardGems
         );
-    }
 
-    /* ================= MAPPER ================= */
+        log.info(
+                "Submission reviewed & approved | submissionId={} | programId={} | userId={} | awardedGems={}",
+                submissionId,
+                program.getProgramId(),
+                registration.getUser().getUserId(),
+                rewardGems
+        );
+    }
 
     private JudgeSubmissionDTO mapToDto(ActivitySubmission submission) {
         ActivityRegistration reg = submission.getActivityRegistration();
