@@ -88,6 +88,14 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiErrorDTO> handleResourceNotFound(ResourceNotFoundException ex) {
+        return build(HttpStatus.NOT_FOUND, ex.getMessage());    }
+
+    @ExceptionHandler(InvalidOperationException.class)
+    public ResponseEntity<ApiErrorDTO> handleInvalidOperation(InvalidOperationException ex) {
+        return build(HttpStatus.CONFLICT, ex.getMessage());
+    }
 
     private ResponseEntity<ApiErrorDTO> build(HttpStatus status, String message) {
 
