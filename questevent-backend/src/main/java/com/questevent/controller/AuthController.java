@@ -1,38 +1,38 @@
 package com.questevent.controller;
-
 import com.questevent.entity.User;
-import com.questevent.entity.UserWallet;
 import com.questevent.enums.Department;
-import com.questevent.repository.UserWalletRepository;
-import com.questevent.repository.UserRepository;
+import com.questevent.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 
 @Controller
-@RequiredArgsConstructor
 public class AuthController {
 
-    private final UserRepository userRepository;
-    private final UserWalletRepository userWalletRepository;
+    private static final Logger log =
+            LoggerFactory.getLogger(AuthController.class);
+
+    private final AuthService authService;
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
 
     @GetMapping({"/", "/login"})
     @ResponseBody
-    public String loginPage(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public String loginPage(HttpServletRequest request,
+                            HttpServletResponse response) throws IOException {
 
-        HttpSession session = request.getSession(false);
+        log.info("Login page requested");
 
-        // already logged in → go to profile
-        if (session != null && session.getAttribute("userId") != null) {
+        if (authService.isLoggedIn(request)) {
+            log.info("User already logged in, redirecting to /profile");
             response.sendRedirect("/profile");
             return null;
         }
@@ -40,18 +40,12 @@ public class AuthController {
         return """
         <!DOCTYPE html>
         <html>
-        <head>
-            <title>Login</title>
-        </head>
+        <head><title>Login</title></head>
         <body style="font-family: Arial; padding: 40px;">
             <h2>Login Page</h2>
-
             <a href="/oauth2/authorization/azure">
-                <button style="padding:10px 20px; cursor:pointer;">
-                    Login with Microsoft
-                </button>
+                <button style="padding:10px 20px;">Login with Microsoft</button>
             </a>
-
         </body>
         </html>
         """;
@@ -62,16 +56,18 @@ public class AuthController {
     @ResponseBody
     public String completeProfilePage() {
 
+        log.info("Complete profile page opened");
         return """
         <h2>Complete Your Profile 📝</h2>
 
         <form method="post" action="/complete-profile">
+
             <label>Department:</label><br>
             <select name="department">
                 <option value="HR">HR</option>
                 <option value="TECH">TECH</option>
                 <option value="GENERAL">GENERAL</option>
-                <option value="GENERAL">IT</option>
+                <option value="IT">IT</option>
             </select><br><br>
 
             <label>Gender:</label><br>
@@ -87,28 +83,18 @@ public class AuthController {
 
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/complete-profile")
-    public void saveProfile(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            @RequestParam Department department,
-            @RequestParam String gender
-    ) throws IOException {
+    public void saveProfile(HttpServletRequest request,
+                            HttpServletResponse response,
+                            @RequestParam Department department,
+                            @RequestParam String gender) throws IOException {
 
-        Long userId = (Long) request.getSession().getAttribute("userId");
+        log.info("Profile submission received department={}, gender={}",
+                department, gender);
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        user.setDepartment(department);
-        user.setGender(gender);
-        userRepository.save(user);
-        userWalletRepository.findByUserUserId(userId)
-                .orElseGet(() -> {
-                    UserWallet wallet = new UserWallet();
-                    wallet.setUser(user);
-                    wallet.setGems(0);
-                    return userWalletRepository.save(wallet);
-                });
+        Long userId = authService.getLoggedInUserId(request);
+        authService.completeProfile(userId, department, gender);
 
+        log.info("Profile completed successfully, redirecting to /profile");
         response.sendRedirect("/profile");
     }
 
@@ -117,8 +103,11 @@ public class AuthController {
     @ResponseBody
     public String profile(HttpServletRequest request) {
 
-        Long userId = (Long) request.getSession().getAttribute("userId");
-        User user = userRepository.findById(userId).orElseThrow();
+        log.info("Profile page requested");
+
+        User user = authService.getLoggedInUser(request);
+
+        log.debug("Rendering profile page userId={}", user.getUserId());
 
         return """
             <h2>User Profile 👤</h2>
@@ -148,8 +137,9 @@ public class AuthController {
     @GetMapping("/logout-success")
     @ResponseBody
     public String logoutSuccess() {
+        log.info("Logout success page requested");
         return """
-            <h2>Logged out successfully ✅</h2>
+            <h2>Logged out successfully </h2>
             <a href="/login">Login again</a>
         """;
     }

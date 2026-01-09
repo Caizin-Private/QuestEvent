@@ -15,7 +15,14 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:8080")); // Allow Swagger UI from same origin
+        configuration.setAllowedOrigins(List.of("http://localhost:8080",
+                "http://localhost:3000",
+                "http://d33m3dyxosqoxf.cloudfront.net",
+                "https://d33m3dyxosqoxf.cloudfront.net",
+                "http://questeventutest-env.eba-k6h77htc.us-west-2.elasticbeanstalk.com",
+                "https://questeventutest-env.eba-k6h77htc.us-west-2.elasticbeanstalk.com"
+
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);

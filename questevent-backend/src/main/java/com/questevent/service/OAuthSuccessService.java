@@ -64,35 +64,27 @@ public class OAuthSuccessService extends SavedRequestAwareAuthenticationSuccessH
 
         boolean profileIncomplete =
                 user.getDepartment() == Department.GENERAL &&
-                        user.getGender() == "PENDING";
-
+                        "PENDING".equals(user.getGender());
         if (profileIncomplete) {
-
             log.info(
                     "Redirecting OAuth user to profile completion | userId={}",
                     user.getUserId()
             );
-
             response.sendRedirect("/complete-profile");
         } else {
-
             log.info(
                     "Redirecting OAuth user to profile | userId={}",
                     user.getUserId()
             );
-
             response.sendRedirect("/profile");
         }
     }
 
     private String resolveEmail(OAuth2User oauthUser) {
-
         log.debug("Resolving email from OAuth2User attributes");
-
         String email = oauthUser.getAttribute("email");
         if (email == null) email = oauthUser.getAttribute("preferred_username");
         if (email == null) email = oauthUser.getAttribute("upn");
-
         return email;
     }
 }

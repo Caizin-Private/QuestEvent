@@ -5,9 +5,10 @@ import com.questevent.entity.User;
 import com.questevent.repository.UserRepository;
 import com.questevent.service.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,11 +25,17 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthTokenController {
 
+    private static final Logger log =
+            LoggerFactory.getLogger(AuthTokenController.class);
+
     private final JwtService jwtService;
     private final UserRepository userRepository;
 
     @GetMapping
     public Map<String, Object> authInfo() {
+
+        log.info("Auth info endpoint accessed");
+
         return Map.of(
                 "message", "JWT Authentication API",
                 "endpoints", Map.of(
@@ -43,10 +50,7 @@ public class AuthTokenController {
 
     @GetMapping("/token")
     @PreAuthorize("isAuthenticated()")
-    @Operation(
-            summary = "Generate JWT access + refresh token",
-            description = "Requires OAuth2 login first"
-    )
+    @Operation(summary = "Generate JWT access + refresh token")
     public Map<String, Object> generateTokens() {
 
         Authentication authentication =
@@ -54,14 +58,19 @@ public class AuthTokenController {
 
         UserPrincipal principal = extractPrincipal(authentication);
 
+        log.info("Generating tokens for userId={} email={}",
+                principal.userId(), principal.email());
+
         String accessToken = jwtService.generateAccessToken(principal);
         String refreshToken = jwtService.generateRefreshToken(principal);
+
+        log.debug("Tokens generated successfully for userId={}", principal.userId());
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("accessToken", accessToken);
         response.put("refreshToken", refreshToken);
         response.put("tokenType", "Bearer");
-        response.put("expiresIn", 300); // 5 minutes
+        response.put("expiresIn", 300);
         response.put("userId", principal.userId());
         response.put("email", principal.email());
         response.put("role", principal.role().name());
@@ -70,28 +79,43 @@ public class AuthTokenController {
     }
 
     @PostMapping("/refresh")
-    @Operation(
-            summary = "Refresh access token",
-            description = "Generate new access token using refresh token"
-    )
+    @Operation(summary = "Refresh access token")
     public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> body) {
+
+        log.info("Refresh token request received");
 
         String refreshToken = body.get("refreshToken");
 
-        if (refreshToken == null || !jwtService.validateToken(refreshToken)
+        if (refreshToken == null) {
+            log.warn("Refresh token missing in request body");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Invalid or expired refresh token"));
+        }
+
+        if (!jwtService.validateToken(refreshToken)
                 || !jwtService.isRefreshToken(refreshToken)) {
+
+            log.warn("Invalid refresh token received");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Invalid or expired refresh token"));
         }
 
         String email = jwtService.extractUsername(refreshToken);
+
+        log.info("Refresh token validated for email={}", email);
+
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> {
+                    log.error("User not found during refresh for email={}", email);
+                    return new RuntimeException("User not found");
+                });
 
         UserPrincipal principal =
                 new UserPrincipal(user.getUserId(), user.getEmail(), user.getRole());
 
         String newAccessToken = jwtService.generateAccessToken(principal);
+
+        log.info("New access token issued for userId={}", user.getUserId());
 
         return ResponseEntity.ok(Map.of(
                 "accessToken", newAccessToken,
@@ -110,6 +134,8 @@ public class AuthTokenController {
 
         UserPrincipal principal = extractPrincipal(authentication);
 
+        log.info("Current user info requested userId={}", principal.userId());
+
         return Map.of(
                 "userId", principal.userId(),
                 "email", principal.email(),
@@ -124,6 +150,9 @@ public class AuthTokenController {
 
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
+
+        log.info("JWT test endpoint hit, authenticated={}",
+                authentication.isAuthenticated());
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("status", "JWT authentication working ✅");
@@ -145,6 +174,9 @@ public class AuthTokenController {
 
         String authSource = (String) request.getAttribute("AUTH_SOURCE");
 
+        log.info("Auth source verification requested, source={}",
+                authSource != null ? authSource : "UNKNOWN");
+
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("authenticationSource",
                 authSource != null ? authSource : "UNKNOWN");
@@ -161,14 +193,22 @@ public class AuthTokenController {
             return principal;
         }
 
-        if (authentication.getPrincipal() instanceof
-                org.springframework.security.core.userdetails.UserDetails ud) {
+        if (authentication.getPrincipal()
+                instanceof org.springframework.security.core.userdetails.UserDetails ud) {
+
+            log.debug("Extracting user from UserDetails username={}", ud.getUsername());
 
             User user = userRepository.findByEmail(ud.getUsername())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> {
+                        log.error("User not found for username={}", ud.getUsername());
+                        return new RuntimeException("User not found");
+                    });
 
             return new UserPrincipal(user.getUserId(), user.getEmail(), user.getRole());
         }
+
+        log.error("Unsupported principal type: {}",
+                authentication.getPrincipal().getClass().getName());
 
         throw new RuntimeException("Unable to extract user principal");
     }
