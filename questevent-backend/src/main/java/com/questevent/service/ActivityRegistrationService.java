@@ -6,6 +6,7 @@ import com.questevent.entity.ActivityRegistration;
 import com.questevent.entity.Program;
 import com.questevent.entity.User;
 import com.questevent.enums.CompletionStatus;
+import com.questevent.exception.*;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivityRepository;
 import com.questevent.repository.UserRepository;
@@ -44,7 +45,7 @@ public class ActivityRegistrationService {
         if (authentication == null || !authentication.isAuthenticated()
                 || !(authentication.getPrincipal() instanceof UserPrincipal principal)) {
             log.warn("Unauthorized activity registration attempt");
-            throw new RuntimeException("Unauthorized");
+            throw new UnauthorizedException("Unauthorized");
         }
 
         Long userId = principal.userId();
@@ -52,13 +53,13 @@ public class ActivityRegistrationService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> {
                     log.error("User not found | userId={}", userId);
-                    return new RuntimeException("User not found");
+                    return new UserNotFoundException("User not found");
                 });
 
         Activity activity = activityRepository.findById(request.getActivityId())
                 .orElseThrow(() -> {
                     log.error("Activity not found | activityId={}", request.getActivityId());
-                    return new RuntimeException("Activity not found");
+                    return new ActivityNotFoundException("Activity not found");
                 });
 
         validateCompulsoryActivities(activity, userId);
@@ -72,7 +73,9 @@ public class ActivityRegistrationService {
                     activity.getActivityId(),
                     userId
             );
-            throw new RuntimeException("User already registered for this activity");
+            throw new ResourceConflictException(
+                    "User already registered for this activity"
+            );
         }
 
         ActivityRegistration registration = new ActivityRegistration();
@@ -115,7 +118,9 @@ public class ActivityRegistrationService {
                 activityRegistrationRepository.findById(id)
                         .orElseThrow(() -> {
                             log.warn("Registration not found | registrationId={}", id);
-                            return new RuntimeException("Registration not found");
+                            return new ResourceNotFoundException(
+                                    "Registration not found"
+                            );
                         });
 
         return mapToDTO(registration);
@@ -194,7 +199,9 @@ public class ActivityRegistrationService {
                 activityRegistrationRepository.findById(id)
                         .orElseThrow(() -> {
                             log.warn("Registration not found | registrationId={}", id);
-                            return new RuntimeException("Registration not found");
+                            return new ResourceNotFoundException(
+                                    "Registration not found"
+                            );
                         });
 
         registration.setCompletionStatus(updateDTO.getCompletionStatus());
@@ -218,7 +225,7 @@ public class ActivityRegistrationService {
 
         if (!activityRegistrationRepository.existsById(id)) {
             log.warn("Registration not found while deleting | registrationId={}", id);
-            throw new RuntimeException("Registration not found");
+            throw new ResourceNotFoundException("Registration not found");
         }
 
         activityRegistrationRepository.deleteById(id);
@@ -273,7 +280,7 @@ public class ActivityRegistrationService {
                         compulsory.getActivityId(),
                         userId
                 );
-                throw new RuntimeException(
+                throw new InvalidOperationException(
                         "Complete compulsory activity '"
                                 + compulsory.getActivityName()
                                 + "' before registering for this activity"
@@ -326,13 +333,13 @@ public class ActivityRegistrationService {
         Activity activity = activityRepository.findById(activityId)
                 .orElseThrow(() -> {
                     log.error("Activity not found | activityId={}", activityId);
-                    return new RuntimeException("Activity not found");
+                    return new ActivityNotFoundException("Activity not found");
                 });
 
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> {
                     log.error("User not found | userId={}", request.getUserId());
-                    return new RuntimeException("User not found");
+                    return new UserNotFoundException("User not found");
                 });
 
         if (activityRegistrationRepository
@@ -345,7 +352,9 @@ public class ActivityRegistrationService {
                     activity.getActivityId(),
                     user.getUserId()
             );
-            throw new RuntimeException("User already registered for this activity");
+            throw new ResourceConflictException(
+                    "User already registered for this activity"
+            );
         }
 
         ActivityRegistration registration = new ActivityRegistration();
