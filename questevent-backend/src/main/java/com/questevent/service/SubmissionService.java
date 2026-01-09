@@ -4,7 +4,6 @@ public interface SubmissionService {
 
     void submitActivity(
             Long activityId,
-            Long userId,
             String submissionUrl
     );
 }

@@ -1,12 +1,18 @@
 package com.questevent.service;
 
+import com.questevent.dto.UserPrincipal;
 import com.questevent.entity.ActivityRegistration;
 import com.questevent.entity.ActivitySubmission;
+import com.questevent.entity.User;
 import com.questevent.enums.CompletionStatus;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
+import com.questevent.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.Nullable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -15,15 +21,28 @@ public class SubmissionServiceImpl implements SubmissionService {
 
     private final ActivityRegistrationRepository registrationRepository;
     private final ActivitySubmissionRepository submissionRepository;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
-    public void submitActivity(Long activityId, Long userId, String submissionUrl) {
+    public void submitActivity(Long activityId, String submissionUrl) {
+        @Nullable Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        User hostUser = null;
+
+        if (authentication != null && authentication.isAuthenticated()) {
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof UserPrincipal p) {
+                hostUser = userRepository.findById(p.userId()).orElse(null);
+            }
+        }
 
 
         // 1️⃣ Validate registration
+        assert hostUser != null;
         ActivityRegistration registration = registrationRepository
-                .findByActivityActivityIdAndUserUserId(activityId, userId)
+                .findByActivityActivityIdAndUserUserId(activityId, hostUser.getUserId())
                 .orElseThrow(() ->
                         new RuntimeException("User is not registered for this activity"));
 

@@ -10,9 +10,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class SubmissionControllerTest {
@@ -23,38 +25,43 @@ class SubmissionControllerTest {
     @InjectMocks
     private SubmissionController submissionController;
 
-
     @Test
     void submitActivity_shouldReturnCreated_whenSubmissionIsSuccessful() {
 
+        // Arrange
         ActivitySubmissionRequestDTO request = new ActivitySubmissionRequestDTO();
         request.setActivityId(1L);
-        request.setUserId(2L);
         request.setSubmissionUrl("https://github.com/user/project");
 
-        doNothing().when(submissionService)
-                .submitActivity(1L, 2L, "https://github.com/user/project");
+        doNothing()
+                .when(submissionService)
+                .submitActivity(1L, "https://github.com/user/project");
 
+        // Act
         ResponseEntity<String> response =
                 submissionController.submitActivity(request);
 
+        // Assert
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertEquals("Submission successful", response.getBody());
-    }
 
+        verify(submissionService)
+                .submitActivity(1L, "https://github.com/user/project");
+    }
 
     @Test
     void submitActivity_shouldThrowException_whenUserNotRegistered() {
 
+        // Arrange
         ActivitySubmissionRequestDTO request = new ActivitySubmissionRequestDTO();
         request.setActivityId(1L);
-        request.setUserId(99L);
         request.setSubmissionUrl("https://github.com/user/project");
 
         doThrow(new RuntimeException("User is not registered for this activity"))
                 .when(submissionService)
-                .submitActivity(1L, 99L, "https://github.com/user/project");
+                .submitActivity(1L, "https://github.com/user/project");
 
+        // Act + Assert
         RuntimeException exception = assertThrows(
                 RuntimeException.class,
                 () -> submissionController.submitActivity(request)
@@ -66,19 +73,19 @@ class SubmissionControllerTest {
         );
     }
 
-
     @Test
     void submitActivity_shouldThrowException_whenSubmissionAlreadyExists() {
 
+        // Arrange
         ActivitySubmissionRequestDTO request = new ActivitySubmissionRequestDTO();
         request.setActivityId(1L);
-        request.setUserId(2L);
         request.setSubmissionUrl("https://github.com/user/project");
 
         doThrow(new RuntimeException("Submission already exists for this registration"))
                 .when(submissionService)
-                .submitActivity(1L, 2L, "https://github.com/user/project");
+                .submitActivity(1L, "https://github.com/user/project");
 
+        // Act + Assert
         RuntimeException exception = assertThrows(
                 RuntimeException.class,
                 () -> submissionController.submitActivity(request)
@@ -90,19 +97,19 @@ class SubmissionControllerTest {
         );
     }
 
-
     @Test
     void submitActivity_shouldThrowException_whenActivityAlreadyCompleted() {
 
+        // Arrange
         ActivitySubmissionRequestDTO request = new ActivitySubmissionRequestDTO();
         request.setActivityId(1L);
-        request.setUserId(2L);
         request.setSubmissionUrl("https://github.com/user/project");
 
         doThrow(new RuntimeException("Activity already completed. Submission not allowed."))
                 .when(submissionService)
-                .submitActivity(1L, 2L, "https://github.com/user/project");
+                .submitActivity(1L, "https://github.com/user/project");
 
+        // Act + Assert
         RuntimeException exception = assertThrows(
                 RuntimeException.class,
                 () -> submissionController.submitActivity(request)
