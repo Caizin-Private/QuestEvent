@@ -4,6 +4,10 @@ import com.questevent.dto.UserPrincipal;
 import com.questevent.dto.UserWalletBalanceDTO;
 import com.questevent.entity.User;
 import com.questevent.entity.UserWallet;
+import com.questevent.exception.ResourceConflictException;
+import com.questevent.exception.UnauthorizedException;
+import com.questevent.exception.UserNotFoundException;
+import com.questevent.exception.WalletNotFoundException;
 import com.questevent.repository.UserRepository;
 import com.questevent.repository.UserWalletRepository;
 import jakarta.transaction.Transactional;
@@ -16,8 +20,8 @@ import org.springframework.web.server.ResponseStatusException;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
-@Slf4j
 @Service
+@Slf4j
 public class UserWalletService {
 
     private final UserWalletRepository userWalletRepository;
@@ -42,9 +46,7 @@ public class UserWalletService {
         userWalletRepository.findByUserUserId(user.getUserId())
                 .ifPresent(w -> {
                     log.error("Wallet already exists for userId={}", user.getUserId());
-                    throw new IllegalStateException(
-                            "Wallet already exists for user"
-                    );
+                    throw new ResourceConflictException("Wallet already exists for user");
                 });
 
         UserWallet userWallet = new UserWallet();
@@ -63,19 +65,13 @@ public class UserWalletService {
 
         if (authentication == null || !authentication.isAuthenticated()) {
             log.warn("Unauthenticated request to fetch wallet balance");
-            throw new ResponseStatusException(
-                    UNAUTHORIZED,
-                    "Unauthenticated request"
-            );
+            throw new UnauthorizedException("Unauthenticated request");
         }
 
         Object principal = authentication.getPrincipal();
         if (!(principal instanceof UserPrincipal p)) {
             log.warn("Invalid authentication principal: {}", principal);
-            throw new ResponseStatusException(
-                    UNAUTHORIZED,
-                    "Invalid authentication principal"
-            );
+            throw new UnauthorizedException("Invalid authentication principal");
         }
 
         log.debug("Fetching wallet balance for userId={}", p.userId());
@@ -83,19 +79,13 @@ public class UserWalletService {
         User user = userRepository.findById(p.userId())
                 .orElseThrow(() -> {
                     log.warn("User not found for userId={}", p.userId());
-                    return new ResponseStatusException(
-                            NOT_FOUND,
-                            "User not found"
-                    );
+                    return new UserNotFoundException("User not found");
                 });
 
         UserWallet wallet = user.getWallet();
         if (wallet == null) {
             log.warn("Wallet not found for userId={}", p.userId());
-            throw new ResponseStatusException(
-                    NOT_FOUND,
-                    "Wallet not found"
-            );
+            throw new WalletNotFoundException("Wallet not found");
         }
 
         UserWalletBalanceDTO dto = new UserWalletBalanceDTO();
