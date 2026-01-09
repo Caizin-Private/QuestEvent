@@ -31,6 +31,14 @@ public class LeaderboardController {
 
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/global")
+    @Operation(
+            summary = "Get global leaderboard",
+            description = "Returns a ranked leaderboard of all users based on gems and program participation"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Global leaderboard fetched successfully"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     public List<LeaderboardDTO> globalLeaderboard() {
         log.info("Fetching global leaderboard");
 
@@ -45,7 +53,20 @@ public class LeaderboardController {
 
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/program/{programId}")
+    @Operation(
+            summary = "Get program leaderboard",
+            description = "Returns a ranked leaderboard for a specific program"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Program leaderboard fetched successfully"),
+            @ApiResponse(responseCode = "404", description = "Program not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     public List<LeaderboardDTO> programLeaderboard(
+            @Parameter(
+                    description = "Program ID for which leaderboard is required",
+                    required = true
+            )
             @PathVariable Long programId
     ) {
         log.info("Fetching program leaderboard for programId={}", programId);
