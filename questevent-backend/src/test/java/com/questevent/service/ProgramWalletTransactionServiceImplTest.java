@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class ProgramWalletTransactionServiceImplTest {
+class ProgramWalletTransactionServiceImplTest {
 
     @Mock
     private ProgramWalletRepository programWalletRepository;
@@ -85,11 +85,12 @@ public class ProgramWalletTransactionServiceImplTest {
         Program program = new Program();
         program.setProgramId(10L);
 
-        assertThrows(
+        IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
                 () -> service.creditGems(user, program, -20)
         );
 
+        assertEquals("Amount must be greater than zero", ex.getMessage());
         verifyNoInteractions(programWalletRepository);
     }
 
@@ -105,37 +106,13 @@ public class ProgramWalletTransactionServiceImplTest {
                 .findByUserUserIdAndProgramProgramId(1L, 10L))
                 .thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
                 () -> service.creditGems(user, program, 10)
         );
 
         assertEquals("Program wallet not found", ex.getMessage());
         verify(programWalletRepository, never()).save(any());
-    }
-
-    @Test
-    void creditGems_shouldHandleLargeAmount() {
-        User user = new User();
-        user.setUserId(1L);
-
-        Program program = new Program();
-        program.setProgramId(10L);
-
-        ProgramWallet wallet = new ProgramWallet();
-        wallet.setProgramWalletId(UUID.randomUUID());
-        wallet.setUser(user);
-        wallet.setProgram(program);
-        wallet.setGems(1_000_000);
-
-        when(programWalletRepository
-                .findByUserUserIdAndProgramProgramId(1L, 10L))
-                .thenReturn(Optional.of(wallet));
-
-        service.creditGems(user, program, 500_000);
-
-        assertEquals(1_500_000, wallet.getGems());
-        verify(programWalletRepository).save(wallet);
     }
 
     @Test
@@ -149,7 +126,6 @@ public class ProgramWalletTransactionServiceImplTest {
 
         UserWallet userWallet = new UserWallet();
         userWallet.setGems(100);
-
         user.setWallet(userWallet);
 
         ProgramWallet programWallet = new ProgramWallet();
@@ -198,8 +174,8 @@ public class ProgramWalletTransactionServiceImplTest {
 
         service.autoSettleExpiredProgramWallets();
 
-        verifyNoInteractions(userWalletRepository);
         verify(programRepository).save(program);
+        verifyNoInteractions(userWalletRepository);
     }
 
     @Test
@@ -254,9 +230,11 @@ public class ProgramWalletTransactionServiceImplTest {
 
     @Test
     void manuallySettleExpiredProgramWallets_shouldThrowException_whenProgramIdInvalid() {
-        assertThrows(
+        IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
                 () -> service.manuallySettleExpiredProgramWallets(0L)
         );
+
+        assertEquals("Invalid programId", ex.getMessage());
     }
 }

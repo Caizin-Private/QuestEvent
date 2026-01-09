@@ -56,8 +56,7 @@ class ProgramWalletServiceTest {
         when(programWalletRepository.save(any()))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        ProgramWallet wallet =
-                programWalletService.createWallet(1L, 10L);
+        ProgramWallet wallet = programWalletService.createWallet(1L, 10L);
 
         assertNotNull(wallet);
         assertEquals(0, wallet.getGems());
@@ -69,12 +68,13 @@ class ProgramWalletServiceTest {
     void createWallet_shouldFail_whenUserNotFound() {
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
                 () -> programWalletService.createWallet(1L, 10L)
         );
 
-        assertEquals("User not found", ex.getMessage());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("User not found", ex.getReason());
     }
 
     @Test
@@ -85,12 +85,13 @@ class ProgramWalletServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(programRepository.findById(10L)).thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
                 () -> programWalletService.createWallet(1L, 10L)
         );
 
-        assertEquals("Program not found", ex.getMessage());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Program not found", ex.getReason());
     }
 
     @Test
@@ -106,12 +107,13 @@ class ProgramWalletServiceTest {
         when(programWalletRepository.findByUserAndProgram(user, program))
                 .thenReturn(Optional.of(new ProgramWallet()));
 
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
                 () -> programWalletService.createWallet(1L, 10L)
         );
 
-        assertEquals("ProgramWallet already exists", ex.getMessage());
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+        assertEquals("Program wallet already exists", ex.getReason());
         verify(programWalletRepository, never()).save(any());
     }
 
@@ -121,6 +123,7 @@ class ProgramWalletServiceTest {
 
         User user = new User();
         user.setUserId(1L);
+
         Program program = new Program();
         program.setProgramId(10L);
 
@@ -130,22 +133,20 @@ class ProgramWalletServiceTest {
         wallet.setProgram(program);
         wallet.setGems(50);
 
-        when(programWalletRepository.findById(any(UUID.class)))
+        when(programWalletRepository.findById(walletId))
                 .thenReturn(Optional.of(wallet));
 
         ProgramWalletBalanceDTO dto =
                 programWalletService.getWalletBalanceByWalletId(walletId);
 
-        assertNotNull(dto);
         assertEquals(walletId, dto.getProgramWalletId());
         assertEquals(10L, dto.getProgramId());
         assertEquals(1L, dto.getUserId());
         assertEquals(50, dto.getGems());
     }
 
-
     @Test
-    void getWalletBalanceByWalletId_shouldThrowNotFound_whenMissing() {
+    void getWalletBalanceByWalletId_shouldThrowNotFound() {
         when(programWalletRepository.findById(any()))
                 .thenReturn(Optional.empty());
 
@@ -155,6 +156,7 @@ class ProgramWalletServiceTest {
         );
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Program wallet not found", ex.getReason());
     }
 
     @Test
@@ -194,6 +196,7 @@ class ProgramWalletServiceTest {
         );
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("No wallets found for this program", ex.getReason());
     }
 
     @Test
@@ -233,7 +236,7 @@ class ProgramWalletServiceTest {
     }
 
     @Test
-    void getMyProgramWallet_shouldThrowNotFound_whenUserMissing() {
+    void getMyProgramWallet_shouldThrowUserNotFound() {
         UserPrincipal principal = new UserPrincipal(1L, "test@mail.com", null);
         Authentication authentication = mock(Authentication.class);
 
@@ -249,12 +252,13 @@ class ProgramWalletServiceTest {
         );
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("User not found", ex.getReason());
 
         SecurityContextHolder.clearContext();
     }
 
     @Test
-    void getMyProgramWallet_shouldThrowNotFound_whenWalletMissing() {
+    void getMyProgramWallet_shouldThrowWalletNotFound() {
         UserPrincipal principal = new UserPrincipal(1L, "test@mail.com", null);
         Authentication authentication = mock(Authentication.class);
 
@@ -276,6 +280,7 @@ class ProgramWalletServiceTest {
         );
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Program wallet not found", ex.getReason());
 
         SecurityContextHolder.clearContext();
     }

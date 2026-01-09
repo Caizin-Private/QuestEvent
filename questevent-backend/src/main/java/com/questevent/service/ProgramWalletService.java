@@ -19,12 +19,18 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.UUID;
 
+import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Slf4j
 @Service
 @Transactional
 public class ProgramWalletService {
+
+    private static final String USER_NOT_FOUND = "User not found";
+    private static final String PROGRAM_NOT_FOUND = "Program not found";
+    private static final String WALLET_ALREADY_EXISTS = "Program wallet already exists";
+    private static final String WALLET_NOT_FOUND = "Program wallet not found";
 
     private final ProgramWalletRepository programWalletRepository;
     private final UserRepository userRepository;
@@ -51,13 +57,13 @@ public class ProgramWalletService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> {
                     log.error("User not found while creating program wallet | userId={}", userId);
-                    return new RuntimeException("User not found");
+                    return new ResponseStatusException(NOT_FOUND, USER_NOT_FOUND);
                 });
 
         Program program = programRepository.findById(programId)
                 .orElseThrow(() -> {
                     log.error("Program not found while creating program wallet | programId={}", programId);
-                    return new RuntimeException("Program not found");
+                    return new ResponseStatusException(NOT_FOUND, PROGRAM_NOT_FOUND);
                 });
 
         if (programWalletRepository.findByUserAndProgram(user, program).isPresent()) {
@@ -66,7 +72,7 @@ public class ProgramWalletService {
                     userId,
                     programId
             );
-            throw new RuntimeException("ProgramWallet already exists");
+            throw new ResponseStatusException(CONFLICT, WALLET_ALREADY_EXISTS);
         }
 
         ProgramWallet programWallet = new ProgramWallet();
@@ -88,14 +94,10 @@ public class ProgramWalletService {
 
     public ProgramWalletBalanceDTO getWalletBalanceByWalletId(UUID walletId) {
 
-        log.debug("Fetching program wallet by walletId={}", walletId);
-
         ProgramWallet wallet = programWalletRepository.findById(walletId)
                 .orElseThrow(() -> {
                     log.warn("Program wallet not found | walletId={}", walletId);
-                    return new ResponseStatusException(
-                            NOT_FOUND, "Program wallet not found"
-                    );
+                    return new ResponseStatusException(NOT_FOUND, WALLET_NOT_FOUND);
                 });
 
         ProgramWalletBalanceDTO dto = new ProgramWalletBalanceDTO();
@@ -104,34 +106,20 @@ public class ProgramWalletService {
         dto.setUserId(wallet.getUser().getUserId());
         dto.setGems(wallet.getGems());
 
-        log.info(
-                "Program wallet balance fetched | walletId={} | gems={}",
-                walletId,
-                wallet.getGems()
-        );
-
         return dto;
     }
 
     public List<ProgramWalletBalanceDTO> getProgramWalletsByProgramId(Long programId) {
 
-        log.debug("Fetching all program wallets | programId={}", programId);
-
         List<ProgramWallet> wallets =
                 programWalletRepository.findByProgramProgramId(programId);
 
         if (wallets.isEmpty()) {
-            log.warn("No program wallets found | programId={}", programId);
             throw new ResponseStatusException(
-                    NOT_FOUND, "No wallets found for this program"
+                    NOT_FOUND,
+                    "No wallets found for this program"
             );
         }
-
-        log.info(
-                "Found {} program wallets | programId={}",
-                wallets.size(),
-                programId
-        );
 
         return wallets.stream().map(wallet -> {
             ProgramWalletBalanceDTO dto = new ProgramWalletBalanceDTO();
@@ -145,28 +133,16 @@ public class ProgramWalletService {
 
     public ProgramWalletBalanceDTO getMyProgramWallet(Long programId) {
 
-        log.debug("Fetching my program wallet | programId={}", programId);
-
         @Nullable Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
 
-        User user;
-
-        if (authentication != null && authentication.isAuthenticated()) {
-            Object principal = authentication.getPrincipal();
-            if (principal instanceof UserPrincipal p) {
-                user = userRepository.findById(p.userId()).orElse(null);
-            } else {
-                user = null;
-            }
-        } else {
-            user = null;
+        if (authentication == null || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof UserPrincipal p)) {
+            throw new ResponseStatusException(NOT_FOUND, USER_NOT_FOUND);
         }
 
-        if (user == null) {
-            log.warn("Authenticated user not found while fetching program wallet");
-            throw new ResponseStatusException(NOT_FOUND, "User not found");
-        }
+        User user = userRepository.findById(p.userId())
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, USER_NOT_FOUND));
 
         ProgramWallet wallet =
                 programWalletRepository
@@ -174,30 +150,16 @@ public class ProgramWalletService {
                                 user.getUserId(),
                                 programId
                         )
-                        .orElseThrow(() -> {
-                            log.warn(
-                                    "Program wallet not found | userId={} | programId={}",
-                                    user.getUserId(),
-                                    programId
-                            );
-                            return new ResponseStatusException(
-                                    NOT_FOUND,
-                                    "Program wallet not found"
-                            );
-                        });
+                        .orElseThrow(() -> new ResponseStatusException(
+                                NOT_FOUND,
+                                WALLET_NOT_FOUND
+                        ));
 
         ProgramWalletBalanceDTO dto = new ProgramWalletBalanceDTO();
         dto.setProgramWalletId(wallet.getProgramWalletId());
         dto.setUserId(wallet.getUser().getUserId());
         dto.setProgramId(programId);
         dto.setGems(wallet.getGems());
-
-        log.info(
-                "My program wallet fetched | userId={} | programId={} | gems={}",
-                user.getUserId(),
-                programId,
-                wallet.getGems()
-        );
 
         return dto;
     }

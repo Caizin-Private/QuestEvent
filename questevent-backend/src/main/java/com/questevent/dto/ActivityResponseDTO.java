@@ -3,7 +3,6 @@ package com.questevent.dto;
 import lombok.Data;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 
 @Data
 public class ActivityResponseDTO {

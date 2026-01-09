@@ -94,7 +94,7 @@ class RbacServiceTest {
     void unauthenticated_user_denied_everywhere() {
         when(authentication.isAuthenticated()).thenReturn(false);
 
-        assertFalse(rbacService.canViewProgram(authentication, 1L));
+        assertFalse(rbacService.canViewProgram(authentication));
         assertFalse(rbacService.canAccessUserProfile(authentication, 1L));
         assertFalse(rbacService.canManageProgram(authentication, 1L));
         assertFalse(rbacService.canJudgeAccessProgram(authentication, 1L));
@@ -116,7 +116,7 @@ class RbacServiceTest {
         when(userRepository.findByEmail("jwt@test.com"))
                 .thenReturn(Optional.of(user));
 
-        assertTrue(rbacService.canViewProgram(jwtAuth, 1L));
+        assertTrue(rbacService.canViewProgram(jwtAuth));
     }
 
 
@@ -131,7 +131,7 @@ class RbacServiceTest {
         when(userRepository.findByEmail("oauth@test.com"))
                 .thenReturn(Optional.of(user));
 
-        assertTrue(rbacService.canViewProgram(authentication, 1L));
+        assertTrue(rbacService.canViewProgram(authentication));
     }
 
     @Test
@@ -146,7 +146,7 @@ class RbacServiceTest {
         when(userRepository.findByEmail("fallback@test.com"))
                 .thenReturn(Optional.of(user));
 
-        assertTrue(rbacService.canViewProgram(authentication, 1L));
+        assertTrue(rbacService.canViewProgram(authentication));
     }
 
     /* ===================================================
@@ -158,7 +158,7 @@ class RbacServiceTest {
         authenticate(owner);
 
         assertTrue(rbacService.isPlatformOwner(authentication));
-        assertTrue(rbacService.canViewProgram(authentication, 1L));
+        assertTrue(rbacService.canViewProgram(authentication));
         assertTrue(rbacService.canJudgeAccessProgram(authentication, 1L));
         assertTrue(rbacService.canAccessUserWallet(authentication, 99L));
         assertTrue(rbacService.canAccessProgramWallet(authentication, UUID.randomUUID()));

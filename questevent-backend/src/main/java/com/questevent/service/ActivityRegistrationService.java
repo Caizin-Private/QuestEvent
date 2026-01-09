@@ -11,13 +11,13 @@ import com.questevent.repository.ActivityRepository;
 import com.questevent.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -32,46 +32,31 @@ public class ActivityRegistrationService {
     public ActivityRegistrationResponseDTO registerParticipantForActivity(
             ActivityRegistrationRequestDTO request) {
 
-        log.debug(
-                "Register participant for activity requested | activityId={}",
-                request.getActivityId()
-        );
-
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()
                 || !(authentication.getPrincipal() instanceof UserPrincipal principal)) {
-            log.warn("Unauthorized activity registration attempt");
-            throw new RuntimeException("Unauthorized");
+            throw new AccessDeniedException("User is not authenticated");
         }
 
         Long userId = principal.userId();
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> {
-                    log.error("User not found | userId={}", userId);
-                    return new RuntimeException("User not found");
-                });
+                .orElseThrow(() ->
+                        new IllegalStateException("User not found: " + userId));
 
         Activity activity = activityRepository.findById(request.getActivityId())
-                .orElseThrow(() -> {
-                    log.error("Activity not found | activityId={}", request.getActivityId());
-                    return new RuntimeException("Activity not found");
-                });
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Activity not found: " + request.getActivityId()));
 
         validateCompulsoryActivities(activity, userId);
 
         if (activityRegistrationRepository
                 .existsByActivity_ActivityIdAndUser_UserId(
                         activity.getActivityId(), userId)) {
-
-            log.warn(
-                    "Duplicate activity registration blocked | activityId={} | userId={}",
-                    activity.getActivityId(),
-                    userId
-            );
-            throw new RuntimeException("User already registered for this activity");
+            throw new IllegalStateException("User already registered for this activity");
         }
 
         ActivityRegistration registration = new ActivityRegistration();
@@ -83,63 +68,42 @@ public class ActivityRegistrationService {
                         : CompletionStatus.NOT_COMPLETED
         );
 
-        ActivityRegistration saved =
-                activityRegistrationRepository.save(registration);
-
-        log.info(
-                "User registered for activity | registrationId={} | activityId={} | userId={}",
-                saved.getActivityRegistrationId(),
-                activity.getActivityId(),
-                userId
+        return mapToResponseDTO(
+                activityRegistrationRepository.save(registration)
         );
-
-        return mapToResponseDTO(saved);
     }
 
     @Transactional(readOnly = true)
     public List<ActivityRegistrationDTO> getAllRegistrations() {
-        log.info("Fetching all activity registrations");
         return activityRegistrationRepository.findAll()
                 .stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
     public ActivityRegistrationDTO getRegistrationById(Long id) {
-
-        log.debug("Fetching activity registration | registrationId={}", id);
-
         ActivityRegistration registration =
                 activityRegistrationRepository.findById(id)
-                        .orElseThrow(() -> {
-                            log.warn("Registration not found | registrationId={}", id);
-                            return new RuntimeException("Registration not found");
-                        });
-
+                        .orElseThrow(() ->
+                                new IllegalArgumentException("Registration not found: " + id));
         return mapToDTO(registration);
     }
 
     @Transactional(readOnly = true)
     public List<ActivityRegistrationDTO> getRegistrationsByActivityId(Long activityId) {
-
-        log.debug("Fetching registrations by activity | activityId={}", activityId);
-
         return activityRegistrationRepository.findByActivityActivityId(activityId)
                 .stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
     public List<ActivityRegistrationDTO> getRegistrationsByUserId(Long userId) {
-
-        log.debug("Fetching registrations by user | userId={}", userId);
-
         return activityRegistrationRepository.findByUserUserId(userId)
                 .stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -147,17 +111,11 @@ public class ActivityRegistrationService {
             Long activityId,
             CompletionStatus status) {
 
-        log.debug(
-                "Fetching registrations by activity and status | activityId={} | status={}",
-                activityId,
-                status
-        );
-
         return activityRegistrationRepository
                 .findByActivityActivityIdAndCompletionStatus(activityId, status)
                 .stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -165,17 +123,11 @@ public class ActivityRegistrationService {
             Long userId,
             CompletionStatus status) {
 
-        log.debug(
-                "Fetching registrations by user and status | userId={} | status={}",
-                userId,
-                status
-        );
-
         return activityRegistrationRepository
                 .findByUserUserIdAndCompletionStatus(userId, status)
                 .stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional
@@ -183,66 +135,64 @@ public class ActivityRegistrationService {
             Long id,
             ActivityCompletionUpdateDTO updateDTO) {
 
-        log.debug(
-                "Updating completion status | registrationId={} | status={}",
-                id,
-                updateDTO.getCompletionStatus()
-        );
-
         ActivityRegistration registration =
                 activityRegistrationRepository.findById(id)
-                        .orElseThrow(() -> {
-                            log.warn("Registration not found | registrationId={}", id);
-                            return new RuntimeException("Registration not found");
-                        });
+                        .orElseThrow(() ->
+                                new IllegalArgumentException("Registration not found: " + id));
 
         registration.setCompletionStatus(updateDTO.getCompletionStatus());
-
-        ActivityRegistration updated =
-                activityRegistrationRepository.save(registration);
-
-        log.info(
-                "Completion status updated | registrationId={} | status={}",
-                id,
-                updated.getCompletionStatus()
-        );
-
-        return mapToDTO(updated);
+        return mapToDTO(activityRegistrationRepository.save(registration));
     }
 
     @Transactional
     public void deleteRegistration(Long id) {
-
-        log.debug("Delete activity registration requested | registrationId={}", id);
-
         if (!activityRegistrationRepository.existsById(id)) {
-            log.warn("Registration not found while deleting | registrationId={}", id);
-            throw new RuntimeException("Registration not found");
+            throw new IllegalArgumentException("Registration not found: " + id);
         }
-
         activityRegistrationRepository.deleteById(id);
-
-        log.info("Activity registration deleted | registrationId={}", id);
     }
 
     @Transactional(readOnly = true)
     public long getParticipantCountForActivity(Long activityId) {
+        return activityRegistrationRepository.countByActivityActivityId(activityId);
+    }
 
-        long count =
-                activityRegistrationRepository.countByActivityActivityId(activityId);
+    @Transactional
+    public ActivityRegistrationResponseDTO addParticipantToActivity(
+            Long activityId,
+            AddParticipantInActivityRequestDTO request) {
 
-        log.info(
-                "Participant count fetched | activityId={} | count={}",
-                activityId,
-                count
-        );
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "User not found: " + request.getUserId()));
 
-        return count;
+        Activity activity = activityRepository.findById(activityId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Activity not found: " + activityId));
+
+        if (activityRegistrationRepository
+                .existsByActivity_ActivityIdAndUser_UserId(
+                        activityId, user.getUserId())) {
+            throw new IllegalStateException(
+                    "User already registered for this activity");
+        }
+
+        ActivityRegistration registration = new ActivityRegistration();
+        registration.setActivity(activity);
+        registration.setUser(user);
+        registration.setCompletionStatus(CompletionStatus.NOT_COMPLETED);
+
+        ActivityRegistration saved =
+                activityRegistrationRepository.save(registration);
+
+        return mapToResponseDTO(saved);
     }
 
     private void validateCompulsoryActivities(Activity activity, Long userId) {
 
-        if (Boolean.TRUE.equals(activity.getIsCompulsory())) {
+        if (!Boolean.TRUE.equals(activity.getIsCompulsory())) {
             return;
         }
 
@@ -251,32 +201,22 @@ public class ActivityRegistrationService {
             return;
         }
 
-        Long programId = program.getProgramId();
-
         List<Activity> compulsoryActivities =
-                activityRepository.findByProgram_ProgramIdAndIsCompulsoryTrue(programId);
+                activityRepository.findByProgram_ProgramIdAndIsCompulsoryTrue(
+                        program.getProgramId());
 
         for (Activity compulsory : compulsoryActivities) {
-
             boolean completed =
                     activityRegistrationRepository
                             .existsByActivity_ActivityIdAndUser_UserIdAndCompletionStatus(
                                     compulsory.getActivityId(),
                                     userId,
-                                    CompletionStatus.COMPLETED
-                            );
+                                    CompletionStatus.COMPLETED);
 
             if (!completed) {
-                log.warn(
-                        "Compulsory activity not completed | compulsoryActivityId={} | userId={}",
-                        compulsory.getActivityId(),
-                        userId
-                );
-                throw new RuntimeException(
-                        "Complete compulsory activity '"
-                                + compulsory.getActivityName()
-                                + "' before registering for this activity"
-                );
+                throw new IllegalStateException(
+                        "Complete compulsory activity: " +
+                                compulsory.getActivityName());
             }
         }
     }
@@ -295,9 +235,7 @@ public class ActivityRegistrationService {
     private ActivityRegistrationResponseDTO mapToResponseDTO(
             ActivityRegistration registration) {
 
-        ActivityRegistrationResponseDTO dto =
-                new ActivityRegistrationResponseDTO();
-
+        ActivityRegistrationResponseDTO dto = new ActivityRegistrationResponseDTO();
         dto.setActivityRegistrationId(registration.getActivityRegistrationId());
         dto.setActivityId(registration.getActivity().getActivityId());
         dto.setActivityName(registration.getActivity().getActivityName());
@@ -307,61 +245,6 @@ public class ActivityRegistrationService {
         dto.setCompletionStatus(registration.getCompletionStatus());
         dto.setRewardGems(registration.getActivity().getRewardGems());
         dto.setMessage("Successfully registered for activity");
-
         return dto;
-    }
-
-    @Transactional
-    public ActivityRegistrationResponseDTO addParticipantToActivity(
-            Long activityId,
-            AddParticipantInActivityRequestDTO request) {
-
-        log.debug(
-                "Admin adding participant to activity | activityId={} | userId={}",
-                activityId,
-                request.getUserId()
-        );
-
-        Activity activity = activityRepository.findById(activityId)
-                .orElseThrow(() -> {
-                    log.error("Activity not found | activityId={}", activityId);
-                    return new RuntimeException("Activity not found");
-                });
-
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> {
-                    log.error("User not found | userId={}", request.getUserId());
-                    return new RuntimeException("User not found");
-                });
-
-        if (activityRegistrationRepository
-                .existsByActivity_ActivityIdAndUser_UserId(
-                        activity.getActivityId(),
-                        user.getUserId())) {
-
-            log.warn(
-                    "Duplicate activity registration blocked (admin) | activityId={} | userId={}",
-                    activity.getActivityId(),
-                    user.getUserId()
-            );
-            throw new RuntimeException("User already registered for this activity");
-        }
-
-        ActivityRegistration registration = new ActivityRegistration();
-        registration.setActivity(activity);
-        registration.setUser(user);
-        registration.setCompletionStatus(CompletionStatus.NOT_COMPLETED);
-
-        ActivityRegistration saved =
-                activityRegistrationRepository.save(registration);
-
-        log.info(
-                "Participant added to activity | registrationId={} | activityId={} | userId={}",
-                saved.getActivityRegistrationId(),
-                activityId,
-                user.getUserId()
-        );
-
-        return mapToResponseDTO(saved);
     }
 }

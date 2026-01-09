@@ -33,19 +33,12 @@ public class ActivityRegistrationController {
         log.info("Self activity registration: activityId={}",
                 request.getActivityId());
 
-        try {
-            ActivityRegistrationResponseDTO response =
-                    activityRegistrationService.registerParticipantForActivity(request);
 
-            log.info("Activity registration successful: activityId={}",
-                    request.getActivityId());
+        ActivityRegistrationResponseDTO response =
+                activityRegistrationService.registerParticipantForActivity(request);
 
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (RuntimeException e) {
-            log.warn("Activity registration failed: activityId={}, reason={}",
-                    request.getActivityId(), e.getMessage());
-            throw e;
-        }
+        log.info("Activity registration successful: activityId={}", request.getActivityId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PreAuthorize("@rbac.canRegisterForActivity(authentication, #activityId, #request.userId)")
@@ -57,19 +50,13 @@ public class ActivityRegistrationController {
         log.info("Host adding participant to activity: activityId={}, userId={}",
                 activityId, request.getUserId());
 
-        try {
-            ActivityRegistrationResponseDTO response =
-                    activityRegistrationService.addParticipantToActivity(activityId, request);
+        ActivityRegistrationResponseDTO response =
+                activityRegistrationService.addParticipantToActivity(activityId, request);
 
-            log.info("Participant added to activity: activityId={}, userId={}",
-                    activityId, request.getUserId());
+        log.info("Participant added to activity: activityId={}, userId={}",
+                activityId, request.getUserId());
 
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (RuntimeException e) {
-            log.warn("Failed to add participant: activityId={}, userId={}, reason={}",
-                    activityId, request.getUserId(), e.getMessage());
-            throw e;
-        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PreAuthorize("@rbac.isPlatformOwner(authentication)")

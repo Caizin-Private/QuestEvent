@@ -2,7 +2,6 @@ package com.questevent.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.questevent.dto.ActivityRequestDTO;
-import com.questevent.dto.ActivityResponseDTO;
 import com.questevent.entity.Activity;
 import com.questevent.entity.Program;
 import com.questevent.service.ActivityService;
@@ -18,7 +17,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;

@@ -2,7 +2,6 @@ package com.questevent.service;
 
 import com.questevent.entity.User;
 import com.questevent.enums.Department;
-import com.questevent.enums.Role;
 import com.questevent.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,7 +18,6 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import java.io.IOException;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)

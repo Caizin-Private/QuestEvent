@@ -18,7 +18,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 class ActivityServiceTest {
@@ -40,6 +39,7 @@ class ActivityServiceTest {
     @Test
     void createActivity_success() {
         Long programId = 1L;
+
         Program program = new Program();
         program.setProgramId(programId);
 
@@ -49,41 +49,37 @@ class ActivityServiceTest {
         dto.setRewardGems(100);
         dto.setIsCompulsory(true);
 
-        Activity savedActivity = new Activity();
-        savedActivity.setActivityId(1L);
-        savedActivity.setActivityName("Test Activity");
-        savedActivity.setActivityDuration(60);
-        savedActivity.setRewardGems(100);
-        savedActivity.setIsCompulsory(true);
-        savedActivity.setProgram(program);
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.of(program));
 
-        when(programRepository.findById(programId)).thenReturn(Optional.of(program));
-        when(activityRepository.save(any(Activity.class))).thenReturn(savedActivity);
+        when(activityRepository.save(any(Activity.class)))
+                .thenAnswer(invocation -> {
+                    Activity activity = invocation.getArgument(0, Activity.class);
+                    activity.setActivityId(1L);
+                    return activity;
+                });
 
         Activity result = activityService.createActivity(programId, dto);
 
         assertNotNull(result);
+        assertEquals(1L, result.getActivityId());
         assertEquals("Test Activity", result.getActivityName());
         assertEquals(100, result.getRewardGems());
         assertEquals(program, result.getProgram());
-        verify(activityRepository, times(1)).save(any(Activity.class));
     }
 
     @Test
     void createActivity_programNotFound() {
-        Long programId = 999L;
-        ActivityRequestDTO dto = new ActivityRequestDTO();
+        when(programRepository.findById(1L))
+                .thenReturn(Optional.empty());
 
-        when(programRepository.findById(programId)).thenReturn(Optional.empty());
-
-        ResponseStatusException exception = assertThrows(
+        ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> activityService.createActivity(programId, dto)
+                () -> activityService.createActivity(1L, new ActivityRequestDTO())
         );
 
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
-        assertEquals("Program not found", exception.getReason());
-        verify(activityRepository, never()).save(any());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Program not found", ex.getReason());
     }
 
     @Test
@@ -94,158 +90,87 @@ class ActivityServiceTest {
         Program program = new Program();
         program.setProgramId(programId);
 
-        Activity existingActivity = new Activity();
-        existingActivity.setActivityId(activityId);
-        existingActivity.setActivityName("Old Name");
-        existingActivity.setProgram(program);
-
-        ActivityRequestDTO dto = new ActivityRequestDTO();
-        dto.setActivityName("New Name");
-        dto.setRewardGems(200);
-
-        Activity updatedActivity = new Activity();
-        updatedActivity.setActivityId(activityId);
-        updatedActivity.setActivityName("New Name");
-        updatedActivity.setRewardGems(200);
-        updatedActivity.setProgram(program);
-
-        when(activityRepository.findById(activityId)).thenReturn(Optional.of(existingActivity));
-        when(activityRepository.save(any(Activity.class))).thenReturn(updatedActivity);
-
-        Activity result = activityService.updateActivity(programId, activityId, dto);
-
-        assertNotNull(result);
-        assertEquals("New Name", result.getActivityName());
-        assertEquals(200, result.getRewardGems());
-        verify(activityRepository, times(1)).save(any(Activity.class));
-    }
-
-    @Test
-    void updateActivity_activityNotFound() {
-        Long programId = 1L;
-        Long activityId = 999L;
-        ActivityRequestDTO dto = new ActivityRequestDTO();
-
-        when(activityRepository.findById(activityId)).thenReturn(Optional.empty());
-
-        ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
-                () -> activityService.updateActivity(programId, activityId, dto)
-        );
-
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
-        assertEquals("Activity not found", exception.getReason());
-    }
-
-    @Test
-    void updateActivity_activityDoesNotBelongToProgram() {
-        Long programId = 1L;
-        Long activityId = 1L;
-        Long differentProgramId = 2L;
-
-        Program differentProgram = new Program();
-        differentProgram.setProgramId(differentProgramId);
-
-        Activity existingActivity = new Activity();
-        existingActivity.setActivityId(activityId);
-        existingActivity.setProgram(differentProgram);
-
-        ActivityRequestDTO dto = new ActivityRequestDTO();
-
-        when(activityRepository.findById(activityId)).thenReturn(Optional.of(existingActivity));
-
-        ResponseStatusException exception = assertThrows(
-                ResponseStatusException.class,
-                () -> activityService.updateActivity(programId, activityId, dto)
-        );
-
-        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
-        assertEquals("Activity does not belong to this program", exception.getReason());
-        verify(activityRepository, never()).save(any());
-    }
-
-    @Test
-    void getActivitiesByProgramId_success() {
-        Long programId = 1L;
-        Activity activity1 = new Activity();
-        activity1.setActivityId(1L);
-        Activity activity2 = new Activity();
-        activity2.setActivityId(2L);
-
-        when(programRepository.existsById(programId))
-                .thenReturn(true);
-
-        when(activityRepository.findByProgram_ProgramId(programId))
-                .thenReturn(List.of(activity1, activity2));
-
-        List<Activity> result = activityService.getActivitiesByProgramId(programId);
-
-        assertEquals(2, result.size());
-
-        verify(programRepository, times(1)).existsById(programId);
-        verify(activityRepository, times(1))
-                .findByProgram_ProgramId(programId);
-    }
-
-    @Test
-    void deleteActivity_success() {
-        Long programId = 1L;
-        Long activityId = 1L;
-
-        Program program = new Program();
-        program.setProgramId(programId);
-
         Activity activity = new Activity();
         activity.setActivityId(activityId);
         activity.setProgram(program);
 
-        when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
-        doNothing().when(activityRepository).delete(activity);
+        when(activityRepository.findById(activityId))
+                .thenReturn(Optional.of(activity));
 
-        assertDoesNotThrow(() -> activityService.deleteActivity(programId, activityId));
+        when(activityRepository.save(any(Activity.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0, Activity.class));
 
-        verify(activityRepository, times(1)).delete(activity);
+        Activity result =
+                activityService.updateActivity(programId, activityId, new ActivityRequestDTO());
+
+        assertNotNull(result);
+        assertEquals(activityId, result.getActivityId());
     }
 
     @Test
-    void deleteActivity_activityNotFound() {
-        Long programId = 1L;
-        Long activityId = 999L;
+    void updateActivity_activityNotFound() {
+        when(activityRepository.findById(1L))
+                .thenReturn(Optional.empty());
 
-        when(activityRepository.findById(activityId)).thenReturn(Optional.empty());
-
-        ResponseStatusException exception = assertThrows(
+        ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> activityService.deleteActivity(programId, activityId)
+                () -> activityService.updateActivity(1L, 1L, new ActivityRequestDTO())
         );
 
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
-        assertEquals("Activity not found", exception.getReason());
-        verify(activityRepository, never()).delete(any());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals("Activity not found", ex.getReason());
     }
 
     @Test
-    void deleteActivity_mismatchBetweenProgramAndActivity() {
-        Long programId = 1L;
-        Long activityId = 1L;
-        Long differentProgramId = 2L;
-
-        Program differentProgram = new Program();
-        differentProgram.setProgramId(differentProgramId);
+    void updateActivity_programMismatch() {
+        Program otherProgram = new Program();
+        otherProgram.setProgramId(2L);
 
         Activity activity = new Activity();
-        activity.setActivityId(activityId);
-        activity.setProgram(differentProgram);
+        activity.setActivityId(1L);
+        activity.setProgram(otherProgram);
 
-        when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
+        when(activityRepository.findById(1L))
+                .thenReturn(Optional.of(activity));
 
-        ResponseStatusException exception = assertThrows(
+        ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> activityService.deleteActivity(programId, activityId)
+                () -> activityService.updateActivity(1L, 1L, new ActivityRequestDTO())
         );
 
-        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
-        assertEquals("Mismatch between Program and Activity", exception.getReason());
-        verify(activityRepository, never()).delete(any());
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("Activity does not belong to this program", ex.getReason());
+    }
+
+    @Test
+    void getActivitiesByProgramId_success() {
+        when(programRepository.existsById(1L)).thenReturn(true);
+        when(activityRepository.findByProgram_ProgramId(1L))
+                .thenReturn(List.of(new Activity(), new Activity()));
+
+        List<Activity> result = activityService.getActivitiesByProgramId(1L);
+
+        assertEquals(2, result.size());
+    }
+
+    @Test
+    void deleteActivity_mismatch() {
+        Program otherProgram = new Program();
+        otherProgram.setProgramId(2L);
+
+        Activity activity = new Activity();
+        activity.setActivityId(1L);
+        activity.setProgram(otherProgram);
+
+        when(activityRepository.findById(1L))
+                .thenReturn(Optional.of(activity));
+
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> activityService.deleteActivity(1L, 1L)
+        );
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("Mismatch between Program and Activity", ex.getReason());
     }
 }

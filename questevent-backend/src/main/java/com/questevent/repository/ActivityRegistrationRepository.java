@@ -4,7 +4,6 @@ import com.questevent.entity.ActivityRegistration;
 import com.questevent.enums.CompletionStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 

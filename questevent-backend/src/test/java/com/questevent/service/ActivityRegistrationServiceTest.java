@@ -1,8 +1,12 @@
 package com.questevent.service;
 
-import com.questevent.dto.*;
-import com.questevent.entity.*;
-import com.questevent.enums.CompletionStatus;
+import com.questevent.dto.ActivityRegistrationRequestDTO;
+import com.questevent.dto.ActivityRegistrationResponseDTO;
+import com.questevent.dto.UserPrincipal;
+import com.questevent.entity.Activity;
+import com.questevent.entity.ActivityRegistration;
+import com.questevent.entity.Program;
+import com.questevent.entity.User;
 import com.questevent.enums.Role;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivityRepository;
@@ -13,7 +17,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -44,15 +47,11 @@ class ActivityRegistrationServiceTest {
         SecurityContextHolder.clearContext();
     }
 
-    /* =====================================================
-       HELPERS
-       ===================================================== */
-
     private void mockAuthenticatedUser(Long userId) {
         UserPrincipal principal =
                 new UserPrincipal(userId, "test@questevent.com", Role.USER);
 
-        Authentication authentication =
+        UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(principal, null, List.of());
 
         SecurityContext context = SecurityContextHolder.createEmptyContext();
@@ -74,10 +73,6 @@ class ActivityRegistrationServiceTest {
         return activity;
     }
 
-    /* =====================================================
-       REGISTER PARTICIPANT
-       ===================================================== */
-
     @Test
     void registerParticipantForActivity_success() {
         mockAuthenticatedUser(1L);
@@ -94,14 +89,13 @@ class ActivityRegistrationServiceTest {
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(activityRepository.findById(1L)).thenReturn(Optional.of(activity));
-        when(activityRepository
-                .findByProgram_ProgramIdAndIsCompulsoryTrue(10L))
+        when(activityRepository.findByProgram_ProgramIdAndIsCompulsoryTrue(10L))
                 .thenReturn(List.of());
         when(activityRegistrationRepository
                 .existsByActivity_ActivityIdAndUser_UserId(1L, 1L))
                 .thenReturn(false);
 
-        when(activityRegistrationRepository.save(any()))
+        when(activityRegistrationRepository.save(any(ActivityRegistration.class)))
                 .thenAnswer(invocation -> {
                     ActivityRegistration reg = invocation.getArgument(0);
                     reg.setActivityRegistrationId(1L);
@@ -126,12 +120,12 @@ class ActivityRegistrationServiceTest {
 
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
                 () -> activityRegistrationService.registerParticipantForActivity(request)
         );
 
-        assertEquals("User not found", ex.getMessage());
+        assertEquals("User not found: 1", ex.getMessage());
     }
 
     @Test
@@ -147,12 +141,12 @@ class ActivityRegistrationServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(activityRepository.findById(99L)).thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
                 () -> activityRegistrationService.registerParticipantForActivity(request)
         );
 
-        assertEquals("Activity not found", ex.getMessage());
+        assertEquals("Activity not found: 99", ex.getMessage());
     }
 
     @Test
@@ -169,15 +163,14 @@ class ActivityRegistrationServiceTest {
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(activityRepository.findById(1L)).thenReturn(Optional.of(activity));
-        when(activityRepository
-                .findByProgram_ProgramIdAndIsCompulsoryTrue(10L))
+        when(activityRepository.findByProgram_ProgramIdAndIsCompulsoryTrue(10L))
                 .thenReturn(List.of());
         when(activityRegistrationRepository
                 .existsByActivity_ActivityIdAndUser_UserId(1L, 1L))
                 .thenReturn(true);
 
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
                 () -> activityRegistrationService.registerParticipantForActivity(request)
         );
 

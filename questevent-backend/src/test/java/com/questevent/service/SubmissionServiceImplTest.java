@@ -16,10 +16,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -47,11 +49,7 @@ class SubmissionServiceImplTest {
                 new UserPrincipal(userId, "test@questevent.com", Role.USER);
 
         Authentication authentication =
-                new UsernamePasswordAuthenticationToken(
-                        principal,
-                        null,
-                        List.of()
-                );
+                new UsernamePasswordAuthenticationToken(principal, null, List.of());
 
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authentication);
@@ -59,12 +57,12 @@ class SubmissionServiceImplTest {
     }
 
     @AfterEach
-    void clearSecurityContext() {
+    void clearContext() {
         SecurityContextHolder.clearContext();
     }
 
     @Test
-    void submitActivity_shouldSaveSubmissionSuccessfully() {
+    void submitActivity_success() {
 
         mockAuthenticatedUser(2L);
 
@@ -82,27 +80,21 @@ class SubmissionServiceImplTest {
                 .existsByActivityRegistration_ActivityRegistrationId(1L))
                 .thenReturn(false);
 
-        submissionService.submitActivity(
-                1L,
-                "https://github.com/project"
-        );
+        submissionService.submitActivity(1L, "https://github.com/project");
 
         verify(submissionRepository).save(any(ActivitySubmission.class));
         verify(registrationRepository).save(registration);
 
-        assertEquals(
-                CompletionStatus.COMPLETED,
-                registration.getCompletionStatus()
-        );
+        assertEquals(CompletionStatus.COMPLETED, registration.getCompletionStatus());
     }
 
     @Test
-    void submitActivity_shouldThrowIfUserNotRegistered() {
+    void submitActivity_userNotRegistered() {
 
         mockAuthenticatedUser(2L);
 
         User user = new User();
-        user.setUserId(2L); // ✅ THIS IS CRITICAL
+        user.setUserId(2L);
 
         when(userRepository.findById(2L))
                 .thenReturn(Optional.of(user));
@@ -111,20 +103,17 @@ class SubmissionServiceImplTest {
                 .findByActivityActivityIdAndUserUserId(1L, 2L))
                 .thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
                 () -> submissionService.submitActivity(1L, "url")
         );
 
-        assertEquals(
-                "User is not registered for this activity",
-                ex.getMessage()
-        );
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("User is not registered for this activity", ex.getReason());
     }
 
-
     @Test
-    void submitActivity_shouldThrowIfActivityAlreadyCompleted() {
+    void submitActivity_alreadyCompleted() {
 
         mockAuthenticatedUser(2L);
 
@@ -138,19 +127,17 @@ class SubmissionServiceImplTest {
                 .findByActivityActivityIdAndUserUserId(1L, 2L))
                 .thenReturn(Optional.of(registration));
 
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
                 () -> submissionService.submitActivity(1L, "url")
         );
 
-        assertEquals(
-                "Activity already completed. Submission not allowed.",
-                ex.getMessage()
-        );
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+        assertEquals("Activity already completed. Submission not allowed.", ex.getReason());
     }
 
     @Test
-    void submitActivity_shouldThrowIfSubmissionAlreadyExists() {
+    void submitActivity_duplicateSubmission() {
 
         mockAuthenticatedUser(2L);
 
@@ -168,14 +155,15 @@ class SubmissionServiceImplTest {
                 .existsByActivityRegistration_ActivityRegistrationId(1L))
                 .thenReturn(true);
 
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
                 () -> submissionService.submitActivity(1L, "url")
         );
 
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
         assertEquals(
                 "Submission already exists for this registration",
-                ex.getMessage()
+                ex.getReason()
         );
     }
 

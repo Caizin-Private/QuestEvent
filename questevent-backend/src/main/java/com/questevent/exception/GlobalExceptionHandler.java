@@ -31,14 +31,18 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.FORBIDDEN, "You do not have permission to access this resource");
     }
 
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<?> handleValidationErrors(MethodArgumentNotValidException ex) {
+    public ResponseEntity<Map<String, String>> handleValidationErrors(
+            MethodArgumentNotValidException ex) {
 
         Map<String, String> fieldErrors = new HashMap<>();
 
         ex.getBindingResult()
                 .getFieldErrors()
-                .forEach(err -> fieldErrors.put(err.getField(), err.getDefaultMessage()));
+                .forEach(err ->
+                        fieldErrors.put(err.getField(), err.getDefaultMessage())
+                );
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)

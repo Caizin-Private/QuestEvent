@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.NoSuchElementException;
 
 @Slf4j
 @Service
@@ -31,10 +31,7 @@ public class ProgramRegistrationService {
     public ProgramRegistrationResponseDTO registerParticipantForProgram(
             ProgramRegistrationRequestDTO request) {
 
-        log.debug(
-                "Self-registration requested | programId={}",
-                request.getProgramId()
-        );
+        log.debug("Self-registration requested | programId={}", request.getProgramId());
 
         UserPrincipal principal =
                 (UserPrincipal) SecurityContextHolder.getContext()
@@ -44,19 +41,14 @@ public class ProgramRegistrationService {
         Long userId = principal.userId();
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> {
-                    log.error("User not found during self-registration | userId={}", userId);
-                    return new RuntimeException("User not found");
-                });
+                .orElseThrow(() -> new NoSuchElementException(
+                        "User not found with id: " + userId
+                ));
 
         Program program = programRepository.findById(request.getProgramId())
-                .orElseThrow(() -> {
-                    log.error(
-                            "Program not found during self-registration | programId={}",
-                            request.getProgramId()
-                    );
-                    return new RuntimeException("Program not found");
-                });
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Program not found with id: " + request.getProgramId()
+                ));
 
         if (programRegistrationRepository
                 .existsByProgram_ProgramIdAndUser_UserId(
@@ -67,7 +59,9 @@ public class ProgramRegistrationService {
                     program.getProgramId(),
                     userId
             );
-            throw new RuntimeException("User already registered for this program");
+            throw new IllegalStateException(
+                    "User already registered for this program"
+            );
         }
 
         ProgramRegistration registration = new ProgramRegistration();
@@ -102,16 +96,14 @@ public class ProgramRegistrationService {
         );
 
         Program program = programRepository.findById(programId)
-                .orElseThrow(() -> {
-                    log.error("Program not found while adding participant | programId={}", programId);
-                    return new RuntimeException("Program not found");
-                });
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Program not found with id: " + programId
+                ));
 
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> {
-                    log.error("User not found while adding participant | userId={}", request.getUserId());
-                    return new RuntimeException("User not found");
-                });
+                .orElseThrow(() -> new NoSuchElementException(
+                        "User not found with id: " + request.getUserId()
+                ));
 
         if (programRegistrationRepository
                 .existsByProgram_ProgramIdAndUser_UserId(
@@ -122,7 +114,9 @@ public class ProgramRegistrationService {
                     programId,
                     user.getUserId()
             );
-            throw new RuntimeException("User already registered for this program");
+            throw new IllegalStateException(
+                    "User already registered for this program"
+            );
         }
 
         ProgramRegistration registration = new ProgramRegistration();
@@ -147,12 +141,11 @@ public class ProgramRegistrationService {
 
     @Transactional(readOnly = true)
     public List<ProgramRegistrationDTO> getAllRegistrations() {
-
         log.info("Fetching all program registrations");
-
-        return programRegistrationRepository.findAll().stream()
+        return programRegistrationRepository.findAll()
+                .stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -160,13 +153,11 @@ public class ProgramRegistrationService {
 
         log.debug("Fetching registration by id | registrationId={}", id);
 
-        ProgramRegistration registration = programRegistrationRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.warn("Registration not found | registrationId={}", id);
-                    return new RuntimeException(
-                            "Registration not found with id: " + id
-                    );
-                });
+        ProgramRegistration registration =
+                programRegistrationRepository.findById(id)
+                        .orElseThrow(() -> new NoSuchElementException(
+                                "Registration not found with id: " + id
+                        ));
 
         return mapToDTO(registration);
     }
@@ -176,9 +167,11 @@ public class ProgramRegistrationService {
 
         log.debug("Fetching registrations by program | programId={}", programId);
 
-        return programRegistrationRepository.findByProgramProgramId(programId).stream()
+        return programRegistrationRepository
+                .findByProgramProgramId(programId)
+                .stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -186,9 +179,11 @@ public class ProgramRegistrationService {
 
         log.debug("Fetching registrations by user | userId={}", userId);
 
-        return programRegistrationRepository.findByUserUserId(userId).stream()
+        return programRegistrationRepository
+                .findByUserUserId(userId)
+                .stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional
@@ -197,12 +192,12 @@ public class ProgramRegistrationService {
         log.debug("Delete registration requested | registrationId={}", id);
 
         if (!programRegistrationRepository.existsById(id)) {
-            log.warn("Registration not found while deleting | registrationId={}", id);
-            throw new RuntimeException("Registration not found with id: " + id);
+            throw new NoSuchElementException(
+                    "Registration not found with id: " + id
+            );
         }
 
         programRegistrationRepository.deleteById(id);
-
         log.info("Registration deleted | registrationId={}", id);
     }
 
@@ -230,19 +225,13 @@ public class ProgramRegistrationService {
                 userId
         );
 
-        ProgramRegistration registration = programRegistrationRepository
-                .findByProgramProgramIdAndUserUserId(programId, userId)
-                .orElseThrow(() -> {
-                    log.warn(
-                            "Registration not found | programId={} | userId={}",
-                            programId,
-                            userId
-                    );
-                    return new RuntimeException(
-                            "Registration not found for program id: "
-                                    + programId + " and user id: " + userId
-                    );
-                });
+        ProgramRegistration registration =
+                programRegistrationRepository
+                        .findByProgramProgramIdAndUserUserId(programId, userId)
+                        .orElseThrow(() -> new NoSuchElementException(
+                                "Registration not found for programId="
+                                        + programId + ", userId=" + userId
+                        ));
 
         programRegistrationRepository.delete(registration);
 
@@ -265,8 +254,12 @@ public class ProgramRegistrationService {
         );
     }
 
-    private ProgramRegistrationResponseDTO mapToResponseDTO(ProgramRegistration registration) {
-        ProgramRegistrationResponseDTO dto = new ProgramRegistrationResponseDTO();
+    private ProgramRegistrationResponseDTO mapToResponseDTO(
+            ProgramRegistration registration) {
+
+        ProgramRegistrationResponseDTO dto =
+                new ProgramRegistrationResponseDTO();
+
         dto.setProgramRegistrationId(registration.getProgramRegistrationId());
         dto.setProgramId(registration.getProgram().getProgramId());
         dto.setProgramTitle(registration.getProgram().getProgramTitle());
@@ -275,6 +268,7 @@ public class ProgramRegistrationService {
         dto.setUserEmail(registration.getUser().getEmail());
         dto.setRegisteredAt(registration.getRegisteredAt());
         dto.setMessage("Successfully registered for program");
+
         return dto;
     }
 }

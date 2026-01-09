@@ -22,6 +22,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class AuthController {
 
+    private static final String SESSION_USER_ID = "userId";
     private final UserRepository userRepository;
     private final UserWalletRepository userWalletRepository;
 
@@ -31,8 +32,7 @@ public class AuthController {
 
         HttpSession session = request.getSession(false);
 
-
-        if (session != null && session.getAttribute("userId") != null) {
+        if (session != null && session.getAttribute(SESSION_USER_ID) != null) {
             response.sendRedirect("/profile");
             return null;
         }
@@ -61,7 +61,6 @@ public class AuthController {
     @GetMapping("/complete-profile")
     @ResponseBody
     public String completeProfilePage() {
-
         return """
         <h2>Complete Your Profile 📝</h2>
 
@@ -94,19 +93,21 @@ public class AuthController {
             @RequestParam String gender
     ) throws IOException {
 
-        Long userId = (Long) request.getSession().getAttribute("userId");
+        Long userId = (Long) request.getSession().getAttribute(SESSION_USER_ID);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalStateException("User not found"));
+
         user.setDepartment(department);
         user.setGender(gender);
         userRepository.save(user);
-        UserWallet wallet = userWalletRepository.findByUserUserId(userId)
+
+        userWalletRepository.findByUserUserId(userId)
                 .orElseGet(() -> {
-                    UserWallet newWallet = new UserWallet();
-                    newWallet.setUser(user);
-                    newWallet.setGems(0);
-                    return userWalletRepository.save(newWallet);
+                    UserWallet wallet = new UserWallet();
+                    wallet.setUser(user);
+                    wallet.setGems(0);
+                    return userWalletRepository.save(wallet);
                 });
 
         response.sendRedirect("/profile");
@@ -117,7 +118,7 @@ public class AuthController {
     @ResponseBody
     public String profile(HttpServletRequest request) {
 
-        Long userId = (Long) request.getSession().getAttribute("userId");
+        Long userId = (Long) request.getSession().getAttribute(SESSION_USER_ID);
         User user = userRepository.findById(userId).orElseThrow();
 
         return """

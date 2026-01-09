@@ -23,6 +23,12 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthTokenController {
 
+    private static final String KEY_USER_ID = "userId";
+    private static final String KEY_EMAIL = "email";
+    private static final String KEY_ROLE = "role";
+    private static final String KEY_AUTHENTICATED = "authenticated";
+    private static final String KEY_AUTH_SOURCE = "AUTH_SOURCE";
+
     private final JwtService jwtService;
     private final UserRepository userRepository;
 
@@ -60,10 +66,10 @@ public class AuthTokenController {
         response.put("accessToken", accessToken);
         response.put("refreshToken", refreshToken);
         response.put("tokenType", "Bearer");
-        response.put("expiresIn", 300); // 5 minutes
-        response.put("userId", principal.userId());
-        response.put("email", principal.email());
-        response.put("role", principal.role().name());
+        response.put("expiresIn", 300);
+        response.put(KEY_USER_ID, principal.userId());
+        response.put(KEY_EMAIL, principal.email());
+        response.put(KEY_ROLE, principal.role().name());
 
         return response;
     }
@@ -73,19 +79,23 @@ public class AuthTokenController {
             summary = "Refresh access token",
             description = "Generate new access token using refresh token"
     )
-    public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> body) {
+    public ResponseEntity<Map<String, Object>> refreshToken(
+            @RequestBody Map<String, String> body) {
 
         String refreshToken = body.get("refreshToken");
 
-        if (refreshToken == null || !jwtService.validateToken(refreshToken)
+        if (refreshToken == null
+                || !jwtService.validateToken(refreshToken)
                 || !jwtService.isRefreshToken(refreshToken)) {
+
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Invalid or expired refresh token"));
         }
 
         String email = jwtService.extractUsername(refreshToken);
+
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new IllegalStateException("User not found"));
 
         UserPrincipal principal =
                 new UserPrincipal(user.getUserId(), user.getEmail(), user.getRole());
@@ -110,10 +120,10 @@ public class AuthTokenController {
         UserPrincipal principal = extractPrincipal(authentication);
 
         return Map.of(
-                "userId", principal.userId(),
-                "email", principal.email(),
-                "role", principal.role().name(),
-                "authenticated", authentication.isAuthenticated()
+                KEY_USER_ID, principal.userId(),
+                KEY_EMAIL, principal.email(),
+                KEY_ROLE, principal.role().name(),
+                KEY_AUTHENTICATED, authentication.isAuthenticated()
         );
     }
 
@@ -126,13 +136,13 @@ public class AuthTokenController {
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("status", "JWT authentication working ✅");
-        response.put("authenticated", authentication.isAuthenticated());
+        response.put(KEY_AUTHENTICATED, authentication.isAuthenticated());
         response.put("authorities", authentication.getAuthorities());
 
-        if (authentication.getPrincipal() instanceof UserPrincipal p) {
-            response.put("userId", p.userId());
-            response.put("email", p.email());
-            response.put("role", p.role().name());
+        if (authentication.getPrincipal() instanceof UserPrincipal principal) {
+            response.put(KEY_USER_ID, principal.userId());
+            response.put(KEY_EMAIL, principal.email());
+            response.put(KEY_ROLE, principal.role().name());
         }
 
         return response;
@@ -142,33 +152,41 @@ public class AuthTokenController {
     @PreAuthorize("isAuthenticated()")
     public Map<String, Object> verifyAuthSource(HttpServletRequest request) {
 
-        String authSource = (String) request.getAttribute("AUTH_SOURCE");
+        String authSource = (String) request.getAttribute(KEY_AUTH_SOURCE);
 
         Map<String, Object> response = new LinkedHashMap<>();
-        response.put("authenticationSource",
-                authSource != null ? authSource : "UNKNOWN");
-
-        response.put("hasAuthorizationHeader",
-                request.getHeader("Authorization") != null);
+        response.put(
+                "authenticationSource",
+                authSource != null ? authSource : "UNKNOWN"
+        );
+        response.put(
+                "hasAuthorizationHeader",
+                request.getHeader("Authorization") != null
+        );
 
         return response;
     }
 
     private UserPrincipal extractPrincipal(Authentication authentication) {
 
-        if (authentication.getPrincipal() instanceof UserPrincipal principal) {
-            return principal;
+        Object principal = authentication.getPrincipal();
+
+        if (principal instanceof UserPrincipal userPrincipal) {
+            return userPrincipal;
         }
 
-        if (authentication.getPrincipal() instanceof
-                org.springframework.security.core.userdetails.UserDetails ud) {
+        if (principal instanceof org.springframework.security.core.userdetails.UserDetails ud) {
 
             User user = userRepository.findByEmail(ud.getUsername())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> new IllegalStateException("User not found"));
 
-            return new UserPrincipal(user.getUserId(), user.getEmail(), user.getRole());
+            return new UserPrincipal(
+                    user.getUserId(),
+                    user.getEmail(),
+                    user.getRole()
+            );
         }
 
-        throw new RuntimeException("Unable to extract user principal");
+        throw new IllegalStateException("Unable to extract user principal");
     }
 }

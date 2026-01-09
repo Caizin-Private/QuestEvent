@@ -3,6 +3,7 @@ package com.questevent.service;
 import com.questevent.dto.UserResponseDto;
 import com.questevent.entity.User;
 import com.questevent.enums.Role;
+import com.questevent.exception.UserNotFoundException;
 import com.questevent.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -68,14 +69,16 @@ class UserServiceTest {
     }
 
     @Test
-    void shouldThrowException_whenUserNotFoundById() {
+    void shouldThrowUserNotFoundException_whenUserNotFoundById() {
 
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> userService.getUserById(1L));
+        UserNotFoundException ex = assertThrows(
+                UserNotFoundException.class,
+                () -> userService.getUserById(1L)
+        );
 
-        assertTrue(ex.getMessage().contains("User not found"));
+        assertEquals("User not found with id 1", ex.getMessage());
         verify(userRepository).findById(1L);
     }
 
@@ -103,7 +106,8 @@ class UserServiceTest {
         updatedUser.setRole(Role.HOST);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+        when(userRepository.save(any(User.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         User result = userService.updateUser(1L, updatedUser);
 

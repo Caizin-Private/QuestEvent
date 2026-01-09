@@ -56,48 +56,60 @@ public class RbacService {
     }
 
     private User currentUser(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
+        if (!isAuthenticated(authentication)) {
             return null;
         }
 
+        if (authentication instanceof JwtAuthenticationToken jwtAuth) {
+            return findUserByEmail(extractEmailFromJwt(jwtAuth.getToken()));
+        }
 
         Object principal = authentication.getPrincipal();
 
-        if (authentication instanceof JwtAuthenticationToken jwtAuth) {
-            Jwt jwt = jwtAuth.getToken();
-
-            String email = jwt.getClaimAsString("email");
-            if (email == null) {
-                email = jwt.getClaimAsString("preferred_username");
-            }
-            if (email == null) {
-                email = jwt.getClaimAsString("upn");
-            }
-
-            if (email == null) return null;
-
-            return userRepository.findByEmail(email).orElse(null);
-        }
-
-        if (principal instanceof UserPrincipal p) {
-            return userRepository.findById(p.userId()).orElse(null);
+        if (principal instanceof UserPrincipal userPrincipal) {
+            return userRepository.findById(userPrincipal.userId()).orElse(null);
         }
 
         if (principal instanceof OAuth2User oauthUser) {
-            String email = oauthUser.getAttribute("email");
-            if (email == null) {
-                email = oauthUser.getAttribute("preferred_username");
-            }
-            if (email == null) {
-                email = oauthUser.getAttribute("upn");
-            }
-            if (email == null) return null;
-
-            return userRepository.findByEmail(email).orElse(null);
+            return findUserByEmail(extractEmailFromOAuth(oauthUser));
         }
 
         return null;
     }
+
+    private boolean isAuthenticated(Authentication authentication) {
+        return authentication != null && authentication.isAuthenticated();
+    }
+
+    private User findUserByEmail(String email) {
+        if (email == null) {
+            return null;
+        }
+        return userRepository.findByEmail(email).orElse(null);
+    }
+
+    private String extractEmailFromJwt(Jwt jwt) {
+        String email = jwt.getClaimAsString("email");
+        if (email == null) {
+            email = jwt.getClaimAsString("preferred_username");
+        }
+        if (email == null) {
+            email = jwt.getClaimAsString("upn");
+        }
+        return email;
+    }
+
+    private String extractEmailFromOAuth(OAuth2User oauthUser) {
+        String email = oauthUser.getAttribute("email");
+        if (email == null) {
+            email = oauthUser.getAttribute("preferred_username");
+        }
+        if (email == null) {
+            email = oauthUser.getAttribute("upn");
+        }
+        return email;
+    }
+
 
     public boolean isPlatformOwner(Authentication authentication) {
         User user = currentUser(authentication);
@@ -129,7 +141,7 @@ public class RbacService {
         return program.getUser().getUserId().equals(user.getUserId());
     }
 
-    public boolean canViewProgram(Authentication authentication, Long programId) {
+    public boolean canViewProgram(Authentication authentication) {
         return currentUser(authentication) != null;
     }
 
@@ -164,21 +176,17 @@ public class RbacService {
             return true;
         }
 
-        if (registration.getActivity() != null &&
+        return registration.getActivity() != null &&
                 registration.getActivity().getProgram() != null &&
-                registration.getActivity().getProgram().getUser() != null &&
-                user.getUserId().equals(registration.getActivity().getProgram().getUser().getUserId())) {
-            return true;
-        }
-
-        if (registration.getActivity() != null &&
-                registration.getActivity().getProgram() != null &&
-                registration.getActivity().getProgram().getJudge() != null &&
-                user.getUserId().equals(registration.getActivity().getProgram().getJudge().getUser().getUserId())) {
-            return true;
-        }
-
-        return false;
+                (
+                        (registration.getActivity().getProgram().getUser() != null &&
+                                user.getUserId().equals(
+                                        registration.getActivity().getProgram().getUser().getUserId()))
+                                ||
+                                (registration.getActivity().getProgram().getJudge() != null &&
+                                        user.getUserId().equals(
+                                                registration.getActivity().getProgram().getJudge().getUser().getUserId()))
+                );
     }
 
     public boolean canAccessProgramRegistration(Authentication authentication, Long registrationId) {
@@ -197,19 +205,16 @@ public class RbacService {
             return true;
         }
 
-        if (registration.getProgram() != null &&
-                registration.getProgram().getUser() != null &&
-                user.getUserId().equals(registration.getProgram().getUser().getUserId())) {
-            return true;
-        }
-
-        if (registration.getProgram() != null &&
-                registration.getProgram().getJudge() != null &&
-                user.getUserId().equals(registration.getProgram().getJudge().getUser().getUserId())) {
-            return true;
-        }
-
-        return false;
+        return registration.getProgram() != null &&
+                (
+                        (registration.getProgram().getUser() != null &&
+                                user.getUserId().equals(
+                                        registration.getProgram().getUser().getUserId()))
+                                ||
+                                (registration.getProgram().getJudge() != null &&
+                                        user.getUserId().equals(
+                                                registration.getProgram().getJudge().getUser().getUserId()))
+                );
     }
 
     public boolean canVerifySubmission(Authentication authentication, Long submissionId) {

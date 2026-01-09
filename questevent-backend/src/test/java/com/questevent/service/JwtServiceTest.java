@@ -14,14 +14,14 @@ class JwtServiceTest {
 
     private JwtService jwtService;
 
-    private final String SECRET =
+    private final String secret =
             "my-super-secret-key-my-super-secret-key-my-super-secret-key";
 
     @BeforeEach
     void setup() {
         jwtService = new JwtService();
 
-        ReflectionTestUtils.setField(jwtService, "secret", SECRET);
+        ReflectionTestUtils.setField(jwtService, "secret", secret);
         ReflectionTestUtils.setField(jwtService, "accessExpiration", 5 * 60 * 1000L);
         ReflectionTestUtils.setField(jwtService, "refreshExpiration", 60 * 60 * 1000L);
     }

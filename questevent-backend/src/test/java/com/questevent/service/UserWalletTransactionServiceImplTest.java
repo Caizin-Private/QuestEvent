@@ -3,7 +3,6 @@ package com.questevent.service;
 import com.questevent.entity.User;
 import com.questevent.entity.UserWallet;
 import com.questevent.repository.UserWalletRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -22,13 +21,14 @@ class UserWalletTransactionServiceImplTest {
     @InjectMocks
     private UserWalletTransactionServiceImpl userWalletTransactionService;
 
-    @BeforeEach
-    void setUp() {
+    private void initMocks() {
         MockitoAnnotations.openMocks(this);
     }
 
     @Test
     void creditGems_success() {
+        initMocks();
+
         User user = new User();
         user.setUserId(1L);
 
@@ -41,11 +41,13 @@ class UserWalletTransactionServiceImplTest {
         userWalletTransactionService.creditGems(user, 50);
 
         assertEquals(150, wallet.getGems());
-        verify(userWalletRepository, times(1)).save(wallet);
+        verify(userWalletRepository).save(wallet);
     }
 
     @Test
     void creditGems_amountZero_shouldThrowException() {
+        initMocks();
+
         User user = new User();
         user.setUserId(1L);
 
@@ -60,6 +62,8 @@ class UserWalletTransactionServiceImplTest {
 
     @Test
     void creditGems_amountNegative_shouldThrowException() {
+        initMocks();
+
         User user = new User();
         user.setUserId(1L);
 
@@ -72,17 +76,18 @@ class UserWalletTransactionServiceImplTest {
         verifyNoInteractions(userWalletRepository);
     }
 
-
     @Test
     void creditGems_walletNotFound_shouldThrowException() {
+        initMocks();
+
         User user = new User();
         user.setUserId(1L);
 
         when(userWalletRepository.findByUserUserId(1L))
                 .thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
                 () -> userWalletTransactionService.creditGems(user, 20)
         );
 
