@@ -2,13 +2,14 @@ package com.questevent.service;
 
 import com.questevent.entity.User;
 import com.questevent.entity.UserWallet;
+import com.questevent.exception.WalletNotFoundException;
 import com.questevent.repository.UserWalletRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
 @Service
+@Slf4j
 public class UserWalletTransactionServiceImpl implements UserWalletTransactionService {
 
     private final UserWalletRepository userWalletRepository;
@@ -29,11 +30,7 @@ public class UserWalletTransactionServiceImpl implements UserWalletTransactionSe
         }
 
         if (amount <= 0) {
-            log.warn(
-                    "Invalid credit amount={} for userId={}",
-                    amount,
-                    user.getUserId()
-            );
+            log.warn("Invalid credit amount={} for userId={}", amount, user.getUserId());
             throw new IllegalArgumentException("Amount must be greater than zero");
         }
 
@@ -41,7 +38,7 @@ public class UserWalletTransactionServiceImpl implements UserWalletTransactionSe
                 .findByUserUserId(user.getUserId())
                 .orElseThrow(() -> {
                     log.error("Wallet not found for userId={}", user.getUserId());
-                    return new IllegalStateException("Wallet not found");
+                    return new WalletNotFoundException("Wallet not found");
                 });
 
         Long before = wallet.getGems();
