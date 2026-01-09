@@ -7,21 +7,23 @@ import com.questevent.entity.Program;
 import com.questevent.entity.ProgramRegistration;
 import com.questevent.entity.User;
 import com.questevent.enums.ProgramStatus;
+import com.questevent.exception.ProgramNotFoundException;
+import com.questevent.exception.ResourceConflictException;
+import com.questevent.exception.UnauthorizedException;
+import com.questevent.exception.UserNotFoundException;
 import com.questevent.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.UUID;
 
-import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Slf4j
 @Service
@@ -56,31 +58,24 @@ public class ProgramService {
         if (authentication == null || !authentication.isAuthenticated()
                 || !(authentication.getPrincipal() instanceof UserPrincipal p)) {
             log.warn("Unauthorized program creation attempt");
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
+            throw new UnauthorizedException("Unauthorized");
         }
 
         User hostUser = userRepository.findById(p.userId())
                 .orElseThrow(() -> {
                     log.error("Host user not found | userId={}", p.userId());
-                    return new ResponseStatusException(
-                            HttpStatus.NOT_FOUND, "User not found"
-                    );
+                    return new UserNotFoundException("User not found");
                 });
 
         User judgeUser = userRepository.findById(dto.getJudgeUserId())
                 .orElseThrow(() -> {
                     log.error("Judge user not found | judgeUserId={}", dto.getJudgeUserId());
-                    return new ResponseStatusException(
-                            HttpStatus.NOT_FOUND, "Judge user not found"
-                    );
+                    return new UserNotFoundException("Judge user not found");
                 });
 
         if (hostUser.getUserId().equals(judgeUser.getUserId())) {
             log.warn("Creator attempted to assign self as judge | userId={}", hostUser.getUserId());
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Creator cannot be the judge"
-            );
+            throw new IllegalArgumentException("Creator cannot be the judge");
         }
 
         Program program = new Program();
@@ -119,23 +114,18 @@ public class ProgramService {
         if (authentication == null || !authentication.isAuthenticated()
                 || !(authentication.getPrincipal() instanceof UserPrincipal p)) {
             log.warn("Unauthorized program update attempt | programId={}", programId);
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
-        }
+            throw new UnauthorizedException("Unauthorized");        }
 
         User hostUser = userRepository.findById(p.userId())
                 .orElseThrow(() -> {
                     log.error("Host user not found | userId={}", p.userId());
-                    return new ResponseStatusException(
-                            HttpStatus.NOT_FOUND, "User not found"
-                    );
+                    return new UserNotFoundException("User not found");
                 });
 
         Program existingProgram = programRepository.findById(programId)
                 .orElseThrow(() -> {
                     log.error("Program not found | programId={}", programId);
-                    return new ResponseStatusException(
-                            HttpStatus.NOT_FOUND, "Program not found"
-                    );
+                    return new ProgramNotFoundException("Program not found");
                 });
 
         if (!existingProgram.getUser().getUserId().equals(hostUser.getUserId())) {
@@ -144,10 +134,8 @@ public class ProgramService {
                     programId,
                     hostUser.getUserId()
             );
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "You do not have permission to update this program"
-            );
+            throw new AccessDeniedException("You do not have permission to update this program");
+
         }
 
         mapDtoToEntity(dto, existingProgram);
@@ -157,18 +145,12 @@ public class ProgramService {
             User judgeUser = userRepository.findById(dto.getJudgeUserId())
                     .orElseThrow(() -> {
                         log.error("Judge user not found | judgeUserId={}", dto.getJudgeUserId());
-                        return new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Judge user not found"
-                        );
+                        return new UserNotFoundException("Judge user not found");
                     });
 
             if (hostUser.getUserId().equals(judgeUser.getUserId())) {
                 log.warn("Creator attempted to assign self as judge | userId={}", hostUser.getUserId());
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Creator cannot be the judge"
-                );
+                throw new IllegalArgumentException("Creator cannot be the judge");
             }
 
             Judge judge = judgeRepository.findByUserUserId(judgeUser.getUserId())
@@ -205,7 +187,7 @@ public class ProgramService {
         User hostUser = getCurrentUser();
         if (hostUser == null) {
             log.warn("User not found while fetching my programs");
-            throw new ResponseStatusException(NOT_FOUND, "User not found");
+            throw new UserNotFoundException("User not found");
         }
 
         log.info("Fetching programs created by user | userId={}", hostUser.getUserId());
@@ -217,10 +199,7 @@ public class ProgramService {
         return programRepository.findById(programId)
                 .orElseThrow(() -> {
                     log.warn("Program not found | programId={}", programId);
-                    return new ResponseStatusException(
-                            HttpStatus.NOT_FOUND,
-                            "Program not found"
-                    );
+                    return new ProgramNotFoundException("Program not found");
                 });
     }
 
@@ -236,16 +215,13 @@ public class ProgramService {
         User hostUser = getCurrentUser();
         if (hostUser == null) {
             log.warn("User not found while deleting program | programId={}", programId);
-            throw new ResponseStatusException(NOT_FOUND, "User not found");
+            throw new UserNotFoundException("User not found");
         }
 
         Program program = programRepository.findById(programId)
                 .orElseThrow(() -> {
                     log.warn("Program not found | programId={}", programId);
-                    return new ResponseStatusException(
-                            HttpStatus.NOT_FOUND,
-                            "Program not found"
-                    );
+                    return new ProgramNotFoundException("Program not found");
                 });
 
         if (!program.getUser().getUserId().equals(hostUser.getUserId())) {
@@ -254,10 +230,7 @@ public class ProgramService {
                     programId,
                     hostUser.getUserId()
             );
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "You do not have permission to delete this program"
-            );
+            throw new AccessDeniedException("You do not have permission to delete this program");
         }
 
         programRepository.delete(program);
@@ -273,7 +246,7 @@ public class ProgramService {
         User currentUser = getCurrentUser();
         if (currentUser == null) {
             log.warn("User not found while fetching completed programs");
-            throw new ResponseStatusException(NOT_FOUND, "User not found");
+            throw new UserNotFoundException("User not found");
         }
 
         List<ProgramRegistration> registrations =
@@ -309,7 +282,7 @@ public class ProgramService {
         User currentUser = getCurrentUser();
         if (currentUser == null) {
             log.warn("User not found while fetching judge programs");
-            throw new ResponseStatusException(NOT_FOUND, "User not found");
+            throw new UserNotFoundException("User not found");
         }
 
         log.info("Fetching programs where user is judge | userId={}", currentUser.getUserId());
@@ -320,7 +293,7 @@ public class ProgramService {
         User currentUser = getCurrentUser();
         if (currentUser == null) {
             log.warn("User not found while fetching department programs");
-            throw new ResponseStatusException(NOT_FOUND, "User not found");
+            throw new UserNotFoundException("User not found");
         }
 
         log.info(
@@ -338,7 +311,7 @@ public class ProgramService {
         User currentUser = getCurrentUser();
         if (currentUser == null) {
             log.warn("User not found while fetching draft programs");
-            throw new ResponseStatusException(NOT_FOUND, "User not found");
+            throw new UserNotFoundException("User not found");
         }
 
         log.info("Fetching draft programs | hostUserId={}", currentUser.getUserId());
@@ -355,16 +328,13 @@ public class ProgramService {
         User currentUser = getCurrentUser();
         if (currentUser == null) {
             log.warn("User not found while changing program status | programId={}", programId);
-            throw new ResponseStatusException(NOT_FOUND, "User not found");
+            throw new UserNotFoundException("User not found");
         }
 
         Program program = programRepository.findById(programId)
                 .orElseThrow(() -> {
                     log.warn("Program not found | programId={}", programId);
-                    return new ResponseStatusException(
-                            HttpStatus.NOT_FOUND,
-                            "Program not found"
-                    );
+                    return new ProgramNotFoundException("Program not found");
                 });
 
         if (!program.getUser().getUserId().equals(currentUser.getUserId())) {
@@ -373,10 +343,7 @@ public class ProgramService {
                     programId,
                     currentUser.getUserId()
             );
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "You do not have permission to change status of this program"
-            );
+            throw new AccessDeniedException("You do not have permission to change status of this program");
         }
 
         if (program.getStatus() != ProgramStatus.DRAFT) {
@@ -385,8 +352,7 @@ public class ProgramService {
                     programId,
                     program.getStatus()
             );
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
+            throw new ResourceConflictException(
                     "Program status must be DRAFT to change to ACTIVE"
             );
         }

@@ -6,9 +6,11 @@ import com.questevent.entity.Program;
 import com.questevent.repository.ActivityRepository;
 import com.questevent.repository.ProgramRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
+import com.questevent.exception.ActivityNotFoundException;
+import com.questevent.exception.ProgramNotFoundException;
+import com.questevent.exception.ResourceConflictException;
+
 
 import java.util.List;
 import java.util.UUID;
@@ -35,10 +37,8 @@ public class ActivityService {
         Program program = programRepository.findById(programId)
                 .orElseThrow(() -> {
                     log.error("Program not found while creating activity | programId={}", programId);
-                    return new ResponseStatusException(
-                            HttpStatus.NOT_FOUND,
-                            "Program not found"
-                    );
+                    return new ProgramNotFoundException("Program not found");
+
                 });
 
         Activity activity = new Activity();
@@ -67,10 +67,7 @@ public class ActivityService {
         Activity existingActivity = activityRepository.findById(activityId)
                 .orElseThrow(() -> {
                     log.error("Activity not found | activityId={}", activityId);
-                    return new ResponseStatusException(
-                            HttpStatus.NOT_FOUND,
-                            "Activity not found"
-                    );
+                    return new ActivityNotFoundException("Activity not found");
                 });
 
         if (!existingActivity.getProgram().getProgramId().equals(programId)) {
@@ -80,10 +77,7 @@ public class ActivityService {
                     programId,
                     existingActivity.getProgram().getProgramId()
             );
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Activity does not belong to this program"
-            );
+            throw new ResourceConflictException("Activity does not belong to this program");
         }
 
         mapDtoToEntity(dto, existingActivity);
@@ -105,10 +99,7 @@ public class ActivityService {
 
         if (!programRepository.existsById(programId)) {
             log.warn("Program not found while fetching activities | programId={}", programId);
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Program not found"
-            );
+            throw new ProgramNotFoundException("Program not found");
         }
 
         List<Activity> activities =
@@ -134,10 +125,7 @@ public class ActivityService {
         Activity activity = activityRepository.findById(activityId)
                 .orElseThrow(() -> {
                     log.warn("Activity not found while deleting | activityId={}", activityId);
-                    return new ResponseStatusException(
-                            HttpStatus.NOT_FOUND,
-                            "Activity not found"
-                    );
+                    return new ActivityNotFoundException("Activity not found");
                 });
 
         if (!activity.getProgram().getProgramId().equals(programId)) {
@@ -146,10 +134,7 @@ public class ActivityService {
                     activityId,
                     programId
             );
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "Mismatch between Program and Activity"
-            );
+            throw new ResourceConflictException("Activity does not belong to this program");
         }
 
         activityRepository.delete(activity);
@@ -173,10 +158,7 @@ public class ActivityService {
                     "Program not found while fetching compulsory activities | programId={}",
                     programId
             );
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Program not found"
-            );
+            throw new ProgramNotFoundException("Program not found");
         }
 
         List<Activity> activities =
