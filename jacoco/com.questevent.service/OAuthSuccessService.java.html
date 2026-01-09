@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
+<span class="fc" id="L19">@Slf4j</span>
 @Component
 @RequiredArgsConstructor
 public class OAuthSuccessService extends SavedRequestAwareAuthenticationSuccessHandler {
@@ -28,43 +30,70 @@ public class OAuthSuccessService extends SavedRequestAwareAuthenticationSuccessH
             Authentication authentication
     ) throws IOException {
 
-<span class="fc" id="L31">        OAuth2User oauthUser = (OAuth2User) authentication.getPrincipal();</span>
-<span class="fc" id="L32">        HttpSession session = request.getSession();</span>
+<span class="fc" id="L33">        log.debug(&quot;OAuth2 authentication success triggered&quot;);</span>
 
-<span class="fc" id="L34">        String email = resolveEmail(oauthUser);</span>
+<span class="fc" id="L35">        OAuth2User oauthUser = (OAuth2User) authentication.getPrincipal();</span>
+<span class="fc" id="L36">        HttpSession session = request.getSession();</span>
 
-<span class="fc" id="L36">        User user = userRepository.findByEmail(email).orElseGet(() -&gt; {</span>
+<span class="fc" id="L38">        String email = resolveEmail(oauthUser);</span>
 
-<span class="fc" id="L38">            User u = new User();</span>
-<span class="fc" id="L39">            u.setEmail(email);</span>
-<span class="fc" id="L40">            u.setName(oauthUser.getAttribute(&quot;name&quot;));</span>
-<span class="fc" id="L41">            u.setRole(Role.USER);</span>
+<span class="fc" id="L40">        log.debug(&quot;Resolved OAuth email | email={}&quot;, email);</span>
 
-<span class="fc" id="L43">            u.setDepartment(Department.GENERAL);</span>
-<span class="fc" id="L44">            u.setGender(&quot;PENDING&quot;);</span>
+<span class="fc" id="L42">        User user = userRepository.findByEmail(email).orElseGet(() -&gt; {</span>
 
-<span class="fc" id="L46">            return userRepository.save(u);</span>
+<span class="fc" id="L44">            log.info(&quot;New OAuth user detected | email={}&quot;, email);</span>
+
+<span class="fc" id="L46">            User u = new User();</span>
+<span class="fc" id="L47">            u.setEmail(email);</span>
+<span class="fc" id="L48">            u.setName(oauthUser.getAttribute(&quot;name&quot;));</span>
+<span class="fc" id="L49">            u.setRole(Role.USER);</span>
+
+<span class="fc" id="L51">            u.setDepartment(Department.GENERAL);</span>
+<span class="fc" id="L52">            u.setGender(&quot;PENDING&quot;);</span>
+
+<span class="fc" id="L54">            return userRepository.save(u);</span>
         });
 
+<span class="fc" id="L57">        log.info(</span>
+                &quot;OAuth login successful | userId={} | email={}&quot;,
+<span class="fc" id="L59">                user.getUserId(),</span>
+<span class="fc" id="L60">                user.getEmail()</span>
+        );
 
-<span class="fc" id="L50">        session.setAttribute(&quot;userId&quot;, user.getUserId());</span>
+<span class="fc" id="L63">        session.setAttribute(&quot;userId&quot;, user.getUserId());</span>
 
-<span class="fc" id="L52">        boolean profileIncomplete =</span>
-<span class="fc bfc" id="L53" title="All 2 branches covered.">                user.getDepartment() == Department.GENERAL &amp;&amp;</span>
-<span class="pc bpc" id="L54" title="1 of 2 branches missed.">                        user.getGender() == &quot;PENDING&quot;;</span>
+<span class="fc" id="L65">        boolean profileIncomplete =</span>
+<span class="fc bfc" id="L66" title="All 2 branches covered.">                user.getDepartment() == Department.GENERAL &amp;&amp;</span>
+<span class="pc bpc" id="L67" title="1 of 2 branches missed.">                        user.getGender() == &quot;PENDING&quot;;</span>
 
-<span class="fc bfc" id="L56" title="All 2 branches covered.">        if (profileIncomplete) {</span>
-<span class="fc" id="L57">            response.sendRedirect(&quot;/complete-profile&quot;); // FIRST LOGIN</span>
+<span class="fc bfc" id="L69" title="All 2 branches covered.">        if (profileIncomplete) {</span>
+
+<span class="fc" id="L71">            log.info(</span>
+                    &quot;Redirecting OAuth user to profile completion | userId={}&quot;,
+<span class="fc" id="L73">                    user.getUserId()</span>
+            );
+
+<span class="fc" id="L76">            response.sendRedirect(&quot;/complete-profile&quot;);</span>
         } else {
-<span class="fc" id="L59">            response.sendRedirect(&quot;/profile&quot;); // NORMAL LOGIN</span>
+
+<span class="fc" id="L79">            log.info(</span>
+                    &quot;Redirecting OAuth user to profile | userId={}&quot;,
+<span class="fc" id="L81">                    user.getUserId()</span>
+            );
+
+<span class="fc" id="L84">            response.sendRedirect(&quot;/profile&quot;);</span>
         }
-<span class="fc" id="L61">    }</span>
+<span class="fc" id="L86">    }</span>
 
     private String resolveEmail(OAuth2User oauthUser) {
-<span class="fc" id="L64">        String email = oauthUser.getAttribute(&quot;email&quot;);</span>
-<span class="fc bfc" id="L65" title="All 2 branches covered.">        if (email == null) email = oauthUser.getAttribute(&quot;preferred_username&quot;);</span>
-<span class="fc bfc" id="L66" title="All 2 branches covered.">        if (email == null) email = oauthUser.getAttribute(&quot;upn&quot;);</span>
-<span class="fc" id="L67">        return email;</span>
+
+<span class="fc" id="L90">        log.debug(&quot;Resolving email from OAuth2User attributes&quot;);</span>
+
+<span class="fc" id="L92">        String email = oauthUser.getAttribute(&quot;email&quot;);</span>
+<span class="fc bfc" id="L93" title="All 2 branches covered.">        if (email == null) email = oauthUser.getAttribute(&quot;preferred_username&quot;);</span>
+<span class="fc bfc" id="L94" title="All 2 branches covered.">        if (email == null) email = oauthUser.getAttribute(&quot;upn&quot;);</span>
+
+<span class="fc" id="L96">        return email;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

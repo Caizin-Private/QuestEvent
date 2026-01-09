@@ -4,87 +4,141 @@ import com.questevent.dto.UserResponseDto;
 import com.questevent.entity.User;
 import com.questevent.exception.UserNotFoundException;
 import com.questevent.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+<span class="fc" id="L13">@Slf4j</span>
 @Service
 public class UserService {
 
     private final UserRepository userRepository;
     private final UserWalletService userWalletService;
 
-<span class="fc" id="L18">    public UserService(UserRepository userRepository, UserWalletService userWalletService) {</span>
-<span class="fc" id="L19">        this.userRepository = userRepository;</span>
-<span class="fc" id="L20">        this.userWalletService = userWalletService;</span>
-<span class="fc" id="L21">    }</span>
+<span class="fc" id="L20">    public UserService(UserRepository userRepository, UserWalletService userWalletService) {</span>
+<span class="fc" id="L21">        this.userRepository = userRepository;</span>
+<span class="fc" id="L22">        this.userWalletService = userWalletService;</span>
+<span class="fc" id="L23">    }</span>
 
     public List&lt;User&gt; getAllUsers() {
-<span class="fc" id="L24">        return userRepository.findAll();</span>
+
+<span class="fc" id="L27">        log.debug(&quot;Fetching all users&quot;);</span>
+
+<span class="fc" id="L29">        List&lt;User&gt; users = userRepository.findAll();</span>
+
+<span class="fc" id="L31">        log.info(&quot;Fetched all users | count={}&quot;, users.size());</span>
+
+<span class="fc" id="L33">        return users;</span>
     }
 
     public User getUserById(Long id) {
-<span class="fc" id="L28">        return userRepository.findById(id)</span>
-<span class="fc" id="L29">                .orElseThrow(() -&gt; new UserNotFoundException(&quot;User not found with id &quot; + id));    }</span>
+
+<span class="fc" id="L38">        log.debug(&quot;Fetching user by id | userId={}&quot;, id);</span>
+
+<span class="fc" id="L40">        return userRepository.findById(id)</span>
+<span class="fc" id="L41">                .orElseThrow(() -&gt; {</span>
+<span class="fc" id="L42">                    log.warn(&quot;User not found | userId={}&quot;, id);</span>
+<span class="fc" id="L43">                    return new UserNotFoundException(&quot;User not found with id &quot; + id);</span>
+                });
+    }
 
     public User addUser(User user) {
 
-<span class="fc" id="L33">        userRepository.save(user);</span>
-<span class="fc" id="L34">        userWalletService.createWalletForUser(user);</span>
-<span class="fc" id="L35">        return user;</span>
+<span class="fc" id="L49">        log.debug(</span>
+                &quot;Adding new user | email={} | role={}&quot;,
+<span class="fc" id="L51">                user.getEmail(),</span>
+<span class="fc" id="L52">                user.getRole()</span>
+        );
 
+<span class="fc" id="L55">        userRepository.save(user);</span>
+<span class="fc" id="L56">        userWalletService.createWalletForUser(user);</span>
+
+<span class="fc" id="L58">        log.info(</span>
+                &quot;User created successfully | userId={}&quot;,
+<span class="fc" id="L60">                user.getUserId()</span>
+        );
+
+<span class="fc" id="L63">        return user;</span>
     }
 
     public User updateUser(Long id, User updatedUser) {
 
-<span class="fc" id="L41">        User user = getUserById(id);</span>
+<span class="fc" id="L68">        log.debug(&quot;Updating user | userId={}&quot;, id);</span>
 
-<span class="fc" id="L43">        user.setName(updatedUser.getName());</span>
-<span class="fc" id="L44">        user.setEmail(updatedUser.getEmail());</span>
-<span class="fc" id="L45">        user.setDepartment(updatedUser.getDepartment());</span>
-<span class="fc" id="L46">        user.setGender(updatedUser.getGender());</span>
-<span class="fc" id="L47">        user.setRole(updatedUser.getRole());</span>
+<span class="fc" id="L70">        User user = getUserById(id);</span>
 
-<span class="pc bpc" id="L49" title="1 of 2 branches missed.">        if(updatedUser.getWallet() != null) {</span>
-<span class="nc" id="L50">            updatedUser.getWallet().setUser(user);</span>
-<span class="nc" id="L51">            user.setWallet(updatedUser.getWallet());</span>
+<span class="fc" id="L72">        user.setName(updatedUser.getName());</span>
+<span class="fc" id="L73">        user.setEmail(updatedUser.getEmail());</span>
+<span class="fc" id="L74">        user.setDepartment(updatedUser.getDepartment());</span>
+<span class="fc" id="L75">        user.setGender(updatedUser.getGender());</span>
+<span class="fc" id="L76">        user.setRole(updatedUser.getRole());</span>
+
+<span class="pc bpc" id="L78" title="1 of 2 branches missed.">        if(updatedUser.getWallet() != null) {</span>
+<span class="nc" id="L79">            updatedUser.getWallet().setUser(user);</span>
+<span class="nc" id="L80">            user.setWallet(updatedUser.getWallet());</span>
         }
 
-<span class="pc bpc" id="L54" title="1 of 2 branches missed.">        if(updatedUser.getHostedPrograms() != null)</span>
-<span class="nc" id="L55">            user.setHostedPrograms(updatedUser.getHostedPrograms());</span>
+<span class="pc bpc" id="L83" title="1 of 2 branches missed.">        if(updatedUser.getHostedPrograms() != null)</span>
+<span class="nc" id="L84">            user.setHostedPrograms(updatedUser.getHostedPrograms());</span>
 
-<span class="pc bpc" id="L57" title="1 of 2 branches missed.">        if(updatedUser.getActivityRegistrations() != null)</span>
-<span class="nc" id="L58">            user.setActivityRegistrations(updatedUser.getActivityRegistrations());</span>
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">        if(updatedUser.getActivityRegistrations() != null)</span>
+<span class="nc" id="L87">            user.setActivityRegistrations(updatedUser.getActivityRegistrations());</span>
 
-<span class="pc bpc" id="L60" title="1 of 2 branches missed.">        if(updatedUser.getProgramRegistrations() != null)</span>
-<span class="nc" id="L61">            user.setProgramRegistrations(updatedUser.getProgramRegistrations());</span>
+<span class="pc bpc" id="L89" title="1 of 2 branches missed.">        if(updatedUser.getProgramRegistrations() != null)</span>
+<span class="nc" id="L90">            user.setProgramRegistrations(updatedUser.getProgramRegistrations());</span>
 
-<span class="pc bpc" id="L63" title="1 of 2 branches missed.">        if(updatedUser.getProgramWallets() != null)</span>
-<span class="nc" id="L64">            user.setProgramWallets(updatedUser.getProgramWallets());</span>
+<span class="pc bpc" id="L92" title="1 of 2 branches missed.">        if(updatedUser.getProgramWallets() != null)</span>
+<span class="nc" id="L93">            user.setProgramWallets(updatedUser.getProgramWallets());</span>
 
-<span class="fc" id="L66">        return userRepository.save(user);</span>
+<span class="fc" id="L95">        User saved = userRepository.save(user);</span>
+
+<span class="fc" id="L97">        log.info(</span>
+                &quot;User updated successfully | userId={}&quot;,
+<span class="fc" id="L99">                saved.getUserId()</span>
+        );
+
+<span class="fc" id="L102">        return saved;</span>
     }
 
     public void deleteUser(Long id) {
-<span class="fc" id="L70">        userRepository.deleteById(id);</span>
-<span class="fc" id="L71">    }</span>
+
+<span class="fc" id="L107">        log.debug(&quot;Deleting user | userId={}&quot;, id);</span>
+
+<span class="fc" id="L109">        userRepository.deleteById(id);</span>
+
+<span class="fc" id="L111">        log.info(&quot;User deleted | userId={}&quot;, id);</span>
+<span class="fc" id="L112">    }</span>
 
     public List&lt;SimpleGrantedAuthority&gt; getAuthorities(User user) {
-<span class="fc" id="L74">        return List.of(</span>
-<span class="fc" id="L75">                new SimpleGrantedAuthority(&quot;ROLE_&quot; + user.getRole().name())</span>
+
+<span class="fc" id="L116">        log.debug(</span>
+                &quot;Resolving authorities | userId={} | role={}&quot;,
+<span class="fc" id="L118">                user.getUserId(),</span>
+<span class="fc" id="L119">                user.getRole()</span>
+        );
+
+<span class="fc" id="L122">        return List.of(</span>
+<span class="fc" id="L123">                new SimpleGrantedAuthority(&quot;ROLE_&quot; + user.getRole().name())</span>
         );
     }
 
     public UserResponseDto convertToDto(User user) {
-<span class="fc" id="L80">        UserResponseDto userDto = new UserResponseDto();</span>
-<span class="fc" id="L81">        userDto.setUserId(user.getUserId());</span>
-<span class="fc" id="L82">        userDto.setName(user.getName());</span>
-<span class="fc" id="L83">        userDto.setEmail(user.getEmail());</span>
-<span class="fc" id="L84">        userDto.setDepartment(user.getDepartment());</span>
-<span class="fc" id="L85">        userDto.setGender(user.getGender());</span>
-<span class="fc" id="L86">        userDto.setRole(user.getRole());</span>
-<span class="fc" id="L87">        return userDto;</span>
+
+<span class="fc" id="L129">        log.debug(</span>
+                &quot;Converting User to UserResponseDto | userId={}&quot;,
+<span class="fc" id="L131">                user.getUserId()</span>
+        );
+
+<span class="fc" id="L134">        UserResponseDto userDto = new UserResponseDto();</span>
+<span class="fc" id="L135">        userDto.setUserId(user.getUserId());</span>
+<span class="fc" id="L136">        userDto.setName(user.getName());</span>
+<span class="fc" id="L137">        userDto.setEmail(user.getEmail());</span>
+<span class="fc" id="L138">        userDto.setDepartment(user.getDepartment());</span>
+<span class="fc" id="L139">        userDto.setGender(user.getGender());</span>
+<span class="fc" id="L140">        userDto.setRole(user.getRole());</span>
+<span class="fc" id="L141">        return userDto;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -5,6 +5,7 @@ import com.questevent.enums.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -15,8 +16,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+<span class="fc" id="L19">@Slf4j</span>
 @Service
-<span class="fc" id="L19">public class JwtService {</span>
+<span class="fc" id="L21">public class JwtService {</span>
 
     @Value(&quot;${jwt.secret}&quot;)
     private String secret;
@@ -28,24 +30,53 @@ import java.util.function.Function;
     private Long refreshExpiration;
 
     private SecretKey getSigningKey() {
-<span class="fc" id="L31">        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));</span>
+<span class="fc" id="L33">        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));</span>
     }
 
     public String generateAccessToken(UserPrincipal userPrincipal) {
-<span class="fc" id="L35">        Map&lt;String, Object&gt; claims = new HashMap&lt;&gt;();</span>
-<span class="fc" id="L36">        claims.put(&quot;userId&quot;, userPrincipal.userId());</span>
-<span class="fc" id="L37">        claims.put(&quot;email&quot;, userPrincipal.email());</span>
-<span class="fc" id="L38">        claims.put(&quot;role&quot;, userPrincipal.role().name());</span>
-<span class="fc" id="L39">        claims.put(&quot;tokenType&quot;, &quot;ACCESS&quot;);</span>
 
-<span class="fc" id="L41">        return createToken(claims, userPrincipal.email(), accessExpiration);</span>
+<span class="fc" id="L38">        log.debug(</span>
+                &quot;Generating ACCESS token | userId={} | role={}&quot;,
+<span class="fc" id="L40">                userPrincipal.userId(),</span>
+<span class="fc" id="L41">                userPrincipal.role()</span>
+        );
+
+<span class="fc" id="L44">        Map&lt;String, Object&gt; claims = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L45">        claims.put(&quot;userId&quot;, userPrincipal.userId());</span>
+<span class="fc" id="L46">        claims.put(&quot;email&quot;, userPrincipal.email());</span>
+<span class="fc" id="L47">        claims.put(&quot;role&quot;, userPrincipal.role().name());</span>
+<span class="fc" id="L48">        claims.put(&quot;tokenType&quot;, &quot;ACCESS&quot;);</span>
+
+<span class="fc" id="L50">        String token =</span>
+<span class="fc" id="L51">                createToken(claims, userPrincipal.email(), accessExpiration);</span>
+
+<span class="fc" id="L53">        log.info(</span>
+                &quot;ACCESS token generated | userId={}&quot;,
+<span class="fc" id="L55">                userPrincipal.userId()</span>
+        );
+
+<span class="fc" id="L58">        return token;</span>
     }
 
     public String generateRefreshToken(UserPrincipal userPrincipal) {
-<span class="fc" id="L45">        Map&lt;String, Object&gt; claims = new HashMap&lt;&gt;();</span>
-<span class="fc" id="L46">        claims.put(&quot;tokenType&quot;, &quot;REFRESH&quot;);</span>
 
-<span class="fc" id="L48">        return createToken(claims, userPrincipal.email(), refreshExpiration);</span>
+<span class="fc" id="L63">        log.debug(</span>
+                &quot;Generating REFRESH token | userId={}&quot;,
+<span class="fc" id="L65">                userPrincipal.userId()</span>
+        );
+
+<span class="fc" id="L68">        Map&lt;String, Object&gt; claims = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L69">        claims.put(&quot;tokenType&quot;, &quot;REFRESH&quot;);</span>
+
+<span class="fc" id="L71">        String token =</span>
+<span class="fc" id="L72">                createToken(claims, userPrincipal.email(), refreshExpiration);</span>
+
+<span class="fc" id="L74">        log.info(</span>
+                &quot;REFRESH token generated | userId={}&quot;,
+<span class="fc" id="L76">                userPrincipal.userId()</span>
+        );
+
+<span class="fc" id="L79">        return token;</span>
     }
 
     private String createToken(
@@ -53,71 +84,100 @@ import java.util.function.Function;
             String subject,
             Long expirationMillis
     ) {
-<span class="fc" id="L56">        Date now = new Date();</span>
-<span class="fc" id="L57">        Date expiryDate = new Date(now.getTime() + expirationMillis);</span>
+<span class="fc" id="L87">        Date now = new Date();</span>
+<span class="fc" id="L88">        Date expiryDate = new Date(now.getTime() + expirationMillis);</span>
 
-<span class="fc" id="L59">        return Jwts.builder()</span>
-<span class="fc" id="L60">                .claims(claims)</span>
-<span class="fc" id="L61">                .subject(subject)</span>
-<span class="fc" id="L62">                .issuedAt(now)</span>
-<span class="fc" id="L63">                .expiration(expiryDate)</span>
-<span class="fc" id="L64">                .signWith(getSigningKey())</span>
-<span class="fc" id="L65">                .compact();</span>
+<span class="fc" id="L90">        return Jwts.builder()</span>
+<span class="fc" id="L91">                .claims(claims)</span>
+<span class="fc" id="L92">                .subject(subject)</span>
+<span class="fc" id="L93">                .issuedAt(now)</span>
+<span class="fc" id="L94">                .expiration(expiryDate)</span>
+<span class="fc" id="L95">                .signWith(getSigningKey())</span>
+<span class="fc" id="L96">                .compact();</span>
     }
 
     public boolean validateToken(String token) {
         try {
-<span class="fc" id="L70">            return extractExpiration(token).after(new Date());</span>
-<span class="fc" id="L71">        } catch (Exception e) {</span>
-<span class="fc" id="L72">            return false;</span>
+<span class="fc" id="L101">            boolean valid =</span>
+<span class="fc" id="L102">                    extractExpiration(token).after(new Date());</span>
+
+<span class="pc bpc" id="L104" title="1 of 2 branches missed.">            if (!valid) {</span>
+<span class="nc" id="L105">                log.warn(&quot;JWT validation failed: token expired&quot;);</span>
+            }
+
+<span class="fc" id="L108">            return valid;</span>
+<span class="fc" id="L109">        } catch (Exception e) {</span>
+<span class="fc" id="L110">            log.warn(</span>
+                    &quot;JWT validation failed: {}&quot;,
+<span class="fc" id="L112">                    e.getClass().getSimpleName()</span>
+            );
+<span class="fc" id="L114">            return false;</span>
         }
     }
 
     public boolean isRefreshToken(String token) {
-<span class="fc" id="L77">        Claims claims = extractAllClaims(token);</span>
-<span class="fc" id="L78">        return &quot;REFRESH&quot;.equals(claims.get(&quot;tokenType&quot;, String.class));</span>
+<span class="fc" id="L119">        Claims claims = extractAllClaims(token);</span>
+<span class="fc" id="L120">        boolean isRefresh =</span>
+<span class="fc" id="L121">                &quot;REFRESH&quot;.equals(claims.get(&quot;tokenType&quot;, String.class));</span>
+
+<span class="fc" id="L123">        log.debug(&quot;Token type check | isRefresh={}&quot;, isRefresh);</span>
+<span class="fc" id="L124">        return isRefresh;</span>
     }
 
     public boolean isAccessToken(String token) {
-<span class="fc" id="L82">        Claims claims = extractAllClaims(token);</span>
-<span class="fc" id="L83">        return &quot;ACCESS&quot;.equals(claims.get(&quot;tokenType&quot;, String.class));</span>
+<span class="fc" id="L128">        Claims claims = extractAllClaims(token);</span>
+<span class="fc" id="L129">        boolean isAccess =</span>
+<span class="fc" id="L130">                &quot;ACCESS&quot;.equals(claims.get(&quot;tokenType&quot;, String.class));</span>
+
+<span class="fc" id="L132">        log.debug(&quot;Token type check | isAccess={}&quot;, isAccess);</span>
+<span class="fc" id="L133">        return isAccess;</span>
     }
 
     public String extractUsername(String token) {
-<span class="fc" id="L87">        return extractClaim(token, Claims::getSubject);</span>
+<span class="fc" id="L137">        return extractClaim(token, Claims::getSubject);</span>
     }
 
     public Date extractExpiration(String token) {
-<span class="fc" id="L91">        return extractClaim(token, Claims::getExpiration);</span>
+<span class="fc" id="L141">        return extractClaim(token, Claims::getExpiration);</span>
     }
 
     public &lt;T&gt; T extractClaim(String token, Function&lt;Claims, T&gt; claimsResolver) {
-<span class="fc" id="L95">        final Claims claims = extractAllClaims(token);</span>
-<span class="fc" id="L96">        return claimsResolver.apply(claims);</span>
+<span class="fc" id="L145">        final Claims claims = extractAllClaims(token);</span>
+<span class="fc" id="L146">        return claimsResolver.apply(claims);</span>
     }
 
     private Claims extractAllClaims(String token) {
-<span class="fc" id="L100">        return Jwts.parser()</span>
-<span class="fc" id="L101">                .verifyWith(getSigningKey())</span>
-<span class="fc" id="L102">                .build()</span>
-<span class="fc" id="L103">                .parseSignedClaims(token)</span>
-<span class="fc" id="L104">                .getPayload();</span>
+<span class="fc" id="L150">        return Jwts.parser()</span>
+<span class="fc" id="L151">                .verifyWith(getSigningKey())</span>
+<span class="fc" id="L152">                .build()</span>
+<span class="fc" id="L153">                .parseSignedClaims(token)</span>
+<span class="fc" id="L154">                .getPayload();</span>
     }
 
     public UserPrincipal extractUserPrincipal(String token) {
-<span class="fc" id="L108">        Claims claims = extractAllClaims(token);</span>
 
-<span class="fc" id="L110">        Long userId = claims.get(&quot;userId&quot;, Long.class);</span>
-<span class="fc" id="L111">        String email = claims.get(&quot;email&quot;, String.class);</span>
-<span class="fc" id="L112">        String roleStr = claims.get(&quot;role&quot;, String.class);</span>
+<span class="fc" id="L159">        log.debug(&quot;Extracting UserPrincipal from ACCESS token&quot;);</span>
 
-<span class="pc bpc" id="L114" title="2 of 6 branches missed.">        if (userId == null || email == null || roleStr == null) {</span>
-<span class="fc" id="L115">            throw new RuntimeException(&quot;Invalid ACCESS token: missing required claims&quot;);</span>
+<span class="fc" id="L161">        Claims claims = extractAllClaims(token);</span>
+
+<span class="fc" id="L163">        Long userId = claims.get(&quot;userId&quot;, Long.class);</span>
+<span class="fc" id="L164">        String email = claims.get(&quot;email&quot;, String.class);</span>
+<span class="fc" id="L165">        String roleStr = claims.get(&quot;role&quot;, String.class);</span>
+
+<span class="pc bpc" id="L167" title="2 of 6 branches missed.">        if (userId == null || email == null || roleStr == null) {</span>
+<span class="fc" id="L168">            log.error(&quot;Invalid ACCESS token: missing required claims&quot;);</span>
+<span class="fc" id="L169">            throw new RuntimeException(&quot;Invalid ACCESS token: missing required claims&quot;);</span>
         }
 
-<span class="fc" id="L118">        Role role = Role.valueOf(roleStr);</span>
+<span class="fc" id="L172">        Role role = Role.valueOf(roleStr);</span>
 
-<span class="fc" id="L120">        return new UserPrincipal(userId, email, role);</span>
+<span class="fc" id="L174">        log.info(</span>
+                &quot;UserPrincipal extracted | userId={} | role={}&quot;,
+                userId,
+                role
+        );
+
+<span class="fc" id="L180">        return new UserPrincipal(userId, email, role);</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
