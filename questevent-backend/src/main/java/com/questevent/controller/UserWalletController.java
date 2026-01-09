@@ -32,6 +32,11 @@ public class UserWalletController {
             summary = "Get my wallet balance",
             description = "Returns wallet balance of the authenticated user"
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Wallet retrieved successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "Wallet not found")
+    })
     public ResponseEntity<UserWalletBalanceDTO> getWalletBalance() {
         log.info("Fetching wallet balance for authenticated user");
 
