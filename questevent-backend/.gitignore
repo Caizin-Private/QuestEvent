@@ -14,9 +14,8 @@ target/
 *.tmp
 
 # Gradle
-#.gradle/
+.gradle/
 build/
-#gradle/
 
 # ===============================
 # IntelliJ IDEA

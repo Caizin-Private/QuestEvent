@@ -5,6 +5,9 @@ plugins {
     id 'jacoco'
     id 'org.sonarqube' version '4.4.1.3373'
 }
+bootJar {
+    enabled = true
+}
 
 group = 'com.caizin'
 version = '0.0.1-SNAPSHOT'
