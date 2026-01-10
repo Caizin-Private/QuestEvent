@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JudgeController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">questevent-backend</a> &gt; <a href="index.source.html" class="el_package">com.questevent.controller</a> &gt; <span class="el_source">JudgeController.java</span></div><h1>JudgeController.java</h1><pre class="source lang-java linenums">package com.questevent.controller;
 
-import com.questevent.dto.JudgeRejectionRequestDTO;
 import com.questevent.dto.JudgeSubmissionDTO;
 import com.questevent.service.JudgeService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -9,6 +8,7 @@ import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -42,53 +42,31 @@ public class JudgeController {
             description = &quot;Returns all PENDING submissions for activities &quot; +
                     &quot;belonging to programs where the logged-in judge is assigned&quot;
     )
-    @ApiResponse(
-            responseCode = &quot;200&quot;,
-            description = &quot;Pending submissions fetched successfully&quot;,
-            content = @Content(
-                    mediaType = &quot;application/json&quot;,
-                    schema = @Schema(implementation = JudgeSubmissionDTO.class)
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = &quot;200&quot;,
+                    description = &quot;Pending submissions fetched successfully&quot;,
+                    content = @Content(
+                            mediaType = &quot;application/json&quot;,
+                            schema = @Schema(implementation = JudgeSubmissionDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = &quot;401&quot;,
+                    description = &quot;Unauthorized – JWT missing or invalid&quot;
             )
-    )
-    @ApiResponse(
-            responseCode = &quot;401&quot;,
-            description = &quot;Unauthorized – JWT missing or invalid&quot;
-    )
+    })
     @GetMapping(&quot;/submissions/pending&quot;)
     public ResponseEntity&lt;List&lt;JudgeSubmissionDTO&gt;&gt; getPendingSubmissions(
             Authentication authentication
     ) {
-<span class="fc" id="L61">        log.info(&quot;Fetching pending submissions for judge&quot;);</span>
+<span class="fc" id="L63">        log.info(&quot;Fetching pending submissions for judge&quot;);</span>
 
-<span class="fc" id="L63">        List&lt;JudgeSubmissionDTO&gt; submissions =</span>
-<span class="fc" id="L64">                judgeService.getPendingSubmissionsForJudge(authentication);</span>
+<span class="fc" id="L65">        List&lt;JudgeSubmissionDTO&gt; submissions =</span>
+<span class="fc" id="L66">                judgeService.getPendingSubmissionsForJudge(authentication);</span>
 
-<span class="fc" id="L66">        log.debug(&quot;Pending submissions fetched, count={}&quot;, submissions.size());</span>
-<span class="fc" id="L67">        return ResponseEntity.ok(submissions);</span>
-    }
-
-    @Operation(
-            summary = &quot;Reject a submission&quot;,
-            description = &quot;Rejects a submission with a reason. Only assigned judge can reject.&quot;
-    )
-    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Submission rejected&quot;)
-    @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Already reviewed&quot;)
-    @ApiResponse(responseCode = &quot;401&quot;, description = &quot;Unauthorized&quot;)
-    @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Submission not found&quot;)
-    @PostMapping(&quot;/submissions/{submissionId}/reject&quot;)
-    public ResponseEntity&lt;Void&gt; rejectSubmission(
-            @PathVariable UUID submissionId,
-            @RequestBody JudgeRejectionRequestDTO request
-    ) {
-<span class="nc" id="L83">        log.info(&quot;Rejecting submissionId={}&quot;, submissionId);</span>
-
-<span class="nc" id="L85">        judgeService.rejectSubmission(</span>
-                submissionId,
-<span class="nc" id="L87">                request.rejectionReason()</span>
-        );
-
-<span class="nc" id="L90">        log.info(&quot;Submission rejected submissionId={}&quot;, submissionId);</span>
-<span class="nc" id="L91">        return ResponseEntity.ok().build();</span>
+<span class="fc" id="L68">        log.debug(&quot;Pending submissions fetched, count={}&quot;, submissions.size());</span>
+<span class="fc" id="L69">        return ResponseEntity.ok(submissions);</span>
     }
 
     @Operation(
@@ -96,18 +74,20 @@ public class JudgeController {
             description = &quot;Returns all PENDING submissions for a specific activity. &quot; +
                     &quot;Judge must be assigned to the program of that activity.&quot;
     )
-    @ApiResponse(
-            responseCode = &quot;200&quot;,
-            description = &quot;Pending submissions for activity fetched successfully&quot;
-    )
-    @ApiResponse(
-            responseCode = &quot;401&quot;,
-            description = &quot;Unauthorized – Judge not assigned or JWT invalid&quot;
-    )
-    @ApiResponse(
-            responseCode = &quot;404&quot;,
-            description = &quot;Activity not found&quot;
-    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = &quot;200&quot;,
+                    description = &quot;Pending submissions for activity fetched successfully&quot;
+            ),
+            @ApiResponse(
+                    responseCode = &quot;401&quot;,
+                    description = &quot;Unauthorized – Judge not assigned or JWT invalid&quot;
+            ),
+            @ApiResponse(
+                    responseCode = &quot;404&quot;,
+                    description = &quot;Activity not found&quot;
+            )
+    })
     @GetMapping(&quot;/submissions/pending/activity/{activityId}&quot;)
     public ResponseEntity&lt;List&lt;JudgeSubmissionDTO&gt;&gt; getPendingSubmissionsForActivity(
             @Parameter(
@@ -119,15 +99,15 @@ public class JudgeController {
             @PathVariable UUID activityId,
             Authentication authentication
     ) {
-<span class="fc" id="L122">        log.info(&quot;Fetching pending submissions for activityId={}&quot;, activityId);</span>
+<span class="fc" id="L102">        log.info(&quot;Fetching pending submissions for activityId={}&quot;, activityId);</span>
 
-<span class="fc" id="L124">        List&lt;JudgeSubmissionDTO&gt; submissions =</span>
-<span class="fc" id="L125">                judgeService.getPendingSubmissionsForActivity(activityId, authentication);</span>
+<span class="fc" id="L104">        List&lt;JudgeSubmissionDTO&gt; submissions =</span>
+<span class="fc" id="L105">                judgeService.getPendingSubmissionsForActivity(activityId, authentication);</span>
 
-<span class="fc" id="L127">        log.debug(&quot;Pending submissions fetched for activityId={}, count={}&quot;,</span>
-<span class="fc" id="L128">                activityId, submissions.size());</span>
+<span class="fc" id="L107">        log.debug(&quot;Pending submissions fetched for activityId={}, count={}&quot;,</span>
+<span class="fc" id="L108">                activityId, submissions.size());</span>
 
-<span class="fc" id="L130">        return ResponseEntity.ok(submissions);</span>
+<span class="fc" id="L110">        return ResponseEntity.ok(submissions);</span>
     }
 
     @Operation(
@@ -136,25 +116,27 @@ public class JudgeController {
                     &quot;for programs where the judge is assigned. &quot; +
                     &quot;OWNER role sees all submissions.&quot;
     )
-    @ApiResponse(
-            responseCode = &quot;200&quot;,
-            description = &quot;All submissions fetched successfully&quot;
-    )
-    @ApiResponse(
-            responseCode = &quot;401&quot;,
-            description = &quot;Unauthorized&quot;
-    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = &quot;200&quot;,
+                    description = &quot;All submissions fetched successfully&quot;
+            ),
+            @ApiResponse(
+                    responseCode = &quot;401&quot;,
+                    description = &quot;Unauthorized&quot;
+            )
+    })
     @GetMapping(&quot;/submissions&quot;)
     public ResponseEntity&lt;List&lt;JudgeSubmissionDTO&gt;&gt; getAllSubmissions(
             Authentication authentication
     ) {
-<span class="fc" id="L151">        log.info(&quot;Fetching all submissions for judge&quot;);</span>
+<span class="fc" id="L133">        log.info(&quot;Fetching all submissions for judge&quot;);</span>
 
-<span class="fc" id="L153">        List&lt;JudgeSubmissionDTO&gt; submissions =</span>
-<span class="fc" id="L154">                judgeService.getAllSubmissionsForJudge(authentication);</span>
+<span class="fc" id="L135">        List&lt;JudgeSubmissionDTO&gt; submissions =</span>
+<span class="fc" id="L136">                judgeService.getAllSubmissionsForJudge(authentication);</span>
 
-<span class="fc" id="L156">        log.debug(&quot;All submissions fetched, count={}&quot;, submissions.size());</span>
-<span class="fc" id="L157">        return ResponseEntity.ok(submissions);</span>
+<span class="fc" id="L138">        log.debug(&quot;All submissions fetched, count={}&quot;, submissions.size());</span>
+<span class="fc" id="L139">        return ResponseEntity.ok(submissions);</span>
     }
 
     @Operation(
@@ -163,22 +145,24 @@ public class JudgeController {
                     &quot;and marks activity as completed. &quot; +
                     &quot;Only the assigned judge can review.&quot;
     )
-    @ApiResponse(
-            responseCode = &quot;200&quot;,
-            description = &quot;Submission reviewed successfully&quot;
-    )
-    @ApiResponse(
-            responseCode = &quot;400&quot;,
-            description = &quot;Invalid submission or already reviewed&quot;
-    )
-    @ApiResponse(
-            responseCode = &quot;401&quot;,
-            description = &quot;Unauthorized – Judge not assigned&quot;
-    )
-    @ApiResponse(
-            responseCode = &quot;404&quot;,
-            description = &quot;Submission not found&quot;
-    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = &quot;200&quot;,
+                    description = &quot;Submission reviewed successfully&quot;
+            ),
+            @ApiResponse(
+                    responseCode = &quot;400&quot;,
+                    description = &quot;Invalid submission or already reviewed&quot;
+            ),
+            @ApiResponse(
+                    responseCode = &quot;401&quot;,
+                    description = &quot;Unauthorized – Judge not assigned&quot;
+            ),
+            @ApiResponse(
+                    responseCode = &quot;404&quot;,
+                    description = &quot;Submission not found&quot;
+            )
+    })
     @PostMapping(&quot;/submissions/{submissionId}/review&quot;)
     public ResponseEntity&lt;Void&gt; reviewSubmission(
             @Parameter(
@@ -189,12 +173,12 @@ public class JudgeController {
             )
             @PathVariable UUID submissionId
     ) {
-<span class="fc" id="L192">        log.info(&quot;Reviewing submission submissionId={}&quot;, submissionId);</span>
+<span class="fc" id="L176">        log.info(&quot;Reviewing submission submissionId={}&quot;, submissionId);</span>
 
-<span class="fc" id="L194">        judgeService.reviewSubmission(submissionId);</span>
+<span class="fc" id="L178">        judgeService.reviewSubmission(submissionId);</span>
 
-<span class="fc" id="L196">        log.info(&quot;Submission reviewed successfully submissionId={}&quot;, submissionId);</span>
-<span class="fc" id="L197">        return ResponseEntity.ok().build();</span>
+<span class="fc" id="L180">        log.info(&quot;Submission reviewed successfully submissionId={}&quot;, submissionId);</span>
+<span class="fc" id="L181">        return ResponseEntity.ok().build();</span>
     }
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

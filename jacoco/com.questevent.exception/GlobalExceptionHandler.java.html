@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GlobalExceptionHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">questevent-backend</a> &gt; <a href="index.source.html" class="el_package">com.questevent.exception</a> &gt; <span class="el_source">GlobalExceptionHandler.java</span></div><h1>GlobalExceptionHandler.java</h1><pre class="source lang-java linenums">package com.questevent.exception;
 
 import com.questevent.dto.ApiErrorDTO;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,12 +8,13 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.access.AccessDeniedException;
+
 
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
-<span class="fc" id="L17">@Slf4j</span>
 @RestControllerAdvice(basePackages = &quot;com.questevent&quot;)
 <span class="fc" id="L19">public class GlobalExceptionHandler {</span>
 
@@ -30,122 +30,82 @@ import java.util.Map;
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleAccessDenied(AccessDeniedException ex) {
-<span class="nc" id="L33">        return build(</span>
-                HttpStatus.FORBIDDEN,
-                &quot;You do not have permission to access this resource&quot;
-        );
+<span class="nc" id="L33">        return build(HttpStatus.FORBIDDEN, &quot;You do not have permission to access this resource&quot;);</span>
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; handleValidationErrors(
-            MethodArgumentNotValidException ex) {
+    public ResponseEntity&lt;?&gt; handleValidationErrors(MethodArgumentNotValidException ex) {
 
-<span class="nc" id="L43">        Map&lt;String, String&gt; fieldErrors = new HashMap&lt;&gt;();</span>
-<span class="nc" id="L44">        ex.getBindingResult()</span>
-<span class="nc" id="L45">                .getFieldErrors()</span>
-<span class="nc" id="L46">                .forEach(error -&gt;</span>
-<span class="nc" id="L47">                        fieldErrors.put(</span>
-<span class="nc" id="L48">                                error.getField(),</span>
-<span class="nc" id="L49">                                error.getDefaultMessage()</span>
-                        )
-                );
+<span class="nc" id="L39">        Map&lt;String, String&gt; fieldErrors = new HashMap&lt;&gt;();</span>
 
-<span class="nc" id="L53">        return ResponseEntity</span>
-<span class="nc" id="L54">                .status(HttpStatus.BAD_REQUEST)</span>
-<span class="nc" id="L55">                .body(fieldErrors);</span>
+<span class="nc" id="L41">        ex.getBindingResult()</span>
+<span class="nc" id="L42">                .getFieldErrors()</span>
+<span class="nc" id="L43">                .forEach(err -&gt; fieldErrors.put(err.getField(), err.getDefaultMessage()));</span>
+
+<span class="nc" id="L45">        return ResponseEntity</span>
+<span class="nc" id="L46">                .status(HttpStatus.BAD_REQUEST)</span>
+<span class="nc" id="L47">                .body(fieldErrors);</span>
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity&lt;ApiErrorDTO&gt; handleDatabaseError(
-            DataIntegrityViolationException ex) {
-
-<span class="nc" id="L62">        log.warn(&quot;Database constraint violation&quot;, ex);</span>
-<span class="nc" id="L63">        return build(</span>
-                HttpStatus.BAD_REQUEST,
-                &quot;Database constraint violation&quot;
-        );
+    public ResponseEntity&lt;ApiErrorDTO&gt; handleDatabaseError(DataIntegrityViolationException ex) {
+<span class="nc" id="L52">        return build(HttpStatus.BAD_REQUEST, &quot;Database constraint violation&quot;);</span>
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity&lt;ApiErrorDTO&gt; handleIllegalArgument(
-            IllegalArgumentException ex) {
-
-<span class="nc" id="L73">        return build(HttpStatus.BAD_REQUEST, ex.getMessage());</span>
+    public ResponseEntity&lt;ApiErrorDTO&gt; handleIllegalArgument(IllegalArgumentException ex) {
+<span class="nc" id="L57">        return build(HttpStatus.BAD_REQUEST, ex.getMessage());</span>
     }
 
     @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity&lt;ApiErrorDTO&gt; handleIllegalState(
-            IllegalStateException ex) {
-
-<span class="nc" id="L80">        return build(HttpStatus.CONFLICT, ex.getMessage());</span>
-    }
-
-    @ExceptionHandler(ProgramNotFoundException.class)
-    public ResponseEntity&lt;ApiErrorDTO&gt; handleProgramNotFound(
-            ProgramNotFoundException ex) {
-
-<span class="nc" id="L87">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
-    }
-
-    @ExceptionHandler(ActivityNotFoundException.class)
-    public ResponseEntity&lt;ApiErrorDTO&gt; handleActivityNotFound(
-            ActivityNotFoundException ex) {
-
-<span class="nc" id="L94">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
-    }
-
-    @ExceptionHandler(ResourceConflictException.class)
-    public ResponseEntity&lt;ApiErrorDTO&gt; handleResourceConflict(
-            ResourceConflictException ex) {
-
-<span class="nc" id="L101">        return build(HttpStatus.CONFLICT, ex.getMessage());</span>
-    }
-
-    @ExceptionHandler(WalletNotFoundException.class)
-    public ResponseEntity&lt;ApiErrorDTO&gt; handleWalletNotFound(
-            WalletNotFoundException ex) {
-
-<span class="nc" id="L108">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
-    }
-
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity&lt;ApiErrorDTO&gt; handleResourceNotFound(
-            ResourceNotFoundException ex) {
-
-<span class="nc" id="L115">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
-    }
-
-    @ExceptionHandler(InvalidOperationException.class)
-    public ResponseEntity&lt;ApiErrorDTO&gt; handleInvalidOperation(
-            InvalidOperationException ex) {
-
-<span class="nc" id="L122">        return build(HttpStatus.CONFLICT, ex.getMessage());</span>
+    public ResponseEntity&lt;ApiErrorDTO&gt; handleIllegalState(IllegalStateException ex) {
+<span class="nc" id="L62">        return build(HttpStatus.CONFLICT, ex.getMessage());</span>
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleAll(Exception ex) {
-
-<span class="nc" id="L128">        log.error(&quot;Unhandled exception occurred&quot;, ex);</span>
-
-<span class="nc" id="L130">        return build(</span>
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                &quot;Something went wrong&quot;
-        );
+<span class="nc" id="L67">        ex.printStackTrace();</span>
+<span class="nc" id="L68">        return build(HttpStatus.INTERNAL_SERVER_ERROR, &quot;Something went wrong&quot;);</span>
     }
 
-    private ResponseEntity&lt;ApiErrorDTO&gt; build(
-            HttpStatus status,
-            String message
-    ) {
-<span class="nc" id="L140">        ApiErrorDTO error = new ApiErrorDTO(</span>
-<span class="nc" id="L141">                status.value(),</span>
+    @ExceptionHandler(ProgramNotFoundException.class)
+    public ResponseEntity&lt;ApiErrorDTO&gt; handleProgramNotFound(ProgramNotFoundException ex) {
+<span class="nc" id="L73">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
+    }
+
+    @ExceptionHandler(ActivityNotFoundException.class)
+    public ResponseEntity&lt;ApiErrorDTO&gt; handleActivityNotFound(ActivityNotFoundException ex) {
+<span class="nc" id="L78">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
+    }
+
+    @ExceptionHandler(ResourceConflictException.class)
+    public ResponseEntity&lt;ApiErrorDTO&gt; handleResourceConflict(ResourceConflictException ex) {
+<span class="nc" id="L83">        return build(HttpStatus.CONFLICT, ex.getMessage());</span>
+    }
+
+    @ExceptionHandler(WalletNotFoundException.class)
+    public ResponseEntity&lt;ApiErrorDTO&gt; handleWalletNotFound(WalletNotFoundException ex) {
+<span class="nc" id="L88">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity&lt;ApiErrorDTO&gt; handleResourceNotFound(ResourceNotFoundException ex) {
+<span class="nc" id="L93">        return build(HttpStatus.NOT_FOUND, ex.getMessage());    }</span>
+
+    @ExceptionHandler(InvalidOperationException.class)
+    public ResponseEntity&lt;ApiErrorDTO&gt; handleInvalidOperation(InvalidOperationException ex) {
+<span class="nc" id="L97">        return build(HttpStatus.CONFLICT, ex.getMessage());</span>
+    }
+
+    private ResponseEntity&lt;ApiErrorDTO&gt; build(HttpStatus status, String message) {
+
+<span class="nc" id="L102">        ApiErrorDTO error = new ApiErrorDTO(</span>
+<span class="nc" id="L103">                status.value(),</span>
                 message,
-<span class="nc" id="L143">                Instant.now()</span>
+<span class="nc" id="L105">                Instant.now()</span>
         );
 
-<span class="nc" id="L146">        return ResponseEntity</span>
-<span class="nc" id="L147">                .status(status)</span>
-<span class="nc" id="L148">                .body(error);</span>
+<span class="nc" id="L108">        return ResponseEntity.status(status).body(error);</span>
     }
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

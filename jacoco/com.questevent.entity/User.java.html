@@ -7,6 +7,7 @@ import lombok.Data;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @Entity
@@ -66,14 +67,14 @@ public class User {
 
     @PrePersist
     protected void onCreate() {
-<span class="nc" id="L69">        Instant now = Instant.now();</span>
-<span class="nc" id="L70">        this.createdAt = now;</span>
-<span class="nc" id="L71">        this.updatedAt = now;</span>
-<span class="nc" id="L72">    }</span>
+<span class="nc" id="L70">        Instant now = Instant.now();</span>
+<span class="nc" id="L71">        this.createdAt = now;</span>
+<span class="nc" id="L72">        this.updatedAt = now;</span>
+<span class="nc" id="L73">    }</span>
 
     @PreUpdate
     protected void onUpdate() {
-<span class="nc" id="L76">        this.updatedAt = Instant.now();</span>
-<span class="nc" id="L77">    }</span>
+<span class="nc" id="L77">        this.updatedAt = Instant.now();</span>
+<span class="nc" id="L78">    }</span>
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
