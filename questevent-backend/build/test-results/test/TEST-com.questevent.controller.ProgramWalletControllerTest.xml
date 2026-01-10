@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.questevent.controller.ProgramWalletControllerTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-01-09T14:23:58.407Z" hostname="LF2XK776W2" time="0.02">
+<testsuite name="com.questevent.controller.ProgramWalletControllerTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-01-10T05:51:02" hostname="LF2XK776W2" time="0.021">
   <properties/>
-  <testcase name="getProgramWalletsByProgramId_shouldReturnMultipleWallets()" classname="com.questevent.controller.ProgramWalletControllerTest" time="0.017"/>
-  <testcase name="getProgramWalletBalance_shouldReturnWallet()" classname="com.questevent.controller.ProgramWalletControllerTest" time="0.001"/>
-  <testcase name="getProgramWalletsByProgramId_shouldReturnList()" classname="com.questevent.controller.ProgramWalletControllerTest" time="0.0"/>
-  <testcase name="getMyProgramWallet_shouldReturnWallet()" classname="com.questevent.controller.ProgramWalletControllerTest" time="0.001"/>
-  <testcase name="getMyProgramWallet_whenWalletNotFound_shouldThrowException()" classname="com.questevent.controller.ProgramWalletControllerTest" time="0.001"/>
-  <testcase name="getProgramWalletsByProgramId_whenNoWallets_shouldReturnEmptyList()" classname="com.questevent.controller.ProgramWalletControllerTest" time="0.0"/>
+  <testcase name="getProgramWalletsByProgramId_shouldReturnMultipleWallets()" classname="com.questevent.controller.ProgramWalletControllerTest" time="0.018"/>
+  <testcase name="getProgramWalletBalance_shouldReturnWallet()" classname="com.questevent.controller.ProgramWalletControllerTest" time="0.0"/>
+  <testcase name="getProgramWalletsByProgramId_shouldReturnList()" classname="com.questevent.controller.ProgramWalletControllerTest" time="0.001"/>
+  <testcase name="getMyProgramWallet_shouldReturnWallet()" classname="com.questevent.controller.ProgramWalletControllerTest" time="0.0"/>
+  <testcase name="getMyProgramWallet_whenWalletNotFound_shouldThrowException()" classname="com.questevent.controller.ProgramWalletControllerTest" time="0.0"/>
+  <testcase name="getProgramWalletsByProgramId_whenNoWallets_shouldReturnEmptyList()" classname="com.questevent.controller.ProgramWalletControllerTest" time="0.001"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

@@ -6,7 +6,6 @@ import com.questevent.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -17,7 +16,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/users")
@@ -38,11 +36,9 @@ public class UserController {
             summary = "Create a new user",
             description = "Creates a new user (Platform Owner only)"
     )
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "User created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid input"),
-            @ApiResponse(responseCode = "403", description = "Forbidden - Platform Owner only")
-    })
+    @ApiResponse(responseCode = "201", description = "User created successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid input")
+    @ApiResponse(responseCode = "403", description = "Forbidden - Platform Owner only")
     public ResponseEntity<UserResponseDto> createUser(
             @Valid @RequestBody User user) {
 
@@ -59,7 +55,10 @@ public class UserController {
 
     @PreAuthorize("@rbac.isPlatformOwner(authentication)")
     @GetMapping
-    @Operation(summary = "Get all users", description = "Retrieves a list of all users (Platform Owner only)")
+    @Operation(
+            summary = "Get all users",
+            description = "Retrieves a list of all users (Platform Owner only)"
+    )
     @ApiResponse(responseCode = "200", description = "Successfully retrieved list of users")
     @ApiResponse(responseCode = "403", description = "Forbidden - Platform Owner only")
     public ResponseEntity<List<UserResponseDto>> getAllUsers() {
@@ -78,12 +77,13 @@ public class UserController {
 
     @PreAuthorize("@rbac.canAccessUserProfile(authentication, #id)")
     @GetMapping("/{id}")
-    @Operation(summary = "Get user by ID", description = "Retrieves a specific user by ID (Owner or self)")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "User found"),
-            @ApiResponse(responseCode = "404", description = "User not found"),
-            @ApiResponse(responseCode = "403", description = "Forbidden - Access denied")
-    })
+    @Operation(
+            summary = "Get user by ID",
+            description = "Retrieves a specific user by ID (Owner or self)"
+    )
+    @ApiResponse(responseCode = "200", description = "User found")
+    @ApiResponse(responseCode = "404", description = "User not found")
+    @ApiResponse(responseCode = "403", description = "Forbidden - Access denied")
     public ResponseEntity<UserResponseDto> getUser(
             @Parameter(description = "User ID", required = true)
             @PathVariable Long id) {
@@ -99,12 +99,13 @@ public class UserController {
 
     @PreAuthorize("@rbac.canAccessUserProfile(authentication, #id)")
     @PutMapping("/{id}")
-    @Operation(summary = "Update user", description = "Updates user information (Owner or self)")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "User updated successfully"),
-            @ApiResponse(responseCode = "404", description = "User not found"),
-            @ApiResponse(responseCode = "403", description = "Forbidden - Access denied")
-    })
+    @Operation(
+            summary = "Update user",
+            description = "Updates user information (Owner or self)"
+    )
+    @ApiResponse(responseCode = "200", description = "User updated successfully")
+    @ApiResponse(responseCode = "404", description = "User not found")
+    @ApiResponse(responseCode = "403", description = "Forbidden - Access denied")
     public ResponseEntity<UserResponseDto> updateUser(
             @PathVariable Long id,
             @Valid @RequestBody User user) {
@@ -120,14 +121,14 @@ public class UserController {
 
     @PreAuthorize("@rbac.isPlatformOwner(authentication)")
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete user", description = "Deletes a user (Platform Owner only)")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "User deleted successfully"),
-            @ApiResponse(responseCode = "404", description = "User not found"),
-            @ApiResponse(responseCode = "403", description = "Forbidden - Platform Owner only")
-    })
-    public ResponseEntity<Void> deleteUser(
-            @PathVariable Long id) {
+    @Operation(
+            summary = "Delete user",
+            description = "Deletes a user (Platform Owner only)"
+    )
+    @ApiResponse(responseCode = "204", description = "User deleted successfully")
+    @ApiResponse(responseCode = "404", description = "User not found")
+    @ApiResponse(responseCode = "403", description = "Forbidden - Platform Owner only")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
 
         log.warn("Deleting user with id={}", id);
 

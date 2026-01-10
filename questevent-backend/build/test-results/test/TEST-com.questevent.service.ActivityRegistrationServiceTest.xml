@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.questevent.service.ActivityRegistrationServiceTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-01-09T14:23:58.496Z" hostname="LF2XK776W2" time="0.05">
+<testsuite name="com.questevent.service.ActivityRegistrationServiceTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-01-10T05:51:02" hostname="LF2XK776W2" time="0.055">
   <properties/>
-  <testcase name="registerParticipantForActivity_alreadyRegistered()" classname="com.questevent.service.ActivityRegistrationServiceTest" time="0.045"/>
-  <testcase name="registerParticipantForActivity_activityNotFound()" classname="com.questevent.service.ActivityRegistrationServiceTest" time="0.0"/>
-  <testcase name="registerParticipantForActivity_success()" classname="com.questevent.service.ActivityRegistrationServiceTest" time="0.002"/>
-  <testcase name="deleteRegistration_notFound()" classname="com.questevent.service.ActivityRegistrationServiceTest" time="0.0"/>
-  <testcase name="addParticipantToActivity_success()" classname="com.questevent.service.ActivityRegistrationServiceTest" time="0.001"/>
+  <testcase name="registerParticipantForActivity_alreadyRegistered()" classname="com.questevent.service.ActivityRegistrationServiceTest" time="0.05"/>
+  <testcase name="registerParticipantForActivity_activityNotFound()" classname="com.questevent.service.ActivityRegistrationServiceTest" time="0.001"/>
+  <testcase name="registerParticipantForActivity_success()" classname="com.questevent.service.ActivityRegistrationServiceTest" time="0.001"/>
+  <testcase name="deleteRegistration_notFound()" classname="com.questevent.service.ActivityRegistrationServiceTest" time="0.001"/>
+  <testcase name="addParticipantToActivity_success()" classname="com.questevent.service.ActivityRegistrationServiceTest" time="0.0"/>
   <testcase name="deleteRegistration_success()" classname="com.questevent.service.ActivityRegistrationServiceTest" time="0.001"/>
-  <testcase name="registerParticipantForActivity_userNotFound()" classname="com.questevent.service.ActivityRegistrationServiceTest" time="0.0"/>
+  <testcase name="registerParticipantForActivity_userNotFound()" classname="com.questevent.service.ActivityRegistrationServiceTest" time="0.001"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

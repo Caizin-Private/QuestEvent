@@ -14,7 +14,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -41,7 +40,8 @@ class AuthControllerTest {
 
         mockMvc.perform(get("/login"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Login with Microsoft")));
+                .andExpect(content()
+                        .string(org.hamcrest.Matchers.containsString("Login with Microsoft")));
     }
 
     @Test
@@ -70,9 +70,12 @@ class AuthControllerTest {
 
         mockMvc.perform(get("/profile"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("User Profile")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("test@example.com")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("USER")));
+                .andExpect(content()
+                        .string(org.hamcrest.Matchers.containsString("User Profile")))
+                .andExpect(content()
+                        .string(org.hamcrest.Matchers.containsString("test@example.com")))
+                .andExpect(content()
+                        .string(org.hamcrest.Matchers.containsString("USER")));
     }
 
     @Test
@@ -80,7 +83,8 @@ class AuthControllerTest {
     void shouldSaveProfileAndRedirect() throws Exception {
 
         when(authService.getLoggedInUserId(any())).thenReturn(1L);
-        doNothing().when(authService).completeProfile(eq(1L), eq(Department.IT), eq("MALE"));
+        doNothing().when(authService)
+                .completeProfile(1L, Department.IT, "MALE");
 
         mockMvc.perform(post("/complete-profile")
                         .param("department", "IT")
@@ -94,6 +98,7 @@ class AuthControllerTest {
 
         mockMvc.perform(get("/logout-success"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Logged out successfully")));
+                .andExpect(content()
+                        .string(org.hamcrest.Matchers.containsString("Logged out successfully")));
     }
 }

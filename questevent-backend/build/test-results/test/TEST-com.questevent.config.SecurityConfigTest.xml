@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.questevent.config.SecurityConfigTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-01-09T14:23:57.549Z" hostname="LF2XK776W2" time="0.004">
+<testsuite name="com.questevent.config.SecurityConfigTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-01-10T05:51:01" hostname="LF2XK776W2" time="0.005">
   <properties/>
   <testcase name="securityFilterChainBeanShouldLoad()" classname="com.questevent.config.SecurityConfigTest" time="0.001"/>
   <testcase name="jwtAuthFilterBeanShouldExist()" classname="com.questevent.config.SecurityConfigTest" time="0.001"/>
   <testcase name="oauthSuccessHandlerBeanShouldExist()" classname="com.questevent.config.SecurityConfigTest" time="0.001"/>
   <testcase name="corsConfigBeanShouldExist()" classname="com.questevent.config.SecurityConfigTest" time="0.001"/>
-  <system-out><![CDATA[2026-01-09 19:53:57.548 INFO  [Test worker] o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.questevent.config.SecurityConfigTest]: SecurityConfigTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-2026-01-09 19:53:57.548 INFO  [Test worker] o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.questevent.QuestEventApplication for test class com.questevent.config.SecurityConfigTest
+  <system-out><![CDATA[2026-01-10 11:21:01.465 INFO  [Test worker] o.s.t.c.s.AnnotationConfigContextLoaderUtils - Could not detect default configuration classes for test class [com.questevent.config.SecurityConfigTest]: SecurityConfigTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-01-10 11:21:01.465 INFO  [Test worker] o.s.b.t.c.SpringBootTestContextBootstrapper - Found @SpringBootConfiguration com.questevent.QuestEventApplication for test class com.questevent.config.SecurityConfigTest
 ]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

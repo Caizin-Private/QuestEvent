@@ -41,7 +41,7 @@
 </td>
 <td>
 <div class="infoBox" id="duration">
-<div class="counter">0.621s</div>
+<div class="counter">0.319s</div>
 <p>duration</p>
 </div>
 </td>
@@ -58,19 +58,19 @@
 </tr>
 </table>
 </div>
-<div class="tab-container">
+<div id="tabs">
 <ul class="tabLinks">
 <li>
-<a href="#">Tests</a>
+<a href="#tab0">Tests</a>
 </li>
 <li>
-<a href="#">Standard output</a>
+<a href="#tab1">Standard output</a>
 </li>
 <li>
-<a href="#">Standard error</a>
+<a href="#tab2">Standard error</a>
 </li>
 </ul>
-<div class="tab">
+<div id="tab0" class="tab">
 <h2>Tests</h2>
 <table>
 <thead>
@@ -82,76 +82,76 @@
 </thead>
 <tr>
 <td class="success">shouldAllowCorsForValidOrigin()</td>
-<td class="success">0.002s</td>
+<td class="success">0.001s</td>
 <td class="success">passed</td>
 </tr>
 <tr>
 <td class="success">shouldExposeAuthorizationHeader()</td>
-<td class="success">0.616s</td>
+<td class="success">0.316s</td>
 <td class="success">passed</td>
 </tr>
 <tr>
 <td class="success">shouldRejectUnknownOrigin()</td>
-<td class="success">0.003s</td>
+<td class="success">0.002s</td>
 <td class="success">passed</td>
 </tr>
 </table>
 </div>
-<div class="tab">
+<div id="tab1" class="tab">
 <h2>Standard output</h2>
 <span class="code">
-<pre id="class-stdout">19:53:47.107 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.questevent.config.CorsConfigTest]: CorsConfigTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-19:53:47.164 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.questevent.QuestEventApplication for test class com.questevent.config.CorsConfigTest
-19:53:47,054 |-INFO in ch.qos.logback.classic.LoggerContext[default] - This is logback-classic version 1.5.11
-19:53:47,055 |-INFO in ch.qos.logback.classic.util.ContextInitializer@62ab5e63 - Here is a list of configurators discovered as a service, by rank: 
-19:53:47,055 |-INFO in ch.qos.logback.classic.util.ContextInitializer@62ab5e63 -   org.springframework.boot.logging.logback.RootLogLevelConfigurator
-19:53:47,055 |-INFO in ch.qos.logback.classic.util.ContextInitializer@62ab5e63 - They will be invoked in order until ExecutionStatus.DO_NOT_INVOKE_NEXT_IF_ANY is returned.
-19:53:47,055 |-INFO in ch.qos.logback.classic.util.ContextInitializer@62ab5e63 - Constructed configurator of type class org.springframework.boot.logging.logback.RootLogLevelConfigurator
-19:53:47,058 |-INFO in ch.qos.logback.classic.util.ContextInitializer@62ab5e63 - org.springframework.boot.logging.logback.RootLogLevelConfigurator.configure() call lasted 0 milliseconds. ExecutionStatus=INVOKE_NEXT_IF_ANY
-19:53:47,058 |-INFO in ch.qos.logback.classic.util.ContextInitializer@62ab5e63 - Trying to configure with ch.qos.logback.classic.joran.SerializedModelConfigurator
-19:53:47,058 |-INFO in ch.qos.logback.classic.util.ContextInitializer@62ab5e63 - Constructed configurator of type class ch.qos.logback.classic.joran.SerializedModelConfigurator
-19:53:47,061 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Could NOT find resource [logback-test.scmo]
-19:53:47,061 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Could NOT find resource [logback.scmo]
-19:53:47,061 |-INFO in ch.qos.logback.classic.util.ContextInitializer@62ab5e63 - ch.qos.logback.classic.joran.SerializedModelConfigurator.configure() call lasted 3 milliseconds. ExecutionStatus=INVOKE_NEXT_IF_ANY
-19:53:47,061 |-INFO in ch.qos.logback.classic.util.ContextInitializer@62ab5e63 - Trying to configure with ch.qos.logback.classic.util.DefaultJoranConfigurator
-19:53:47,062 |-INFO in ch.qos.logback.classic.util.ContextInitializer@62ab5e63 - Constructed configurator of type class ch.qos.logback.classic.util.DefaultJoranConfigurator
-19:53:47,062 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Could NOT find resource [logback-test.xml]
-19:53:47,062 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Could NOT find resource [logback.xml]
-19:53:47,062 |-INFO in ch.qos.logback.classic.util.ContextInitializer@62ab5e63 - ch.qos.logback.classic.util.DefaultJoranConfigurator.configure() call lasted 0 milliseconds. ExecutionStatus=INVOKE_NEXT_IF_ANY
-19:53:47,062 |-INFO in ch.qos.logback.classic.util.ContextInitializer@62ab5e63 - Trying to configure with ch.qos.logback.classic.BasicConfigurator
-19:53:47,062 |-INFO in ch.qos.logback.classic.util.ContextInitializer@62ab5e63 - Constructed configurator of type class ch.qos.logback.classic.BasicConfigurator
-19:53:47,062 |-INFO in ch.qos.logback.classic.BasicConfigurator@e91facf - Setting up default configuration.
-19:53:47,068 |-INFO in ch.qos.logback.classic.util.ContextInitializer@62ab5e63 - ch.qos.logback.classic.BasicConfigurator.configure() call lasted 6 milliseconds. ExecutionStatus=NEUTRAL
-19:53:47,354 |-INFO in ch.qos.logback.core.model.processor.AppenderModelHandler - Processing appender named [CONSOLE]
-19:53:47,354 |-INFO in ch.qos.logback.core.model.processor.AppenderModelHandler - About to instantiate appender of type [ch.qos.logback.core.ConsoleAppender]
-19:53:47,356 |-INFO in ch.qos.logback.core.model.processor.ImplicitModelHandler - Assuming default type [ch.qos.logback.classic.encoder.PatternLayoutEncoder] for [encoder] property
-19:53:47,364 |-INFO in ch.qos.logback.core.model.processor.AppenderModelHandler - Processing appender named [FILE]
-19:53:47,364 |-INFO in ch.qos.logback.core.model.processor.AppenderModelHandler - About to instantiate appender of type [ch.qos.logback.core.rolling.RollingFileAppender]
-19:53:47,366 |-INFO in ch.qos.logback.core.model.processor.ModelInterpretationContext@5e8f0f98 - value &quot;logs/questevent.log&quot; substituted for &quot;${LOG_PATH}/${LOG_FILE}.log&quot;
-19:53:47,367 |-INFO in ch.qos.logback.core.model.processor.ModelInterpretationContext@5e8f0f98 - value &quot;logs/questevent.%d{yyyy-MM-dd}.%i.log&quot; substituted for &quot;${LOG_PATH}/${LOG_FILE}.%d{yyyy-MM-dd}.%i.log&quot;
-19:53:47,368 |-INFO in c.q.l.core.rolling.SizeAndTimeBasedRollingPolicy@1810953994 - setting totalSizeCap to 1 GB
-19:53:47,369 |-INFO in c.q.l.core.rolling.SizeAndTimeBasedRollingPolicy@1810953994 - Archive files will be limited to [10 MB] each.
-19:53:47,370 |-INFO in c.q.l.core.rolling.SizeAndTimeBasedRollingPolicy@1810953994 - No compression will be used
-19:53:47,371 |-INFO in c.q.l.core.rolling.SizeAndTimeBasedRollingPolicy@1810953994 - Will use the pattern logs/questevent.%d{yyyy-MM-dd}.%i.log for the active file
-19:53:47,372 |-INFO in ch.qos.logback.core.rolling.SizeAndTimeBasedFileNamingAndTriggeringPolicy@5310e451 - The date pattern is 'yyyy-MM-dd' from file name pattern 'logs/questevent.%d{yyyy-MM-dd}.%i.log'.
-19:53:47,372 |-INFO in ch.qos.logback.core.rolling.SizeAndTimeBasedFileNamingAndTriggeringPolicy@5310e451 - Roll-over at midnight.
-19:53:47,372 |-INFO in ch.qos.logback.core.rolling.SizeAndTimeBasedFileNamingAndTriggeringPolicy@5310e451 - Setting initial period to 2026-01-09T14:15:38.606Z
-19:53:47,373 |-INFO in ch.qos.logback.core.model.processor.ImplicitModelHandler - Assuming default type [ch.qos.logback.classic.encoder.PatternLayoutEncoder] for [encoder] property
-19:53:47,373 |-WARN in ch.qos.logback.classic.encoder.PatternLayoutEncoder@52d63b7e - As of version 1.2.0 &quot;immediateFlush&quot; property should be set within the enclosing Appender.
-19:53:47,373 |-WARN in ch.qos.logback.classic.encoder.PatternLayoutEncoder@52d63b7e - Please move &quot;immediateFlush&quot; property into the enclosing appender.
-19:53:47,373 |-WARN in ch.qos.logback.classic.encoder.PatternLayoutEncoder@52d63b7e - Setting the &quot;immediateFlush&quot; property of the enclosing appender to true
-19:53:47,374 |-INFO in ch.qos.logback.core.rolling.RollingFileAppender[FILE] - Active log file name: logs/questevent.log
-19:53:47,374 |-INFO in ch.qos.logback.core.rolling.RollingFileAppender[FILE] - File property is set to [logs/questevent.log]
-19:53:47,375 |-INFO in ch.qos.logback.classic.model.processor.RootLoggerModelHandler - Setting level of ROOT logger to INFO
-19:53:47,375 |-INFO in ch.qos.logback.classic.jul.LevelChangePropagator@74830d73 - Propagating INFO level on Logger[ROOT] onto the JUL framework
-19:53:47,375 |-INFO in ch.qos.logback.core.model.processor.AppenderRefModelHandler - Attaching appender named [CONSOLE] to Logger[ROOT]
-19:53:47,375 |-INFO in ch.qos.logback.core.model.processor.AppenderRefModelHandler - Attaching appender named [FILE] to Logger[ROOT]
-19:53:47,375 |-INFO in ch.qos.logback.classic.model.processor.LoggerModelHandler - Setting level of logger [com.questevent] to DEBUG
-19:53:47,375 |-INFO in ch.qos.logback.classic.jul.LevelChangePropagator@74830d73 - Propagating DEBUG level on Logger[com.questevent] onto the JUL framework
-19:53:47,376 |-INFO in ch.qos.logback.classic.model.processor.LoggerModelHandler - Setting additivity of logger [com.questevent] to false
-19:53:47,376 |-INFO in ch.qos.logback.core.model.processor.AppenderRefModelHandler - Attaching appender named [FILE] to Logger[com.questevent]
-19:53:47,376 |-INFO in ch.qos.logback.core.model.processor.DefaultProcessor@1827fc4e - End of configuration.
-19:53:47,376 |-INFO in org.springframework.boot.logging.logback.SpringBootJoranConfigurator@4c41a177 - Registering current configuration as safe fallback point
+<pre>11:20:46.075 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.questevent.config.CorsConfigTest]: CorsConfigTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+11:20:46.145 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.questevent.QuestEventApplication for test class com.questevent.config.CorsConfigTest
+11:20:46,003 |-INFO in ch.qos.logback.classic.LoggerContext[default] - This is logback-classic version 1.5.11
+11:20:46,005 |-INFO in ch.qos.logback.classic.util.ContextInitializer@669c2b07 - Here is a list of configurators discovered as a service, by rank: 
+11:20:46,005 |-INFO in ch.qos.logback.classic.util.ContextInitializer@669c2b07 -   org.springframework.boot.logging.logback.RootLogLevelConfigurator
+11:20:46,005 |-INFO in ch.qos.logback.classic.util.ContextInitializer@669c2b07 - They will be invoked in order until ExecutionStatus.DO_NOT_INVOKE_NEXT_IF_ANY is returned.
+11:20:46,005 |-INFO in ch.qos.logback.classic.util.ContextInitializer@669c2b07 - Constructed configurator of type class org.springframework.boot.logging.logback.RootLogLevelConfigurator
+11:20:46,007 |-INFO in ch.qos.logback.classic.util.ContextInitializer@669c2b07 - org.springframework.boot.logging.logback.RootLogLevelConfigurator.configure() call lasted 0 milliseconds. ExecutionStatus=INVOKE_NEXT_IF_ANY
+11:20:46,007 |-INFO in ch.qos.logback.classic.util.ContextInitializer@669c2b07 - Trying to configure with ch.qos.logback.classic.joran.SerializedModelConfigurator
+11:20:46,008 |-INFO in ch.qos.logback.classic.util.ContextInitializer@669c2b07 - Constructed configurator of type class ch.qos.logback.classic.joran.SerializedModelConfigurator
+11:20:46,008 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Could NOT find resource [logback-test.scmo]
+11:20:46,008 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Could NOT find resource [logback.scmo]
+11:20:46,008 |-INFO in ch.qos.logback.classic.util.ContextInitializer@669c2b07 - ch.qos.logback.classic.joran.SerializedModelConfigurator.configure() call lasted 0 milliseconds. ExecutionStatus=INVOKE_NEXT_IF_ANY
+11:20:46,008 |-INFO in ch.qos.logback.classic.util.ContextInitializer@669c2b07 - Trying to configure with ch.qos.logback.classic.util.DefaultJoranConfigurator
+11:20:46,009 |-INFO in ch.qos.logback.classic.util.ContextInitializer@669c2b07 - Constructed configurator of type class ch.qos.logback.classic.util.DefaultJoranConfigurator
+11:20:46,009 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Could NOT find resource [logback-test.xml]
+11:20:46,009 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Could NOT find resource [logback.xml]
+11:20:46,009 |-INFO in ch.qos.logback.classic.util.ContextInitializer@669c2b07 - ch.qos.logback.classic.util.DefaultJoranConfigurator.configure() call lasted 0 milliseconds. ExecutionStatus=INVOKE_NEXT_IF_ANY
+11:20:46,009 |-INFO in ch.qos.logback.classic.util.ContextInitializer@669c2b07 - Trying to configure with ch.qos.logback.classic.BasicConfigurator
+11:20:46,009 |-INFO in ch.qos.logback.classic.util.ContextInitializer@669c2b07 - Constructed configurator of type class ch.qos.logback.classic.BasicConfigurator
+11:20:46,009 |-INFO in ch.qos.logback.classic.BasicConfigurator@1b1ea1d9 - Setting up default configuration.
+11:20:46,016 |-INFO in ch.qos.logback.classic.util.ContextInitializer@669c2b07 - ch.qos.logback.classic.BasicConfigurator.configure() call lasted 7 milliseconds. ExecutionStatus=NEUTRAL
+11:20:46,376 |-INFO in ch.qos.logback.core.model.processor.AppenderModelHandler - Processing appender named [CONSOLE]
+11:20:46,376 |-INFO in ch.qos.logback.core.model.processor.AppenderModelHandler - About to instantiate appender of type [ch.qos.logback.core.ConsoleAppender]
+11:20:46,378 |-INFO in ch.qos.logback.core.model.processor.ImplicitModelHandler - Assuming default type [ch.qos.logback.classic.encoder.PatternLayoutEncoder] for [encoder] property
+11:20:46,388 |-INFO in ch.qos.logback.core.model.processor.AppenderModelHandler - Processing appender named [FILE]
+11:20:46,388 |-INFO in ch.qos.logback.core.model.processor.AppenderModelHandler - About to instantiate appender of type [ch.qos.logback.core.rolling.RollingFileAppender]
+11:20:46,390 |-INFO in ch.qos.logback.core.model.processor.ModelInterpretationContext@6a902015 - value &quot;logs/questevent.log&quot; substituted for &quot;${LOG_PATH}/${LOG_FILE}.log&quot;
+11:20:46,392 |-INFO in ch.qos.logback.core.model.processor.ModelInterpretationContext@6a902015 - value &quot;logs/questevent.%d{yyyy-MM-dd}.%i.log&quot; substituted for &quot;${LOG_PATH}/${LOG_FILE}.%d{yyyy-MM-dd}.%i.log&quot;
+11:20:46,393 |-INFO in c.q.l.core.rolling.SizeAndTimeBasedRollingPolicy@1440325059 - setting totalSizeCap to 1 GB
+11:20:46,395 |-INFO in c.q.l.core.rolling.SizeAndTimeBasedRollingPolicy@1440325059 - Archive files will be limited to [10 MB] each.
+11:20:46,396 |-INFO in c.q.l.core.rolling.SizeAndTimeBasedRollingPolicy@1440325059 - No compression will be used
+11:20:46,397 |-INFO in c.q.l.core.rolling.SizeAndTimeBasedRollingPolicy@1440325059 - Will use the pattern logs/questevent.%d{yyyy-MM-dd}.%i.log for the active file
+11:20:46,398 |-INFO in ch.qos.logback.core.rolling.SizeAndTimeBasedFileNamingAndTriggeringPolicy@521a506c - The date pattern is 'yyyy-MM-dd' from file name pattern 'logs/questevent.%d{yyyy-MM-dd}.%i.log'.
+11:20:46,398 |-INFO in ch.qos.logback.core.rolling.SizeAndTimeBasedFileNamingAndTriggeringPolicy@521a506c - Roll-over at midnight.
+11:20:46,398 |-INFO in ch.qos.logback.core.rolling.SizeAndTimeBasedFileNamingAndTriggeringPolicy@521a506c - Setting initial period to 2026-01-10T05:41:46.269Z
+11:20:46,399 |-INFO in ch.qos.logback.core.model.processor.ImplicitModelHandler - Assuming default type [ch.qos.logback.classic.encoder.PatternLayoutEncoder] for [encoder] property
+11:20:46,400 |-WARN in ch.qos.logback.classic.encoder.PatternLayoutEncoder@3c64339f - As of version 1.2.0 &quot;immediateFlush&quot; property should be set within the enclosing Appender.
+11:20:46,400 |-WARN in ch.qos.logback.classic.encoder.PatternLayoutEncoder@3c64339f - Please move &quot;immediateFlush&quot; property into the enclosing appender.
+11:20:46,400 |-WARN in ch.qos.logback.classic.encoder.PatternLayoutEncoder@3c64339f - Setting the &quot;immediateFlush&quot; property of the enclosing appender to true
+11:20:46,401 |-INFO in ch.qos.logback.core.rolling.RollingFileAppender[FILE] - Active log file name: logs/questevent.log
+11:20:46,401 |-INFO in ch.qos.logback.core.rolling.RollingFileAppender[FILE] - File property is set to [logs/questevent.log]
+11:20:46,401 |-INFO in ch.qos.logback.classic.model.processor.RootLoggerModelHandler - Setting level of ROOT logger to INFO
+11:20:46,401 |-INFO in ch.qos.logback.classic.jul.LevelChangePropagator@579f3c8e - Propagating INFO level on Logger[ROOT] onto the JUL framework
+11:20:46,402 |-INFO in ch.qos.logback.core.model.processor.AppenderRefModelHandler - Attaching appender named [CONSOLE] to Logger[ROOT]
+11:20:46,402 |-INFO in ch.qos.logback.core.model.processor.AppenderRefModelHandler - Attaching appender named [FILE] to Logger[ROOT]
+11:20:46,402 |-INFO in ch.qos.logback.classic.model.processor.LoggerModelHandler - Setting level of logger [com.questevent] to DEBUG
+11:20:46,402 |-INFO in ch.qos.logback.classic.jul.LevelChangePropagator@579f3c8e - Propagating DEBUG level on Logger[com.questevent] onto the JUL framework
+11:20:46,402 |-INFO in ch.qos.logback.classic.model.processor.LoggerModelHandler - Setting additivity of logger [com.questevent] to false
+11:20:46,402 |-INFO in ch.qos.logback.core.model.processor.AppenderRefModelHandler - Attaching appender named [FILE] to Logger[com.questevent]
+11:20:46,402 |-INFO in ch.qos.logback.core.model.processor.DefaultProcessor@4eb1943b - End of configuration.
+11:20:46,403 |-INFO in org.springframework.boot.logging.logback.SpringBootJoranConfigurator@4e2824b1 - Registering current configuration as safe fallback point
 
 
   .   ____          _            __ _ _
@@ -163,37 +163,35 @@
 
  :: Spring Boot ::                (v3.3.5)
 
-2026-01-09 19:53:47.399 INFO  [background-preinit] o.h.validator.internal.util.Version - HV000001: Hibernate Validator 8.0.1.Final
-2026-01-09 19:53:47.815 INFO  [Test worker] o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2026-01-09 19:53:47.850 INFO  [Test worker] o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 31 ms. Found 9 JPA repository interfaces.
-2026-01-09 19:53:48.053 INFO  [Test worker] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
-2026-01-09 19:53:50.292 INFO  [Test worker] com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@262d72a
-2026-01-09 19:53:50.294 INFO  [Test worker] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
-2026-01-09 19:53:50.329 INFO  [Test worker] o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
-2026-01-09 19:53:50.359 INFO  [Test worker] org.hibernate.Version - HHH000412: Hibernate ORM core version 6.5.3.Final
-2026-01-09 19:53:50.377 INFO  [Test worker] o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
-2026-01-09 19:53:50.505 INFO  [Test worker] o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
-2026-01-09 19:53:50.811 WARN  [Test worker] org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
-2026-01-09 19:53:51.798 INFO  [Test worker] o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2026-01-09 19:53:51.799 INFO  [Test worker] o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
-2026-01-09 19:53:51.957 INFO  [Test worker] o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
-2026-01-09 19:53:52.820 WARN  [Test worker] o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
-2026-01-09 19:53:53.130 INFO  [Test worker] o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
-2026-01-09 19:53:53.130 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
-2026-01-09 19:53:53.130 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-01-10 11:20:46.430 INFO  [background-preinit] o.h.validator.internal.util.Version - HV000001: Hibernate Validator 8.0.1.Final
+2026-01-10 11:20:46.927 INFO  [Test worker] o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-01-10 11:20:46.966 INFO  [Test worker] o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 35 ms. Found 9 JPA repository interfaces.
+2026-01-10 11:20:47.226 INFO  [Test worker] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2026-01-10 11:20:51.004 INFO  [Test worker] com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@38648de6
+2026-01-10 11:20:51.006 INFO  [Test worker] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2026-01-10 11:20:51.044 INFO  [Test worker] o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-01-10 11:20:51.080 INFO  [Test worker] org.hibernate.Version - HHH000412: Hibernate ORM core version 6.5.3.Final
+2026-01-10 11:20:51.100 INFO  [Test worker] o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-01-10 11:20:51.254 INFO  [Test worker] o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-01-10 11:20:51.736 WARN  [Test worker] org.hibernate.orm.deprecation - HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-01-10 11:20:53.176 INFO  [Test worker] o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-01-10 11:20:53.177 INFO  [Test worker] o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-01-10 11:20:53.351 INFO  [Test worker] o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-01-10 11:20:54.278 WARN  [Test worker] o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-01-10 11:20:54.620 INFO  [Test worker] o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-10 11:20:54.620 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-10 11:20:54.620 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
 </pre>
-<button class="clipboard-copy-btn" aria-label="Copy to clipboard" data-copy-element-id="class-stdout">Copy</button>
 </span>
 </div>
-<div class="tab">
+<div id="tab2" class="tab">
 <h2>Standard error</h2>
 <span class="code">
-<pre id="class-stderr">WARNING: A Java agent has been loaded dynamically (/Users/abhinashsamal/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy-agent/1.14.19/154da3a65b4f4a909d3e5bdec55d1b2b4cbb6ce1/byte-buddy-agent-1.14.19.jar)
+<pre>WARNING: A Java agent has been loaded dynamically (/Users/abhinashsamal/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy-agent/1.14.19/154da3a65b4f4a909d3e5bdec55d1b2b4cbb6ce1/byte-buddy-agent-1.14.19.jar)
 WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
 WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
 WARNING: Dynamic loading of agents will be disallowed by default in a future release
 </pre>
-<button class="clipboard-copy-btn" aria-label="Copy to clipboard" data-copy-element-id="class-stderr">Copy</button>
 </span>
 </div>
 </div>
@@ -204,7 +202,7 @@ WARNING: Dynamic loading of agents will be disallowed by default in a future rel
 <input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
 </label>
 </div>Generated by 
-<a href="https://www.gradle.org">Gradle 9.2.1</a> at 9 Jan 2026, 7:54:01 pm</p>
+<a href="http://www.gradle.org">Gradle 8.5</a> at 10-Jan-2026, 11:21:07 am</p>
 </div>
 </div>
 </body>

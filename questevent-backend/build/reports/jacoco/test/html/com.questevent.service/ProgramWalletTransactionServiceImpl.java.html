@@ -5,6 +5,9 @@ import com.questevent.entity.ProgramWallet;
 import com.questevent.entity.User;
 import com.questevent.entity.UserWallet;
 import com.questevent.enums.ProgramStatus;
+import com.questevent.exception.ProgramNotFoundException;
+import com.questevent.exception.ResourceConflictException;
+import com.questevent.exception.WalletNotFoundException;
 import com.questevent.repository.ProgramRepository;
 import com.questevent.repository.ProgramWalletRepository;
 import com.questevent.repository.UserWalletRepository;
@@ -16,7 +19,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-<span class="fc" id="L19">@Slf4j</span>
+<span class="fc" id="L22">@Slf4j</span>
 @Service
 public class ProgramWalletTransactionServiceImpl
         implements ProgramWalletTransactionService {
@@ -28,200 +31,200 @@ public class ProgramWalletTransactionServiceImpl
     public ProgramWalletTransactionServiceImpl(
             ProgramWalletRepository programWalletRepository,
             ProgramRepository programRepository,
-<span class="fc" id="L31">            UserWalletRepository userWalletRepository) {</span>
-<span class="fc" id="L32">        this.programWalletRepository = programWalletRepository;</span>
-<span class="fc" id="L33">        this.programRepository = programRepository;</span>
-<span class="fc" id="L34">        this.userWalletRepository = userWalletRepository;</span>
-<span class="fc" id="L35">    }</span>
+<span class="fc" id="L34">            UserWalletRepository userWalletRepository) {</span>
+<span class="fc" id="L35">        this.programWalletRepository = programWalletRepository;</span>
+<span class="fc" id="L36">        this.programRepository = programRepository;</span>
+<span class="fc" id="L37">        this.userWalletRepository = userWalletRepository;</span>
+<span class="fc" id="L38">    }</span>
 
     @Override
     @Transactional
     public void creditGems(User user, Program program, Long amount) {
 
-<span class="fc" id="L41">        log.debug(</span>
+<span class="fc" id="L44">        log.debug(</span>
                 &quot;Credit gems requested | userId={} | programId={} | amount={}&quot;,
-<span class="pc bpc" id="L43" title="1 of 2 branches missed.">                user != null ? user.getUserId() : null,</span>
-<span class="pc bpc" id="L44" title="1 of 2 branches missed.">                program != null ? program.getProgramId() : null,</span>
+<span class="pc bpc" id="L46" title="1 of 2 branches missed.">                user != null ? user.getUserId() : null,</span>
+<span class="pc bpc" id="L47" title="1 of 2 branches missed.">                program != null ? program.getProgramId() : null,</span>
                 amount
         );
 
-<span class="pc bpc" id="L48" title="3 of 6 branches missed.">        if (user == null || user.getUserId() == null ||</span>
-<span class="pc bpc" id="L49" title="1 of 2 branches missed.">                program == null || program.getProgramId() == null) {</span>
-<span class="nc" id="L50">            log.warn(&quot;Invalid user or program supplied for program wallet credit&quot;);</span>
-<span class="nc" id="L51">            throw new IllegalArgumentException(&quot;Invalid user or program&quot;);</span>
+<span class="pc bpc" id="L51" title="3 of 6 branches missed.">        if (user == null || user.getUserId() == null ||</span>
+<span class="pc bpc" id="L52" title="1 of 2 branches missed.">                program == null || program.getProgramId() == null) {</span>
+<span class="nc" id="L53">            log.warn(&quot;Invalid user or program supplied for program wallet credit&quot;);</span>
+<span class="nc" id="L54">            throw new IllegalArgumentException(&quot;Invalid user or program&quot;);</span>
         }
 
-<span class="fc bfc" id="L54" title="All 2 branches covered.">        if (amount &lt;= 0) {</span>
-<span class="fc" id="L55">            log.warn(</span>
+<span class="fc bfc" id="L57" title="All 2 branches covered.">        if (amount &lt;= 0) {</span>
+<span class="fc" id="L58">            log.warn(</span>
                     &quot;Invalid credit amount={} for programId={}&quot;,
                     amount,
-<span class="fc" id="L58">                    program.getProgramId()</span>
+<span class="fc" id="L61">                    program.getProgramId()</span>
             );
-<span class="fc" id="L60">            throw new IllegalArgumentException(&quot;Amount must be greater than zero&quot;);</span>
+<span class="fc" id="L63">            throw new IllegalArgumentException(&quot;Amount must be greater than zero&quot;);</span>
         }
 
-<span class="fc" id="L63">        ProgramWallet wallet = programWalletRepository</span>
-<span class="fc" id="L64">                .findByUserUserIdAndProgramProgramId(</span>
-<span class="fc" id="L65">                        user.getUserId(),</span>
-<span class="fc" id="L66">                        program.getProgramId()</span>
+<span class="fc" id="L66">        ProgramWallet wallet = programWalletRepository</span>
+<span class="fc" id="L67">                .findByUserUserIdAndProgramProgramId(</span>
+<span class="fc" id="L68">                        user.getUserId(),</span>
+<span class="fc" id="L69">                        program.getProgramId()</span>
                 )
-<span class="fc" id="L68">                .orElseThrow(() -&gt; {</span>
-<span class="fc" id="L69">                    log.error(</span>
+<span class="fc" id="L71">                .orElseThrow(() -&gt; {</span>
+<span class="fc" id="L72">                    log.error(</span>
                             &quot;Program wallet not found | userId={} | programId={}&quot;,
-<span class="fc" id="L71">                            user.getUserId(),</span>
-<span class="fc" id="L72">                            program.getProgramId()</span>
+<span class="fc" id="L74">                            user.getUserId(),</span>
+<span class="fc" id="L75">                            program.getProgramId()</span>
                     );
-<span class="fc" id="L74">                    return new IllegalStateException(&quot;Program wallet not found&quot;);</span>
+<span class="fc" id="L77">                    return new WalletNotFoundException(&quot;Program wallet not found&quot;);</span>
                 });
 
-<span class="fc" id="L77">        Long before = wallet.getGems();</span>
-<span class="fc" id="L78">        wallet.setGems(before + amount);</span>
-<span class="fc" id="L79">        programWalletRepository.save(wallet);</span>
+<span class="fc" id="L80">        Long before = wallet.getGems();</span>
+<span class="fc" id="L81">        wallet.setGems(before + amount);</span>
+<span class="fc" id="L82">        programWalletRepository.save(wallet);</span>
 
-<span class="fc" id="L81">        log.info(</span>
+<span class="fc" id="L84">        log.info(</span>
                 &quot;Program wallet credited | userId={} | programId={} | before={} | credited={} | after={}&quot;,
-<span class="fc" id="L83">                user.getUserId(),</span>
-<span class="fc" id="L84">                program.getProgramId(),</span>
+<span class="fc" id="L86">                user.getUserId(),</span>
+<span class="fc" id="L87">                program.getProgramId(),</span>
                 before,
                 amount,
-<span class="fc" id="L87">                wallet.getGems()</span>
+<span class="fc" id="L90">                wallet.getGems()</span>
         );
-<span class="fc" id="L89">    }</span>
+<span class="fc" id="L92">    }</span>
 
     @Override
     @Transactional
     public void autoSettleExpiredProgramWallets() {
 
-<span class="fc" id="L95">        log.info(&quot;Auto-settlement job started&quot;);</span>
+<span class="fc" id="L98">        log.info(&quot;Auto-settlement job started&quot;);</span>
 
-<span class="fc" id="L97">        List&lt;Program&gt; expiredPrograms =</span>
-<span class="fc" id="L98">                programRepository.findByStatusAndEndDateBefore(</span>
+<span class="fc" id="L100">        List&lt;Program&gt; expiredPrograms =</span>
+<span class="fc" id="L101">                programRepository.findByStatusAndEndDateBefore(</span>
                         ProgramStatus.ACTIVE,
-<span class="fc" id="L100">                        LocalDateTime.now()</span>
+<span class="fc" id="L103">                        LocalDateTime.now()</span>
                 );
 
-<span class="fc" id="L103">        log.debug(&quot;Found {} expired active programs&quot;, expiredPrograms.size());</span>
+<span class="fc" id="L106">        log.debug(&quot;Found {} expired active programs&quot;, expiredPrograms.size());</span>
 
-<span class="fc bfc" id="L105" title="All 2 branches covered.">        for (Program program : expiredPrograms) {</span>
+<span class="fc bfc" id="L108" title="All 2 branches covered.">        for (Program program : expiredPrograms) {</span>
 
-<span class="fc" id="L107">            log.info(</span>
+<span class="fc" id="L110">            log.info(</span>
                     &quot;Auto-settling program | programId={}&quot;,
-<span class="fc" id="L109">                    program.getProgramId()</span>
+<span class="fc" id="L112">                    program.getProgramId()</span>
             );
 
-<span class="fc" id="L112">            List&lt;ProgramWallet&gt; wallets =</span>
+<span class="fc" id="L115">            List&lt;ProgramWallet&gt; wallets =</span>
                     programWalletRepository
-<span class="fc" id="L114">                            .findByProgramProgramId(program.getProgramId());</span>
+<span class="fc" id="L117">                            .findByProgramProgramId(program.getProgramId());</span>
 
-<span class="fc bfc" id="L116" title="All 2 branches covered.">            for (ProgramWallet programWallet : wallets) {</span>
+<span class="fc bfc" id="L119" title="All 2 branches covered.">            for (ProgramWallet programWallet : wallets) {</span>
 
-<span class="fc" id="L118">                Long gems = programWallet.getGems();</span>
-<span class="fc bfc" id="L119" title="All 2 branches covered.">                if (gems &lt;= 0) {</span>
-<span class="fc" id="L120">                    continue;</span>
+<span class="fc" id="L121">                Long gems = programWallet.getGems();</span>
+<span class="fc bfc" id="L122" title="All 2 branches covered.">                if (gems &lt;= 0) {</span>
+<span class="fc" id="L123">                    continue;</span>
                 }
 
-<span class="fc" id="L123">                UserWallet userWallet = userWalletRepository</span>
-<span class="fc" id="L124">                        .findByUserUserId(</span>
-<span class="fc" id="L125">                                programWallet.getUser().getUserId()</span>
+<span class="fc" id="L126">                UserWallet userWallet = userWalletRepository</span>
+<span class="fc" id="L127">                        .findByUserUserId(</span>
+<span class="fc" id="L128">                                programWallet.getUser().getUserId()</span>
                         )
-<span class="fc" id="L127">                        .orElseThrow(() -&gt; {</span>
-<span class="nc" id="L128">                            log.error(</span>
+<span class="fc" id="L130">                        .orElseThrow(() -&gt; {</span>
+<span class="nc" id="L131">                            log.error(</span>
                                     &quot;User wallet not found during auto-settlement | userId={}&quot;,
-<span class="nc" id="L130">                                    programWallet.getUser().getUserId()</span>
+<span class="nc" id="L133">                                    programWallet.getUser().getUserId()</span>
                             );
-<span class="nc" id="L132">                            return new IllegalStateException(&quot;User wallet not found&quot;);</span>
+<span class="nc" id="L135">                            return new WalletNotFoundException(&quot;User wallet not found&quot;);</span>
                         });
 
-<span class="fc" id="L135">                userWallet.setGems(userWallet.getGems() + gems);</span>
-<span class="fc" id="L136">                programWallet.setGems(0L);</span>
+<span class="fc" id="L138">                userWallet.setGems(userWallet.getGems() + gems);</span>
+<span class="fc" id="L139">                programWallet.setGems(0L);</span>
 
-<span class="fc" id="L138">                userWalletRepository.save(userWallet);</span>
-<span class="fc" id="L139">                programWalletRepository.save(programWallet);</span>
+<span class="fc" id="L141">                userWalletRepository.save(userWallet);</span>
+<span class="fc" id="L142">                programWalletRepository.save(programWallet);</span>
 
-<span class="fc" id="L141">                log.info(</span>
+<span class="fc" id="L144">                log.info(</span>
                         &quot;Auto-settled gems | programId={} | userId={} | transferred={} | userBefore={} | userAfter={}&quot;,
-<span class="fc" id="L143">                        program.getProgramId(),</span>
-<span class="fc" id="L144">                        programWallet.getUser().getUserId(),</span>
+<span class="fc" id="L146">                        program.getProgramId(),</span>
+<span class="fc" id="L147">                        programWallet.getUser().getUserId(),</span>
                         gems,
-<span class="fc" id="L146">                        userWallet.getGems()</span>
+<span class="fc" id="L149">                        userWallet.getGems()</span>
                 );
-<span class="fc" id="L148">            }</span>
+<span class="fc" id="L151">            }</span>
 
-<span class="fc" id="L150">            program.setStatus(ProgramStatus.COMPLETED);</span>
-<span class="fc" id="L151">            programRepository.save(program);</span>
+<span class="fc" id="L153">            program.setStatus(ProgramStatus.COMPLETED);</span>
+<span class="fc" id="L154">            programRepository.save(program);</span>
 
-<span class="fc" id="L153">            log.info(</span>
+<span class="fc" id="L156">            log.info(</span>
                     &quot;Program marked COMPLETED after auto-settlement | programId={}&quot;,
-<span class="fc" id="L155">                    program.getProgramId()</span>
+<span class="fc" id="L158">                    program.getProgramId()</span>
             );
-<span class="fc" id="L157">        }</span>
+<span class="fc" id="L160">        }</span>
 
-<span class="fc" id="L159">        log.info(&quot;Auto-settlement job finished&quot;);</span>
-<span class="fc" id="L160">    }</span>
+<span class="fc" id="L162">        log.info(&quot;Auto-settlement job finished&quot;);</span>
+<span class="fc" id="L163">    }</span>
 
     @Override
     @Transactional
     public void manuallySettleExpiredProgramWallets(UUID programId) {
 
-<span class="fc" id="L166">        log.debug(&quot;Manual settlement requested | programId={}&quot;, programId);</span>
+<span class="fc" id="L169">        log.debug(&quot;Manual settlement requested | programId={}&quot;, programId);</span>
 
-<span class="fc bfc" id="L168" title="All 2 branches covered.">        if (programId == null ) {</span>
-<span class="fc" id="L169">            log.warn(&quot;Invalid programId supplied for manual settlement&quot;);</span>
-<span class="fc" id="L170">            throw new IllegalArgumentException(&quot;Invalid programId&quot;);</span>
+<span class="fc bfc" id="L171" title="All 2 branches covered.">        if (programId == null) {</span>
+<span class="fc" id="L172">            log.warn(&quot;Invalid programId supplied for manual settlement&quot;);</span>
+<span class="fc" id="L173">            throw new IllegalArgumentException(&quot;Invalid programId&quot;);</span>
         }
 
-<span class="fc" id="L173">        Program program = programRepository.findById(programId)</span>
-<span class="fc" id="L174">                .orElseThrow(() -&gt; {</span>
-<span class="nc" id="L175">                    log.error(&quot;Program not found | programId={}&quot;, programId);</span>
-<span class="nc" id="L176">                    return new IllegalStateException(&quot;Program not found&quot;);</span>
+<span class="fc" id="L176">        Program program = programRepository.findById(programId)</span>
+<span class="fc" id="L177">                .orElseThrow(() -&gt; {</span>
+<span class="nc" id="L178">                    log.error(&quot;Program not found | programId={}&quot;, programId);</span>
+<span class="nc" id="L179">                    return new ProgramNotFoundException(&quot;Program not found&quot;);</span>
                 });
 
-<span class="fc bfc" id="L179" title="All 2 branches covered.">        if (program.getStatus() == ProgramStatus.COMPLETED) {</span>
-<span class="fc" id="L180">            log.warn(&quot;Program already completed | programId={}&quot;, programId);</span>
-<span class="fc" id="L181">            throw new IllegalStateException(&quot;Program already completed&quot;);</span>
+<span class="fc bfc" id="L182" title="All 2 branches covered.">        if (program.getStatus() == ProgramStatus.COMPLETED) {</span>
+<span class="fc" id="L183">            log.warn(&quot;Program already completed | programId={}&quot;, programId);</span>
+<span class="fc" id="L184">            throw new ResourceConflictException(&quot;Program already completed&quot;);</span>
         }
 
-<span class="fc" id="L184">        List&lt;ProgramWallet&gt; wallets =</span>
-<span class="fc" id="L185">                programWalletRepository.findByProgramProgramId(programId);</span>
+<span class="fc" id="L187">        List&lt;ProgramWallet&gt; wallets =</span>
+<span class="fc" id="L188">                programWalletRepository.findByProgramProgramId(programId);</span>
 
-<span class="fc bfc" id="L187" title="All 2 branches covered.">        for (ProgramWallet programWallet : wallets) {</span>
+<span class="fc bfc" id="L190" title="All 2 branches covered.">        for (ProgramWallet programWallet : wallets) {</span>
 
-<span class="fc" id="L189">            Long gems = programWallet.getGems();</span>
-<span class="pc bpc" id="L190" title="1 of 2 branches missed.">            if (gems &lt;= 0) {</span>
-<span class="nc" id="L191">                continue;</span>
+<span class="fc" id="L192">            Long gems = programWallet.getGems();</span>
+<span class="pc bpc" id="L193" title="1 of 2 branches missed.">            if (gems &lt;= 0) {</span>
+<span class="nc" id="L194">                continue;</span>
             }
 
-<span class="fc" id="L194">            UserWallet userWallet = programWallet.getUser().getWallet();</span>
-<span class="pc bpc" id="L195" title="1 of 2 branches missed.">            if (userWallet == null) {</span>
-<span class="nc" id="L196">                log.error(</span>
+<span class="fc" id="L197">            UserWallet userWallet = programWallet.getUser().getWallet();</span>
+<span class="pc bpc" id="L198" title="1 of 2 branches missed.">            if (userWallet == null) {</span>
+<span class="nc" id="L199">                log.error(</span>
                         &quot;User wallet missing during manual settlement | userId={}&quot;,
-<span class="nc" id="L198">                        programWallet.getUser().getUserId()</span>
+<span class="nc" id="L201">                        programWallet.getUser().getUserId()</span>
                 );
-<span class="nc" id="L200">                throw new IllegalStateException(&quot;User wallet not found&quot;);</span>
+<span class="nc" id="L203">                throw new WalletNotFoundException(&quot;User wallet not found&quot;);</span>
             }
 
-<span class="fc" id="L203">            userWallet.setGems(userWallet.getGems() + gems);</span>
-<span class="fc" id="L204">            programWallet.setGems(0L);</span>
+<span class="fc" id="L206">            userWallet.setGems(userWallet.getGems() + gems);</span>
+<span class="fc" id="L207">            programWallet.setGems(0L);</span>
 
-<span class="fc" id="L206">            userWalletRepository.save(userWallet);</span>
-<span class="fc" id="L207">            programWalletRepository.save(programWallet);</span>
+<span class="fc" id="L209">            userWalletRepository.save(userWallet);</span>
+<span class="fc" id="L210">            programWalletRepository.save(programWallet);</span>
 
-<span class="fc" id="L209">            log.info(</span>
+<span class="fc" id="L212">            log.info(</span>
                     &quot;Manual settlement completed | programId={} | userId={} | transferred={} | userBefore={} | userAfter={}&quot;,
                     programId,
-<span class="fc" id="L212">                    programWallet.getUser().getUserId(),</span>
+<span class="fc" id="L215">                    programWallet.getUser().getUserId(),</span>
                     gems,
-<span class="fc" id="L214">                    userWallet.getGems()</span>
+<span class="fc" id="L217">                    userWallet.getGems()</span>
             );
-<span class="fc" id="L216">        }</span>
+<span class="fc" id="L219">        }</span>
 
-<span class="fc" id="L218">        program.setStatus(ProgramStatus.COMPLETED);</span>
-<span class="fc" id="L219">        programRepository.save(program);</span>
+<span class="fc" id="L221">        program.setStatus(ProgramStatus.COMPLETED);</span>
+<span class="fc" id="L222">        programRepository.save(program);</span>
 
-<span class="fc" id="L221">        log.info(</span>
+<span class="fc" id="L224">        log.info(</span>
                 &quot;Program marked COMPLETED after manual settlement | programId={}&quot;,
                 programId
         );
-<span class="fc" id="L225">    }</span>
+<span class="fc" id="L228">    }</span>
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>

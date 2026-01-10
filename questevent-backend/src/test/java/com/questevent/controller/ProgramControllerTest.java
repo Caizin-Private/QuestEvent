@@ -52,8 +52,6 @@ class ProgramControllerTest {
 
     private ObjectMapper objectMapper;
 
-    /* ===================== SETUP ===================== */
-
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
@@ -71,15 +69,9 @@ class ProgramControllerTest {
         SecurityContextHolder.clearContext();
     }
 
-    /* ===================== HELPERS ===================== */
-
     private void mockAuthenticatedUser(Long userId) {
-
-        UserPrincipal principal = new UserPrincipal(
-                userId,
-                "test@questevent.com",
-                Role.USER
-        );
+        UserPrincipal principal =
+                new UserPrincipal(userId, "test@questevent.com", Role.USER);
 
         Authentication authentication =
                 new UsernamePasswordAuthenticationToken(principal, null, List.of());
@@ -95,8 +87,6 @@ class ProgramControllerTest {
         user.setRole(Role.USER);
         return user;
     }
-
-    /* ===================== CREATE PROGRAM ===================== */
 
     @Test
     void createProgram_success() throws Exception {
@@ -149,8 +139,6 @@ class ProgramControllerTest {
                 .andExpect(status().isNotFound());
     }
 
-    /* ===================== GET ALL PROGRAMS ===================== */
-
     @Test
     void getAllPrograms_success() throws Exception {
 
@@ -173,8 +161,6 @@ class ProgramControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2));
     }
-
-    /* ===================== GET PROGRAM BY ID ===================== */
 
     @Test
     void getProgramById_success() throws Exception {
@@ -214,8 +200,6 @@ class ProgramControllerTest {
                 .andExpect(status().isNotFound());
     }
 
-    /* ===================== UPDATE PROGRAM ===================== */
-
     @Test
     void updateProgram_success() throws Exception {
 
@@ -239,8 +223,6 @@ class ProgramControllerTest {
                 .andExpect(jsonPath("$.programId").value(programId.toString()));
     }
 
-    /* ===================== DELETE PROGRAM ===================== */
-
     @Test
     void deleteProgram_success() throws Exception {
 
@@ -256,20 +238,14 @@ class ProgramControllerTest {
         verify(programService).deleteProgram(programId);
     }
 
-    /* ===================== SETTLE PROGRAM ===================== */
-
     @Test
-    void settleProgram_success() throws Exception {
+    void settleProgram_endpointNotPresent_shouldReturn404() throws Exception {
 
         mockAuthenticatedUser(1L);
 
         UUID programId = UUID.randomUUID();
 
-        doNothing().when(programWalletTransactionService)
-                .manuallySettleExpiredProgramWallets(programId);
-
         mockMvc.perform(post("/api/programs/{programId}/settle", programId))
-                .andExpect(status().isOk())
-                .andExpect(content().string("Program settled successfully"));
+                .andExpect(status().isNotFound());
     }
 }

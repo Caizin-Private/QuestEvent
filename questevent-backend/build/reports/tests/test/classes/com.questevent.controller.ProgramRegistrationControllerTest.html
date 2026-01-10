@@ -41,7 +41,7 @@
 </td>
 <td>
 <div class="infoBox" id="duration">
-<div class="counter">0.047s</div>
+<div class="counter">0.046s</div>
 <p>duration</p>
 </div>
 </td>
@@ -58,16 +58,16 @@
 </tr>
 </table>
 </div>
-<div class="tab-container">
+<div id="tabs">
 <ul class="tabLinks">
 <li>
-<a href="#">Tests</a>
+<a href="#tab0">Tests</a>
 </li>
 <li>
-<a href="#">Standard output</a>
+<a href="#tab1">Standard output</a>
 </li>
 </ul>
-<div class="tab">
+<div id="tab0" class="tab">
 <h2>Tests</h2>
 <table>
 <thead>
@@ -79,7 +79,7 @@
 </thead>
 <tr>
 <td class="success">deleteRegistration_notFound()</td>
-<td class="success">0.003s</td>
+<td class="success">0.002s</td>
 <td class="success">passed</td>
 </tr>
 <tr>
@@ -104,12 +104,12 @@
 </tr>
 <tr>
 <td class="success">getRegistrationsByProgram_success()</td>
-<td class="success">0.023s</td>
+<td class="success">0.024s</td>
 <td class="success">passed</td>
 </tr>
 <tr>
 <td class="success">getRegistrationsByUser_success()</td>
-<td class="success">0.004s</td>
+<td class="success">0.003s</td>
 <td class="success">passed</td>
 </tr>
 <tr>
@@ -119,35 +119,34 @@
 </tr>
 </table>
 </div>
-<div class="tab">
+<div id="tab1" class="tab">
 <h2>Standard output</h2>
 <span class="code">
-<pre id="class-stdout">2026-01-09 19:53:58.380 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
-2026-01-09 19:53:58.380 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
-2026-01-09 19:53:58.380 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
-2026-01-09 19:53:58.384 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
-2026-01-09 19:53:58.384 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
-2026-01-09 19:53:58.385 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 1 ms
-2026-01-09 19:53:58.388 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
-2026-01-09 19:53:58.388 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
-2026-01-09 19:53:58.388 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
-2026-01-09 19:53:58.391 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
-2026-01-09 19:53:58.391 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
-2026-01-09 19:53:58.391 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
-2026-01-09 19:53:58.395 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
-2026-01-09 19:53:58.395 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
-2026-01-09 19:53:58.395 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
-2026-01-09 19:53:58.398 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
-2026-01-09 19:53:58.398 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
-2026-01-09 19:53:58.398 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
-2026-01-09 19:53:58.403 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
-2026-01-09 19:53:58.403 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
-2026-01-09 19:53:58.403 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
-2026-01-09 19:53:58.405 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
-2026-01-09 19:53:58.406 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
-2026-01-09 19:53:58.406 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+<pre>2026-01-10 11:21:02.509 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-10 11:21:02.509 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-10 11:21:02.509 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-01-10 11:21:02.514 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-10 11:21:02.514 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-10 11:21:02.514 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-01-10 11:21:02.517 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-10 11:21:02.517 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-10 11:21:02.518 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 1 ms
+2026-01-10 11:21:02.520 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-10 11:21:02.520 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-10 11:21:02.520 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-01-10 11:21:02.524 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-10 11:21:02.524 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-10 11:21:02.524 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-01-10 11:21:02.527 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-10 11:21:02.527 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-10 11:21:02.528 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 1 ms
+2026-01-10 11:21:02.532 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-10 11:21:02.532 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-10 11:21:02.532 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-01-10 11:21:02.534 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-10 11:21:02.534 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-10 11:21:02.535 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
 </pre>
-<button class="clipboard-copy-btn" aria-label="Copy to clipboard" data-copy-element-id="class-stdout">Copy</button>
 </span>
 </div>
 </div>
@@ -158,7 +157,7 @@
 <input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
 </label>
 </div>Generated by 
-<a href="https://www.gradle.org">Gradle 9.2.1</a> at 9 Jan 2026, 7:54:01 pm</p>
+<a href="http://www.gradle.org">Gradle 8.5</a> at 10-Jan-2026, 11:21:07 am</p>
 </div>
 </div>
 </body>

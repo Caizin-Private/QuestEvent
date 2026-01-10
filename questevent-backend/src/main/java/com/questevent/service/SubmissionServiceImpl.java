@@ -3,12 +3,16 @@ package com.questevent.service;
 import com.questevent.entity.ActivityRegistration;
 import com.questevent.entity.ActivitySubmission;
 import com.questevent.enums.CompletionStatus;
+import com.questevent.exception.ActivityAlreadyCompletedException;
+import com.questevent.exception.ActivityRegistrationNotFoundException;
+import com.questevent.exception.DuplicateSubmissionException;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
 import java.util.UUID;
 
 @Slf4j
@@ -21,7 +25,11 @@ public class SubmissionServiceImpl implements SubmissionService {
 
     @Override
     @Transactional
-    public void submitActivity(UUID activityId, Long userId, String submissionUrl) {
+    public void submitActivity(
+            UUID activityId,
+            Long userId,
+            String submissionUrl
+    ) {
 
         log.debug(
                 "Submit activity requested | activityId={} | userId={}",
@@ -29,16 +37,19 @@ public class SubmissionServiceImpl implements SubmissionService {
                 userId
         );
 
-        ActivityRegistration registration = registrationRepository
-                .findByActivityActivityIdAndUserUserId(activityId, userId)
-                .orElseThrow(() -> {
-                    log.error(
-                            "User not registered for activity | activityId={} | userId={}",
-                            activityId,
-                            userId
-                    );
-                    return new RuntimeException("User is not registered for this activity");
-                });
+        ActivityRegistration registration =
+                registrationRepository
+                        .findByActivityActivityIdAndUserUserId(activityId, userId)
+                        .orElseThrow(() -> {
+                            log.error(
+                                    "User not registered for activity | activityId={} | userId={}",
+                                    activityId,
+                                    userId
+                            );
+                            return new ActivityRegistrationNotFoundException(
+                                    "User is not registered for this activity"
+                            );
+                        });
 
         if (registration.getCompletionStatus() == CompletionStatus.COMPLETED) {
             log.warn(
@@ -47,11 +58,13 @@ public class SubmissionServiceImpl implements SubmissionService {
                     userId,
                     registration.getActivityRegistrationId()
             );
-            throw new RuntimeException("Activity already completed. Submission not allowed.");
+            throw new ActivityAlreadyCompletedException(
+                    "Activity already completed. Submission not allowed."
+            );
         }
 
-        boolean alreadySubmitted = submissionRepository
-                .existsByActivityRegistration_ActivityRegistrationId(
+        boolean alreadySubmitted =
+                submissionRepository.existsByActivityRegistration_ActivityRegistrationId(
                         registration.getActivityRegistrationId()
                 );
 
@@ -62,7 +75,9 @@ public class SubmissionServiceImpl implements SubmissionService {
                     userId,
                     registration.getActivityRegistrationId()
             );
-            throw new RuntimeException("Submission already exists for this registration");
+            throw new DuplicateSubmissionException(
+                    "Submission already exists for this registration"
+            );
         }
 
         ActivitySubmission submission = new ActivitySubmission();

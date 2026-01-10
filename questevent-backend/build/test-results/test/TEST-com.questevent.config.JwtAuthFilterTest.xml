@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.questevent.config.JwtAuthFilterTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-01-09T14:23:53.772Z" hostname="LF2XK776W2" time="0.351">
+<testsuite name="com.questevent.config.JwtAuthFilterTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-01-10T05:50:54" hostname="LF2XK776W2" time="0.383">
   <properties/>
-  <testcase name="shouldAuthenticateWithValidJwtToken()" classname="com.questevent.config.JwtAuthFilterTest" time="0.34"/>
-  <testcase name="shouldRejectInvalidJwtToken()" classname="com.questevent.config.JwtAuthFilterTest" time="0.005"/>
-  <testcase name="shouldAllowPublicAuthEndpointWithoutToken()" classname="com.questevent.config.JwtAuthFilterTest" time="0.002"/>
+  <testcase name="shouldAuthenticateWithValidJwtToken()" classname="com.questevent.config.JwtAuthFilterTest" time="0.368"/>
+  <testcase name="shouldSkipStaticResources()" classname="com.questevent.config.JwtAuthFilterTest" time="0.003"/>
+  <testcase name="shouldRejectInvalidJwtToken()" classname="com.questevent.config.JwtAuthFilterTest" time="0.004"/>
+  <testcase name="shouldAllowPublicAuthEndpointWithoutToken()" classname="com.questevent.config.JwtAuthFilterTest" time="0.001"/>
   <testcase name="shouldRejectApiWithoutJwtToken()" classname="com.questevent.config.JwtAuthFilterTest" time="0.002"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
