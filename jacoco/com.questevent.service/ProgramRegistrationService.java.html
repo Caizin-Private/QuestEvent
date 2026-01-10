@@ -18,8 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
-<span class="fc" id="L22">@Slf4j</span>
+<span class="fc" id="L23">@Slf4j</span>
 @Service
 @RequiredArgsConstructor
 public class ProgramRegistrationService {
@@ -33,68 +34,68 @@ public class ProgramRegistrationService {
     public ProgramRegistrationResponseDTO registerParticipantForProgram(
             ProgramRegistrationRequestDTO request) {
 
-<span class="fc" id="L36">        log.debug(</span>
+<span class="fc" id="L37">        log.debug(</span>
                 &quot;Self-registration requested | programId={}&quot;,
-<span class="fc" id="L38">                request.getProgramId()</span>
+<span class="fc" id="L39">                request.getProgramId()</span>
         );
 
         Authentication authentication =
-<span class="fc" id="L42">                SecurityContextHolder.getContext().getAuthentication();</span>
+<span class="fc" id="L43">                SecurityContextHolder.getContext().getAuthentication();</span>
 
-<span class="pc bpc" id="L44" title="2 of 4 branches missed.">        if (authentication == null || !authentication.isAuthenticated()</span>
-<span class="pc bpc" id="L45" title="1 of 2 branches missed.">                || !(authentication.getPrincipal() instanceof UserPrincipal principal)) {</span>
-<span class="nc" id="L46">            throw new UnauthorizedException(&quot;Unauthorized&quot;);</span>
+<span class="pc bpc" id="L45" title="2 of 4 branches missed.">        if (authentication == null || !authentication.isAuthenticated()</span>
+<span class="pc bpc" id="L46" title="1 of 2 branches missed.">                || !(authentication.getPrincipal() instanceof UserPrincipal principal)) {</span>
+<span class="nc" id="L47">            throw new UnauthorizedException(&quot;Unauthorized&quot;);</span>
         }
 
-<span class="fc" id="L49">        Long userId = principal.userId();</span>
+<span class="fc" id="L50">        Long userId = principal.userId();</span>
 
-<span class="fc" id="L51">        User user = userRepository.findById(userId)</span>
-<span class="fc" id="L52">                .orElseThrow(() -&gt; {</span>
-<span class="fc" id="L53">                    log.error(&quot;User not found during self-registration | userId={}&quot;, userId);</span>
-<span class="fc" id="L54">                    return new UserNotFoundException(&quot;User not found&quot;);</span>
+<span class="fc" id="L52">        User user = userRepository.findById(userId)</span>
+<span class="fc" id="L53">                .orElseThrow(() -&gt; {</span>
+<span class="fc" id="L54">                    log.error(&quot;User not found during self-registration | userId={}&quot;, userId);</span>
+<span class="fc" id="L55">                    return new UserNotFoundException(&quot;User not found&quot;);</span>
                 });
 
-<span class="fc" id="L57">        Program program = programRepository.findById(request.getProgramId())</span>
-<span class="fc" id="L58">                .orElseThrow(() -&gt; {</span>
-<span class="fc" id="L59">                    log.error(</span>
+<span class="fc" id="L58">        Program program = programRepository.findById(request.getProgramId())</span>
+<span class="fc" id="L59">                .orElseThrow(() -&gt; {</span>
+<span class="fc" id="L60">                    log.error(</span>
                             &quot;Program not found during self-registration | programId={}&quot;,
-<span class="fc" id="L61">                            request.getProgramId()</span>
+<span class="fc" id="L62">                            request.getProgramId()</span>
                     );
-<span class="fc" id="L63">                    return new ProgramNotFoundException(&quot;Program not found&quot;);</span>
+<span class="fc" id="L64">                    return new ProgramNotFoundException(&quot;Program not found&quot;);</span>
                 });
 
-<span class="fc" id="L66">        if (programRegistrationRepository</span>
-<span class="pc bpc" id="L67" title="1 of 2 branches missed.">                .existsByProgram_ProgramIdAndUser_UserId(</span>
-<span class="fc" id="L68">                        program.getProgramId(), userId)) {</span>
+<span class="fc" id="L67">        if (programRegistrationRepository</span>
+<span class="pc bpc" id="L68" title="1 of 2 branches missed.">                .existsByProgram_ProgramIdAndUser_UserId(</span>
+<span class="fc" id="L69">                        program.getProgramId(), userId)) {</span>
 
-<span class="nc" id="L70">            log.warn(</span>
+<span class="nc" id="L71">            log.warn(</span>
                     &quot;Duplicate self-registration blocked | programId={} | userId={}&quot;,
-<span class="nc" id="L72">                    program.getProgramId(),</span>
+<span class="nc" id="L73">                    program.getProgramId(),</span>
                     userId
             );
-<span class="nc" id="L75">            throw new ResourceConflictException(</span>
+<span class="nc" id="L76">            throw new ResourceConflictException(</span>
                     &quot;User already registered for this program&quot;
             );
         }
 
-<span class="fc" id="L80">        ProgramRegistration registration = new ProgramRegistration();</span>
-<span class="fc" id="L81">        registration.setProgram(program);</span>
-<span class="fc" id="L82">        registration.setUser(user);</span>
-<span class="fc" id="L83">        registration.setRegisteredAt(Instant.now());</span>
+<span class="fc" id="L81">        ProgramRegistration registration = new ProgramRegistration();</span>
+<span class="fc" id="L82">        registration.setProgram(program);</span>
+<span class="fc" id="L83">        registration.setUser(user);</span>
+<span class="fc" id="L84">        registration.setRegisteredAt(Instant.now());</span>
 
-<span class="fc" id="L85">        ProgramRegistration saved =</span>
-<span class="fc" id="L86">                programRegistrationRepository.save(registration);</span>
+<span class="fc" id="L86">        ProgramRegistration saved =</span>
+<span class="fc" id="L87">                programRegistrationRepository.save(registration);</span>
 
-<span class="fc" id="L88">        programWalletService.createWallet(userId, program.getProgramId());</span>
+<span class="fc" id="L89">        programWalletService.createWallet(userId, program.getProgramId());</span>
 
-<span class="fc" id="L90">        log.info(</span>
+<span class="fc" id="L91">        log.info(</span>
                 &quot;User registered for program | registrationId={} | programId={} | userId={}&quot;,
-<span class="fc" id="L92">                saved.getProgramRegistrationId(),</span>
-<span class="fc" id="L93">                program.getProgramId(),</span>
+<span class="fc" id="L93">                saved.getProgramRegistrationId(),</span>
+<span class="fc" id="L94">                program.getProgramId(),</span>
                 userId
         );
 
-<span class="fc" id="L97">        return mapToResponseDTO(saved);</span>
+<span class="fc" id="L98">        return mapToResponseDTO(saved);</span>
     }
 
     @Transactional
@@ -102,180 +103,179 @@ public class ProgramRegistrationService {
             UUID programId,
             AddParticipantInProgramRequestDTO request) {
 
-<span class="nc" id="L105">        log.debug(</span>
+<span class="nc" id="L106">        log.debug(</span>
                 &quot;Admin adding participant | programId={} | userId={}&quot;,
                 programId,
-<span class="nc" id="L108">                request.getUserId()</span>
+<span class="nc" id="L109">                request.getUserId()</span>
         );
 
-<span class="nc" id="L111">        Program program = programRepository.findById(programId)</span>
-<span class="nc" id="L112">                .orElseThrow(() -&gt; {</span>
-<span class="nc" id="L113">                    log.error(&quot;Program not found while adding participant | programId={}&quot;, programId);</span>
-<span class="nc" id="L114">                    return new ProgramNotFoundException(&quot;Program not found&quot;);</span>
+<span class="nc" id="L112">        Program program = programRepository.findById(programId)</span>
+<span class="nc" id="L113">                .orElseThrow(() -&gt; {</span>
+<span class="nc" id="L114">                    log.error(&quot;Program not found while adding participant | programId={}&quot;, programId);</span>
+<span class="nc" id="L115">                    return new ProgramNotFoundException(&quot;Program not found&quot;);</span>
                 });
 
-<span class="nc" id="L117">        User user = userRepository.findById(request.getUserId())</span>
-<span class="nc" id="L118">                .orElseThrow(() -&gt; {</span>
-<span class="nc" id="L119">                    log.error(&quot;User not found while adding participant | userId={}&quot;, request.getUserId());</span>
-<span class="nc" id="L120">                    return new UserNotFoundException(&quot;User not found&quot;);</span>
+<span class="nc" id="L118">        User user = userRepository.findById(request.getUserId())</span>
+<span class="nc" id="L119">                .orElseThrow(() -&gt; {</span>
+<span class="nc" id="L120">                    log.error(&quot;User not found while adding participant | userId={}&quot;, request.getUserId());</span>
+<span class="nc" id="L121">                    return new UserNotFoundException(&quot;User not found&quot;);</span>
                 });
 
-<span class="nc" id="L123">        if (programRegistrationRepository</span>
-<span class="nc bnc" id="L124" title="All 2 branches missed.">                .existsByProgram_ProgramIdAndUser_UserId(</span>
-<span class="nc" id="L125">                        programId, user.getUserId())) {</span>
+<span class="nc" id="L124">        if (programRegistrationRepository</span>
+<span class="nc bnc" id="L125" title="All 2 branches missed.">                .existsByProgram_ProgramIdAndUser_UserId(</span>
+<span class="nc" id="L126">                        programId, user.getUserId())) {</span>
 
-<span class="nc" id="L127">            log.warn(</span>
+<span class="nc" id="L128">            log.warn(</span>
                     &quot;Duplicate participant addition blocked | programId={} | userId={}&quot;,
                     programId,
-<span class="nc" id="L130">                    user.getUserId()</span>
+<span class="nc" id="L131">                    user.getUserId()</span>
             );
-<span class="nc" id="L132">            throw new ResourceConflictException(</span>
+<span class="nc" id="L133">            throw new ResourceConflictException(</span>
                     &quot;User already registered for this program&quot;
             );
         }
 
-<span class="nc" id="L137">        ProgramRegistration registration = new ProgramRegistration();</span>
-<span class="nc" id="L138">        registration.setProgram(program);</span>
-<span class="nc" id="L139">        registration.setUser(user);</span>
-<span class="nc" id="L140">        registration.setRegisteredAt(Instant.now());</span>
+<span class="nc" id="L138">        ProgramRegistration registration = new ProgramRegistration();</span>
+<span class="nc" id="L139">        registration.setProgram(program);</span>
+<span class="nc" id="L140">        registration.setUser(user);</span>
+<span class="nc" id="L141">        registration.setRegisteredAt(Instant.now());</span>
 
-<span class="nc" id="L142">        ProgramRegistration saved =</span>
-<span class="nc" id="L143">                programRegistrationRepository.save(registration);</span>
+<span class="nc" id="L143">        ProgramRegistration saved =</span>
+<span class="nc" id="L144">                programRegistrationRepository.save(registration);</span>
 
-<span class="nc" id="L145">        programWalletService.createWallet(user.getUserId(), programId);</span>
+<span class="nc" id="L146">        programWalletService.createWallet(user.getUserId(), programId);</span>
 
-<span class="nc" id="L147">        log.info(</span>
+<span class="nc" id="L148">        log.info(</span>
                 &quot;Participant added to program | registrationId={} | programId={} | userId={}&quot;,
-<span class="nc" id="L149">                saved.getProgramRegistrationId(),</span>
+<span class="nc" id="L150">                saved.getProgramRegistrationId(),</span>
                 programId,
-<span class="nc" id="L151">                user.getUserId()</span>
+<span class="nc" id="L152">                user.getUserId()</span>
         );
 
-<span class="nc" id="L154">        return mapToResponseDTO(saved);</span>
+<span class="nc" id="L155">        return mapToResponseDTO(saved);</span>
     }
 
     @Transactional(readOnly = true)
     public List&lt;ProgramRegistrationDTO&gt; getAllRegistrations() {
 
-<span class="fc" id="L160">        log.info(&quot;Fetching all program registrations&quot;);</span>
+<span class="fc" id="L161">        log.info(&quot;Fetching all program registrations&quot;);</span>
 
-<span class="fc" id="L162">        return programRegistrationRepository.findAll()</span>
-<span class="fc" id="L163">                .stream()</span>
-<span class="fc" id="L164">                .map(this::mapToDTO)</span>
-<span class="fc" id="L165">                .toList();</span>
+<span class="fc" id="L163">        return programRegistrationRepository.findAll()</span>
+<span class="fc" id="L164">                .stream()</span>
+<span class="fc" id="L165">                .map(this::mapToDTO)</span>
+<span class="fc" id="L166">                .collect(Collectors.toList());</span>
     }
 
     @Transactional(readOnly = true)
     public ProgramRegistrationDTO getRegistrationById(UUID id) {
 
-<span class="fc" id="L171">        log.debug(&quot;Fetching registration by id | registrationId={}&quot;, id);</span>
+<span class="fc" id="L172">        log.debug(&quot;Fetching registration by id | registrationId={}&quot;, id);</span>
 
-<span class="fc" id="L173">        ProgramRegistration registration =</span>
-<span class="fc" id="L174">                programRegistrationRepository.findById(id)</span>
-<span class="fc" id="L175">                        .orElseThrow(() -&gt; {</span>
-<span class="fc" id="L176">                            log.warn(&quot;Registration not found | registrationId={}&quot;, id);</span>
-<span class="fc" id="L177">                            return new ResourceNotFoundException(</span>
+<span class="fc" id="L174">        ProgramRegistration registration =</span>
+<span class="fc" id="L175">                programRegistrationRepository.findById(id)</span>
+<span class="fc" id="L176">                        .orElseThrow(() -&gt; {</span>
+<span class="fc" id="L177">                            log.warn(&quot;Registration not found | registrationId={}&quot;, id);</span>
+<span class="fc" id="L178">                            return new ResourceNotFoundException(</span>
                                     &quot;Registration not found with id: &quot; + id
                             );
                         });
 
-<span class="fc" id="L182">        return mapToDTO(registration);</span>
+<span class="fc" id="L183">        return mapToDTO(registration);</span>
     }
 
     @Transactional(readOnly = true)
     public List&lt;ProgramRegistrationDTO&gt; getRegistrationsByProgramId(UUID programId) {
 
-<span class="nc" id="L188">        log.debug(&quot;Fetching registrations by program | programId={}&quot;, programId);</span>
+<span class="nc" id="L189">        log.debug(&quot;Fetching registrations by program | programId={}&quot;, programId);</span>
 
-<span class="nc" id="L190">        return programRegistrationRepository.findByProgramProgramId(programId)</span>
-<span class="nc" id="L191">                .stream()</span>
-<span class="nc" id="L192">                .map(this::mapToDTO)</span>
-<span class="nc" id="L193">                .toList();</span>
+<span class="nc" id="L191">        return programRegistrationRepository.findByProgramProgramId(programId)</span>
+<span class="nc" id="L192">                .stream()</span>
+<span class="nc" id="L193">                .map(this::mapToDTO)</span>
+<span class="nc" id="L194">                .collect(Collectors.toList());</span>
     }
 
     @Transactional(readOnly = true)
     public List&lt;ProgramRegistrationDTO&gt; getRegistrationsByUserId(Long userId) {
 
-<span class="nc" id="L199">        log.debug(&quot;Fetching registrations by user | userId={}&quot;, userId);</span>
+<span class="nc" id="L200">        log.debug(&quot;Fetching registrations by user | userId={}&quot;, userId);</span>
 
-<span class="nc" id="L201">        return programRegistrationRepository.findByUserUserId(userId)</span>
-<span class="nc" id="L202">                .stream()</span>
-<span class="nc" id="L203">                .map(this::mapToDTO)</span>
-<span class="nc" id="L204">                .toList();</span>
+<span class="nc" id="L202">        return programRegistrationRepository.findByUserUserId(userId)</span>
+<span class="nc" id="L203">                .stream()</span>
+<span class="nc" id="L204">                .map(this::mapToDTO)</span>
+<span class="nc" id="L205">                .collect(Collectors.toList());</span>
     }
 
     @Transactional
     public void deleteRegistration(UUID id) {
 
-<span class="fc" id="L210">        log.debug(&quot;Delete registration requested | registrationId={}&quot;, id);</span>
+<span class="fc" id="L211">        log.debug(&quot;Delete registration requested | registrationId={}&quot;, id);</span>
 
-<span class="fc bfc" id="L212" title="All 2 branches covered.">        if (!programRegistrationRepository.existsById(id)) {</span>
-<span class="fc" id="L213">            log.warn(&quot;Registration not found while deleting | registrationId={}&quot;, id);</span>
-<span class="fc" id="L214">            throw new ResourceNotFoundException(</span>
+<span class="fc bfc" id="L213" title="All 2 branches covered.">        if (!programRegistrationRepository.existsById(id)) {</span>
+<span class="fc" id="L214">            log.warn(&quot;Registration not found while deleting | registrationId={}&quot;, id);</span>
+<span class="fc" id="L215">            throw new ResourceNotFoundException(</span>
                     &quot;Registration not found with id: &quot; + id
             );
         }
 
-<span class="fc" id="L219">        programRegistrationRepository.deleteById(id);</span>
+<span class="fc" id="L220">        programRegistrationRepository.deleteById(id);</span>
 
-<span class="fc" id="L221">        log.info(&quot;Registration deleted | registrationId={}&quot;, id);</span>
-<span class="fc" id="L222">    }</span>
+<span class="fc" id="L222">        log.info(&quot;Registration deleted | registrationId={}&quot;, id);</span>
+<span class="fc" id="L223">    }</span>
 
     @Transactional
     public void deleteRegistrationByProgramAndUser(UUID programId, Long userId) {
 
-<span class="nc" id="L227">        log.debug(</span>
+<span class="nc" id="L228">        log.debug(</span>
                 &quot;Delete registration by program and user | programId={} | userId={}&quot;,
                 programId,
                 userId
         );
 
-<span class="nc" id="L233">        ProgramRegistration registration =</span>
+<span class="nc" id="L234">        ProgramRegistration registration =</span>
                 programRegistrationRepository
-<span class="nc" id="L235">                        .findByProgramProgramIdAndUserUserId(programId, userId)</span>
-<span class="nc" id="L236">                        .orElseThrow(() -&gt; {</span>
-<span class="nc" id="L237">                            log.warn(</span>
+<span class="nc" id="L236">                        .findByProgramProgramIdAndUserUserId(programId, userId)</span>
+<span class="nc" id="L237">                        .orElseThrow(() -&gt; {</span>
+<span class="nc" id="L238">                            log.warn(</span>
                                     &quot;Registration not found | programId={} | userId={}&quot;,
                                     programId,
                                     userId
                             );
-<span class="nc" id="L242">                            return new ResourceNotFoundException(</span>
-                                    &quot;Registration not found for program id: &quot;
-                                            + programId + &quot; and user id: &quot; + userId
+<span class="nc" id="L243">                            return new ResourceNotFoundException(&quot;Registration not found for program id: &quot; + programId + &quot; and user id: &quot; + userId</span>
                             );
                         });
 
-<span class="nc" id="L248">        programRegistrationRepository.delete(registration);</span>
+<span class="nc" id="L247">        programRegistrationRepository.delete(registration);</span>
 
-<span class="nc" id="L250">        log.info(</span>
+<span class="nc" id="L249">        log.info(</span>
                 &quot;Registration deleted | registrationId={} | programId={} | userId={}&quot;,
-<span class="nc" id="L252">                registration.getProgramRegistrationId(),</span>
+<span class="nc" id="L251">                registration.getProgramRegistrationId(),</span>
                 programId,
                 userId
         );
-<span class="nc" id="L256">    }</span>
+<span class="nc" id="L255">    }</span>
 
     private ProgramRegistrationDTO mapToDTO(ProgramRegistration registration) {
-<span class="fc" id="L259">        return new ProgramRegistrationDTO(</span>
-<span class="fc" id="L260">                registration.getProgramRegistrationId(),</span>
-<span class="fc" id="L261">                registration.getProgram().getProgramId(),</span>
-<span class="fc" id="L262">                registration.getProgram().getProgramTitle(),</span>
-<span class="fc" id="L263">                registration.getUser().getUserId(),</span>
-<span class="fc" id="L264">                registration.getUser().getName(),</span>
-<span class="fc" id="L265">                registration.getRegisteredAt()</span>
+<span class="fc" id="L258">        return new ProgramRegistrationDTO(</span>
+<span class="fc" id="L259">                registration.getProgramRegistrationId(),</span>
+<span class="fc" id="L260">                registration.getProgram().getProgramId(),</span>
+<span class="fc" id="L261">                registration.getProgram().getProgramTitle(),</span>
+<span class="fc" id="L262">                registration.getUser().getUserId(),</span>
+<span class="fc" id="L263">                registration.getUser().getName(),</span>
+<span class="fc" id="L264">                registration.getRegisteredAt()</span>
         );
     }
 
     @Transactional(readOnly = true)
     public long getParticipantCountForProgram(UUID programId) {
 
-<span class="fc" id="L272">        log.info(</span>
+<span class="fc" id="L271">        log.info(</span>
                 &quot;Fetching participant count for program | programId={}&quot;,
                 programId
         );
 
-<span class="fc" id="L277">        return programRegistrationRepository.countByProgramProgramId(programId);</span>
+<span class="fc" id="L276">        return programRegistrationRepository.countByProgramProgramId(programId);</span>
     }
+
 
     private ProgramRegistrationResponseDTO mapToResponseDTO(
             ProgramRegistration registration) {

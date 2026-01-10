@@ -50,9 +50,6 @@ public class ActivitySubmission {
     @Column(name = &quot;reviewed_at&quot;)
     private Instant reviewedAt;
 
-    @Column(length = 500)
-    private String rejectionReason;
-
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(
             name = &quot;reviewed_by&quot;,
@@ -63,9 +60,9 @@ public class ActivitySubmission {
 
     @PrePersist
     protected void onSubmit() {
-<span class="nc" id="L66">        this.submittedAt = Instant.now();</span>
-<span class="nc" id="L67">        this.reviewStatus = ReviewStatus.PENDING;</span>
-<span class="nc" id="L68">    }</span>
+<span class="nc" id="L63">        this.submittedAt = Instant.now();</span>
+<span class="nc" id="L64">        this.reviewStatus = ReviewStatus.PENDING;</span>
+<span class="nc" id="L65">    }</span>
 
 }
 
