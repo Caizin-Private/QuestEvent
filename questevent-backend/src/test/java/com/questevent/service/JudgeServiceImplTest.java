@@ -12,7 +12,6 @@ import com.questevent.repository.UserRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.function.Executable;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -52,6 +51,8 @@ class JudgeServiceImplTest {
         SecurityContextHolder.clearContext();
     }
 
+    /* ================= PENDING ================= */
+
     @Test
     void getPendingSubmissionsForJudge_shouldReturnPendingForJudge() {
 
@@ -76,6 +77,8 @@ class JudgeServiceImplTest {
         assertEquals(1, result.size());
         assertEquals(ReviewStatus.PENDING, result.get(0).reviewStatus());
     }
+
+    /* ================= REVIEW ================= */
 
     @Test
     void reviewSubmission_shouldApproveSubmissionAndCreditWallet() {
@@ -115,11 +118,10 @@ class JudgeServiceImplTest {
         when(submissionRepository.findById(submissionId))
                 .thenReturn(Optional.empty());
 
-        Executable executable =
-                () -> judgeService.reviewSubmission(submissionId);
-
-        ResponseStatusException ex =
-                assertThrows(ResponseStatusException.class, executable);
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> judgeService.reviewSubmission(submissionId)
+        );
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
         assertEquals("Submission not found", ex.getReason());
@@ -137,11 +139,10 @@ class JudgeServiceImplTest {
         when(submissionRepository.findById(submission.getSubmissionId()))
                 .thenReturn(Optional.of(submission));
 
-        Executable executable =
-                () -> judgeService.reviewSubmission(submission.getSubmissionId());
-
-        ResponseStatusException ex =
-                assertThrows(ResponseStatusException.class, executable);
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> judgeService.reviewSubmission(submission.getSubmissionId())
+        );
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
         assertEquals("Submission already reviewed", ex.getReason());
@@ -163,11 +164,10 @@ class JudgeServiceImplTest {
         when(submissionRepository.findById(submission.getSubmissionId()))
                 .thenReturn(Optional.of(submission));
 
-        Executable executable =
-                () -> judgeService.reviewSubmission(submission.getSubmissionId());
-
-        ResponseStatusException ex =
-                assertThrows(ResponseStatusException.class, executable);
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> judgeService.reviewSubmission(submission.getSubmissionId())
+        );
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
         assertEquals("Judge not assigned to this program", ex.getReason());
@@ -188,15 +188,16 @@ class JudgeServiceImplTest {
         when(submissionRepository.findById(submission.getSubmissionId()))
                 .thenReturn(Optional.of(submission));
 
-        Executable executable =
-                () -> judgeService.reviewSubmission(submission.getSubmissionId());
-
-        ResponseStatusException ex =
-                assertThrows(ResponseStatusException.class, executable);
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> judgeService.reviewSubmission(submission.getSubmissionId())
+        );
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
         assertEquals("Invalid reward gems", ex.getReason());
     }
+
+    /* ================= HELPERS ================= */
 
     private void mockAuthenticatedUser(User user) {
         UserPrincipal principal =
@@ -209,7 +210,7 @@ class JudgeServiceImplTest {
 
     private User mockJudgeUser() {
         User user = new User();
-        user.setUserId(5L);
+        user.setUserId(5L);              // ONLY userId is Long
         user.setRole(Role.JUDGE);
         return user;
     }

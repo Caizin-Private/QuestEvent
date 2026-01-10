@@ -16,11 +16,26 @@ class SecurityConfigTest {
     @Autowired
     private SecurityFilterChain securityFilterChain;
 
-    @Test void securityFilterChainBeanShouldLoad() { assertNotNull(securityFilterChain); }
+    @Test
+    void securityFilterChainBeanShouldLoad() {
+        assertNotNull(securityFilterChain);
+    }
 
-    @Test void jwtAuthFilterBeanShouldExist() { JwtAuthFilter filter = context.getBean(JwtAuthFilter.class); assertNotNull(filter); }
+    @Test
+    void jwtAuthFilterBeanShouldExist() {
+        JwtAuthFilter filter = context.getBean(JwtAuthFilter.class);
+        assertNotNull(filter);
+    }
 
-    @Test void oauthSuccessHandlerBeanShouldExist() { OAuthSuccessService handler = context.getBean(OAuthSuccessService.class); assertNotNull(handler); }
+    @Test
+    void oauthSuccessHandlerBeanShouldExist() {
+        OAuthSuccessService handler = context.getBean(OAuthSuccessService.class);
+        assertNotNull(handler);
+    }
 
-    @Test void corsConfigBeanShouldExist() { CorsConfig corsConfig = context.getBean(CorsConfig.class); assertNotNull(corsConfig); }
+    @Test
+    void corsConfigBeanShouldExist() {
+        CorsConfig corsConfig = context.getBean(CorsConfig.class);
+        assertNotNull(corsConfig);
+    }
 }
