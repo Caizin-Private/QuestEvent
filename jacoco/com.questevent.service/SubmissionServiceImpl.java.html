@@ -3,15 +3,19 @@
 import com.questevent.entity.ActivityRegistration;
 import com.questevent.entity.ActivitySubmission;
 import com.questevent.enums.CompletionStatus;
+import com.questevent.exception.ActivityAlreadyCompletedException;
+import com.questevent.exception.ActivityRegistrationNotFoundException;
+import com.questevent.exception.DuplicateSubmissionException;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
 import java.util.UUID;
 
-<span class="fc" id="L14">@Slf4j</span>
+<span class="fc" id="L18">@Slf4j</span>
 @Service
 @RequiredArgsConstructor
 public class SubmissionServiceImpl implements SubmissionService {
@@ -21,66 +25,77 @@ public class SubmissionServiceImpl implements SubmissionService {
 
     @Override
     @Transactional
-    public void submitActivity(UUID activityId, Long userId, String submissionUrl) {
+    public void submitActivity(
+            UUID activityId,
+            Long userId,
+            String submissionUrl
+    ) {
 
-<span class="fc" id="L26">        log.debug(</span>
+<span class="fc" id="L34">        log.debug(</span>
                 &quot;Submit activity requested | activityId={} | userId={}&quot;,
                 activityId,
                 userId
         );
 
-<span class="fc" id="L32">        ActivityRegistration registration = registrationRepository</span>
-<span class="fc" id="L33">                .findByActivityActivityIdAndUserUserId(activityId, userId)</span>
-<span class="fc" id="L34">                .orElseThrow(() -&gt; {</span>
-<span class="fc" id="L35">                    log.error(</span>
-                            &quot;User not registered for activity | activityId={} | userId={}&quot;,
-                            activityId,
-                            userId
-                    );
-<span class="fc" id="L40">                    return new RuntimeException(&quot;User is not registered for this activity&quot;);</span>
-                });
+<span class="fc" id="L40">        ActivityRegistration registration =</span>
+                registrationRepository
+<span class="fc" id="L42">                        .findByActivityActivityIdAndUserUserId(activityId, userId)</span>
+<span class="fc" id="L43">                        .orElseThrow(() -&gt; {</span>
+<span class="fc" id="L44">                            log.error(</span>
+                                    &quot;User not registered for activity | activityId={} | userId={}&quot;,
+                                    activityId,
+                                    userId
+                            );
+<span class="fc" id="L49">                            return new ActivityRegistrationNotFoundException(</span>
+                                    &quot;User is not registered for this activity&quot;
+                            );
+                        });
 
-<span class="fc bfc" id="L43" title="All 2 branches covered.">        if (registration.getCompletionStatus() == CompletionStatus.COMPLETED) {</span>
-<span class="fc" id="L44">            log.warn(</span>
+<span class="fc bfc" id="L54" title="All 2 branches covered.">        if (registration.getCompletionStatus() == CompletionStatus.COMPLETED) {</span>
+<span class="fc" id="L55">            log.warn(</span>
                     &quot;Resubmission attempt blocked | activityId={} | userId={} | registrationId={}&quot;,
                     activityId,
                     userId,
-<span class="fc" id="L48">                    registration.getActivityRegistrationId()</span>
+<span class="fc" id="L59">                    registration.getActivityRegistrationId()</span>
             );
-<span class="fc" id="L50">            throw new RuntimeException(&quot;Activity already completed. Submission not allowed.&quot;);</span>
+<span class="fc" id="L61">            throw new ActivityAlreadyCompletedException(</span>
+                    &quot;Activity already completed. Submission not allowed.&quot;
+            );
         }
 
-<span class="fc" id="L53">        boolean alreadySubmitted = submissionRepository</span>
-<span class="fc" id="L54">                .existsByActivityRegistration_ActivityRegistrationId(</span>
-<span class="fc" id="L55">                        registration.getActivityRegistrationId()</span>
+<span class="fc" id="L66">        boolean alreadySubmitted =</span>
+<span class="fc" id="L67">                submissionRepository.existsByActivityRegistration_ActivityRegistrationId(</span>
+<span class="fc" id="L68">                        registration.getActivityRegistrationId()</span>
                 );
 
-<span class="fc bfc" id="L58" title="All 2 branches covered.">        if (alreadySubmitted) {</span>
-<span class="fc" id="L59">            log.warn(</span>
+<span class="fc bfc" id="L71" title="All 2 branches covered.">        if (alreadySubmitted) {</span>
+<span class="fc" id="L72">            log.warn(</span>
                     &quot;Duplicate submission detected | activityId={} | userId={} | registrationId={}&quot;,
                     activityId,
                     userId,
-<span class="fc" id="L63">                    registration.getActivityRegistrationId()</span>
+<span class="fc" id="L76">                    registration.getActivityRegistrationId()</span>
             );
-<span class="fc" id="L65">            throw new RuntimeException(&quot;Submission already exists for this registration&quot;);</span>
+<span class="fc" id="L78">            throw new DuplicateSubmissionException(</span>
+                    &quot;Submission already exists for this registration&quot;
+            );
         }
 
-<span class="fc" id="L68">        ActivitySubmission submission = new ActivitySubmission();</span>
-<span class="fc" id="L69">        submission.setActivityRegistration(registration);</span>
-<span class="fc" id="L70">        submission.setSubmissionUrl(submissionUrl);</span>
+<span class="fc" id="L83">        ActivitySubmission submission = new ActivitySubmission();</span>
+<span class="fc" id="L84">        submission.setActivityRegistration(registration);</span>
+<span class="fc" id="L85">        submission.setSubmissionUrl(submissionUrl);</span>
 
-<span class="fc" id="L72">        registration.setCompletionStatus(CompletionStatus.COMPLETED);</span>
+<span class="fc" id="L87">        registration.setCompletionStatus(CompletionStatus.COMPLETED);</span>
 
-<span class="fc" id="L74">        submissionRepository.save(submission);</span>
-<span class="fc" id="L75">        registrationRepository.save(registration);</span>
+<span class="fc" id="L89">        submissionRepository.save(submission);</span>
+<span class="fc" id="L90">        registrationRepository.save(registration);</span>
 
-<span class="fc" id="L77">        log.info(</span>
+<span class="fc" id="L92">        log.info(</span>
                 &quot;Activity submitted successfully | activityId={} | userId={} | registrationId={} | submissionId={}&quot;,
                 activityId,
                 userId,
-<span class="fc" id="L81">                registration.getActivityRegistrationId(),</span>
-<span class="fc" id="L82">                submission.getSubmissionId()</span>
+<span class="fc" id="L96">                registration.getActivityRegistrationId(),</span>
+<span class="fc" id="L97">                submission.getSubmissionId()</span>
         );
-<span class="fc" id="L84">    }</span>
+<span class="fc" id="L99">    }</span>
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>
