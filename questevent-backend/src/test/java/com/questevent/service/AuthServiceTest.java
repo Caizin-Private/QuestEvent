@@ -3,6 +3,7 @@ package com.questevent.service;
 import com.questevent.entity.User;
 import com.questevent.entity.UserWallet;
 import com.questevent.enums.Department;
+import com.questevent.exception.UnauthenticatedUserException;
 import com.questevent.repository.UserRepository;
 import com.questevent.repository.UserWalletRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -44,6 +45,45 @@ class AuthServiceTest {
         user = new User();
         user.setUserId(1L);
         user.setEmail("test@example.com");
+    }
+
+    @Test
+    void isLoggedIn_returnsTrue_whenSessionHasUserId() {
+        when(request.getSession(false)).thenReturn(session);
+        when(session.getAttribute("userId")).thenReturn(1L);
+
+        assertTrue(authService.isLoggedIn(request));
+    }
+
+    @Test
+    void isLoggedIn_returnsFalse_whenSessionMissing() {
+        when(request.getSession(false)).thenReturn(null);
+
+        assertFalse(authService.isLoggedIn(request));
+    }
+
+    @Test
+    void getLoggedInUserId_throwsException_whenNotLoggedIn() {
+        when(request.getSession(false)).thenReturn(null);
+
+        assertThrows(
+                UnauthenticatedUserException.class,
+                () -> authService.getLoggedInUserId(request)
+        );
+    }
+
+    @Test
+    void getLoggedInUser_returnsUser_whenPresent() {
+        User user = new User();
+        user.setUserId(1L);
+
+        when(request.getSession(false)).thenReturn(session);
+        when(session.getAttribute("userId")).thenReturn(1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        User result = authService.getLoggedInUser(request);
+
+        assertEquals(1L, result.getUserId());
     }
 
     @Test

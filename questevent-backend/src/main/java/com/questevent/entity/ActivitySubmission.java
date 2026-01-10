@@ -50,6 +50,9 @@ public class ActivitySubmission {
     @Column(name = "reviewed_at")
     private Instant reviewedAt;
 
+    @Column(length = 500)
+    private String rejectionReason;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(
             name = "reviewed_by",

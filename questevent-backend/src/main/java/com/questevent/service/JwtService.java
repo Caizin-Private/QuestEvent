@@ -2,8 +2,8 @@ package com.questevent.service;
 
 import com.questevent.dto.UserPrincipal;
 import com.questevent.enums.Role;
+import com.questevent.exception.InvalidJwtTokenException;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
@@ -15,12 +15,19 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 import java.util.function.Function;
 
 @Slf4j
 @Service
 public class JwtService {
+
+    private static final String CLAIM_USER_ID = "userId";
+    private static final String CLAIM_EMAIL = "email";
+    private static final String CLAIM_ROLE = "role";
+    private static final String CLAIM_TOKEN_TYPE = "tokenType";
+
+    private static final String TOKEN_TYPE_ACCESS = "ACCESS";
+    private static final String TOKEN_TYPE_REFRESH = "REFRESH";
 
     @Value("${jwt.secret}")
     private String secret;
@@ -44,10 +51,10 @@ public class JwtService {
         );
 
         Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", userPrincipal.userId());
-        claims.put("email", userPrincipal.email());
-        claims.put("role", userPrincipal.role().name());
-        claims.put("tokenType", "ACCESS");
+        claims.put(CLAIM_USER_ID, userPrincipal.userId());
+        claims.put(CLAIM_EMAIL, userPrincipal.email());
+        claims.put(CLAIM_ROLE, userPrincipal.role().name());
+        claims.put(CLAIM_TOKEN_TYPE, TOKEN_TYPE_ACCESS);
 
         String token =
                 createToken(claims, userPrincipal.email(), accessExpiration);
@@ -68,7 +75,7 @@ public class JwtService {
         );
 
         Map<String, Object> claims = new HashMap<>();
-        claims.put("tokenType", "REFRESH");
+        claims.put(CLAIM_TOKEN_TYPE, TOKEN_TYPE_REFRESH);
 
         String token =
                 createToken(claims, userPrincipal.email(), refreshExpiration);
@@ -100,8 +107,7 @@ public class JwtService {
 
     public boolean validateToken(String token) {
         try {
-            boolean valid =
-                    extractExpiration(token).after(new Date());
+            boolean valid = extractExpiration(token).after(new Date());
 
             if (!valid) {
                 log.warn("JWT validation failed: token expired");
@@ -120,7 +126,9 @@ public class JwtService {
     public boolean isRefreshToken(String token) {
         Claims claims = extractAllClaims(token);
         boolean isRefresh =
-                "REFRESH".equals(claims.get("tokenType", String.class));
+                TOKEN_TYPE_REFRESH.equals(
+                        claims.get(CLAIM_TOKEN_TYPE, String.class)
+                );
 
         log.debug("Token type check | isRefresh={}", isRefresh);
         return isRefresh;
@@ -129,7 +137,9 @@ public class JwtService {
     public boolean isAccessToken(String token) {
         Claims claims = extractAllClaims(token);
         boolean isAccess =
-                "ACCESS".equals(claims.get("tokenType", String.class));
+                TOKEN_TYPE_ACCESS.equals(
+                        claims.get(CLAIM_TOKEN_TYPE, String.class)
+                );
 
         log.debug("Token type check | isAccess={}", isAccess);
         return isAccess;
@@ -143,7 +153,10 @@ public class JwtService {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+    public <T> T extractClaim(
+            String token,
+            Function<Claims, T> claimsResolver
+    ) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
@@ -162,15 +175,15 @@ public class JwtService {
 
         Claims claims = extractAllClaims(token);
 
-
-
-        Long userId =  claims.get("userId", Long.class);
-        String email = claims.get("email", String.class);
-        String roleStr = claims.get("role", String.class);
+        Long userId = claims.get(CLAIM_USER_ID, Long.class);
+        String email = claims.get(CLAIM_EMAIL, String.class);
+        String roleStr = claims.get(CLAIM_ROLE, String.class);
 
         if (userId == null || email == null || roleStr == null) {
             log.error("Invalid ACCESS token: missing required claims");
-            throw new RuntimeException("Invalid ACCESS token: missing required claims");
+            throw new InvalidJwtTokenException(
+                    "Invalid ACCESS token: missing required claims"
+            );
         }
 
         Role role = Role.valueOf(roleStr);

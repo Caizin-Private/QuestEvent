@@ -1,6 +1,6 @@
 package com.questevent.config;
+
 import com.questevent.dto.UserPrincipal;
-import com.questevent.entity.User;
 import com.questevent.enums.Role;
 import com.questevent.repository.UserRepository;
 import com.questevent.service.JwtService;
@@ -10,17 +10,18 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.context.SecurityContextHolder;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(org.mockito.junit.jupiter.MockitoExtension.class)
+@ExtendWith(MockitoExtension.class)
 class JwtAuthFilterTest {
 
     @Mock
@@ -50,12 +51,8 @@ class JwtAuthFilterTest {
     void shouldAuthenticateWithValidJwtToken() throws Exception {
 
         when(request.getRequestURI()).thenReturn("/api/users");
-
-        when(request.getHeader("Authorization"))
-                .thenReturn("Bearer valid-token");
-
+        when(request.getHeader("Authorization")).thenReturn("Bearer valid-token");
         when(jwtService.validateToken("valid-token")).thenReturn(true);
-
 
         UserPrincipal principal =
                 new UserPrincipal(1L, "test@user.com", Role.USER);
@@ -69,6 +66,7 @@ class JwtAuthFilterTest {
         assertTrue(SecurityContextHolder.getContext().getAuthentication().isAuthenticated());
 
         verify(filterChain).doFilter(request, response);
+        verify(response, never()).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     }
 
     @Test
@@ -77,33 +75,34 @@ class JwtAuthFilterTest {
         when(request.getRequestURI()).thenReturn("/api/programs");
         when(request.getHeader("Authorization")).thenReturn(null);
 
-        StringWriter sw = new StringWriter();
-        when(response.getWriter()).thenReturn(new PrintWriter(sw));
+        StringWriter writer = new StringWriter();
+        when(response.getWriter()).thenReturn(new PrintWriter(writer));
 
         jwtAuthFilter.doFilterInternal(request, response, filterChain);
 
         verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         verify(filterChain, never()).doFilter(any(), any());
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
     @Test
     void shouldRejectInvalidJwtToken() throws Exception {
 
-        when(request.getRequestURI()).thenReturn("/api/programs");
 
-        when(request.getHeader("Authorization"))
-                .thenReturn("Bearer bad-token");
+        when(request.getRequestURI()).thenReturn("/api/programs");
+        when(request.getHeader("Authorization")).thenReturn("Bearer bad-token");
 
         when(jwtService.validateToken("bad-token"))
-                .thenThrow(new RuntimeException("Invalid"));
+                .thenThrow(new RuntimeException("Invalid token"));
 
-        StringWriter sw = new StringWriter();
-        when(response.getWriter()).thenReturn(new PrintWriter(sw));
+        StringWriter writer = new StringWriter();
+        when(response.getWriter()).thenReturn(new PrintWriter(writer));
 
         jwtAuthFilter.doFilterInternal(request, response, filterChain);
 
         verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        verify(filterChain, never()).doFilter(any(), any());
+        verify(filterChain).doFilter(request, response);
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
     @Test
@@ -114,5 +113,17 @@ class JwtAuthFilterTest {
         jwtAuthFilter.doFilterInternal(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
+        verify(response, never()).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    }
+
+    @Test
+    void shouldSkipStaticResources() throws Exception {
+
+        when(request.getRequestURI()).thenReturn("/css/style.css");
+
+        jwtAuthFilter.doFilterInternal(request, response, filterChain);
+
+        verify(filterChain).doFilter(request, response);
+        verifyNoInteractions(jwtService);
     }
 }
