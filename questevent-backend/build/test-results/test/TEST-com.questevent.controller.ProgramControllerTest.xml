@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.questevent.controller.ProgramControllerTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-01-10T05:51:02" hostname="LF2XK776W2" time="0.068">
+  <properties/>
+  <testcase name="updateProgram_success()" classname="com.questevent.controller.ProgramControllerTest" time="0.04"/>
+  <testcase name="getProgramById_success()" classname="com.questevent.controller.ProgramControllerTest" time="0.004"/>
+  <testcase name="settleProgram_endpointNotPresent_shouldReturn404()" classname="com.questevent.controller.ProgramControllerTest" time="0.003"/>
+  <testcase name="createProgram_userNotFound()" classname="com.questevent.controller.ProgramControllerTest" time="0.005"/>
+  <testcase name="getAllPrograms_success()" classname="com.questevent.controller.ProgramControllerTest" time="0.005"/>
+  <testcase name="getProgramById_notFound()" classname="com.questevent.controller.ProgramControllerTest" time="0.003"/>
+  <testcase name="deleteProgram_success()" classname="com.questevent.controller.ProgramControllerTest" time="0.003"/>
+  <testcase name="createProgram_success()" classname="com.questevent.controller.ProgramControllerTest" time="0.005"/>
+  <system-out><![CDATA[2026-01-10 11:21:02.455 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-10 11:21:02.455 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-10 11:21:02.455 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-01-10 11:21:02.462 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-10 11:21:02.462 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-10 11:21:02.462 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-01-10 11:21:02.466 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-10 11:21:02.466 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-10 11:21:02.466 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-01-10 11:21:02.466 WARN  [Test worker] o.s.web.servlet.PageNotFound - No mapping for POST /api/programs/85b864e6-c6b8-4739-aeda-3d3676cc98d3/settle
+2026-01-10 11:21:02.467 WARN  [Test worker] o.s.web.servlet.PageNotFound - No endpoint POST /api/programs/85b864e6-c6b8-4739-aeda-3d3676cc98d3/settle.
+2026-01-10 11:21:02.469 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-10 11:21:02.469 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-10 11:21:02.469 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-01-10 11:21:02.474 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-10 11:21:02.474 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-10 11:21:02.474 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-01-10 11:21:02.479 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-10 11:21:02.479 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-10 11:21:02.479 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-01-10 11:21:02.482 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-10 11:21:02.482 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-10 11:21:02.482 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+2026-01-10 11:21:02.484 INFO  [Test worker] o.s.mock.web.MockServletContext - Initializing Spring TestDispatcherServlet ''
+2026-01-10 11:21:02.484 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+2026-01-10 11:21:02.484 INFO  [Test worker] o.s.t.w.s.TestDispatcherServlet - Completed initialization in 0 ms
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

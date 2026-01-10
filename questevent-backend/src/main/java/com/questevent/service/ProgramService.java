@@ -24,10 +24,12 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
 
-
 @Slf4j
 @Service
 public class ProgramService {
+
+    private static final String USER_NOT_FOUND = "User not found";
+    private static final String PROGRAM_NOT_FOUND = "Program not found";
 
     private final ProgramRepository programRepository;
     private final UserRepository userRepository;
@@ -64,13 +66,13 @@ public class ProgramService {
         User hostUser = userRepository.findById(p.userId())
                 .orElseThrow(() -> {
                     log.error("Host user not found | userId={}", p.userId());
-                    return new UserNotFoundException("User not found");
+                    return new UserNotFoundException(USER_NOT_FOUND);
                 });
 
         User judgeUser = userRepository.findById(dto.getJudgeUserId())
                 .orElseThrow(() -> {
                     log.error("Judge user not found | judgeUserId={}", dto.getJudgeUserId());
-                    return new UserNotFoundException("Judge user not found");
+                    return new UserNotFoundException(USER_NOT_FOUND);
                 });
 
         if (hostUser.getUserId().equals(judgeUser.getUserId())) {
@@ -86,7 +88,7 @@ public class ProgramService {
                 .orElseGet(() -> {
                     Judge j = new Judge();
                     j.setUser(judgeUser);
-                    return j; // persisted via CascadeType.PERSIST
+                    return j;
                 });
 
         program.setJudge(judge);
@@ -114,18 +116,19 @@ public class ProgramService {
         if (authentication == null || !authentication.isAuthenticated()
                 || !(authentication.getPrincipal() instanceof UserPrincipal p)) {
             log.warn("Unauthorized program update attempt | programId={}", programId);
-            throw new UnauthorizedException("Unauthorized");        }
+            throw new UnauthorizedException("Unauthorized");
+        }
 
         User hostUser = userRepository.findById(p.userId())
                 .orElseThrow(() -> {
                     log.error("Host user not found | userId={}", p.userId());
-                    return new UserNotFoundException("User not found");
+                    return new UserNotFoundException(USER_NOT_FOUND);
                 });
 
         Program existingProgram = programRepository.findById(programId)
                 .orElseThrow(() -> {
                     log.error("Program not found | programId={}", programId);
-                    return new ProgramNotFoundException("Program not found");
+                    return new ProgramNotFoundException(PROGRAM_NOT_FOUND);
                 });
 
         if (!existingProgram.getUser().getUserId().equals(hostUser.getUserId())) {
@@ -135,7 +138,6 @@ public class ProgramService {
                     hostUser.getUserId()
             );
             throw new AccessDeniedException("You do not have permission to update this program");
-
         }
 
         mapDtoToEntity(dto, existingProgram);
@@ -145,11 +147,10 @@ public class ProgramService {
             User judgeUser = userRepository.findById(dto.getJudgeUserId())
                     .orElseThrow(() -> {
                         log.error("Judge user not found | judgeUserId={}", dto.getJudgeUserId());
-                        return new UserNotFoundException("Judge user not found");
+                        return new UserNotFoundException(USER_NOT_FOUND);
                     });
 
             if (hostUser.getUserId().equals(judgeUser.getUserId())) {
-                log.warn("Creator attempted to assign self as judge | userId={}", hostUser.getUserId());
                 throw new IllegalArgumentException("Creator cannot be the judge");
             }
 
@@ -174,133 +175,66 @@ public class ProgramService {
         return updated;
     }
 
-    private void mapDtoToEntity(ProgramRequestDTO dto, Program program) {
-        program.setProgramTitle(dto.getProgramTitle());
-        program.setProgramDescription(dto.getProgramDescription());
-        program.setDepartment(dto.getDepartment());
-        program.setStartDate(dto.getStartDate());
-        program.setEndDate(dto.getEndDate());
-        program.setStatus(dto.getStatus());
-    }
-
     public List<Program> getMyPrograms() {
         User hostUser = getCurrentUser();
         if (hostUser == null) {
-            log.warn("User not found while fetching my programs");
-            throw new UserNotFoundException("User not found");
+            throw new UserNotFoundException(USER_NOT_FOUND);
         }
-
-        log.info("Fetching programs created by user | userId={}", hostUser.getUserId());
         return programRepository.findByUser_UserId(hostUser.getUserId());
     }
 
     public Program getProgramById(UUID programId) {
-        log.debug("Fetching program by id | programId={}", programId);
         return programRepository.findById(programId)
-                .orElseThrow(() -> {
-                    log.warn("Program not found | programId={}", programId);
-                    return new ProgramNotFoundException("Program not found");
-                });
+                .orElseThrow(() -> new ProgramNotFoundException(PROGRAM_NOT_FOUND));
     }
 
     public List<Program> getAllPrograms() {
-        log.info("Fetching all programs");
         return programRepository.findAll();
     }
 
     public void deleteProgram(UUID programId) {
 
-        log.debug("Delete program requested | programId={}", programId);
-
         User hostUser = getCurrentUser();
         if (hostUser == null) {
-            log.warn("User not found while deleting program | programId={}", programId);
-            throw new UserNotFoundException("User not found");
+            throw new UserNotFoundException(USER_NOT_FOUND);
         }
 
         Program program = programRepository.findById(programId)
-                .orElseThrow(() -> {
-                    log.warn("Program not found | programId={}", programId);
-                    return new ProgramNotFoundException("Program not found");
-                });
+                .orElseThrow(() -> new ProgramNotFoundException(PROGRAM_NOT_FOUND));
 
         if (!program.getUser().getUserId().equals(hostUser.getUserId())) {
-            log.warn(
-                    "Program delete forbidden | programId={} | requesterId={}",
-                    programId,
-                    hostUser.getUserId()
-            );
             throw new AccessDeniedException("You do not have permission to delete this program");
         }
 
         programRepository.delete(program);
-
-        log.info(
-                "Program deleted | programId={} | hostUserId={}",
-                programId,
-                hostUser.getUserId()
-        );
     }
 
     public List<Program> getCompletedProgramsForUser() {
         User currentUser = getCurrentUser();
         if (currentUser == null) {
-            log.warn("User not found while fetching completed programs");
-            throw new UserNotFoundException("User not found");
+            throw new UserNotFoundException(USER_NOT_FOUND);
         }
 
-        List<ProgramRegistration> registrations =
-                programRegistrationRepository.findByUserUserId(currentUser.getUserId());
-
-        log.info(
-                "Fetching completed programs | userId={} | totalRegistrations={}",
-                currentUser.getUserId(),
-                registrations.size()
-        );
-
-        return registrations.stream()
+        return programRegistrationRepository.findByUserUserId(currentUser.getUserId())
+                .stream()
                 .map(ProgramRegistration::getProgram)
-                .filter(program -> program.getStatus() == ProgramStatus.COMPLETED)
+                .filter(p -> p.getStatus() == ProgramStatus.COMPLETED)
                 .toList();
-    }
-
-    private User getCurrentUser() {
-        @Nullable Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication != null && authentication.isAuthenticated()) {
-            Object principal = authentication.getPrincipal();
-            if (principal instanceof UserPrincipal p) {
-                return userRepository.findById(p.userId()).orElse(null);
-            }
-        }
-
-        return null;
     }
 
     public List<Program> getProgramsWhereUserIsJudge() {
         User currentUser = getCurrentUser();
         if (currentUser == null) {
-            log.warn("User not found while fetching judge programs");
-            throw new UserNotFoundException("User not found");
+            throw new UserNotFoundException(USER_NOT_FOUND);
         }
-
-        log.info("Fetching programs where user is judge | userId={}", currentUser.getUserId());
         return programRepository.findByJudgeUserId(currentUser.getUserId());
     }
 
     public List<Program> getActiveProgramsByUserDepartment() {
         User currentUser = getCurrentUser();
         if (currentUser == null) {
-            log.warn("User not found while fetching department programs");
-            throw new UserNotFoundException("User not found");
+            throw new UserNotFoundException(USER_NOT_FOUND);
         }
-
-        log.info(
-                "Fetching active programs by department | department={}",
-                currentUser.getDepartment()
-        );
-
         return programRepository.findByStatusAndDepartment(
                 ProgramStatus.ACTIVE,
                 currentUser.getDepartment()
@@ -310,11 +244,8 @@ public class ProgramService {
     public List<Program> getDraftProgramsByHost() {
         User currentUser = getCurrentUser();
         if (currentUser == null) {
-            log.warn("User not found while fetching draft programs");
-            throw new UserNotFoundException("User not found");
+            throw new UserNotFoundException(USER_NOT_FOUND);
         }
-
-        log.info("Fetching draft programs | hostUserId={}", currentUser.getUserId());
         return programRepository.findByStatusAndUser_UserId(
                 ProgramStatus.DRAFT,
                 currentUser.getUserId()
@@ -323,48 +254,45 @@ public class ProgramService {
 
     public Program changeProgramStatusToActive(UUID programId) {
 
-        log.debug("Change program status to ACTIVE requested | programId={}", programId);
-
         User currentUser = getCurrentUser();
         if (currentUser == null) {
-            log.warn("User not found while changing program status | programId={}", programId);
-            throw new UserNotFoundException("User not found");
+            throw new UserNotFoundException(USER_NOT_FOUND);
         }
 
         Program program = programRepository.findById(programId)
-                .orElseThrow(() -> {
-                    log.warn("Program not found | programId={}", programId);
-                    return new ProgramNotFoundException("Program not found");
-                });
+                .orElseThrow(() -> new ProgramNotFoundException(PROGRAM_NOT_FOUND));
 
         if (!program.getUser().getUserId().equals(currentUser.getUserId())) {
-            log.warn(
-                    "Status change forbidden | programId={} | requesterId={}",
-                    programId,
-                    currentUser.getUserId()
-            );
             throw new AccessDeniedException("You do not have permission to change status of this program");
         }
 
         if (program.getStatus() != ProgramStatus.DRAFT) {
-            log.warn(
-                    "Invalid status transition | programId={} | currentStatus={}",
-                    programId,
-                    program.getStatus()
-            );
             throw new ResourceConflictException(
                     "Program status must be DRAFT to change to ACTIVE"
             );
         }
 
         program.setStatus(ProgramStatus.ACTIVE);
-        Program updated = programRepository.save(program);
+        return programRepository.save(program);
+    }
 
-        log.info(
-                "Program status changed to ACTIVE | programId={}",
-                programId
-        );
+    private void mapDtoToEntity(ProgramRequestDTO dto, Program program) {
+        program.setProgramTitle(dto.getProgramTitle());
+        program.setProgramDescription(dto.getProgramDescription());
+        program.setDepartment(dto.getDepartment());
+        program.setStartDate(dto.getStartDate());
+        program.setEndDate(dto.getEndDate());
+        program.setStatus(dto.getStatus());
+    }
 
-        return updated;
+    private User getCurrentUser() {
+        @Nullable Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null && authentication.isAuthenticated()
+                && authentication.getPrincipal() instanceof UserPrincipal p) {
+            return userRepository.findById(p.userId()).orElse(null);
+        }
+        return null;
     }
 }

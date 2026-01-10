@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -163,7 +162,7 @@ public class ProgramRegistrationService {
         return programRegistrationRepository.findAll()
                 .stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -191,7 +190,7 @@ public class ProgramRegistrationService {
         return programRegistrationRepository.findByProgramProgramId(programId)
                 .stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -202,7 +201,7 @@ public class ProgramRegistrationService {
         return programRegistrationRepository.findByUserUserId(userId)
                 .stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional
@@ -240,7 +239,9 @@ public class ProgramRegistrationService {
                                     programId,
                                     userId
                             );
-                            return new ResourceNotFoundException("Registration not found for program id: " + programId + " and user id: " + userId
+                            return new ResourceNotFoundException(
+                                    "Registration not found for program id: "
+                                            + programId + " and user id: " + userId
                             );
                         });
 
@@ -275,7 +276,6 @@ public class ProgramRegistrationService {
 
         return programRegistrationRepository.countByProgramProgramId(programId);
     }
-
 
     private ProgramRegistrationResponseDTO mapToResponseDTO(
             ProgramRegistration registration) {

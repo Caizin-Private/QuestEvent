@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.questevent.service.ProgramWalletServiceTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-01-10T05:51:02" hostname="LF2XK776W2" time="0.024">
+  <properties/>
+  <testcase name="getMyProgramWallet_shouldThrowNotFound_whenWalletMissing()" classname="com.questevent.service.ProgramWalletServiceTest" time="0.022"/>
+  <testcase name="getProgramWalletsByProgramId_shouldThrowNotFound_whenEmpty()" classname="com.questevent.service.ProgramWalletServiceTest" time="0.0"/>
+  <testcase name="getWalletBalanceByWalletId_shouldThrowNotFound_whenMissing()" classname="com.questevent.service.ProgramWalletServiceTest" time="0.001"/>
+  <testcase name="getMyProgramWallet_shouldThrowNotFound_whenUserMissing()" classname="com.questevent.service.ProgramWalletServiceTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

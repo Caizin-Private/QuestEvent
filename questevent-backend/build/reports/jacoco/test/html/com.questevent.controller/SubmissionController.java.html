@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SubmissionController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">questevent-backend</a> &gt; <a href="index.source.html" class="el_package">com.questevent.controller</a> &gt; <span class="el_source">SubmissionController.java</span></div><h1>SubmissionController.java</h1><pre class="source lang-java linenums">package com.questevent.controller;
+
+import com.questevent.dto.ActivitySubmissionRequestDTO;
+import com.questevent.service.SubmissionService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping(&quot;/api/submissions&quot;)
+@RequiredArgsConstructor
+@Tag(name = &quot;Activity Submissions&quot;, description = &quot;APIs for submitting activity work&quot;)
+public class SubmissionController {
+
+<span class="fc" id="L23">    private static final Logger log =</span>
+<span class="fc" id="L24">            LoggerFactory.getLogger(SubmissionController.class);</span>
+
+    private final SubmissionService submissionService;
+
+    @PreAuthorize(&quot;@rbac.canSubmitActivity(authentication, #request.activityId, authentication.principal.userId)&quot;)
+    @PostMapping
+    @Operation(
+            summary = &quot;Submit activity work&quot;,
+            description = &quot;Allows a registered user to submit work for an activity&quot;
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;201&quot;, description = &quot;Submission successful&quot;),
+            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Invalid request or submission already exists&quot;),
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Activity already completed, submission not allowed&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;User is not registered for the activity&quot;)
+    })
+    public ResponseEntity&lt;String&gt; submitActivity(
+            @RequestBody ActivitySubmissionRequestDTO request
+    ) {
+<span class="fc" id="L43">        log.info(&quot;Submitting activity work: activityId={}, userId={}&quot;,</span>
+<span class="fc" id="L44">                request.getActivityId(), request.getUserId());</span>
+
+<span class="fc" id="L46">        submissionService.submitActivity(</span>
+<span class="fc" id="L47">                request.getActivityId(),</span>
+<span class="fc" id="L48">                request.getUserId(),</span>
+<span class="fc" id="L49">                request.getSubmissionUrl()</span>
+        );
+
+<span class="fc" id="L52">        log.info(&quot;Activity submission successful: activityId={}, userId={}&quot;,</span>
+<span class="fc" id="L53">                request.getActivityId(), request.getUserId());</span>
+
+<span class="fc" id="L55">        return ResponseEntity</span>
+<span class="fc" id="L56">                .status(HttpStatus.CREATED)</span>
+<span class="fc" id="L57">                .body(&quot;Submission successful&quot;);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>

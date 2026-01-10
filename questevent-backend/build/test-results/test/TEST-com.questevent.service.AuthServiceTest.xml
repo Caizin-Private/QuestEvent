@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.questevent.service.AuthServiceTest" tests="14" skipped="0" failures="0" errors="0" timestamp="2026-01-10T05:51:02" hostname="LF2XK776W2" time="0.049">
+  <properties/>
+  <testcase name="shouldReturnLoggedInUser()" classname="com.questevent.service.AuthServiceTest" time="0.04"/>
+  <testcase name="shouldReturnFalseWhenSessionIsNull()" classname="com.questevent.service.AuthServiceTest" time="0.001"/>
+  <testcase name="isLoggedIn_returnsFalse_whenSessionMissing()" classname="com.questevent.service.AuthServiceTest" time="0.001"/>
+  <testcase name="shouldReturnTrueWhenUserIsLoggedIn()" classname="com.questevent.service.AuthServiceTest" time="0.0"/>
+  <testcase name="shouldThrowWhenSessionMissingInGetUserId()" classname="com.questevent.service.AuthServiceTest" time="0.001"/>
+  <testcase name="shouldUpdateProfileAndCreateWalletIfMissing()" classname="com.questevent.service.AuthServiceTest" time="0.001"/>
+  <testcase name="shouldReturnFalseWhenUserIdNotInSession()" classname="com.questevent.service.AuthServiceTest" time="0.001"/>
+  <testcase name="shouldReturnUserIdWhenLoggedIn()" classname="com.questevent.service.AuthServiceTest" time="0.0"/>
+  <testcase name="isLoggedIn_returnsTrue_whenSessionHasUserId()" classname="com.questevent.service.AuthServiceTest" time="0.001"/>
+  <testcase name="shouldUpdateProfileWithoutCreatingWalletIfExists()" classname="com.questevent.service.AuthServiceTest" time="0.001"/>
+  <testcase name="shouldThrowWhenUserNotFoundDuringProfileUpdate()" classname="com.questevent.service.AuthServiceTest" time="0.0"/>
+  <testcase name="shouldThrowWhenUserNotFound()" classname="com.questevent.service.AuthServiceTest" time="0.001"/>
+  <testcase name="getLoggedInUser_returnsUser_whenPresent()" classname="com.questevent.service.AuthServiceTest" time="0.001"/>
+  <testcase name="getLoggedInUserId_throwsException_whenNotLoggedIn()" classname="com.questevent.service.AuthServiceTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
