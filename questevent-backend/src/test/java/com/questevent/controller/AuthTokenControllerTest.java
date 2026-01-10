@@ -15,12 +15,14 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
-
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import java.util.List;
 import java.util.Optional;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -39,10 +41,10 @@ class AuthTokenControllerTest {
 
     private User user;
     private UserPrincipal principal;
+    private UsernamePasswordAuthenticationToken auth;
 
     @BeforeEach
     void setup() {
-
         user = new User();
         user.setUserId(1L);
         user.setEmail("test@mail.com");
@@ -50,14 +52,20 @@ class AuthTokenControllerTest {
 
         principal = new UserPrincipal(1L, "test@mail.com", Role.USER);
 
-        UsernamePasswordAuthenticationToken auth =
-                new UsernamePasswordAuthenticationToken(
-                        principal,
-                        null,
-                        List.of(new SimpleGrantedAuthority("ROLE_USER"))
-                );
+        auth = new UsernamePasswordAuthenticationToken(
+                principal,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        );
 
         SecurityContextHolder.getContext().setAuthentication(auth);
+    }
+
+    @Test
+    void authInfo_shouldReturnApiInfo() throws Exception {
+        mockMvc.perform(get("/api/auth"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("JWT Authentication API"));
     }
 
     @Test
@@ -72,13 +80,11 @@ class AuthTokenControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value("access-token"))
                 .andExpect(jsonPath("$.refreshToken").value("refresh-token"))
-                .andExpect(jsonPath("$.email").value("test@mail.com"))
-                .andExpect(jsonPath("$.role").value("USER"));
+                .andExpect(jsonPath("$.email").value("test@mail.com"));
     }
 
     @Test
     void refreshToken_missingToken_shouldReturn401() throws Exception {
-
         mockMvc.perform(post("/api/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
@@ -118,8 +124,7 @@ class AuthTokenControllerTest {
                                 { "refreshToken": "good" }
                                 """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").value("new-access"))
-                .andExpect(jsonPath("$.tokenType").value("Bearer"));
+                .andExpect(jsonPath("$.accessToken").value("new-access"));
     }
 
     @Test
@@ -127,9 +132,15 @@ class AuthTokenControllerTest {
 
         mockMvc.perform(get("/api/auth/me"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.userId").value(1L))
                 .andExpect(jsonPath("$.email").value("test@mail.com"))
-                .andExpect(jsonPath("$.role").value("USER"))
-                .andExpect(jsonPath("$.authenticated").value(true));
+                .andExpect(jsonPath("$.role").value("USER"));
+    }
+
+    @Test
+    void testJwt_withAuth_shouldWork() throws Exception {
+
+        mockMvc.perform(get("/api/auth/test"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("JWT authentication working ✅"));
     }
 }

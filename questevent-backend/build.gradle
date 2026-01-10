@@ -4,7 +4,6 @@ plugins {
     id 'io.spring.dependency-management' version '1.1.6'
     id 'jacoco'
     id 'org.sonarqube' version '4.4.1.3373'
-
 }
 bootJar {
     enabled = true
@@ -79,14 +78,11 @@ tasks.withType(JavaCompile) {
 tasks.withType(Test) {
     jvmArgs += '--enable-preview'
 }
-sonarqube {
+
+sonar {
     properties {
         property "sonar.projectKey", "questevent-backend"
-        property "sonar.projectName", "QuestEvent Backend"
-        property "sonar.host.url", "http://localhost:9000"
-        property "sonar.coverage.jacoco.xmlReportPaths",
-                "${buildDir}/reports/jacoco/test/jacocoTestReport.xml"
-        property "sonar.gradle.skipCompile", "true"
+        property "sonar.java.coveragePlugin", "jacoco"
+        property "sonar.coverage.jacoco.xmlReportPaths", "$buildDir/reports/jacoco/test/jacocoTestReport.xml"
     }
 }
-

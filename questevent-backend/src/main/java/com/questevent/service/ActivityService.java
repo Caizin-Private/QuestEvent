@@ -3,13 +3,14 @@ package com.questevent.service;
 import com.questevent.dto.ActivityRequestDTO;
 import com.questevent.entity.Activity;
 import com.questevent.entity.Program;
-import com.questevent.exception.ActivityNotFoundException;
-import com.questevent.exception.ProgramNotFoundException;
-import com.questevent.exception.ResourceConflictException;
 import com.questevent.repository.ActivityRepository;
 import com.questevent.repository.ProgramRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import com.questevent.exception.ActivityNotFoundException;
+import com.questevent.exception.ProgramNotFoundException;
+import com.questevent.exception.ResourceConflictException;
+
 
 import java.util.List;
 import java.util.UUID;
@@ -17,9 +18,6 @@ import java.util.UUID;
 @Slf4j
 @Service
 public class ActivityService {
-
-    private static final String PROGRAM_NOT_FOUND = "Program not found";
-    private static final String ACTIVITY_NOT_FOUND = "Activity not found";
 
     private final ActivityRepository activityRepository;
     private final ProgramRepository programRepository;
@@ -38,11 +36,9 @@ public class ActivityService {
 
         Program program = programRepository.findById(programId)
                 .orElseThrow(() -> {
-                    log.error(
-                            "Program not found while creating activity | programId={}",
-                            programId
-                    );
-                    return new ProgramNotFoundException(PROGRAM_NOT_FOUND);
+                    log.error("Program not found while creating activity | programId={}", programId);
+                    return new ProgramNotFoundException("Program not found");
+
                 });
 
         Activity activity = new Activity();
@@ -71,7 +67,7 @@ public class ActivityService {
         Activity existingActivity = activityRepository.findById(activityId)
                 .orElseThrow(() -> {
                     log.error("Activity not found | activityId={}", activityId);
-                    return new ActivityNotFoundException(ACTIVITY_NOT_FOUND);
+                    return new ActivityNotFoundException("Activity not found");
                 });
 
         if (!existingActivity.getProgram().getProgramId().equals(programId)) {
@@ -81,9 +77,7 @@ public class ActivityService {
                     programId,
                     existingActivity.getProgram().getProgramId()
             );
-            throw new ResourceConflictException(
-                    "Activity does not belong to this program"
-            );
+            throw new ResourceConflictException("Activity does not belong to this program");
         }
 
         mapDtoToEntity(dto, existingActivity);
@@ -104,11 +98,8 @@ public class ActivityService {
         log.debug("Fetching activities by program | programId={}", programId);
 
         if (!programRepository.existsById(programId)) {
-            log.warn(
-                    "Program not found while fetching activities | programId={}",
-                    programId
-            );
-            throw new ProgramNotFoundException(PROGRAM_NOT_FOUND);
+            log.warn("Program not found while fetching activities | programId={}", programId);
+            throw new ProgramNotFoundException("Program not found");
         }
 
         List<Activity> activities =
@@ -133,11 +124,8 @@ public class ActivityService {
 
         Activity activity = activityRepository.findById(activityId)
                 .orElseThrow(() -> {
-                    log.warn(
-                            "Activity not found while deleting | activityId={}",
-                            activityId
-                    );
-                    return new ActivityNotFoundException(ACTIVITY_NOT_FOUND);
+                    log.warn("Activity not found while deleting | activityId={}", activityId);
+                    return new ActivityNotFoundException("Activity not found");
                 });
 
         if (!activity.getProgram().getProgramId().equals(programId)) {
@@ -146,9 +134,7 @@ public class ActivityService {
                     activityId,
                     programId
             );
-            throw new ResourceConflictException(
-                    "Activity does not belong to this program"
-            );
+            throw new ResourceConflictException("Activity does not belong to this program");
         }
 
         activityRepository.delete(activity);
@@ -172,7 +158,7 @@ public class ActivityService {
                     "Program not found while fetching compulsory activities | programId={}",
                     programId
             );
-            throw new ProgramNotFoundException(PROGRAM_NOT_FOUND);
+            throw new ProgramNotFoundException("Program not found");
         }
 
         List<Activity> activities =
