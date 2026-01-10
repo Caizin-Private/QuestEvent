@@ -3,9 +3,6 @@ package com.questevent.controller;
 import com.questevent.dto.ActivitySubmissionRequestDTO;
 import com.questevent.service.SubmissionService;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -14,7 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.UUID;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.doNothing;
@@ -50,20 +46,18 @@ class SubmissionControllerTest {
         assertEquals("Submission successful", response.getBody());
     }
 
-    @ParameterizedTest
-    @MethodSource("submitActivityFailureScenarios")
-    void submitActivity_shouldThrowException_forInvalidCases(
-            Long userId,
-            String errorMessage
-    ) {
+    @Test
+    void submitActivity_shouldThrowException_whenUserNotRegistered() {
+
         UUID activityId = UUID.randomUUID();
+        Long userId = 99L;
 
         ActivitySubmissionRequestDTO request = new ActivitySubmissionRequestDTO();
         request.setActivityId(activityId);
         request.setUserId(userId);
         request.setSubmissionUrl("https://github.com/user/project");
 
-        doThrow(new RuntimeException(errorMessage))
+        doThrow(new RuntimeException("User is not registered for this activity"))
                 .when(submissionService)
                 .submitActivity(activityId, userId, "https://github.com/user/project");
 
@@ -72,23 +66,61 @@ class SubmissionControllerTest {
                 () -> submissionController.submitActivity(request)
         );
 
-        assertEquals(errorMessage, exception.getMessage());
+        assertEquals(
+                "User is not registered for this activity",
+                exception.getMessage()
+        );
     }
 
-    private static Stream<Arguments> submitActivityFailureScenarios() {
-        return Stream.of(
-                Arguments.of(
-                        99L,
-                        "User is not registered for this activity"
-                ),
-                Arguments.of(
-                        2L,
-                        "Submission already exists for this registration"
-                ),
-                Arguments.of(
-                        2L,
-                        "Activity already completed. Submission not allowed."
-                )
+    @Test
+    void submitActivity_shouldThrowException_whenSubmissionAlreadyExists() {
+
+        UUID activityId = UUID.randomUUID();
+        Long userId = 2L;
+
+        ActivitySubmissionRequestDTO request = new ActivitySubmissionRequestDTO();
+        request.setActivityId(activityId);
+        request.setUserId(userId);
+        request.setSubmissionUrl("https://github.com/user/project");
+
+        doThrow(new RuntimeException("Submission already exists for this registration"))
+                .when(submissionService)
+                .submitActivity(activityId, userId, "https://github.com/user/project");
+
+        RuntimeException exception = assertThrows(
+                RuntimeException.class,
+                () -> submissionController.submitActivity(request)
+        );
+
+        assertEquals(
+                "Submission already exists for this registration",
+                exception.getMessage()
+        );
+    }
+
+    @Test
+    void submitActivity_shouldThrowException_whenActivityAlreadyCompleted() {
+
+        UUID activityId = UUID.randomUUID();
+        Long userId = 2L;
+
+        ActivitySubmissionRequestDTO request = new ActivitySubmissionRequestDTO();
+        request.setActivityId(activityId);
+        request.setUserId(userId);
+        request.setSubmissionUrl("https://github.com/user/project");
+
+        doThrow(new RuntimeException("Activity already completed. Submission not allowed."))
+                .when(submissionService)
+                .submitActivity(activityId, userId, "https://github.com/user/project");
+
+        RuntimeException exception = assertThrows(
+                RuntimeException.class,
+                () -> submissionController.submitActivity(request)
+        );
+
+        assertEquals(
+                "Activity already completed. Submission not allowed.",
+                exception.getMessage()
         );
     }
 }
