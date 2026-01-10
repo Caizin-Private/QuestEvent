@@ -26,9 +26,12 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class RbacServiceTest {
 
+    /* ===================== mocks ===================== */
+
     @Mock private UserRepository userRepository;
     @Mock private ProgramRepository programRepository;
     @Mock private ActivityRepository activityRepository;
+    @Mock private ProgramRegistrationRepository programRegistrationRepository;
     @Mock private ActivityRegistrationRepository activityRegistrationRepository;
     @Mock private ActivitySubmissionRepository submissionRepository;
     @Mock private ProgramWalletRepository programWalletRepository;
@@ -38,6 +41,8 @@ class RbacServiceTest {
     @InjectMocks
     private RbacService rbacService;
 
+    /* ===================== fixtures ===================== */
+
     private User owner;
     private User user;
     private User judgeUser;
@@ -45,18 +50,27 @@ class RbacServiceTest {
     private Program program;
     private Activity activity;
 
+    private Long ownerId;
+    private Long userId;
+    private Long judgeUserId;
     private UUID programId;
     private UUID activityId;
+
+    /* ===================== setup ===================== */
 
     @BeforeEach
     void setup() {
 
+        ownerId = 1L;
+        userId = 2L;
+        judgeUserId = 3L;
+
         programId = UUID.randomUUID();
         activityId = UUID.randomUUID();
 
-        owner = createUser(1L, Role.OWNER);
-        user = createUser(2L, Role.USER);
-        judgeUser = createUser(3L, Role.JUDGE);
+        owner = createUser(ownerId, Role.OWNER);
+        user = createUser(userId, Role.USER);
+        judgeUser = createUser(judgeUserId, Role.JUDGE);
 
         program = new Program();
         program.setProgramId(programId);
@@ -70,6 +84,8 @@ class RbacServiceTest {
         activity.setActivityId(activityId);
         activity.setProgram(program);
     }
+
+    /* ===================== helpers ===================== */
 
     private User createUser(Long id, Role role) {
         User u = new User();
@@ -90,14 +106,26 @@ class RbacServiceTest {
                 .thenReturn(Optional.of(u));
     }
 
+    /* ===================================================
+       AUTHENTICATION
+       =================================================== */
+
     @Test
-    void unauthenticated_user_denied() {
+    void unauthenticated_user_denied_everywhere() {
+
         when(authentication.isAuthenticated()).thenReturn(false);
-        assertFalse(rbacService.canViewProgram(authentication));
+
+        assertFalse(rbacService.canViewProgram(authentication, programId));
+        assertFalse(rbacService.canAccessUserProfile(authentication, userId));
+        assertFalse(rbacService.canManageProgram(authentication, programId));
+        assertFalse(rbacService.canJudgeAccessProgram(authentication, programId));
+        assertFalse(rbacService.canRegisterForProgram(authentication, programId, userId));
+        assertFalse(rbacService.canRegisterForActivity(authentication, activityId, userId));
+        assertFalse(rbacService.canSubmitActivity(authentication, activityId, userId));
     }
 
     @Test
-    void jwt_authentication_branch_covered() {
+    void jwtAuthentication_branch_covered() {
 
         Jwt jwt = Jwt.withTokenValue("token")
                 .header("alg", "none")
@@ -110,11 +138,11 @@ class RbacServiceTest {
         when(userRepository.findByEmail("jwt@test.com"))
                 .thenReturn(Optional.of(user));
 
-        assertTrue(rbacService.canViewProgram(jwtAuth));
+        assertTrue(rbacService.canViewProgram(jwtAuth, programId));
     }
 
     @Test
-    void oauth2_email_branch_covered() {
+    void oauth2User_email_branch_covered() {
 
         OAuth2User oauthUser = mock(OAuth2User.class);
         when(oauthUser.getAttribute("email"))
@@ -125,11 +153,11 @@ class RbacServiceTest {
         when(userRepository.findByEmail("oauth@test.com"))
                 .thenReturn(Optional.of(user));
 
-        assertTrue(rbacService.canViewProgram(authentication));
+        assertTrue(rbacService.canViewProgram(authentication, programId));
     }
 
     @Test
-    void oauth2_fallback_username_branch_covered() {
+    void oauth2User_preferredUsername_fallback_covered() {
 
         OAuth2User oauthUser = mock(OAuth2User.class);
         when(oauthUser.getAttribute("email")).thenReturn(null);
@@ -141,8 +169,12 @@ class RbacServiceTest {
         when(userRepository.findByEmail("fallback@test.com"))
                 .thenReturn(Optional.of(user));
 
-        assertTrue(rbacService.canViewProgram(authentication));
+        assertTrue(rbacService.canViewProgram(authentication, programId));
     }
+
+    /* ===================================================
+       OWNER SHORT-CIRCUITS
+       =================================================== */
 
     @Test
     void owner_short_circuit_paths() {
@@ -150,25 +182,46 @@ class RbacServiceTest {
         authenticate(owner);
 
         assertTrue(rbacService.isPlatformOwner(authentication));
-        assertTrue(rbacService.canViewProgram(authentication));
-        assertTrue(rbacService.canManageProgram(authentication, programId));
+        assertTrue(rbacService.canViewProgram(authentication, programId));
         assertTrue(rbacService.canJudgeAccessProgram(authentication, programId));
+        assertTrue(rbacService.canAccessUserWallet(authentication, userId));
+        assertTrue(rbacService.canAccessProgramWallet(authentication, UUID.randomUUID()));
     }
 
+    /* ===================================================
+       USER PROFILE
+       =================================================== */
+
     @Test
-    void program_management_paths() {
+    void user_profile_paths() {
 
         authenticate(user);
 
+        assertTrue(rbacService.canAccessUserProfile(authentication, userId));
+        assertFalse(rbacService.canAccessUserProfile(authentication, 999L));
+    }
+
+    /* ===================================================
+       PROGRAM MANAGEMENT (FIXED)
+       =================================================== */
+
+    @Test
+    void manage_program_paths() {
+
+        authenticate(user);
+
+        // program exists, but owned by someone else
         when(programRepository.findById(programId))
                 .thenReturn(Optional.of(program));
 
         assertFalse(rbacService.canManageProgram(authentication, programId));
 
+        // user becomes owner
         program.setUser(user);
         assertTrue(rbacService.canManageProgram(authentication, programId));
 
-        when(programRepository.findById(any()))
+        // program not found
+        when(programRepository.findById(any(UUID.class)))
                 .thenReturn(Optional.empty());
 
         assertFalse(
@@ -176,26 +229,60 @@ class RbacServiceTest {
         );
     }
 
+    /* ===================================================
+       JUDGE ACCESS
+       =================================================== */
+
     @Test
-    void verify_submission_paths() {
+    void judge_paths() {
 
         authenticate(judgeUser);
 
-        ActivityRegistration reg = new ActivityRegistration();
-        ActivitySubmission submission = new ActivitySubmission();
-        submission.setActivityRegistration(reg);
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.of(program));
+        assertTrue(rbacService.isJudgeForProgram(authentication, programId));
 
-        Activity act = new Activity();
-        act.setProgram(program);
-        reg.setActivity(act);
+        when(activityRepository.findById(activityId))
+                .thenReturn(Optional.of(activity));
+        assertTrue(rbacService.isJudgeForActivity(authentication, activityId));
 
-        when(submissionRepository.findById(any()))
-                .thenReturn(Optional.of(submission));
+        when(judgeRepository.findByUserUserId(judgeUserId))
+                .thenReturn(Optional.of(new Judge()));
+        assertTrue(rbacService.canAccessJudgeSubmissions(authentication));
 
-        assertTrue(
-                rbacService.canVerifySubmission(authentication, UUID.randomUUID())
-        );
+        when(judgeRepository.findByUserUserId(judgeUserId))
+                .thenReturn(Optional.empty());
+        assertFalse(rbacService.canAccessJudgeSubmissions(authentication));
     }
+
+    /* ===================================================
+       SUBMISSIONS
+       =================================================== */
+
+    @Test
+    void submission_paths() {
+
+        authenticate(user);
+
+        UUID regId = UUID.randomUUID();
+
+        ActivityRegistration reg = new ActivityRegistration();
+        reg.setActivityRegistrationId(regId);
+
+        when(activityRegistrationRepository
+                .findByActivityActivityIdAndUserUserId(activityId, userId))
+                .thenReturn(Optional.of(reg));
+
+        when(submissionRepository
+                .existsByActivityRegistration_ActivityRegistrationId(regId))
+                .thenReturn(false);
+
+        assertTrue(rbacService.canSubmitActivity(authentication, activityId, userId));
+    }
+
+    /* ===================================================
+       UTIL (FIXED)
+       =================================================== */
 
     @Test
     void getProgramIdByActivityId_paths() {
@@ -208,7 +295,7 @@ class RbacServiceTest {
                 rbacService.getProgramIdByActivityId(activityId)
         );
 
-        when(activityRepository.findById(any()))
+        when(activityRepository.findById(any(UUID.class)))
                 .thenReturn(Optional.empty());
 
         assertNull(

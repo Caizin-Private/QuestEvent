@@ -19,17 +19,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ActivityRegistrationService {
-
-    private static final String REGISTRATION_NOT_FOUND = "Registration not found";
-    private static final String USER_NOT_FOUND = "User not found";
-    private static final String ACTIVITY_NOT_FOUND = "Activity not found";
-    private static final String DUPLICATE_REGISTRATION =
-            "User already registered for this activity";
 
     private final ActivityRegistrationRepository activityRegistrationRepository;
     private final ActivityRepository activityRepository;
@@ -39,28 +34,48 @@ public class ActivityRegistrationService {
     public ActivityRegistrationResponseDTO registerParticipantForActivity(
             ActivityRegistrationRequestDTO request) {
 
+        log.debug(
+                "Register participant for activity requested | activityId={}",
+                request.getActivityId()
+        );
+
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()
                 || !(authentication.getPrincipal() instanceof UserPrincipal principal)) {
+            log.warn("Unauthorized activity registration attempt");
             throw new UnauthorizedException("Unauthorized");
         }
 
         Long userId = principal.userId();
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
+                .orElseThrow(() -> {
+                    log.error("User not found | userId={}", userId);
+                    return new UserNotFoundException("User not found");
+                });
 
         Activity activity = activityRepository.findById(request.getActivityId())
-                .orElseThrow(() -> new ActivityNotFoundException(ACTIVITY_NOT_FOUND));
+                .orElseThrow(() -> {
+                    log.error("Activity not found | activityId={}", request.getActivityId());
+                    return new ActivityNotFoundException("Activity not found");
+                });
 
         validateCompulsoryActivities(activity, userId);
 
         if (activityRegistrationRepository
                 .existsByActivity_ActivityIdAndUser_UserId(
                         activity.getActivityId(), userId)) {
-            throw new ResourceConflictException(DUPLICATE_REGISTRATION);
+
+            log.warn(
+                    "Duplicate activity registration blocked | activityId={} | userId={}",
+                    activity.getActivityId(),
+                    userId
+            );
+            throw new ResourceConflictException(
+                    "User already registered for this activity"
+            );
         }
 
         ActivityRegistration registration = new ActivityRegistration();
@@ -75,42 +90,62 @@ public class ActivityRegistrationService {
         ActivityRegistration saved =
                 activityRegistrationRepository.save(registration);
 
+        log.info(
+                "User registered for activity | registrationId={} | activityId={} | userId={}",
+                saved.getActivityRegistrationId(),
+                activity.getActivityId(),
+                userId
+        );
+
         return mapToResponseDTO(saved);
     }
 
     @Transactional(readOnly = true)
     public List<ActivityRegistrationDTO> getAllRegistrations() {
+        log.info("Fetching all activity registrations");
         return activityRegistrationRepository.findAll()
                 .stream()
                 .map(this::mapToDTO)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public ActivityRegistrationDTO getRegistrationById(UUID id) {
 
+        log.debug("Fetching activity registration | registrationId={}", id);
+
         ActivityRegistration registration =
                 activityRegistrationRepository.findById(id)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(REGISTRATION_NOT_FOUND));
+                        .orElseThrow(() -> {
+                            log.warn("Registration not found | registrationId={}", id);
+                            return new ResourceNotFoundException(
+                                    "Registration not found"
+                            );
+                        });
 
         return mapToDTO(registration);
     }
 
     @Transactional(readOnly = true)
     public List<ActivityRegistrationDTO> getRegistrationsByActivityId(UUID activityId) {
+
+        log.debug("Fetching registrations by activity | activityId={}", activityId);
+
         return activityRegistrationRepository.findByActivityActivityId(activityId)
                 .stream()
                 .map(this::mapToDTO)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<ActivityRegistrationDTO> getRegistrationsByUserId(Long userId) {
+
+        log.debug("Fetching registrations by user | userId={}", userId);
+
         return activityRegistrationRepository.findByUserUserId(userId)
                 .stream()
                 .map(this::mapToDTO)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -118,11 +153,17 @@ public class ActivityRegistrationService {
             UUID activityId,
             CompletionStatus status) {
 
+        log.debug(
+                "Fetching registrations by activity and status | activityId={} | status={}",
+                activityId,
+                status
+        );
+
         return activityRegistrationRepository
                 .findByActivityActivityIdAndCompletionStatus(activityId, status)
                 .stream()
                 .map(this::mapToDTO)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -130,11 +171,17 @@ public class ActivityRegistrationService {
             Long userId,
             CompletionStatus status) {
 
+        log.debug(
+                "Fetching registrations by user and status | userId={} | status={}",
+                userId,
+                status
+        );
+
         return activityRegistrationRepository
                 .findByUserUserIdAndCompletionStatus(userId, status)
                 .stream()
                 .map(this::mapToDTO)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Transactional
@@ -142,15 +189,31 @@ public class ActivityRegistrationService {
             UUID id,
             ActivityCompletionUpdateDTO updateDTO) {
 
+        log.debug(
+                "Updating completion status | registrationId={} | status={}",
+                id,
+                updateDTO.getCompletionStatus()
+        );
+
         ActivityRegistration registration =
                 activityRegistrationRepository.findById(id)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(REGISTRATION_NOT_FOUND));
+                        .orElseThrow(() -> {
+                            log.warn("Registration not found | registrationId={}", id);
+                            return new ResourceNotFoundException(
+                                    "Registration not found"
+                            );
+                        });
 
         registration.setCompletionStatus(updateDTO.getCompletionStatus());
 
         ActivityRegistration updated =
                 activityRegistrationRepository.save(registration);
+
+        log.info(
+                "Completion status updated | registrationId={} | status={}",
+                id,
+                updated.getCompletionStatus()
+        );
 
         return mapToDTO(updated);
     }
@@ -158,16 +221,31 @@ public class ActivityRegistrationService {
     @Transactional
     public void deleteRegistration(UUID id) {
 
+        log.debug("Delete activity registration requested | registrationId={}", id);
+
         if (!activityRegistrationRepository.existsById(id)) {
-            throw new ResourceNotFoundException(REGISTRATION_NOT_FOUND);
+            log.warn("Registration not found while deleting | registrationId={}", id);
+            throw new ResourceNotFoundException("Registration not found");
         }
 
         activityRegistrationRepository.deleteById(id);
+
+        log.info("Activity registration deleted | registrationId={}", id);
     }
 
     @Transactional(readOnly = true)
     public long getParticipantCountForActivity(UUID activityId) {
-        return activityRegistrationRepository.countByActivityActivityId(activityId);
+
+        long count =
+                activityRegistrationRepository.countByActivityActivityId(activityId);
+
+        log.info(
+                "Participant count fetched | activityId={} | count={}",
+                activityId,
+                count
+        );
+
+        return count;
     }
 
     private void validateCompulsoryActivities(Activity activity, Long userId) {
@@ -181,9 +259,10 @@ public class ActivityRegistrationService {
             return;
         }
 
+        UUID programId = program.getProgramId();
+
         List<Activity> compulsoryActivities =
-                activityRepository.findByProgram_ProgramIdAndIsCompulsoryTrue(
-                        program.getProgramId());
+                activityRepository.findByProgram_ProgramIdAndIsCompulsoryTrue(programId);
 
         for (Activity compulsory : compulsoryActivities) {
 
@@ -196,6 +275,11 @@ public class ActivityRegistrationService {
                             );
 
             if (!completed) {
+                log.warn(
+                        "Compulsory activity not completed | compulsoryActivityId={} | userId={}",
+                        compulsory.getActivityId(),
+                        userId
+                );
                 throw new InvalidOperationException(
                         "Complete compulsory activity '"
                                 + compulsory.getActivityName()
@@ -240,17 +324,37 @@ public class ActivityRegistrationService {
             UUID activityId,
             AddParticipantInActivityRequestDTO request) {
 
+        log.debug(
+                "Admin adding participant to activity | activityId={} | userId={}",
+                activityId,
+                request.getUserId()
+        );
+
         Activity activity = activityRepository.findById(activityId)
-                .orElseThrow(() -> new ActivityNotFoundException(ACTIVITY_NOT_FOUND));
+                .orElseThrow(() -> {
+                    log.error("Activity not found | activityId={}", activityId);
+                    return new ActivityNotFoundException("Activity not found");
+                });
 
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND));
+                .orElseThrow(() -> {
+                    log.error("User not found | userId={}", request.getUserId());
+                    return new UserNotFoundException("User not found");
+                });
 
         if (activityRegistrationRepository
                 .existsByActivity_ActivityIdAndUser_UserId(
                         activity.getActivityId(),
                         user.getUserId())) {
-            throw new ResourceConflictException(DUPLICATE_REGISTRATION);
+
+            log.warn(
+                    "Duplicate activity registration blocked (admin) | activityId={} | userId={}",
+                    activity.getActivityId(),
+                    user.getUserId()
+            );
+            throw new ResourceConflictException(
+                    "User already registered for this activity"
+            );
         }
 
         ActivityRegistration registration = new ActivityRegistration();
@@ -260,6 +364,13 @@ public class ActivityRegistrationService {
 
         ActivityRegistration saved =
                 activityRegistrationRepository.save(registration);
+
+        log.info(
+                "Participant added to activity | registrationId={} | activityId={} | userId={}",
+                saved.getActivityRegistrationId(),
+                activityId,
+                user.getUserId()
+        );
 
         return mapToResponseDTO(saved);
     }

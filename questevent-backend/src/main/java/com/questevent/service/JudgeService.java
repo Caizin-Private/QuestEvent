@@ -26,6 +26,4 @@ public interface JudgeService {
 
 
     void reviewSubmission(UUID submissionId);
-    void rejectSubmission(UUID submissionId, String rejectionReason);
-
 }

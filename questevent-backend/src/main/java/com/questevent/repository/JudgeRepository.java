@@ -11,10 +11,10 @@ import java.util.UUID;
 @Repository
 public interface JudgeRepository extends JpaRepository<Judge, UUID> {
 
-
+    // Find judge by linked user
     Optional<Judge> findByUserUserId(Long userId);
 
-
+    // Check if a user is already a judge
     boolean existsByUserUserId(Long userId);
 
     Optional<Judge> findByUser(User user);
