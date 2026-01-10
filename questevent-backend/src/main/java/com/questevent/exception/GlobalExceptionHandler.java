@@ -8,7 +8,6 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.security.access.AccessDeniedException;
 
 
 import java.time.Instant;
@@ -62,11 +61,6 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, ex.getMessage());
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiErrorDTO> handleAll(Exception ex) {
-        ex.printStackTrace();
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong");
-    }
 
     @ExceptionHandler(ProgramNotFoundException.class)
     public ResponseEntity<ApiErrorDTO> handleProgramNotFound(ProgramNotFoundException ex) {
@@ -90,12 +84,24 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiErrorDTO> handleResourceNotFound(ResourceNotFoundException ex) {
-        return build(HttpStatus.NOT_FOUND, ex.getMessage());    }
+        return build(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
 
     @ExceptionHandler(InvalidOperationException.class)
     public ResponseEntity<ApiErrorDTO> handleInvalidOperation(InvalidOperationException ex) {
         return build(HttpStatus.CONFLICT, ex.getMessage());
     }
+    @ExceptionHandler(JudgeNotFoundException.class)
+    public ResponseEntity<ApiErrorDTO> handleJudgeNotFound(JudgeNotFoundException ex) {
+        return build(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ApiErrorDTO> handleRuntime(RuntimeException ex) {
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong");
+    }
+
 
     private ResponseEntity<ApiErrorDTO> build(HttpStatus status, String message) {
 

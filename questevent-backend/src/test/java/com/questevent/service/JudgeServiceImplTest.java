@@ -6,6 +6,7 @@ import com.questevent.entity.*;
 import com.questevent.enums.CompletionStatus;
 import com.questevent.enums.ReviewStatus;
 import com.questevent.enums.Role;
+import com.questevent.exception.JudgeNotFoundException;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
 import com.questevent.repository.UserRepository;
@@ -164,14 +165,17 @@ class JudgeServiceImplTest {
         when(submissionRepository.findById(submission.getSubmissionId()))
                 .thenReturn(Optional.of(submission));
 
-        ResponseStatusException ex = assertThrows(
-                ResponseStatusException.class,
+        JudgeNotFoundException ex = assertThrows(
+                JudgeNotFoundException.class,
                 () -> judgeService.reviewSubmission(submission.getSubmissionId())
         );
 
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
-        assertEquals("Judge not assigned to this program", ex.getReason());
+        assertEquals(
+                "Judge not assigned to this program",
+                ex.getMessage()
+        );
     }
+
 
     @Test
     void reviewSubmission_shouldThrowIfInvalidRewardGems() {

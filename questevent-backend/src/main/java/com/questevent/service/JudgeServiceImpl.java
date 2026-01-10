@@ -6,6 +6,9 @@ import com.questevent.entity.*;
 import com.questevent.enums.CompletionStatus;
 import com.questevent.enums.ReviewStatus;
 import com.questevent.enums.Role;
+import com.questevent.exception.JudgeNotFoundException;
+import com.questevent.exception.UnauthorizedException;
+import com.questevent.exception.UserNotFoundException;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
 import com.questevent.repository.UserRepository;
@@ -40,9 +43,9 @@ public class JudgeServiceImpl implements JudgeService {
 
         if (authentication == null || !authentication.isAuthenticated()) {
             log.warn("Unauthorized access attempt to judge service");
-            throw new ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED, "Unauthorized");
+            throw new UnauthorizedException("Unauthorized");
         }
+
 
         Object principal = authentication.getPrincipal();
 
@@ -50,9 +53,9 @@ public class JudgeServiceImpl implements JudgeService {
             return userRepository.findById(p.userId())
                     .orElseThrow(() -> {
                         log.error("Authenticated user not found | userId={}", p.userId());
-                        return new ResponseStatusException(
-                                HttpStatus.NOT_FOUND, "User not found");
+                        return new UserNotFoundException("User not found");
                     });
+
         }
 
         log.warn("Invalid authentication principal in judge service");
@@ -218,13 +221,14 @@ public class JudgeServiceImpl implements JudgeService {
         Judge judge = program.getJudge();
         if (judge == null) {
             log.error(
-                    "Judge not assigned to program | programId={}",
+                    "Judge not found for program | programId={}",
                     program.getProgramId()
             );
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Judge not assigned to this program");
+            throw new JudgeNotFoundException(
+                    "Judge not assigned to this program"
+            );
         }
+
 
         Long rewardGems = activity.getRewardGems();
         if (rewardGems == null || rewardGems < 0) {
