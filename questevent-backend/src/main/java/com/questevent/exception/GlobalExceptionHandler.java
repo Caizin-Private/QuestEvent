@@ -101,6 +101,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiErrorDTO> handleRuntime(RuntimeException ex) {
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong");
     }
+    @ExceptionHandler(SubmissionNotFoundException.class)
+    public ResponseEntity<ApiErrorDTO> handleSubmissionNotFound(SubmissionNotFoundException ex) {
+        return build(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
 
 
     private ResponseEntity<ApiErrorDTO> build(HttpStatus status, String message) {

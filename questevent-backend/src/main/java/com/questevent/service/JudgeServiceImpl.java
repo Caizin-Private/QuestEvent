@@ -6,9 +6,7 @@ import com.questevent.entity.*;
 import com.questevent.enums.CompletionStatus;
 import com.questevent.enums.ReviewStatus;
 import com.questevent.enums.Role;
-import com.questevent.exception.JudgeNotFoundException;
-import com.questevent.exception.UnauthorizedException;
-import com.questevent.exception.UserNotFoundException;
+import com.questevent.exception.*;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
 import com.questevent.repository.UserRepository;
@@ -59,8 +57,7 @@ public class JudgeServiceImpl implements JudgeService {
         }
 
         log.warn("Invalid authentication principal in judge service");
-        throw new ResponseStatusException(
-                HttpStatus.UNAUTHORIZED, "Invalid authentication");
+        throw new UnauthorizedException("Invalid authentication");
     }
 
     @Override
@@ -198,8 +195,7 @@ public class JudgeServiceImpl implements JudgeService {
         ActivitySubmission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> {
                     log.warn("Submission not found | submissionId={}", submissionId);
-                    return new ResponseStatusException(
-                            HttpStatus.NOT_FOUND, "Submission not found");
+                    return new SubmissionNotFoundException("Submission not found");
                 });
 
         if (submission.getReviewStatus() != ReviewStatus.PENDING) {
@@ -208,9 +204,7 @@ public class JudgeServiceImpl implements JudgeService {
                     submissionId,
                     submission.getReviewStatus()
             );
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Submission already reviewed");
+            throw new InvalidOperationException("Submission already reviewed");
         }
 
         ActivityRegistration registration = submission.getActivityRegistration();
@@ -237,9 +231,7 @@ public class JudgeServiceImpl implements JudgeService {
                     activity.getActivityId(),
                     rewardGems
             );
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Invalid reward gems");
+            throw new InvalidOperationException("Invalid reward gems");
         }
 
         submission.setReviewedBy(judge);
