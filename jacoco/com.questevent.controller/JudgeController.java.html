@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,7 +30,6 @@ import java.util.UUID;
         description = &quot;APIs for judges to view and review activity submissions &quot; +
                 &quot;only for programs they are assigned to&quot;
 )
-@SecurityRequirement(name = &quot;bearerAuth&quot;)
 public class JudgeController {
 
 <span class="fc" id="L35">    private static final Logger log =</span>
@@ -56,17 +56,18 @@ public class JudgeController {
                     description = &quot;Unauthorized – JWT missing or invalid&quot;
             )
     })
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
     @GetMapping(&quot;/submissions/pending&quot;)
     public ResponseEntity&lt;List&lt;JudgeSubmissionDTO&gt;&gt; getPendingSubmissions(
             Authentication authentication
     ) {
-<span class="fc" id="L63">        log.info(&quot;Fetching pending submissions for judge&quot;);</span>
+<span class="fc" id="L64">        log.info(&quot;Fetching pending submissions for judge&quot;);</span>
 
-<span class="fc" id="L65">        List&lt;JudgeSubmissionDTO&gt; submissions =</span>
-<span class="fc" id="L66">                judgeService.getPendingSubmissionsForJudge(authentication);</span>
+<span class="fc" id="L66">        List&lt;JudgeSubmissionDTO&gt; submissions =</span>
+<span class="fc" id="L67">                judgeService.getPendingSubmissionsForJudge(authentication);</span>
 
-<span class="fc" id="L68">        log.debug(&quot;Pending submissions fetched, count={}&quot;, submissions.size());</span>
-<span class="fc" id="L69">        return ResponseEntity.ok(submissions);</span>
+<span class="fc" id="L69">        log.debug(&quot;Pending submissions fetched, count={}&quot;, submissions.size());</span>
+<span class="fc" id="L70">        return ResponseEntity.ok(submissions);</span>
     }
 
     @Operation(
@@ -88,6 +89,7 @@ public class JudgeController {
                     description = &quot;Activity not found&quot;
             )
     })
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
     @GetMapping(&quot;/submissions/pending/activity/{activityId}&quot;)
     public ResponseEntity&lt;List&lt;JudgeSubmissionDTO&gt;&gt; getPendingSubmissionsForActivity(
             @Parameter(
@@ -99,15 +101,15 @@ public class JudgeController {
             @PathVariable UUID activityId,
             Authentication authentication
     ) {
-<span class="fc" id="L102">        log.info(&quot;Fetching pending submissions for activityId={}&quot;, activityId);</span>
+<span class="fc" id="L104">        log.info(&quot;Fetching pending submissions for activityId={}&quot;, activityId);</span>
 
-<span class="fc" id="L104">        List&lt;JudgeSubmissionDTO&gt; submissions =</span>
-<span class="fc" id="L105">                judgeService.getPendingSubmissionsForActivity(activityId, authentication);</span>
+<span class="fc" id="L106">        List&lt;JudgeSubmissionDTO&gt; submissions =</span>
+<span class="fc" id="L107">                judgeService.getPendingSubmissionsForActivity(activityId, authentication);</span>
 
-<span class="fc" id="L107">        log.debug(&quot;Pending submissions fetched for activityId={}, count={}&quot;,</span>
-<span class="fc" id="L108">                activityId, submissions.size());</span>
+<span class="fc" id="L109">        log.debug(&quot;Pending submissions fetched for activityId={}, count={}&quot;,</span>
+<span class="fc" id="L110">                activityId, submissions.size());</span>
 
-<span class="fc" id="L110">        return ResponseEntity.ok(submissions);</span>
+<span class="fc" id="L112">        return ResponseEntity.ok(submissions);</span>
     }
 
     @Operation(
@@ -126,17 +128,18 @@ public class JudgeController {
                     description = &quot;Unauthorized&quot;
             )
     })
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
     @GetMapping(&quot;/submissions&quot;)
     public ResponseEntity&lt;List&lt;JudgeSubmissionDTO&gt;&gt; getAllSubmissions(
             Authentication authentication
     ) {
-<span class="fc" id="L133">        log.info(&quot;Fetching all submissions for judge&quot;);</span>
+<span class="fc" id="L136">        log.info(&quot;Fetching all submissions for judge&quot;);</span>
 
-<span class="fc" id="L135">        List&lt;JudgeSubmissionDTO&gt; submissions =</span>
-<span class="fc" id="L136">                judgeService.getAllSubmissionsForJudge(authentication);</span>
+<span class="fc" id="L138">        List&lt;JudgeSubmissionDTO&gt; submissions =</span>
+<span class="fc" id="L139">                judgeService.getAllSubmissionsForJudge(authentication);</span>
 
-<span class="fc" id="L138">        log.debug(&quot;All submissions fetched, count={}&quot;, submissions.size());</span>
-<span class="fc" id="L139">        return ResponseEntity.ok(submissions);</span>
+<span class="fc" id="L141">        log.debug(&quot;All submissions fetched, count={}&quot;, submissions.size());</span>
+<span class="fc" id="L142">        return ResponseEntity.ok(submissions);</span>
     }
 
     @Operation(
@@ -163,7 +166,8 @@ public class JudgeController {
                     description = &quot;Submission not found&quot;
             )
     })
-    @PostMapping(&quot;/submissions/{submissionId}/review&quot;)
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @PatchMapping(&quot;/submissions/{submissionId}/review&quot;)
     public ResponseEntity&lt;Void&gt; reviewSubmission(
             @Parameter(
                     name = &quot;submissionId&quot;,
@@ -173,12 +177,12 @@ public class JudgeController {
             )
             @PathVariable UUID submissionId
     ) {
-<span class="fc" id="L176">        log.info(&quot;Reviewing submission submissionId={}&quot;, submissionId);</span>
+<span class="fc" id="L180">        log.info(&quot;Reviewing submission submissionId={}&quot;, submissionId);</span>
 
-<span class="fc" id="L178">        judgeService.reviewSubmission(submissionId);</span>
+<span class="fc" id="L182">        judgeService.reviewSubmission(submissionId);</span>
 
-<span class="fc" id="L180">        log.info(&quot;Submission reviewed successfully submissionId={}&quot;, submissionId);</span>
-<span class="fc" id="L181">        return ResponseEntity.ok().build();</span>
+<span class="fc" id="L184">        log.info(&quot;Submission reviewed successfully submissionId={}&quot;, submissionId);</span>
+<span class="fc" id="L185">        return ResponseEntity.ok().build();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

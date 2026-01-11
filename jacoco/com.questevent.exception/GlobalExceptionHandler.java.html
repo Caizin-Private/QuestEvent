@@ -106,17 +106,38 @@ import java.util.Map;
 <span class="nc" id="L106">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
     }
 
+    @ExceptionHandler(InvalidLeaderboardRequestException.class)
+    public ResponseEntity&lt;ApiErrorDTO&gt; handleInvalidLeaderboardRequest(
+            InvalidLeaderboardRequestException ex) {
+
+<span class="nc" id="L113">        return build(HttpStatus.BAD_REQUEST, ex.getMessage());</span>
+    }
+
+    @ExceptionHandler(LeaderboardNotFoundException.class)
+    public ResponseEntity&lt;ApiErrorDTO&gt; handleLeaderboardNotFound(
+            LeaderboardNotFoundException ex) {
+
+<span class="nc" id="L120">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
+    }
+
+    @ExceptionHandler(LeaderboardFetchFailedException.class)
+    public ResponseEntity&lt;ApiErrorDTO&gt; handleLeaderboardFetchFailed(
+            LeaderboardFetchFailedException ex) {
+
+<span class="nc" id="L127">        return build(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());</span>
+    }
+
 
 
     private ResponseEntity&lt;ApiErrorDTO&gt; build(HttpStatus status, String message) {
 
-<span class="nc" id="L113">        ApiErrorDTO error = new ApiErrorDTO(</span>
-<span class="nc" id="L114">                status.value(),</span>
+<span class="nc" id="L134">        ApiErrorDTO error = new ApiErrorDTO(</span>
+<span class="nc" id="L135">                status.value(),</span>
                 message,
-<span class="nc" id="L116">                Instant.now()</span>
+<span class="nc" id="L137">                Instant.now()</span>
         );
 
-<span class="nc" id="L119">        return ResponseEntity.status(status).body(error);</span>
+<span class="nc" id="L140">        return ResponseEntity.status(status).body(error);</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
