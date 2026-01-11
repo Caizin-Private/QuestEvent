@@ -2,6 +2,7 @@ package com.questevent.controller;
 
 import com.questevent.dto.UserPrincipal;
 import com.questevent.entity.User;
+import com.questevent.exception.AuthTokenException;
 import com.questevent.repository.UserRepository;
 import com.questevent.service.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,6 +28,9 @@ public class AuthTokenController {
 
     private static final Logger log =
             LoggerFactory.getLogger(AuthTokenController.class);
+
+    private static final String USER_ID = "userId";
+    private static final String EMAIL = "email";
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
@@ -71,8 +75,8 @@ public class AuthTokenController {
         response.put("refreshToken", refreshToken);
         response.put("tokenType", "Bearer");
         response.put("expiresIn", 300);
-        response.put("userId", principal.userId());
-        response.put("email", principal.email());
+        response.put(USER_ID, principal.userId());
+        response.put(EMAIL, principal.email());
         response.put("role", principal.role().name());
 
         return response;
@@ -80,7 +84,8 @@ public class AuthTokenController {
 
     @PostMapping("/refresh")
     @Operation(summary = "Refresh access token")
-    public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> body) {
+    public ResponseEntity<Map<String, Object>> refreshToken(
+            @RequestBody Map<String, String> body) {
 
         log.info("Refresh token request received");
 
@@ -107,7 +112,7 @@ public class AuthTokenController {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> {
                     log.error("User not found during refresh for email={}", email);
-                    return new RuntimeException("User not found");
+                    return new AuthTokenException("User not found during token refresh");
                 });
 
         UserPrincipal principal =
@@ -137,8 +142,8 @@ public class AuthTokenController {
         log.info("Current user info requested userId={}", principal.userId());
 
         return Map.of(
-                "userId", principal.userId(),
-                "email", principal.email(),
+                USER_ID, principal.userId(),
+                EMAIL, principal.email(),
                 "role", principal.role().name(),
                 "authenticated", authentication.isAuthenticated()
         );
@@ -160,8 +165,8 @@ public class AuthTokenController {
         response.put("authorities", authentication.getAuthorities());
 
         if (authentication.getPrincipal() instanceof UserPrincipal p) {
-            response.put("userId", p.userId());
-            response.put("email", p.email());
+            response.put(USER_ID, p.userId());
+            response.put(EMAIL, p.email());
             response.put("role", p.role().name());
         }
 
@@ -201,7 +206,7 @@ public class AuthTokenController {
             User user = userRepository.findByEmail(ud.getUsername())
                     .orElseThrow(() -> {
                         log.error("User not found for username={}", ud.getUsername());
-                        return new RuntimeException("User not found");
+                        return new AuthTokenException("User not found for username");
                     });
 
             return new UserPrincipal(user.getUserId(), user.getEmail(), user.getRole());
@@ -210,6 +215,6 @@ public class AuthTokenController {
         log.error("Unsupported principal type: {}",
                 authentication.getPrincipal().getClass().getName());
 
-        throw new RuntimeException("Unable to extract user principal");
+        throw new AuthTokenException("Unable to extract user principal");
     }
 }

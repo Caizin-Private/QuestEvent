@@ -1,7 +1,6 @@
 package com.questevent.controller;
 
 import com.questevent.entity.User;
-import com.questevent.entity.UserWallet;
 import com.questevent.enums.Department;
 import com.questevent.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,7 +12,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.UUID;
 
 @Controller
 public class AuthController {

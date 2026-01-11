@@ -3,6 +3,8 @@ package com.questevent.service;
 import com.questevent.entity.ActivityRegistration;
 import com.questevent.entity.ActivitySubmission;
 import com.questevent.enums.CompletionStatus;
+import com.questevent.exception.ActivityAlreadyCompletedException;
+import com.questevent.exception.DuplicateActivitySubmissionException;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
 import jakarta.transaction.Transactional;
@@ -47,7 +49,9 @@ public class SubmissionServiceImpl implements SubmissionService {
                     userId,
                     registration.getActivityRegistrationId()
             );
-            throw new RuntimeException("Activity already completed. Submission not allowed.");
+            throw new ActivityAlreadyCompletedException(
+                    "Activity already completed. Submission not allowed."
+            );
         }
 
         boolean alreadySubmitted = submissionRepository
@@ -62,7 +66,9 @@ public class SubmissionServiceImpl implements SubmissionService {
                     userId,
                     registration.getActivityRegistrationId()
             );
-            throw new RuntimeException("Submission already exists for this registration");
+            throw new DuplicateActivitySubmissionException(
+                    "Submission already exists for this registration"
+            );
         }
 
         ActivitySubmission submission = new ActivitySubmission();

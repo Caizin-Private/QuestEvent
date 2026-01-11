@@ -3,6 +3,7 @@ package com.questevent.service;
 import com.questevent.entity.User;
 import com.questevent.entity.UserWallet;
 import com.questevent.enums.Department;
+import com.questevent.exception.UserNotLoggedInException;
 import com.questevent.repository.UserRepository;
 import com.questevent.repository.UserWalletRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -44,7 +45,7 @@ public class AuthService {
 
         if (session == null || session.getAttribute(SESSION_USER_ID) == null) {
             log.warn("Unauthorized access attempt — no session or userId");
-            throw new RuntimeException("User not logged in");
+            throw new UserNotLoggedInException("User not logged in");
         }
 
         Long userId = (Long) session.getAttribute(SESSION_USER_ID);
@@ -87,13 +88,18 @@ public class AuthService {
         log.debug("User profile updated successfully userId={}", userId);
 
         userWalletRepository.findByUserUserId(userId)
-                .orElseGet(() -> {
-                    log.info("Wallet not found, creating wallet userId={}",
-                            userId);
-                    UserWallet wallet = new UserWallet();
-                    wallet.setUser(user);
-                    wallet.setGems(0L);
-                    return userWalletRepository.save(wallet);
-                });
+                .ifPresentOrElse(
+                        wallet -> {
+                            // wallet already exists, nothing to do
+                        },
+                        () -> {
+                            log.info("Wallet not found, creating wallet userId={}",
+                                    userId);
+                            UserWallet newWallet = new UserWallet();
+                            newWallet.setUser(user);
+                            newWallet.setGems(0L);
+                            userWalletRepository.save(newWallet);
+                        }
+                );
     }
 }

@@ -2,7 +2,6 @@ package com.questevent.service;
 
 import com.questevent.entity.User;
 import com.questevent.enums.Department;
-import com.questevent.enums.Role;
 import com.questevent.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

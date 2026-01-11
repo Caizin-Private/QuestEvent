@@ -45,11 +45,10 @@ public class ProgramController {
             summary = "Create a new program",
             description = "Creates a new program with the provided details"
     )
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Program created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid input"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
+
+    @ApiResponse(responseCode = "201", description = "Program created successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid input")
+    @ApiResponse(responseCode = "401", description = "Unauthorized")
     @PostMapping
     public ResponseEntity<ProgramResponseDTO> createProgram(@RequestBody ProgramRequestDTO dto) {
         log.info("Creating new program with title='{}'", dto.getProgramTitle());

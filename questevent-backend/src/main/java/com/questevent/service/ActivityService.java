@@ -19,6 +19,7 @@ import java.util.UUID;
 @Service
 public class ActivityService {
 
+    private static final String PROGRAM_NOT_FOUND = "Program not found";
     private final ActivityRepository activityRepository;
     private final ProgramRepository programRepository;
 
@@ -37,7 +38,7 @@ public class ActivityService {
         Program program = programRepository.findById(programId)
                 .orElseThrow(() -> {
                     log.error("Program not found while creating activity | programId={}", programId);
-                    return new ProgramNotFoundException("Program not found");
+                    return new ProgramNotFoundException(PROGRAM_NOT_FOUND );
 
                 });
 
@@ -99,7 +100,7 @@ public class ActivityService {
 
         if (!programRepository.existsById(programId)) {
             log.warn("Program not found while fetching activities | programId={}", programId);
-            throw new ProgramNotFoundException("Program not found");
+            throw new ProgramNotFoundException(PROGRAM_NOT_FOUND );
         }
 
         List<Activity> activities =
@@ -158,7 +159,7 @@ public class ActivityService {
                     "Program not found while fetching compulsory activities | programId={}",
                     programId
             );
-            throw new ProgramNotFoundException("Program not found");
+            throw new ProgramNotFoundException(PROGRAM_NOT_FOUND );
         }
 
         List<Activity> activities =

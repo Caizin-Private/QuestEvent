@@ -159,26 +159,21 @@ public class RbacService {
         ActivityRegistration registration = activityRegistrationRepository.findById(registrationId).orElse(null);
         if (registration == null) return false;
 
-        if (registration.getUser() != null &&
-                user.getUserId().equals(registration.getUser().getUserId())) {
-            return true;
-        }
+        return (registration.getUser() != null &&
+                user.getUserId().equals(registration.getUser().getUserId()))
+                ||
+                (registration.getActivity() != null &&
+                        registration.getActivity().getProgram() != null &&
+                        registration.getActivity().getProgram().getUser() != null &&
+                        user.getUserId().equals(
+                                registration.getActivity().getProgram().getUser().getUserId()))
+                ||
+                (registration.getActivity() != null &&
+                        registration.getActivity().getProgram() != null &&
+                        registration.getActivity().getProgram().getJudge() != null &&
+                        user.getUserId().equals(
+                                registration.getActivity().getProgram().getJudge().getUser().getUserId()));
 
-        if (registration.getActivity() != null &&
-                registration.getActivity().getProgram() != null &&
-                registration.getActivity().getProgram().getUser() != null &&
-                user.getUserId().equals(registration.getActivity().getProgram().getUser().getUserId())) {
-            return true;
-        }
-
-        if (registration.getActivity() != null &&
-                registration.getActivity().getProgram() != null &&
-                registration.getActivity().getProgram().getJudge() != null &&
-                user.getUserId().equals(registration.getActivity().getProgram().getJudge().getUser().getUserId())) {
-            return true;
-        }
-
-        return false;
     }
 
     public boolean canAccessProgramRegistration(Authentication authentication, UUID registrationId) {
@@ -192,24 +187,19 @@ public class RbacService {
         ProgramRegistration registration = programRegistrationRepository.findById(registrationId).orElse(null);
         if (registration == null) return false;
 
-        if (registration.getUser() != null &&
-                user.getUserId().equals(registration.getUser().getUserId())) {
-            return true;
-        }
+        return (registration.getUser() != null &&
+                user.getUserId().equals(registration.getUser().getUserId()))
+                ||
+                (registration.getProgram() != null &&
+                        registration.getProgram().getUser() != null &&
+                        user.getUserId().equals(
+                                registration.getProgram().getUser().getUserId()))
+                ||
+                (registration.getProgram() != null &&
+                        registration.getProgram().getJudge() != null &&
+                        user.getUserId().equals(
+                                registration.getProgram().getJudge().getUser().getUserId()));
 
-        if (registration.getProgram() != null &&
-                registration.getProgram().getUser() != null &&
-                user.getUserId().equals(registration.getProgram().getUser().getUserId())) {
-            return true;
-        }
-
-        if (registration.getProgram() != null &&
-                registration.getProgram().getJudge() != null &&
-                user.getUserId().equals(registration.getProgram().getJudge().getUser().getUserId())) {
-            return true;
-        }
-
-        return false;
     }
 
     public boolean canVerifySubmission(Authentication authentication, UUID submissionId) {
@@ -339,16 +329,11 @@ public class RbacService {
             return false;
         }
 
-        if (program.getUser().getUserId().equals(user.getUserId())) {
-            return true;
-        }
+        return program.getUser().getUserId().equals(user.getUserId())
+                ||
+                (program.getJudge() != null &&
+                        program.getJudge().getUser().getUserId().equals(user.getUserId()));
 
-        if (program.getJudge() != null &&
-                program.getJudge().getUser().getUserId().equals(user.getUserId())) {
-            return true;
-        }
-
-        return false;
     }
 
     public boolean canRegisterForProgram(

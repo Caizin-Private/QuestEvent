@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ActivityRegistrationService {
+    private static final String REGISTRATION_NOT_FOUND = "Registration not found";
 
     private final ActivityRegistrationRepository activityRegistrationRepository;
     private final ActivityRepository activityRepository;
@@ -106,7 +107,7 @@ public class ActivityRegistrationService {
         return activityRegistrationRepository.findAll()
                 .stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -119,7 +120,7 @@ public class ActivityRegistrationService {
                         .orElseThrow(() -> {
                             log.warn("Registration not found | registrationId={}", id);
                             return new ResourceNotFoundException(
-                                    "Registration not found"
+                                    REGISTRATION_NOT_FOUND
                             );
                         });
 
@@ -134,7 +135,7 @@ public class ActivityRegistrationService {
         return activityRegistrationRepository.findByActivityActivityId(activityId)
                 .stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -145,7 +146,7 @@ public class ActivityRegistrationService {
         return activityRegistrationRepository.findByUserUserId(userId)
                 .stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -163,7 +164,7 @@ public class ActivityRegistrationService {
                 .findByActivityActivityIdAndCompletionStatus(activityId, status)
                 .stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -181,7 +182,7 @@ public class ActivityRegistrationService {
                 .findByUserUserIdAndCompletionStatus(userId, status)
                 .stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional
@@ -200,7 +201,7 @@ public class ActivityRegistrationService {
                         .orElseThrow(() -> {
                             log.warn("Registration not found | registrationId={}", id);
                             return new ResourceNotFoundException(
-                                    "Registration not found"
+                                    REGISTRATION_NOT_FOUND
                             );
                         });
 
@@ -225,7 +226,7 @@ public class ActivityRegistrationService {
 
         if (!activityRegistrationRepository.existsById(id)) {
             log.warn("Registration not found while deleting | registrationId={}", id);
-            throw new ResourceNotFoundException("Registration not found");
+            throw new ResourceNotFoundException(REGISTRATION_NOT_FOUND);
         }
 
         activityRegistrationRepository.deleteById(id);

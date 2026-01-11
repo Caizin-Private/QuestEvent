@@ -29,6 +29,11 @@ import java.util.UUID;
 @Service
 public class ProgramService {
 
+    private static final String USER_NOT_FOUND = "User not found";
+    private static final String PROGRAM_NOT_FOUND = "Program not found | programId={}";
+    private static final String PROGRAM_NOT_FOUND_exception = "Program not found";
+
+
     private final ProgramRepository programRepository;
     private final UserRepository userRepository;
     private final JudgeRepository judgeRepository;
@@ -64,7 +69,7 @@ public class ProgramService {
         User hostUser = userRepository.findById(p.userId())
                 .orElseThrow(() -> {
                     log.error("Host user not found | userId={}", p.userId());
-                    return new UserNotFoundException("User not found");
+                    return new UserNotFoundException(USER_NOT_FOUND );
                 });
 
         User judgeUser = userRepository.findById(dto.getJudgeUserId())
@@ -119,13 +124,13 @@ public class ProgramService {
         User hostUser = userRepository.findById(p.userId())
                 .orElseThrow(() -> {
                     log.error("Host user not found | userId={}", p.userId());
-                    return new UserNotFoundException("User not found");
+                    return new UserNotFoundException(USER_NOT_FOUND );
                 });
 
         Program existingProgram = programRepository.findById(programId)
                 .orElseThrow(() -> {
-                    log.error("Program not found | programId={}", programId);
-                    return new ProgramNotFoundException("Program not found");
+                    log.error(PROGRAM_NOT_FOUND, programId);
+                    return new ProgramNotFoundException(PROGRAM_NOT_FOUND_exception);
                 });
 
         if (!existingProgram.getUser().getUserId().equals(hostUser.getUserId())) {
@@ -187,7 +192,7 @@ public class ProgramService {
         User hostUser = getCurrentUser();
         if (hostUser == null) {
             log.warn("User not found while fetching my programs");
-            throw new UserNotFoundException("User not found");
+            throw new UserNotFoundException(USER_NOT_FOUND );
         }
 
         log.info("Fetching programs created by user | userId={}", hostUser.getUserId());
@@ -198,8 +203,8 @@ public class ProgramService {
         log.debug("Fetching program by id | programId={}", programId);
         return programRepository.findById(programId)
                 .orElseThrow(() -> {
-                    log.warn("Program not found | programId={}", programId);
-                    return new ProgramNotFoundException("Program not found");
+                    log.warn(PROGRAM_NOT_FOUND, programId);
+                    return new ProgramNotFoundException(PROGRAM_NOT_FOUND_exception);
                 });
     }
 
@@ -215,13 +220,13 @@ public class ProgramService {
         User hostUser = getCurrentUser();
         if (hostUser == null) {
             log.warn("User not found while deleting program | programId={}", programId);
-            throw new UserNotFoundException("User not found");
+            throw new UserNotFoundException(USER_NOT_FOUND);
         }
 
         Program program = programRepository.findById(programId)
                 .orElseThrow(() -> {
-                    log.warn("Program not found | programId={}", programId);
-                    return new ProgramNotFoundException("Program not found");
+                    log.warn(PROGRAM_NOT_FOUND, programId);
+                    return new ProgramNotFoundException(PROGRAM_NOT_FOUND_exception);
                 });
 
         if (!program.getUser().getUserId().equals(hostUser.getUserId())) {
@@ -246,7 +251,7 @@ public class ProgramService {
         User currentUser = getCurrentUser();
         if (currentUser == null) {
             log.warn("User not found while fetching completed programs");
-            throw new UserNotFoundException("User not found");
+            throw new UserNotFoundException(USER_NOT_FOUND );
         }
 
         List<ProgramRegistration> registrations =
@@ -282,7 +287,7 @@ public class ProgramService {
         User currentUser = getCurrentUser();
         if (currentUser == null) {
             log.warn("User not found while fetching judge programs");
-            throw new UserNotFoundException("User not found");
+            throw new UserNotFoundException(USER_NOT_FOUND );
         }
 
         log.info("Fetching programs where user is judge | userId={}", currentUser.getUserId());
@@ -293,7 +298,7 @@ public class ProgramService {
         User currentUser = getCurrentUser();
         if (currentUser == null) {
             log.warn("User not found while fetching department programs");
-            throw new UserNotFoundException("User not found");
+            throw new UserNotFoundException(USER_NOT_FOUND );
         }
 
         log.info(
@@ -311,7 +316,7 @@ public class ProgramService {
         User currentUser = getCurrentUser();
         if (currentUser == null) {
             log.warn("User not found while fetching draft programs");
-            throw new UserNotFoundException("User not found");
+            throw new UserNotFoundException(USER_NOT_FOUND );
         }
 
         log.info("Fetching draft programs | hostUserId={}", currentUser.getUserId());
@@ -328,13 +333,13 @@ public class ProgramService {
         User currentUser = getCurrentUser();
         if (currentUser == null) {
             log.warn("User not found while changing program status | programId={}", programId);
-            throw new UserNotFoundException("User not found");
+            throw new UserNotFoundException(USER_NOT_FOUND );
         }
 
         Program program = programRepository.findById(programId)
                 .orElseThrow(() -> {
-                    log.warn("Program not found | programId={}", programId);
-                    return new ProgramNotFoundException("Program not found");
+                    log.warn(PROGRAM_NOT_FOUND, programId);
+                    return new ProgramNotFoundException(PROGRAM_NOT_FOUND_exception);
                 });
 
         if (!program.getUser().getUserId().equals(currentUser.getUserId())) {
