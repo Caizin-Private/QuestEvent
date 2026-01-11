@@ -122,24 +122,29 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         try {
             if (!jwtService.validateToken(token)) return false;
 
-            UserPrincipal userPrincipal = jwtService.extractUserPrincipal(token);
+            Authentication existingAuth = SecurityContextHolder.getContext().getAuthentication();
 
-            log.info("✅ JWT AUTH - Path: {}, User: {} (ID: {})",
-                    path, userPrincipal.email(), userPrincipal.userId());
+            if (existingAuth == null) {
 
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            userPrincipal,
-                            null,
-                            List.of(new SimpleGrantedAuthority("ROLE_" + userPrincipal.role().name()))
-                    );
+                UserPrincipal userPrincipal = jwtService.extractUserPrincipal(token);
 
-            if (SecurityContextHolder.getContext().getAuthentication() == null) {
+                String roleName = "ROLE_" + userPrincipal.role().name();
+
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                userPrincipal,
+                                null,
+                                List.of(new SimpleGrantedAuthority(roleName))
+                        );
+
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                log.info("✅ JWT AUTH - Path: {}, User: {} (ID: {})",
+                        path, userPrincipal.email(), userPrincipal.userId());
             }
 
             request.setAttribute(AUTH_SOURCE, JWT_BEARER_TOKEN);
-            request.setAttribute("JWT_USER_ID", userPrincipal.userId());
+            request.setAttribute("JWT_USER_ID", getUserIdFromContext());
 
             filterChain.doFilter(request, response);
             return true;
@@ -152,6 +157,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
             return false;
         }
+    }
+
+    private Long getUserIdFromContext() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof UserPrincipal principal) {
+            return principal.userId();
+        }
+        return null;
     }
 
     private boolean isUserAlreadyAuthenticated() {
@@ -194,11 +207,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 user.getRole()
         );
 
+        String roleName = "ROLE_" + user.getRole().name();
+
         UsernamePasswordAuthenticationToken newAuth =
                 new UsernamePasswordAuthenticationToken(
                         principal,
                         null,
-                        List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
+                        List.of(new SimpleGrantedAuthority(roleName))
                 );
 
         request.setAttribute(AUTH_SOURCE, OAUTH2_SESSION);
