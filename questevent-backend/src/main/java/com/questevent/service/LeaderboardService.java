@@ -1,6 +1,8 @@
 package com.questevent.service;
 
 import com.questevent.dto.LeaderboardDTO;
+import com.questevent.exception.InvalidLeaderboardRequestException;
+import com.questevent.exception.LeaderboardNotFoundException;
 import com.questevent.repository.LeaderboardRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +27,7 @@ public class LeaderboardService {
 
         if (leaderboard == null || leaderboard.isEmpty()) {
             log.warn("Global leaderboard is empty");
-            throw new IllegalStateException("Global leaderboard is empty");
+            throw new LeaderboardNotFoundException("Global leaderboard is empty");
         }
 
         log.info(
@@ -45,7 +47,7 @@ public class LeaderboardService {
 
         if (programId == null ) {
             log.error("Invalid programId supplied for leaderboard | programId={}", programId);
-            throw new IllegalArgumentException("Program ID must be greater than zero");
+            throw new InvalidLeaderboardRequestException("Program ID must be greater than zero");
         }
 
         List<LeaderboardDTO> leaderboard =
@@ -56,7 +58,7 @@ public class LeaderboardService {
                     "Program leaderboard empty | programId={}",
                     programId
             );
-            throw new IllegalStateException(
+            throw new LeaderboardNotFoundException(
                     "No leaderboard data found for programId: " + programId
             );
         }

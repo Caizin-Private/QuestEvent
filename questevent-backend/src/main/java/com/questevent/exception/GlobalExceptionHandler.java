@@ -106,6 +106,27 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
+    @ExceptionHandler(InvalidLeaderboardRequestException.class)
+    public ResponseEntity<ApiErrorDTO> handleInvalidLeaderboardRequest(
+            InvalidLeaderboardRequestException ex) {
+
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(LeaderboardNotFoundException.class)
+    public ResponseEntity<ApiErrorDTO> handleLeaderboardNotFound(
+            LeaderboardNotFoundException ex) {
+
+        return build(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(LeaderboardFetchFailedException.class)
+    public ResponseEntity<ApiErrorDTO> handleLeaderboardFetchFailed(
+            LeaderboardFetchFailedException ex) {
+
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+    }
+
 
 
     private ResponseEntity<ApiErrorDTO> build(HttpStatus status, String message) {
