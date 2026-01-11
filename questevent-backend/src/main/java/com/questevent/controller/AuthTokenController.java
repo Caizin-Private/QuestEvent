@@ -26,8 +26,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthTokenController {
 
-    private static final Logger log =
-            LoggerFactory.getLogger(AuthTokenController.class);
+    private static final Logger log = LoggerFactory.getLogger(AuthTokenController.class);
 
     private static final String USER_ID = "userId";
     private static final String EMAIL = "email";
@@ -38,7 +37,9 @@ public class AuthTokenController {
     @GetMapping
     public Map<String, Object> authInfo() {
 
-        log.info("Auth info endpoint accessed");
+        if (log.isInfoEnabled()) {
+            log.info("Auth info endpoint accessed");
+        }
 
         return Map.of(
                 "message", "JWT Authentication API",
@@ -57,18 +58,20 @@ public class AuthTokenController {
     @Operation(summary = "Generate JWT access + refresh token")
     public Map<String, Object> generateTokens() {
 
-        Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         UserPrincipal principal = extractPrincipal(authentication);
 
-        log.info("Generating tokens for userId={} email={}",
-                principal.userId(), principal.email());
+        if (log.isInfoEnabled()) {
+            log.info("Generating tokens for userId={} email={}", principal.userId(), principal.email());
+        }
 
         String accessToken = jwtService.generateAccessToken(principal);
         String refreshToken = jwtService.generateRefreshToken(principal);
 
-        log.debug("Tokens generated successfully for userId={}", principal.userId());
+        if (log.isDebugEnabled()) {
+            log.debug("Tokens generated successfully for userId={}", principal.userId());
+        }
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("accessToken", accessToken);
@@ -84,43 +87,51 @@ public class AuthTokenController {
 
     @PostMapping("/refresh")
     @Operation(summary = "Refresh access token")
-    public ResponseEntity<Map<String, Object>> refreshToken(
-            @RequestBody Map<String, String> body) {
+    public ResponseEntity<Map<String, Object>> refreshToken(@RequestBody Map<String, String> body) {
 
-        log.info("Refresh token request received");
+        if (log.isInfoEnabled()) {
+            log.info("Refresh token request received");
+        }
 
         String refreshToken = body.get("refreshToken");
 
         if (refreshToken == null) {
-            log.warn("Refresh token missing in request body");
+            if (log.isWarnEnabled()) {
+                log.warn("Refresh token missing in request body");
+            }
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Invalid or expired refresh token"));
         }
 
-        if (!jwtService.validateToken(refreshToken)
-                || !jwtService.isRefreshToken(refreshToken)) {
-
-            log.warn("Invalid refresh token received");
+        if (!jwtService.validateToken(refreshToken) || !jwtService.isRefreshToken(refreshToken)) {
+            if (log.isWarnEnabled()) {
+                log.warn("Invalid refresh token received");
+            }
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Invalid or expired refresh token"));
         }
 
         String email = jwtService.extractUsername(refreshToken);
 
-        log.info("Refresh token validated for email={}", email);
+        if (log.isInfoEnabled()) {
+            log.info("Refresh token validated for email={}", email);
+        }
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> {
-                    log.error("User not found during refresh for email={}", email);
+                    if (log.isErrorEnabled()) {
+                        log.error("User not found during refresh for email={}", email);
+                    }
                     return new AuthTokenException("User not found during token refresh");
                 });
 
-        UserPrincipal principal =
-                new UserPrincipal(user.getUserId(), user.getEmail(), user.getRole());
+        UserPrincipal principal = new UserPrincipal(user.getUserId(), user.getEmail(), user.getRole());
 
         String newAccessToken = jwtService.generateAccessToken(principal);
 
-        log.info("New access token issued for userId={}", user.getUserId());
+        if (log.isInfoEnabled()) {
+            log.info("New access token issued for userId={}", user.getUserId());
+        }
 
         return ResponseEntity.ok(Map.of(
                 "accessToken", newAccessToken,
@@ -134,12 +145,13 @@ public class AuthTokenController {
     @SecurityRequirement(name = "bearerAuth")
     public Map<String, Object> getCurrentUser() {
 
-        Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         UserPrincipal principal = extractPrincipal(authentication);
 
-        log.info("Current user info requested userId={}", principal.userId());
+        if (log.isInfoEnabled()) {
+            log.info("Current user info requested userId={}", principal.userId());
+        }
 
         return Map.of(
                 USER_ID, principal.userId(),
@@ -153,11 +165,11 @@ public class AuthTokenController {
     @PreAuthorize("isAuthenticated()")
     public Map<String, Object> testJwt() {
 
-        Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        log.info("JWT test endpoint hit, authenticated={}",
-                authentication.isAuthenticated());
+        if (log.isInfoEnabled()) {
+            log.info("JWT test endpoint hit, authenticated={}", authentication.isAuthenticated());
+        }
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("status", "JWT authentication working ✅");
@@ -179,15 +191,14 @@ public class AuthTokenController {
 
         String authSource = (String) request.getAttribute("AUTH_SOURCE");
 
-        log.info("Auth source verification requested, source={}",
-                authSource != null ? authSource : "UNKNOWN");
+        if (log.isInfoEnabled()) {
+            log.info("Auth source verification requested, source={}",
+                    authSource != null ? authSource : "UNKNOWN");
+        }
 
         Map<String, Object> response = new LinkedHashMap<>();
-        response.put("authenticationSource",
-                authSource != null ? authSource : "UNKNOWN");
-
-        response.put("hasAuthorizationHeader",
-                request.getHeader("Authorization") != null);
+        response.put("authenticationSource", authSource != null ? authSource : "UNKNOWN");
+        response.put("hasAuthorizationHeader", request.getHeader("Authorization") != null);
 
         return response;
     }
@@ -201,19 +212,25 @@ public class AuthTokenController {
         if (authentication.getPrincipal()
                 instanceof org.springframework.security.core.userdetails.UserDetails ud) {
 
-            log.debug("Extracting user from UserDetails username={}", ud.getUsername());
+            if (log.isDebugEnabled()) {
+                log.debug("Extracting user from UserDetails username={}", ud.getUsername());
+            }
 
             User user = userRepository.findByEmail(ud.getUsername())
                     .orElseThrow(() -> {
-                        log.error("User not found for username={}", ud.getUsername());
+                        if (log.isErrorEnabled()) {
+                            log.error("User not found for username={}", ud.getUsername());
+                        }
                         return new AuthTokenException("User not found for username");
                     });
 
             return new UserPrincipal(user.getUserId(), user.getEmail(), user.getRole());
         }
 
-        log.error("Unsupported principal type: {}",
-                authentication.getPrincipal().getClass().getName());
+        if (log.isErrorEnabled()) {
+            log.error("Unsupported principal type: {}",
+                    authentication.getPrincipal().getClass().getName());
+        }
 
         throw new AuthTokenException("Unable to extract user principal");
     }
