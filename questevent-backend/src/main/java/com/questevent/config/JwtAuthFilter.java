@@ -139,8 +139,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                log.info("✅ JWT AUTH - Path: {}, User: {} (ID: {})",
-                        path, userPrincipal.email(), userPrincipal.userId());
+                if (log.isInfoEnabled()) {
+                    log.info("✅ JWT AUTH - Path: {}, User: {} (ID: {})",
+                            path, userPrincipal.email(), userPrincipal.userId());
+                }
             }
 
             request.setAttribute(AUTH_SOURCE, JWT_BEARER_TOKEN);
@@ -198,8 +200,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         User user = userOpt.get();
 
-        log.info("🔵 OAUTH2 SESSION AUTH - User: {} (ID: {})",
-                user.getEmail(), user.getUserId());
+        if (log.isInfoEnabled()) {
+            log.info("🔵 OAUTH2 SESSION AUTH - User: {} (ID: {})",
+                    user.getEmail(), user.getUserId());
+        }
 
         UserPrincipal principal = new UserPrincipal(
                 user.getUserId(),
