@@ -20,7 +20,8 @@ public class CorsConfig {
                 "http://d33m3dyxosqoxf.cloudfront.net",
                 "https://d33m3dyxosqoxf.cloudfront.net",
                 "http://questeventutest-env.eba-k6h77htc.us-west-2.elasticbeanstalk.com",
-                "https://questeventutest-env.eba-k6h77htc.us-west-2.elasticbeanstalk.com"
+                "https://questeventutest-env.eba-k6h77htc.us-west-2.elasticbeanstalk.com",
+                "https://www.questevent.online", "https://questevent.online"
 
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));

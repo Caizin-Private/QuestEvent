@@ -151,23 +151,26 @@ class ProgramServiceTest {
         Program existingProgram = new Program();
         existingProgram.setProgramId(programId);
         existingProgram.setProgramTitle("Old Title");
+        existingProgram.setProgramDescription("Old Description"); // should NOT change
         existingProgram.setUser(authUser);
 
         ProgramRequestDTO dto = new ProgramRequestDTO();
-        dto.setProgramTitle("New Title");
+        dto.setProgramTitle("New Title"); // PATCH only this field
 
         when(userRepository.findById(authUserId))
                 .thenReturn(Optional.of(authUser));
         when(programRepository.findById(programId))
                 .thenReturn(Optional.of(existingProgram));
-        when(programRepository.save(any()))
-                .thenReturn(existingProgram);
+        when(programRepository.save(any(Program.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         Program result =
                 programService.updateProgram(programId, dto);
 
         assertEquals("New Title", result.getProgramTitle());
+        assertEquals("Old Description", result.getProgramDescription()); // unchanged
     }
+
 
     @Test
     void updateProgram_programNotFound() {

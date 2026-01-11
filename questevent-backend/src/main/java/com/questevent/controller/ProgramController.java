@@ -156,7 +156,7 @@ public class ProgramController {
     }
 
     @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")
-    @PutMapping("/{programId}")
+    @PatchMapping("/{programId}")
     @Operation(summary = "Update program", description = "Updates an existing program's information")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Program updated successfully"),

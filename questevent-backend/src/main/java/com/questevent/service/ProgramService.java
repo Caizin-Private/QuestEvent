@@ -106,7 +106,7 @@ public class ProgramService {
     @Transactional
     public Program updateProgram(UUID programId, ProgramRequestDTO dto) {
 
-        log.debug("Update program requested | programId={}", programId);
+        log.debug("PATCH update program requested | programId={}", programId);
 
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
@@ -114,7 +114,8 @@ public class ProgramService {
         if (authentication == null || !authentication.isAuthenticated()
                 || !(authentication.getPrincipal() instanceof UserPrincipal p)) {
             log.warn("Unauthorized program update attempt | programId={}", programId);
-            throw new UnauthorizedException("Unauthorized");        }
+            throw new UnauthorizedException("Unauthorized");
+        }
 
         User hostUser = userRepository.findById(p.userId())
                 .orElseThrow(() -> {
@@ -135,10 +136,33 @@ public class ProgramService {
                     hostUser.getUserId()
             );
             throw new AccessDeniedException("You do not have permission to update this program");
-
         }
 
-        mapDtoToEntity(dto, existingProgram);
+
+        if (dto.getProgramTitle() != null) {
+            existingProgram.setProgramTitle(dto.getProgramTitle());
+        }
+
+        if (dto.getProgramDescription() != null) {
+            existingProgram.setProgramDescription(dto.getProgramDescription());
+        }
+
+        if (dto.getDepartment() != null) {
+            existingProgram.setDepartment(dto.getDepartment());
+        }
+
+        if (dto.getStartDate() != null) {
+            existingProgram.setStartDate(dto.getStartDate());
+        }
+
+        if (dto.getEndDate() != null) {
+            existingProgram.setEndDate(dto.getEndDate());
+        }
+
+        if (dto.getStatus() != null) {
+            existingProgram.setStatus(dto.getStatus());
+        }
+
 
         if (dto.getJudgeUserId() != null) {
 
@@ -166,13 +190,14 @@ public class ProgramService {
         Program updated = programRepository.save(existingProgram);
 
         log.info(
-                "Program updated | programId={} | hostUserId={}",
+                "Program patched successfully | programId={} | hostUserId={}",
                 updated.getProgramId(),
                 hostUser.getUserId()
         );
 
         return updated;
     }
+
 
     private void mapDtoToEntity(ProgramRequestDTO dto, Program program) {
         program.setProgramTitle(dto.getProgramTitle());
