@@ -270,7 +270,7 @@ public class RbacService {
         User user = currentUser(authentication);
         if (user == null) return false;
 
-        if (user.getRole() == Role.OWNER) {
+        if (user.getRole() == Role.OWNER){
             return true;
         }
         return judgeRepository.findByUserUserId(user.getUserId()).isPresent();

@@ -30,7 +30,6 @@ import java.util.UUID;
         description = "APIs for judges to view and review activity submissions " +
                 "only for programs they are assigned to"
 )
-@SecurityRequirement(name = "bearerAuth")
 public class JudgeController {
 
     private static final Logger log =
@@ -57,7 +56,7 @@ public class JudgeController {
                     description = "Unauthorized – JWT missing or invalid"
             )
     })
-    @PreAuthorize("@rbacService.canAccessJudgeSubmissions(authentication)")
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/submissions/pending")
     public ResponseEntity<List<JudgeSubmissionDTO>> getPendingSubmissions(
             Authentication authentication
@@ -90,7 +89,7 @@ public class JudgeController {
                     description = "Activity not found"
             )
     })
-    @PreAuthorize("@rbacService.isJudgeForActivity(authentication, #activityId)")
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/submissions/pending/activity/{activityId}")
     public ResponseEntity<List<JudgeSubmissionDTO>> getPendingSubmissionsForActivity(
             @Parameter(
@@ -129,7 +128,7 @@ public class JudgeController {
                     description = "Unauthorized"
             )
     })
-    @PreAuthorize("@rbacService.canAccessJudgeSubmissions(authentication)")
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/submissions")
     public ResponseEntity<List<JudgeSubmissionDTO>> getAllSubmissions(
             Authentication authentication
@@ -167,7 +166,7 @@ public class JudgeController {
                     description = "Submission not found"
             )
     })
-    @PreAuthorize("@rbacService.isJudgeForSubmission(authentication, #submissionId)")
+    @PreAuthorize("isAuthenticated()")
     @PatchMapping("/submissions/{submissionId}/review")
     public ResponseEntity<Void> reviewSubmission(
             @Parameter(
