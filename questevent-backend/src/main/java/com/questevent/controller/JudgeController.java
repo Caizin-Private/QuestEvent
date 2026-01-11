@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -56,6 +57,7 @@ public class JudgeController {
                     description = "Unauthorized – JWT missing or invalid"
             )
     })
+    @PreAuthorize("@rbacService.canAccessJudgeSubmissions(authentication)")
     @GetMapping("/submissions/pending")
     public ResponseEntity<List<JudgeSubmissionDTO>> getPendingSubmissions(
             Authentication authentication
@@ -88,6 +90,7 @@ public class JudgeController {
                     description = "Activity not found"
             )
     })
+    @PreAuthorize("@rbacService.isJudgeForActivity(authentication, #activityId)")
     @GetMapping("/submissions/pending/activity/{activityId}")
     public ResponseEntity<List<JudgeSubmissionDTO>> getPendingSubmissionsForActivity(
             @Parameter(
@@ -126,6 +129,7 @@ public class JudgeController {
                     description = "Unauthorized"
             )
     })
+    @PreAuthorize("@rbacService.canAccessJudgeSubmissions(authentication)")
     @GetMapping("/submissions")
     public ResponseEntity<List<JudgeSubmissionDTO>> getAllSubmissions(
             Authentication authentication
@@ -163,7 +167,8 @@ public class JudgeController {
                     description = "Submission not found"
             )
     })
-    @PostMapping("/submissions/{submissionId}/review")
+    @PreAuthorize("@rbacService.isJudgeForSubmission(authentication, #submissionId)")
+    @PatchMapping("/submissions/{submissionId}/review")
     public ResponseEntity<Void> reviewSubmission(
             @Parameter(
                     name = "submissionId",

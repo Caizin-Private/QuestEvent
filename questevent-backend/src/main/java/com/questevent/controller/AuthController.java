@@ -27,7 +27,7 @@ public class AuthController {
         this.authService = authService;
     }
 
-    @GetMapping({"/", "/login"})
+    @GetMapping("/")
     @ResponseBody
     public String loginPage(HttpServletRequest request,
                             HttpServletResponse response) throws IOException {
@@ -143,7 +143,7 @@ public class AuthController {
         log.info("Logout success page requested");
         return """
             <h2>Logged out successfully </h2>
-            <a href="/login">Login again</a>
+            <a href="/">Login again</a>
         """;
     }
 }
