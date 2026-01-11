@@ -232,7 +232,7 @@ class ProgramControllerTest {
         when(programService.updateProgram(eq(programId), any()))
                 .thenReturn(updatedProgram);
 
-        mockMvc.perform(put("/api/programs/{programId}", programId)
+        mockMvc.perform(patch("/api/programs/{programId}", programId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new ProgramRequestDTO())))
                 .andExpect(status().isOk())
