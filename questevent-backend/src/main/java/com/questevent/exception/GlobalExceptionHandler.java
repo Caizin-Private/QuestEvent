@@ -63,7 +63,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorDTO> handleAll(Exception ex) {
-        ex.printStackTrace();
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong");
     }
 
