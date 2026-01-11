@@ -84,12 +84,29 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiErrorDTO> handleResourceNotFound(ResourceNotFoundException ex) {
-        return build(HttpStatus.NOT_FOUND, ex.getMessage());    }
+        return build(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
 
     @ExceptionHandler(InvalidOperationException.class)
     public ResponseEntity<ApiErrorDTO> handleInvalidOperation(InvalidOperationException ex) {
         return build(HttpStatus.CONFLICT, ex.getMessage());
     }
+    @ExceptionHandler(JudgeNotFoundException.class)
+    public ResponseEntity<ApiErrorDTO> handleJudgeNotFound(JudgeNotFoundException ex) {
+        return build(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ApiErrorDTO> handleRuntime(RuntimeException ex) {
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong");
+    }
+    @ExceptionHandler(SubmissionNotFoundException.class)
+    public ResponseEntity<ApiErrorDTO> handleSubmissionNotFound(SubmissionNotFoundException ex) {
+        return build(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+
 
     private ResponseEntity<ApiErrorDTO> build(HttpStatus status, String message) {
 
