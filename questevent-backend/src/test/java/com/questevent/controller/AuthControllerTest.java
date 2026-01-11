@@ -39,7 +39,7 @@ class AuthControllerTest {
 
         when(authService.isLoggedIn(any())).thenReturn(false);
 
-        mockMvc.perform(get("/login"))
+        mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Login with Microsoft")));
     }
@@ -49,7 +49,7 @@ class AuthControllerTest {
 
         when(authService.isLoggedIn(any())).thenReturn(true);
 
-        mockMvc.perform(get("/login"))
+        mockMvc.perform(get("/"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/profile"));
     }
