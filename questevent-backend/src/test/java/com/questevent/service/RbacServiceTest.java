@@ -26,8 +26,6 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class RbacServiceTest {
 
-    /* ===================== mocks ===================== */
-
     @Mock private UserRepository userRepository;
     @Mock private ProgramRepository programRepository;
     @Mock private ActivityRepository activityRepository;
@@ -41,8 +39,6 @@ class RbacServiceTest {
     @InjectMocks
     private RbacService rbacService;
 
-    /* ===================== fixtures ===================== */
-
     private User owner;
     private User user;
     private User judgeUser;
@@ -55,8 +51,6 @@ class RbacServiceTest {
     private Long judgeUserId;
     private UUID programId;
     private UUID activityId;
-
-    /* ===================== setup ===================== */
 
     @BeforeEach
     void setup() {
@@ -85,8 +79,6 @@ class RbacServiceTest {
         activity.setProgram(program);
     }
 
-    /* ===================== helpers ===================== */
-
     private User createUser(Long id, Role role) {
         User u = new User();
         u.setUserId(id);
@@ -106,16 +98,12 @@ class RbacServiceTest {
                 .thenReturn(Optional.of(u));
     }
 
-    /* ===================================================
-       AUTHENTICATION
-       =================================================== */
-
     @Test
     void unauthenticated_user_denied_everywhere() {
 
         when(authentication.isAuthenticated()).thenReturn(false);
 
-        assertFalse(rbacService.canViewProgram(authentication, programId));
+        assertFalse(rbacService.canViewProgram(authentication));
         assertFalse(rbacService.canAccessUserProfile(authentication, userId));
         assertFalse(rbacService.canManageProgram(authentication, programId));
         assertFalse(rbacService.canJudgeAccessProgram(authentication, programId));
@@ -138,7 +126,7 @@ class RbacServiceTest {
         when(userRepository.findByEmail("jwt@test.com"))
                 .thenReturn(Optional.of(user));
 
-        assertTrue(rbacService.canViewProgram(jwtAuth, programId));
+        assertTrue(rbacService.canViewProgram(jwtAuth));
     }
 
     @Test
@@ -153,7 +141,7 @@ class RbacServiceTest {
         when(userRepository.findByEmail("oauth@test.com"))
                 .thenReturn(Optional.of(user));
 
-        assertTrue(rbacService.canViewProgram(authentication, programId));
+        assertTrue(rbacService.canViewProgram(authentication));
     }
 
     @Test
@@ -169,12 +157,8 @@ class RbacServiceTest {
         when(userRepository.findByEmail("fallback@test.com"))
                 .thenReturn(Optional.of(user));
 
-        assertTrue(rbacService.canViewProgram(authentication, programId));
+        assertTrue(rbacService.canViewProgram(authentication));
     }
-
-    /* ===================================================
-       OWNER SHORT-CIRCUITS
-       =================================================== */
 
     @Test
     void owner_short_circuit_paths() {
@@ -182,15 +166,11 @@ class RbacServiceTest {
         authenticate(owner);
 
         assertTrue(rbacService.isPlatformOwner(authentication));
-        assertTrue(rbacService.canViewProgram(authentication, programId));
+        assertTrue(rbacService.canViewProgram(authentication));
         assertTrue(rbacService.canJudgeAccessProgram(authentication, programId));
         assertTrue(rbacService.canAccessUserWallet(authentication, userId));
         assertTrue(rbacService.canAccessProgramWallet(authentication, UUID.randomUUID()));
     }
-
-    /* ===================================================
-       USER PROFILE
-       =================================================== */
 
     @Test
     void user_profile_paths() {
@@ -201,26 +181,19 @@ class RbacServiceTest {
         assertFalse(rbacService.canAccessUserProfile(authentication, 999L));
     }
 
-    /* ===================================================
-       PROGRAM MANAGEMENT (FIXED)
-       =================================================== */
-
     @Test
     void manage_program_paths() {
 
         authenticate(user);
 
-        // program exists, but owned by someone else
         when(programRepository.findById(programId))
                 .thenReturn(Optional.of(program));
 
         assertFalse(rbacService.canManageProgram(authentication, programId));
 
-        // user becomes owner
         program.setUser(user);
         assertTrue(rbacService.canManageProgram(authentication, programId));
 
-        // program not found
         when(programRepository.findById(any(UUID.class)))
                 .thenReturn(Optional.empty());
 
@@ -228,10 +201,6 @@ class RbacServiceTest {
                 rbacService.canManageProgram(authentication, UUID.randomUUID())
         );
     }
-
-    /* ===================================================
-       JUDGE ACCESS
-       =================================================== */
 
     @Test
     void judge_paths() {
@@ -255,10 +224,6 @@ class RbacServiceTest {
         assertFalse(rbacService.canAccessJudgeSubmissions(authentication));
     }
 
-    /* ===================================================
-       SUBMISSIONS
-       =================================================== */
-
     @Test
     void submission_paths() {
 
@@ -279,10 +244,6 @@ class RbacServiceTest {
 
         assertTrue(rbacService.canSubmitActivity(authentication, activityId, userId));
     }
-
-    /* ===================================================
-       UTIL (FIXED)
-       =================================================== */
 
     @Test
     void getProgramIdByActivityId_paths() {

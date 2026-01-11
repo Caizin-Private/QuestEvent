@@ -1,20 +1,9 @@
 package com.questevent.rbac;
 
 import com.questevent.dto.UserPrincipal;
-import com.questevent.entity.Program;
-import com.questevent.entity.Activity;
-import com.questevent.entity.ActivityRegistration;
-import com.questevent.entity.ProgramRegistration;
-import com.questevent.entity.User;
+import com.questevent.entity.*;
 import com.questevent.enums.Role;
-import com.questevent.repository.ActivityRegistrationRepository;
-import com.questevent.repository.ActivityRepository;
-import com.questevent.repository.ActivitySubmissionRepository;
-import com.questevent.repository.JudgeRepository;
-import com.questevent.repository.ProgramRepository;
-import com.questevent.repository.ProgramRegistrationRepository;
-import com.questevent.repository.ProgramWalletRepository;
-import com.questevent.repository.UserRepository;
+import com.questevent.repository.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -56,46 +45,45 @@ public class RbacService {
     }
 
     private User currentUser(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return null;
-        }
-
-
-        Object principal = authentication.getPrincipal();
+        if (authentication == null || !authentication.isAuthenticated()) return null;
 
         if (authentication instanceof JwtAuthenticationToken jwtAuth) {
-            Jwt jwt = jwtAuth.getToken();
-
-            String email = jwt.getClaimAsString("email");
-            if (email == null) {
-                email = jwt.getClaimAsString("preferred_username");
-            }
-            if (email == null) {
-                email = jwt.getClaimAsString("upn");
-            }
-
-            if (email == null) return null;
-
-            return userRepository.findByEmail(email).orElse(null);
+            return userFromJwt(jwtAuth.getToken());
         }
+
+        Object principal = authentication.getPrincipal();
 
         if (principal instanceof UserPrincipal p) {
             return userRepository.findById(p.userId()).orElse(null);
         }
 
         if (principal instanceof OAuth2User oauthUser) {
-            String email = oauthUser.getAttribute("email");
-            if (email == null) {
-                email = oauthUser.getAttribute("preferred_username");
-            }
-            if (email == null) {
-                email = oauthUser.getAttribute("upn");
-            }
-            if (email == null) return null;
-
-            return userRepository.findByEmail(email).orElse(null);
+            return userFromEmail(resolveEmail(oauthUser.getAttribute("email"),
+                    oauthUser.getAttribute("preferred_username"),
+                    oauthUser.getAttribute("upn")));
         }
 
+        return null;
+    }
+
+    private User userFromJwt(Jwt jwt) {
+        String email = resolveEmail(
+                jwt.getClaimAsString("email"),
+                jwt.getClaimAsString("preferred_username"),
+                jwt.getClaimAsString("upn")
+        );
+        return userFromEmail(email);
+    }
+
+    private User userFromEmail(String email) {
+        if (email == null) return null;
+        return userRepository.findByEmail(email).orElse(null);
+    }
+
+    private String resolveEmail(String... values) {
+        for (String v : values) {
+            if (v != null) return v;
+        }
         return null;
     }
 
@@ -107,11 +95,7 @@ public class RbacService {
     public boolean canAccessUserProfile(Authentication authentication, Long userId) {
         User user = currentUser(authentication);
         if (user == null) return false;
-
-        if (user.getRole() == Role.OWNER) {
-            return true;
-        }
-
+        if (user.getRole() == Role.OWNER) return true;
         return user.getUserId().equals(userId);
     }
 
@@ -122,14 +106,11 @@ public class RbacService {
         Program program = programRepository.findById(programId).orElse(null);
         if (program == null) return false;
 
-        if (user.getRole() == Role.OWNER) {
-            return true;
-        }
-
+        if (user.getRole() == Role.OWNER) return true;
         return program.getUser().getUserId().equals(user.getUserId());
     }
 
-    public boolean canViewProgram(Authentication authentication, UUID programId) {
+    public boolean canViewProgram(Authentication authentication) {
         return currentUser(authentication) != null;
     }
 
@@ -137,9 +118,7 @@ public class RbacService {
         User user = currentUser(authentication);
         if (user == null) return false;
 
-        if (user.getRole() == Role.OWNER) {
-            return true;
-        }
+        if (user.getRole() == Role.OWNER) return true;
 
         Program program = programRepository.findById(programId).orElse(null);
         if (program == null) return false;
@@ -152,9 +131,7 @@ public class RbacService {
         User user = currentUser(authentication);
         if (user == null) return false;
 
-        if (user.getRole() == Role.OWNER) {
-            return true;
-        }
+        if (user.getRole() == Role.OWNER) return true;
 
         ActivityRegistration registration = activityRegistrationRepository.findById(registrationId).orElse(null);
         if (registration == null) return false;
@@ -173,16 +150,13 @@ public class RbacService {
                         registration.getActivity().getProgram().getJudge() != null &&
                         user.getUserId().equals(
                                 registration.getActivity().getProgram().getJudge().getUser().getUserId()));
-
     }
 
     public boolean canAccessProgramRegistration(Authentication authentication, UUID registrationId) {
         User user = currentUser(authentication);
         if (user == null) return false;
 
-        if (user.getRole() == Role.OWNER) {
-            return true;
-        }
+        if (user.getRole() == Role.OWNER) return true;
 
         ProgramRegistration registration = programRegistrationRepository.findById(registrationId).orElse(null);
         if (registration == null) return false;
@@ -199,16 +173,14 @@ public class RbacService {
                         registration.getProgram().getJudge() != null &&
                         user.getUserId().equals(
                                 registration.getProgram().getJudge().getUser().getUserId()));
-
     }
 
     public boolean canVerifySubmission(Authentication authentication, UUID submissionId) {
         User user = currentUser(authentication);
         if (user == null) return false;
 
-        if (user.getRole() == Role.OWNER) {
-            return true;
-        }
+        if (user.getRole() == Role.OWNER) return true;
+
         return submissionRepository.findById(submissionId)
                 .map(submission -> {
                     ActivityRegistration activityReg = submission.getActivityRegistration();
@@ -227,12 +199,10 @@ public class RbacService {
         User user = currentUser(authentication);
         if (user == null) return false;
 
-        if (user.getRole() == Role.OWNER) {
-            return true;
-        }
+        if (user.getRole() == Role.OWNER) return true;
 
         return programRepository.findById(programId)
-                .map(program -> program.getJudge() != null && 
+                .map(program -> program.getJudge() != null &&
                         program.getJudge().getUser().getUserId().equals(user.getUserId()))
                 .orElse(false);
     }
@@ -241,9 +211,7 @@ public class RbacService {
         User user = currentUser(authentication);
         if (user == null) return false;
 
-        if (user.getRole() == Role.OWNER) {
-            return true;
-        }
+        if (user.getRole() == Role.OWNER) return true;
 
         return activityRepository.findById(activityId)
                 .map(activity -> {
@@ -260,9 +228,8 @@ public class RbacService {
         User user = currentUser(authentication);
         if (user == null) return false;
 
-        if (user.getRole() == Role.OWNER) {
-            return true;
-        }
+        if (user.getRole() == Role.OWNER) return true;
+
         return judgeRepository.findByUserUserId(user.getUserId()).isPresent();
     }
 
@@ -278,24 +245,17 @@ public class RbacService {
         User user = currentUser(authentication);
         if (user == null) return false;
 
-        if (user.getRole() == Role.OWNER) {
-            return true;
-        }
+        if (user.getRole() == Role.OWNER) return true;
 
         return programWalletRepository.findById(programWalletId)
                 .map(wallet -> wallet.getUser().getUserId().equals(user.getUserId()))
                 .orElse(false);
     }
 
-    public boolean canAccessMyProgramWallet(
-            Authentication authentication,
-            UUID programId
-    ) {
+    public boolean canAccessMyProgramWallet(Authentication authentication, UUID programId) {
         User user = currentUser(authentication);
         if (user == null) return false;
-        if (user.getRole() == Role.OWNER) {
-            return true;
-        }
+        if (user.getRole() == Role.OWNER) return true;
 
         Program program = programRepository.findById(programId).orElse(null);
         if (program != null && program.getUser() != null &&
@@ -304,48 +264,29 @@ public class RbacService {
         }
 
         return programWalletRepository
-                .findByUserUserIdAndProgramProgramId(
-                        user.getUserId(),
-                        programId
-                )
+                .findByUserUserIdAndProgramProgramId(user.getUserId(), programId)
                 .isPresent();
     }
 
-    public boolean canAccessProgramWalletsByProgram(
-            Authentication authentication,
-            UUID programId
-    ) {
+    public boolean canAccessProgramWalletsByProgram(Authentication authentication, UUID programId) {
         User user = currentUser(authentication);
-        if (user == null) {
-            return false;
-        }
+        if (user == null) return false;
 
-        if (user.getRole() == Role.OWNER) {
-            return true;
-        }
+        if (user.getRole() == Role.OWNER) return true;
 
         Program program = programRepository.findById(programId).orElse(null);
-        if (program == null || program.getUser() == null) {
-            return false;
-        }
+        if (program == null || program.getUser() == null) return false;
 
         return program.getUser().getUserId().equals(user.getUserId())
                 ||
                 (program.getJudge() != null &&
                         program.getJudge().getUser().getUserId().equals(user.getUserId()));
-
     }
 
-    public boolean canRegisterForProgram(
-            Authentication authentication,
-            UUID programId,
-            Long userId
-    ) {
+    public boolean canRegisterForProgram(Authentication authentication, UUID programId, Long userId) {
         User user = currentUser(authentication);
         if (user == null) return false;
-        if (user.getRole() == Role.OWNER) {
-            return true;
-        }
+        if (user.getRole() == Role.OWNER) return true;
 
         Program program = programRepository.findById(programId).orElse(null);
         if (program == null) return false;
@@ -356,25 +297,16 @@ public class RbacService {
                     .existsByProgram_ProgramIdAndUser_UserId(programId, userId);
         }
 
-        if (!user.getUserId().equals(userId)) {
-            return false;
-        }
+        if (!user.getUserId().equals(userId)) return false;
 
         return !programRegistrationRepository
                 .existsByProgram_ProgramIdAndUser_UserId(programId, userId);
     }
 
-    public boolean canRegisterForActivity(
-            Authentication authentication,
-            UUID activityId,
-            Long userId
-    ) {
+    public boolean canRegisterForActivity(Authentication authentication, UUID activityId, Long userId) {
         User user = currentUser(authentication);
         if (user == null) return false;
-
-        if (user.getRole() == Role.OWNER) {
-            return true;
-        }
+        if (user.getRole() == Role.OWNER) return true;
 
         Activity activity = activityRepository.findById(activityId).orElse(null);
         if (activity == null) return false;
@@ -392,50 +324,30 @@ public class RbacService {
             return !activityRegistrationRepository.existsByActivity_ActivityIdAndUser_UserId(activityId, userId);
         }
 
-        if (!user.getUserId().equals(userId)) {
-            return false;
-        }
+        if (!user.getUserId().equals(userId)) return false;
 
         if (!programRegistrationRepository.existsByProgram_ProgramIdAndUser_UserId(programId, userId)) {
             return false;
         }
+
         return !activityRegistrationRepository.existsByActivity_ActivityIdAndUser_UserId(activityId, userId);
     }
 
-    public boolean canSubmitActivity(
-            Authentication authentication,
-            UUID activityId,
-            Long requestUserId
-    ) {
+    public boolean canSubmitActivity(Authentication authentication, UUID activityId, Long requestUserId) {
         User user = currentUser(authentication);
-        if (user == null) {
-            return false;
-        }
+        if (user == null) return false;
 
-        // Only USER role can submit
-        if (user.getRole() != Role.USER) {
-            return false;
-        }
+        if (user.getRole() != Role.USER) return false;
 
-        // User can submit only for self
-        if (!user.getUserId().equals(requestUserId)) {
-            return false;
-        }
+        if (!user.getUserId().equals(requestUserId)) return false;
 
-        // Must be registered for the activity
         ActivityRegistration registration =
                 activityRegistrationRepository
-                        .findByActivityActivityIdAndUserUserId(
-                                activityId,
-                                requestUserId
-                        )
+                        .findByActivityActivityIdAndUserUserId(activityId, requestUserId)
                         .orElse(null);
 
-        if (registration == null) {
-            return false;
-        }
+        if (registration == null) return false;
 
-        // Submission must not already exist
         return !submissionRepository
                 .existsByActivityRegistration_ActivityRegistrationId(
                         registration.getActivityRegistrationId()
