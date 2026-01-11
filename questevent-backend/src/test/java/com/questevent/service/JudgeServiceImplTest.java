@@ -6,6 +6,9 @@ import com.questevent.entity.*;
 import com.questevent.enums.CompletionStatus;
 import com.questevent.enums.ReviewStatus;
 import com.questevent.enums.Role;
+import com.questevent.exception.InvalidOperationException;
+import com.questevent.exception.JudgeNotFoundException;
+import com.questevent.exception.SubmissionNotFoundException;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
 import com.questevent.repository.UserRepository;
@@ -15,10 +18,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.List;
@@ -118,13 +119,12 @@ class JudgeServiceImplTest {
         when(submissionRepository.findById(submissionId))
                 .thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(
-                ResponseStatusException.class,
+        SubmissionNotFoundException ex = assertThrows(
+                SubmissionNotFoundException.class,
                 () -> judgeService.reviewSubmission(submissionId)
         );
 
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
-        assertEquals("Submission not found", ex.getReason());
+        assertEquals("Submission not found", ex.getMessage());
     }
 
     @Test
@@ -139,13 +139,12 @@ class JudgeServiceImplTest {
         when(submissionRepository.findById(submission.getSubmissionId()))
                 .thenReturn(Optional.of(submission));
 
-        ResponseStatusException ex = assertThrows(
-                ResponseStatusException.class,
+        InvalidOperationException ex = assertThrows(
+                InvalidOperationException.class,
                 () -> judgeService.reviewSubmission(submission.getSubmissionId())
         );
 
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
-        assertEquals("Submission already reviewed", ex.getReason());
+        assertEquals("Submission already reviewed", ex.getMessage());
     }
 
     @Test
@@ -164,13 +163,15 @@ class JudgeServiceImplTest {
         when(submissionRepository.findById(submission.getSubmissionId()))
                 .thenReturn(Optional.of(submission));
 
-        ResponseStatusException ex = assertThrows(
-                ResponseStatusException.class,
+        JudgeNotFoundException ex = assertThrows(
+                JudgeNotFoundException.class,
                 () -> judgeService.reviewSubmission(submission.getSubmissionId())
         );
 
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
-        assertEquals("Judge not assigned to this program", ex.getReason());
+        assertEquals(
+                "Judge not assigned to this program",
+                ex.getMessage()
+        );
     }
 
     @Test
@@ -188,13 +189,12 @@ class JudgeServiceImplTest {
         when(submissionRepository.findById(submission.getSubmissionId()))
                 .thenReturn(Optional.of(submission));
 
-        ResponseStatusException ex = assertThrows(
-                ResponseStatusException.class,
+        InvalidOperationException ex = assertThrows(
+                InvalidOperationException.class,
                 () -> judgeService.reviewSubmission(submission.getSubmissionId())
         );
 
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
-        assertEquals("Invalid reward gems", ex.getReason());
+        assertEquals("Invalid reward gems", ex.getMessage());
     }
 
     /* ================= HELPERS ================= */
@@ -210,7 +210,7 @@ class JudgeServiceImplTest {
 
     private User mockJudgeUser() {
         User user = new User();
-        user.setUserId(5L);              // ONLY userId is Long
+        user.setUserId(5L);
         user.setRole(Role.JUDGE);
         return user;
     }

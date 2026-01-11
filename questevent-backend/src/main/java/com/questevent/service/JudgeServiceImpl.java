@@ -6,6 +6,7 @@ import com.questevent.entity.*;
 import com.questevent.enums.CompletionStatus;
 import com.questevent.enums.ReviewStatus;
 import com.questevent.enums.Role;
+import com.questevent.exception.*;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
 import com.questevent.repository.UserRepository;
@@ -40,9 +41,9 @@ public class JudgeServiceImpl implements JudgeService {
 
         if (authentication == null || !authentication.isAuthenticated()) {
             log.warn("Unauthorized access attempt to judge service");
-            throw new ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED, "Unauthorized");
+            throw new UnauthorizedException("Unauthorized");
         }
+
 
         Object principal = authentication.getPrincipal();
 
@@ -50,14 +51,13 @@ public class JudgeServiceImpl implements JudgeService {
             return userRepository.findById(p.userId())
                     .orElseThrow(() -> {
                         log.error("Authenticated user not found | userId={}", p.userId());
-                        return new ResponseStatusException(
-                                HttpStatus.NOT_FOUND, "User not found");
+                        return new UserNotFoundException("User not found");
                     });
+
         }
 
         log.warn("Invalid authentication principal in judge service");
-        throw new ResponseStatusException(
-                HttpStatus.UNAUTHORIZED, "Invalid authentication");
+        throw new UnauthorizedException("Invalid authentication");
     }
 
     @Override
@@ -195,8 +195,7 @@ public class JudgeServiceImpl implements JudgeService {
         ActivitySubmission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> {
                     log.warn("Submission not found | submissionId={}", submissionId);
-                    return new ResponseStatusException(
-                            HttpStatus.NOT_FOUND, "Submission not found");
+                    return new SubmissionNotFoundException("Submission not found");
                 });
 
         if (submission.getReviewStatus() != ReviewStatus.PENDING) {
@@ -205,9 +204,7 @@ public class JudgeServiceImpl implements JudgeService {
                     submissionId,
                     submission.getReviewStatus()
             );
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Submission already reviewed");
+            throw new InvalidOperationException("Submission already reviewed");
         }
 
         ActivityRegistration registration = submission.getActivityRegistration();
@@ -218,13 +215,14 @@ public class JudgeServiceImpl implements JudgeService {
         Judge judge = program.getJudge();
         if (judge == null) {
             log.error(
-                    "Judge not assigned to program | programId={}",
+                    "Judge not found for program | programId={}",
                     program.getProgramId()
             );
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Judge not assigned to this program");
+            throw new JudgeNotFoundException(
+                    "Judge not assigned to this program"
+            );
         }
+
 
         Long rewardGems = activity.getRewardGems();
         if (rewardGems == null || rewardGems < 0) {
@@ -233,9 +231,7 @@ public class JudgeServiceImpl implements JudgeService {
                     activity.getActivityId(),
                     rewardGems
             );
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Invalid reward gems");
+            throw new InvalidOperationException("Invalid reward gems");
         }
 
         submission.setReviewedBy(judge);
