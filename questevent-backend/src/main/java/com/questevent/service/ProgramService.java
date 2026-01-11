@@ -31,7 +31,7 @@ public class ProgramService {
 
     private static final String USER_NOT_FOUND = "User not found";
     private static final String PROGRAM_NOT_FOUND = "Program not found | programId={}";
-    private static final String PROGRAM_NOT_FOUND_exception = "Program not found";
+    private static final String PROGRAM_NOT_FOUND_MESSAGE = "Program not found";
 
 
     private final ProgramRepository programRepository;
@@ -130,7 +130,7 @@ public class ProgramService {
         Program existingProgram = programRepository.findById(programId)
                 .orElseThrow(() -> {
                     log.error(PROGRAM_NOT_FOUND, programId);
-                    return new ProgramNotFoundException(PROGRAM_NOT_FOUND_exception);
+                    return new ProgramNotFoundException(PROGRAM_NOT_FOUND_MESSAGE);
                 });
 
         if (!existingProgram.getUser().getUserId().equals(hostUser.getUserId())) {
@@ -204,7 +204,7 @@ public class ProgramService {
         return programRepository.findById(programId)
                 .orElseThrow(() -> {
                     log.warn(PROGRAM_NOT_FOUND, programId);
-                    return new ProgramNotFoundException(PROGRAM_NOT_FOUND_exception);
+                    return new ProgramNotFoundException(PROGRAM_NOT_FOUND_MESSAGE);
                 });
     }
 
@@ -226,7 +226,7 @@ public class ProgramService {
         Program program = programRepository.findById(programId)
                 .orElseThrow(() -> {
                     log.warn(PROGRAM_NOT_FOUND, programId);
-                    return new ProgramNotFoundException(PROGRAM_NOT_FOUND_exception);
+                    return new ProgramNotFoundException(PROGRAM_NOT_FOUND_MESSAGE);
                 });
 
         if (!program.getUser().getUserId().equals(hostUser.getUserId())) {
@@ -339,7 +339,7 @@ public class ProgramService {
         Program program = programRepository.findById(programId)
                 .orElseThrow(() -> {
                     log.warn(PROGRAM_NOT_FOUND, programId);
-                    return new ProgramNotFoundException(PROGRAM_NOT_FOUND_exception);
+                    return new ProgramNotFoundException(PROGRAM_NOT_FOUND_MESSAGE);
                 });
 
         if (!program.getUser().getUserId().equals(currentUser.getUserId())) {

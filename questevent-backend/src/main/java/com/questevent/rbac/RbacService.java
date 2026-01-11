@@ -321,7 +321,7 @@ public class RbacService {
             if (!programRegistrationRepository.existsByProgram_ProgramIdAndUser_UserId(programId, userId)) {
                 return false;
             }
-            return !activityRegistrationRepository.existsByActivity_ActivityIdAndUser_UserId(activityId, userId);
+            return !activityRegistrationRepository.existsByActivityActivityIdAndUserUserId(activityId, userId);
         }
 
         if (!user.getUserId().equals(userId)) return false;
@@ -330,7 +330,7 @@ public class RbacService {
             return false;
         }
 
-        return !activityRegistrationRepository.existsByActivity_ActivityIdAndUser_UserId(activityId, userId);
+        return !activityRegistrationRepository.existsByActivityActivityIdAndUserUserId(activityId, userId);
     }
 
     public boolean canSubmitActivity(Authentication authentication, UUID activityId, Long requestUserId) {

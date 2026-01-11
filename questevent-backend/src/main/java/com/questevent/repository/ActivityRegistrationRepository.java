@@ -11,7 +11,7 @@ import java.util.UUID;
 public interface ActivityRegistrationRepository
         extends JpaRepository<ActivityRegistration, UUID> {
 
-    boolean existsByActivity_ActivityIdAndUser_UserId(UUID activityId, Long userId);
+    boolean existsByActivityActivityIdAndUserUserId(UUID activityId, Long userId);
 
     List<ActivityRegistration> findByActivityActivityId(UUID activityId);
 
@@ -25,6 +25,6 @@ public interface ActivityRegistrationRepository
 
     long countByActivityActivityId(UUID activityId);
 
-    boolean existsByActivity_ActivityIdAndUser_UserIdAndCompletionStatus(UUID activityId, Long userId, CompletionStatus completionStatus);
+    boolean existsByActivityActivityIdAndUserUserIdAndCompletionStatus(UUID activityId, Long userId, CompletionStatus completionStatus);
 }
 

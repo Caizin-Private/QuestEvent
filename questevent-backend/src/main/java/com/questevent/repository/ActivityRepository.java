@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ActivityRepository extends JpaRepository<Activity, UUID> {
-    List<Activity> findByProgram_ProgramId(UUID programId);
-    List<Activity> findByProgram_ProgramIdAndIsCompulsoryTrue(UUID programId);
+    List<Activity> findByProgramProgramId(UUID programId);
+    List<Activity> findByProgramProgramIdAndIsCompulsoryTrue(UUID programId);
 }
 

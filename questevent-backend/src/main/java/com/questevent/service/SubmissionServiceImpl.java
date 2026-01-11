@@ -3,9 +3,6 @@ package com.questevent.service;
 import com.questevent.entity.ActivityRegistration;
 import com.questevent.entity.ActivitySubmission;
 import com.questevent.enums.CompletionStatus;
-import com.questevent.exception.ActivityAlreadyCompletedException;
-import com.questevent.exception.DuplicateActivitySubmissionException;
-import com.questevent.exception.ResourceNotFoundException;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
 import jakarta.transaction.Transactional;
@@ -40,9 +37,7 @@ public class SubmissionServiceImpl implements SubmissionService {
                             activityId,
                             userId
                     );
-                    return new ResourceNotFoundException(
-                            "User is not registered for this activity"
-                    );
+                    return new RuntimeException("User is not registered for this activity");
                 });
 
         if (registration.getCompletionStatus() == CompletionStatus.COMPLETED) {
@@ -52,9 +47,7 @@ public class SubmissionServiceImpl implements SubmissionService {
                     userId,
                     registration.getActivityRegistrationId()
             );
-            throw new ActivityAlreadyCompletedException(
-                    "Activity already completed. Submission not allowed."
-            );
+            throw new RuntimeException("Activity already completed. Submission not allowed.");
         }
 
         boolean alreadySubmitted = submissionRepository
@@ -69,9 +62,7 @@ public class SubmissionServiceImpl implements SubmissionService {
                     userId,
                     registration.getActivityRegistrationId()
             );
-            throw new DuplicateActivitySubmissionException(
-                    "Submission already exists for this registration"
-            );
+            throw new RuntimeException("Submission already exists for this registration");
         }
 
         ActivitySubmission submission = new ActivitySubmission();

@@ -101,7 +101,7 @@ class ActivityRegistrationServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
         when(activityRegistrationRepository
-                .existsByActivity_ActivityIdAndUser_UserId(activityId, userId))
+                .existsByActivityActivityIdAndUserUserId(activityId, userId))
                 .thenReturn(false);
         when(activityRegistrationRepository.save(any())).thenReturn(saved);
 
@@ -180,7 +180,7 @@ class ActivityRegistrationServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
         when(activityRegistrationRepository
-                .existsByActivity_ActivityIdAndUser_UserId(activityId, userId))
+                .existsByActivityActivityIdAndUserUserId(activityId, userId))
                 .thenReturn(true);
 
         ResourceConflictException ex = assertThrows(
@@ -219,7 +219,7 @@ class ActivityRegistrationServiceTest {
         when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
         when(userRepository.findById(targetUserId)).thenReturn(Optional.of(user));
         when(activityRegistrationRepository
-                .existsByActivity_ActivityIdAndUser_UserId(activityId, targetUserId))
+                .existsByActivityActivityIdAndUserUserId(activityId, targetUserId))
                 .thenReturn(false);
         when(activityRegistrationRepository.save(any())).thenReturn(saved);
 

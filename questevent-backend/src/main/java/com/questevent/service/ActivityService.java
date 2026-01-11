@@ -104,7 +104,7 @@ public class ActivityService {
         }
 
         List<Activity> activities =
-                activityRepository.findByProgram_ProgramId(programId);
+                activityRepository.findByProgramProgramId(programId);
 
         log.info(
                 "Activities fetched | programId={} | count={}",
@@ -164,7 +164,7 @@ public class ActivityService {
 
         List<Activity> activities =
                 activityRepository
-                        .findByProgram_ProgramIdAndIsCompulsoryTrue(programId);
+                        .findByProgramProgramIdAndIsCompulsoryTrue(programId);
 
         log.info(
                 "Compulsory activities fetched | programId={} | count={}",
