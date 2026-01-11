@@ -61,10 +61,6 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, ex.getMessage());
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiErrorDTO> handleAll(Exception ex) {
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong");
-    }
 
     @ExceptionHandler(ProgramNotFoundException.class)
     public ResponseEntity<ApiErrorDTO> handleProgramNotFound(ProgramNotFoundException ex) {
