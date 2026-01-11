@@ -50,161 +50,175 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
 
-        // Skip OAuth2 internal routes
-        if (
-                path.startsWith("/oauth2") ||
-                        path.startsWith("/login") ||
-                        path.startsWith("/error") ||
-                        path.startsWith("/css") ||
-                        path.startsWith("/js") ||
-                        path.startsWith("/images") ||
-                        path.startsWith("/favicon")
-        ) {
+        if (isSkippedPath(path)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        boolean isApiEndpoint = path.startsWith("/api/");
-        boolean isAuthInfoEndpoint = path.equals("/api/auth") || path.equals("/api/auth/");
-        boolean isTokenGenerationEndpoint = path.equals("/api/auth/token");
-        boolean allowOAuth2ForApi = isTokenGenerationEndpoint;
-        boolean isPublicApiEndpoint = isAuthInfoEndpoint;
+        boolean isApi = path.startsWith("/api/");
+        boolean allowOAuth2ForApi = path.equals("/api/auth/token");
+        boolean isPublicApi = path.equals("/api/auth") || path.equals("/api/auth/");
 
-        String authHeader = request.getHeader("Authorization");
-        boolean hasBearerToken = authHeader != null && authHeader.startsWith("Bearer ");
-
-        if (hasBearerToken) {
-            String token = authHeader.substring(7);
-            try {
-                if (jwtService.validateToken(token)) {
-                    UserPrincipal userPrincipal = jwtService.extractUserPrincipal(token);
-
-                    log.info("✅ JWT TOKEN AUTHENTICATION - Path: {}, User: {} (ID: {})",
-                            path, userPrincipal.email(), userPrincipal.userId());
-
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    userPrincipal,
-                                    null,
-                                    List.of(new SimpleGrantedAuthority(
-                                            "ROLE_" + userPrincipal.role().name()
-                                    ))
-                            );
-
-                    if (SecurityContextHolder.getContext().getAuthentication() == null) {
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
-                    }
-
-                    request.setAttribute(AUTH_SOURCE, JWT_BEARER_TOKEN);
-                    request.setAttribute("JWT_USER_ID", userPrincipal.userId());
-
-                    filterChain.doFilter(request, response);
-                    return;
-                }
-            } catch (Exception e) {
-                log.warn("Invalid JWT token for path: {} - {}", path, e.getMessage());
-
-                if (isApiEndpoint && !allowOAuth2ForApi) {
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.setContentType(APPLICATION_JSON);
-                    response.getWriter().write(
-                            "{\"error\":\"Unauthorized\",\"message\":\"Valid JWT Bearer token required\"}"
-                    );
-                    return;
-                }
-            }
-        }
-
-        if (isApiEndpoint && !isPublicApiEndpoint && !allowOAuth2ForApi && !hasBearerToken) {
-            log.error("❌ API endpoint requires JWT Bearer token - Path: {}", path);
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType(APPLICATION_JSON);
-            response.getWriter().write(
-                    "{\"error\":\"Unauthorized\",\"message\":\"JWT Bearer token required\"}"
-            );
+        if (tryJwtAuthentication(request, response, filterChain, path, isApi, allowOAuth2ForApi)) {
             return;
         }
 
-        if (isPublicApiEndpoint) {
+        if (isApi && !isPublicApi && !allowOAuth2ForApi && !hasBearerToken(request)) {
+            writeUnauthorized(response, "JWT Bearer token required");
+            return;
+        }
+
+        if (isPublicApi) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        Authentication currentAuth = SecurityContextHolder.getContext().getAuthentication();
-
-        if (currentAuth instanceof UsernamePasswordAuthenticationToken token &&
-                token.getPrincipal() instanceof UserPrincipal) {
-
-            String authSource = (String) request.getAttribute(AUTH_SOURCE);
-            if (authSource == null && authHeader != null && authHeader.startsWith("Bearer ")) {
-                log.debug("Authentication already set for path: {}", path);
-            }
-
+        if (isUserAlreadyAuthenticated()) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        if (currentAuth instanceof OAuth2AuthenticationToken oauthToken) {
-
-            if (isApiEndpoint && !allowOAuth2ForApi) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.setContentType(APPLICATION_JSON);
-                response.getWriter().write(
-                        "{\"error\":\"Unauthorized\",\"message\":\"Use /api/auth/token to get JWT\"}"
-                );
-                return;
-            }
-
-            OAuth2User oauthUser = oauthToken.getPrincipal();
-            String email = resolveEmail(oauthUser);
-
-            if (email != null) {
-                Optional<User> userOpt = userRepository.findByEmail(email);
-
-                if (userOpt.isPresent()) {
-                    User user = userOpt.get();
-
-                    log.info(
-                            "🔵 OAUTH2 SESSION AUTHENTICATION - Path: {}, User: {} (ID: {})",
-                            path, user.getEmail(), user.getUserId()
-                    );
-
-                    UserPrincipal principal = new UserPrincipal(
-                            user.getUserId(),
-                            user.getEmail(),
-                            user.getRole()
-                    );
-
-                    UsernamePasswordAuthenticationToken newAuth =
-                            new UsernamePasswordAuthenticationToken(
-                                    principal,
-                                    null,
-                                    List.of(new SimpleGrantedAuthority(
-                                            "ROLE_" + user.getRole().name()
-                                    ))
-                            );
-
-                    request.setAttribute(AUTH_SOURCE, OAUTH2_SESSION);
-                    request.setAttribute("OAUTH2_USER_ID", user.getUserId());
-
-                    SecurityContextHolder.getContext().setAuthentication(newAuth);
-                }
-            }
+        if (tryOAuth2Authentication(request, response, isApi, allowOAuth2ForApi)) {
+            filterChain.doFilter(request, response);
+            return;
         }
 
-        if (isApiEndpoint ) {
-            Authentication finalAuth = SecurityContextHolder.getContext().getAuthentication();
-            if (finalAuth == null || !finalAuth.isAuthenticated()) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.setContentType(APPLICATION_JSON);
-                response.getWriter().write(
-                        "{\"error\":\"Unauthorized\",\"message\":\"JWT Bearer token required\"}"
-                );
-                return;
-            }
+        if (isApi && !isAuthenticated()) {
+            writeUnauthorized(response, "JWT Bearer token required");
+            return;
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private boolean isSkippedPath(String path) {
+        return path.startsWith("/oauth2") ||
+                path.startsWith("/login") ||
+                path.startsWith("/error") ||
+                path.startsWith("/css") ||
+                path.startsWith("/js") ||
+                path.startsWith("/images") ||
+                path.startsWith("/favicon");
+    }
+
+    private boolean hasBearerToken(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        return authHeader != null && authHeader.startsWith("Bearer ");
+    }
+
+    private boolean tryJwtAuthentication(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain,
+            String path,
+            boolean isApi,
+            boolean allowOAuth2ForApi
+    ) throws IOException, ServletException {
+
+        if (!hasBearerToken(request)) return false;
+
+        String token = request.getHeader("Authorization").substring(7);
+
+        try {
+            if (!jwtService.validateToken(token)) return false;
+
+            UserPrincipal userPrincipal = jwtService.extractUserPrincipal(token);
+
+            log.info("✅ JWT AUTH - Path: {}, User: {} (ID: {})",
+                    path, userPrincipal.email(), userPrincipal.userId());
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            userPrincipal,
+                            null,
+                            List.of(new SimpleGrantedAuthority("ROLE_" + userPrincipal.role().name()))
+                    );
+
+            if (SecurityContextHolder.getContext().getAuthentication() == null) {
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+
+            request.setAttribute(AUTH_SOURCE, JWT_BEARER_TOKEN);
+            request.setAttribute("JWT_USER_ID", userPrincipal.userId());
+
+            filterChain.doFilter(request, response);
+            return true;
+
+        } catch (Exception e) {
+            log.warn("Invalid JWT token for path: {} - {}", path, e.getMessage());
+            if (isApi && !allowOAuth2ForApi) {
+                writeUnauthorized(response, "Valid JWT Bearer token required");
+                return true;
+            }
+            return false;
+        }
+    }
+
+    private boolean isUserAlreadyAuthenticated() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth instanceof UsernamePasswordAuthenticationToken &&
+                auth.getPrincipal() instanceof UserPrincipal;
+    }
+
+    private boolean tryOAuth2Authentication(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            boolean isApi,
+            boolean allowOAuth2ForApi
+    ) throws IOException {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (!(auth instanceof OAuth2AuthenticationToken oauthToken)) return false;
+
+        if (isApi && !allowOAuth2ForApi) {
+            writeUnauthorized(response, "Use /api/auth/token to get JWT");
+            return true;
+        }
+
+        OAuth2User oauthUser = oauthToken.getPrincipal();
+        String email = resolveEmail(oauthUser);
+        if (email == null) return false;
+
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) return false;
+
+        User user = userOpt.get();
+
+        log.info("🔵 OAUTH2 SESSION AUTH - User: {} (ID: {})",
+                user.getEmail(), user.getUserId());
+
+        UserPrincipal principal = new UserPrincipal(
+                user.getUserId(),
+                user.getEmail(),
+                user.getRole()
+        );
+
+        UsernamePasswordAuthenticationToken newAuth =
+                new UsernamePasswordAuthenticationToken(
+                        principal,
+                        null,
+                        List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
+                );
+
+        request.setAttribute(AUTH_SOURCE, OAUTH2_SESSION);
+        request.setAttribute("OAUTH2_USER_ID", user.getUserId());
+
+        SecurityContextHolder.getContext().setAuthentication(newAuth);
+        return true;
+    }
+
+    private boolean isAuthenticated() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.isAuthenticated();
+    }
+
+    private void writeUnauthorized(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType(APPLICATION_JSON);
+        response.getWriter().write(
+                "{\"error\":\"Unauthorized\",\"message\":\"" + message + "\"}"
+        );
     }
 
     private String resolveEmail(OAuth2User oauthUser) {
