@@ -41,16 +41,15 @@ public class SubmissionController {
             @RequestBody ActivitySubmissionRequestDTO request
     ) {
         log.info("Submitting activity work: activityId={}, userId={}",
-                request.getActivityId(), request.getUserId());
+                request.getActivityId());
 
         submissionService.submitActivity(
                 request.getActivityId(),
-                request.getUserId(),
                 request.getSubmissionUrl()
         );
 
         log.info("Activity submission successful: activityId={}, userId={}",
-                request.getActivityId(), request.getUserId());
+                request.getActivityId());
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)

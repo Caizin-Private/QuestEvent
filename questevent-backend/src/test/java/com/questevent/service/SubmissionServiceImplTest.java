@@ -1,17 +1,24 @@
 package com.questevent.service;
 
+import com.questevent.dto.UserPrincipal;
 import com.questevent.entity.Activity;
 import com.questevent.entity.ActivityRegistration;
 import com.questevent.entity.ActivitySubmission;
 import com.questevent.entity.User;
 import com.questevent.enums.CompletionStatus;
+import com.questevent.enums.Role;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -28,22 +35,54 @@ class SubmissionServiceImplTest {
     @Mock
     private ActivitySubmissionRepository submissionRepository;
 
+    @Mock
+    private Authentication authentication;
+
+    @Mock
+    private SecurityContext securityContext;
+
     @InjectMocks
     private SubmissionServiceImpl submissionService;
+
+    private static final Long USER_ID = 1L;
+
+    /* ===================== Security Context Setup ===================== */
+
+    @BeforeEach
+    void setUpSecurityContext() {
+
+        UserPrincipal principal = new UserPrincipal(
+                USER_ID,
+                "test@example.com",
+                Role.USER
+        );
+
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getPrincipal()).thenReturn(principal);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+
+        SecurityContextHolder.setContext(securityContext);
+    }
+
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
+
+    /* ===================== Tests ===================== */
 
     @Test
     void submitActivity_shouldSaveSubmissionSuccessfully() {
 
         UUID activityId = UUID.randomUUID();
-        Long userId = 1L;
         UUID registrationId = UUID.randomUUID();
 
         ActivityRegistration registration =
-                mockRegistration(activityId, userId, registrationId);
+                mockRegistration(activityId, USER_ID, registrationId);
         registration.setCompletionStatus(CompletionStatus.NOT_COMPLETED);
 
         when(registrationRepository
-                .findByActivityActivityIdAndUserUserId(activityId, userId))
+                .findByActivityActivityIdAndUserUserId(activityId, USER_ID))
                 .thenReturn(Optional.of(registration));
 
         when(submissionRepository
@@ -52,11 +91,12 @@ class SubmissionServiceImplTest {
 
         submissionService.submitActivity(
                 activityId,
-                userId,
                 "https://github.com/project"
         );
 
         verify(submissionRepository).save(any(ActivitySubmission.class));
+        verify(registrationRepository).save(registration);
+
         assertEquals(
                 CompletionStatus.COMPLETED,
                 registration.getCompletionStatus()
@@ -67,17 +107,15 @@ class SubmissionServiceImplTest {
     void submitActivity_shouldThrowIfUserNotRegistered() {
 
         UUID activityId = UUID.randomUUID();
-        Long userId = 1L;
 
         when(registrationRepository
-                .findByActivityActivityIdAndUserUserId(activityId, userId))
+                .findByActivityActivityIdAndUserUserId(activityId, USER_ID))
                 .thenReturn(Optional.empty());
 
         RuntimeException ex = assertThrows(
                 RuntimeException.class,
                 () -> submissionService.submitActivity(
                         activityId,
-                        userId,
                         "url"
                 )
         );
@@ -86,28 +124,28 @@ class SubmissionServiceImplTest {
                 "User is not registered for this activity",
                 ex.getMessage()
         );
+
+        verify(submissionRepository, never()).save(any());
     }
 
     @Test
     void submitActivity_shouldThrowIfActivityAlreadyCompleted() {
 
         UUID activityId = UUID.randomUUID();
-        Long userId = 1L;
         UUID registrationId = UUID.randomUUID();
 
         ActivityRegistration registration =
-                mockRegistration(activityId, userId, registrationId);
+                mockRegistration(activityId, USER_ID, registrationId);
         registration.setCompletionStatus(CompletionStatus.COMPLETED);
 
         when(registrationRepository
-                .findByActivityActivityIdAndUserUserId(activityId, userId))
+                .findByActivityActivityIdAndUserUserId(activityId, USER_ID))
                 .thenReturn(Optional.of(registration));
 
         RuntimeException ex = assertThrows(
                 RuntimeException.class,
                 () -> submissionService.submitActivity(
                         activityId,
-                        userId,
                         "url"
                 )
         );
@@ -116,21 +154,22 @@ class SubmissionServiceImplTest {
                 "Activity already completed. Submission not allowed.",
                 ex.getMessage()
         );
+
+        verify(submissionRepository, never()).save(any());
     }
 
     @Test
     void submitActivity_shouldThrowIfSubmissionAlreadyExists() {
 
         UUID activityId = UUID.randomUUID();
-        Long userId = 1L;
         UUID registrationId = UUID.randomUUID();
 
         ActivityRegistration registration =
-                mockRegistration(activityId, userId, registrationId);
+                mockRegistration(activityId, USER_ID, registrationId);
         registration.setCompletionStatus(CompletionStatus.NOT_COMPLETED);
 
         when(registrationRepository
-                .findByActivityActivityIdAndUserUserId(activityId, userId))
+                .findByActivityActivityIdAndUserUserId(activityId, USER_ID))
                 .thenReturn(Optional.of(registration));
 
         when(submissionRepository
@@ -141,7 +180,6 @@ class SubmissionServiceImplTest {
                 RuntimeException.class,
                 () -> submissionService.submitActivity(
                         activityId,
-                        userId,
                         "url"
                 )
         );
@@ -150,9 +188,27 @@ class SubmissionServiceImplTest {
                 "Submission already exists for this registration",
                 ex.getMessage()
         );
+
+        verify(submissionRepository, never()).save(any());
     }
 
-    /* ===================== helper ===================== */
+    @Test
+    void submitActivity_shouldThrowIfPrincipalIsInvalid() {
+
+        when(authentication.getPrincipal()).thenReturn("anonymousUser");
+
+        RuntimeException ex = assertThrows(
+                RuntimeException.class,
+                () -> submissionService.submitActivity(
+                        UUID.randomUUID(),
+                        "url"
+                )
+        );
+
+        assertEquals("User not found", ex.getMessage());
+    }
+
+    /* ===================== Helper ===================== */
 
     private ActivityRegistration mockRegistration(
             UUID activityId,

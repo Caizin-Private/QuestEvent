@@ -1,5 +1,6 @@
 package com.questevent.service;
 
+import com.questevent.dto.UserPrincipal;
 import com.questevent.entity.ActivityRegistration;
 import com.questevent.entity.ActivitySubmission;
 import com.questevent.enums.CompletionStatus;
@@ -11,6 +12,8 @@ import com.questevent.repository.ActivitySubmissionRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import java.util.UUID;
 
@@ -24,7 +27,19 @@ public class SubmissionServiceImpl implements SubmissionService {
 
     @Override
     @Transactional
-    public void submitActivity(UUID activityId, Long userId, String submissionUrl) {
+    public void submitActivity(UUID activityId, String submissionUrl) {
+
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof UserPrincipal principal)) {
+
+            log.warn("Authenticated user not found while submitting activity");
+            throw new ResourceNotFoundException("User not found");
+        }
+
+        Long userId = principal.userId();
 
         log.debug(
                 "Submit activity requested | activityId={} | userId={}",
@@ -91,4 +106,5 @@ public class SubmissionServiceImpl implements SubmissionService {
                 submission.getSubmissionId()
         );
     }
+
 }
