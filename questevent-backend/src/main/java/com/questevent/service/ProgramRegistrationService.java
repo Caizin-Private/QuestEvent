@@ -163,7 +163,7 @@ public class ProgramRegistrationService {
         return programRegistrationRepository.findAll()
                 .stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -191,7 +191,7 @@ public class ProgramRegistrationService {
         return programRegistrationRepository.findByProgramProgramId(programId)
                 .stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -202,7 +202,7 @@ public class ProgramRegistrationService {
         return programRegistrationRepository.findByUserUserId(userId)
                 .stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional

@@ -5,8 +5,6 @@ import com.questevent.enums.CompletionStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 import jakarta.persistence.Id;
-
-import java.util.List;
 import java.util.UUID;
 
 
