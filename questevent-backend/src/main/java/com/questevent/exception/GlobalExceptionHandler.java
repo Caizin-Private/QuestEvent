@@ -33,18 +33,27 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<?> handleValidationErrors(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ApiErrorDTO> handleValidationErrors(
+            MethodArgumentNotValidException ex) {
 
-        Map<String, String> fieldErrors = new HashMap<>();
-
-        ex.getBindingResult()
+        String message = ex.getBindingResult()
                 .getFieldErrors()
-                .forEach(err -> fieldErrors.put(err.getField(), err.getDefaultMessage()));
+                .stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .findFirst()
+                .orElse("Request validation failed");
+
+        ApiErrorDTO apiError = ApiErrorDTO.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message(message)
+                .timestamp(Instant.now())
+                .build();
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(fieldErrors);
+                .body(apiError);
     }
+
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiErrorDTO> handleDatabaseError(DataIntegrityViolationException ex) {
