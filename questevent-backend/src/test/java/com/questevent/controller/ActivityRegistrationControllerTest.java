@@ -105,6 +105,116 @@ class ActivityRegistrationControllerTest {
     }
 
     @Test
+    void getRegistrationsByActivityAndStatus_success() throws Exception {
+
+        UUID activityId = UUID.randomUUID();
+
+        ActivityRegistrationDTO dto =
+                new ActivityRegistrationDTO(
+                        UUID.randomUUID(),
+                        activityId,
+                        "Activity 1",
+                        1L,
+                        "User 1",
+                        CompletionStatus.COMPLETED
+                );
+
+        when(activityRegistrationService
+                .getRegistrationsByActivityIdAndStatus(
+                        activityId, CompletionStatus.COMPLETED))
+                .thenReturn(List.of(dto));
+
+        mockMvc.perform(
+                        get("/api/activity-registrations/activities/{activityId}/status/{status}",
+                                activityId, CompletionStatus.COMPLETED))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].completionStatus")
+                        .value("COMPLETED"));
+    }
+
+    @Test
+    void getRegistrationsByUserAndStatus_success() throws Exception {
+
+        Long userId = 1L;
+
+        ActivityRegistrationDTO dto =
+                new ActivityRegistrationDTO(
+                        UUID.randomUUID(),
+                        UUID.randomUUID(),
+                        "Activity X",
+                        userId,
+                        "User X",
+                        CompletionStatus.NOT_COMPLETED
+                );
+
+        when(activityRegistrationService
+                .getRegistrationsByUserIdAndStatus(
+                        userId, CompletionStatus.NOT_COMPLETED))
+                .thenReturn(List.of(dto));
+
+        mockMvc.perform(
+                        get("/api/activity-registrations/users/{userId}/status/{status}",
+                                userId, CompletionStatus.NOT_COMPLETED))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].userId").value(userId));
+    }
+
+    @Test
+    void getParticipantCount_success() throws Exception {
+
+        UUID activityId = UUID.randomUUID();
+
+        when(activityRegistrationService
+                .getParticipantCountForActivity(activityId))
+                .thenReturn(5L);
+
+        mockMvc.perform(
+                        get("/api/activity-registrations/activities/{activityId}/count",
+                                activityId))
+                .andExpect(status().isOk())
+                .andExpect(content().string("5"));
+    }
+
+    @Test
+    void getAllRegistrations_emptyList() throws Exception {
+
+        when(activityRegistrationService.getAllRegistrations())
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/api/activity-registrations"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void getRegistrationsByActivity_emptyList() throws Exception {
+
+        UUID activityId = UUID.randomUUID();
+
+        when(activityRegistrationService
+                .getRegistrationsByActivityId(activityId))
+                .thenReturn(List.of());
+
+        mockMvc.perform(
+                        get("/api/activity-registrations/activities/{activityId}",
+                                activityId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+
+
+
+
+
+
+
+
+
+
+    @Test
     void getAllRegistrations_success() throws Exception {
         ActivityRegistrationDTO dto1 =
                 new ActivityRegistrationDTO(

@@ -158,7 +158,7 @@ public class JudgeController {
                     responseCode = "404",
                     description = "Submission not found"
             )
-    @PostMapping("/submissions/{submissionId}/review")
+    @PatchMapping("/submissions/{submissionId}/review")
     public ResponseEntity<Void> reviewSubmission(
             @Parameter(
                     name = "submissionId",

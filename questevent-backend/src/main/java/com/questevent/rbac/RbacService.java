@@ -294,13 +294,13 @@ public class RbacService {
         if (program.getUser() != null &&
                 user.getUserId().equals(program.getUser().getUserId())) {
             return !programRegistrationRepository
-                    .existsByProgram_ProgramIdAndUser_UserId(programId, userId);
+                    .existsByProgramProgramIdAndUserUserId(programId, userId);
         }
 
         if (!user.getUserId().equals(userId)) return false;
 
         return !programRegistrationRepository
-                .existsByProgram_ProgramIdAndUser_UserId(programId, userId);
+                .existsByProgramProgramIdAndUserUserId(programId, userId);
     }
 
     public boolean canRegisterForActivity(Authentication authentication, UUID activityId, Long userId) {
@@ -318,7 +318,7 @@ public class RbacService {
         if (program == null) return false;
 
         if (program.getUser() != null && user.getUserId().equals(program.getUser().getUserId())) {
-            if (!programRegistrationRepository.existsByProgram_ProgramIdAndUser_UserId(programId, userId)) {
+            if (!programRegistrationRepository.existsByProgramProgramIdAndUserUserId(programId, userId)) {
                 return false;
             }
             return !activityRegistrationRepository.existsByActivityActivityIdAndUserUserId(activityId, userId);
@@ -326,7 +326,7 @@ public class RbacService {
 
         if (!user.getUserId().equals(userId)) return false;
 
-        if (!programRegistrationRepository.existsByProgram_ProgramIdAndUser_UserId(programId, userId)) {
+        if (!programRegistrationRepository.existsByProgramProgramIdAndUserUserId(programId, userId)) {
             return false;
         }
 
@@ -349,7 +349,7 @@ public class RbacService {
         if (registration == null) return false;
 
         return !submissionRepository
-                .existsByActivityRegistration_ActivityRegistrationId(
+                .existsByActivityRegistrationActivityRegistrationId(
                         registration.getActivityRegistrationId()
                 );
     }

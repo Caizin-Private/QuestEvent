@@ -13,7 +13,7 @@ public interface ActivitySubmissionRepository
         extends JpaRepository<ActivitySubmission, UUID> {
 
     // Existing (keep)
-    boolean existsByActivityRegistration_ActivityRegistrationId(
+    boolean existsByActivityRegistrationActivityRegistrationId(
             UUID activityRegistrationId
     );
 

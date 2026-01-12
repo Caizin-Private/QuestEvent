@@ -65,7 +65,7 @@ public class ProgramRegistrationService {
                 });
 
         if (programRegistrationRepository
-                .existsByProgram_ProgramIdAndUser_UserId(
+                .existsByProgramProgramIdAndUserUserId(
                         program.getProgramId(), userId)) {
 
             log.warn(
@@ -122,7 +122,7 @@ public class ProgramRegistrationService {
                 });
 
         if (programRegistrationRepository
-                .existsByProgram_ProgramIdAndUser_UserId(
+                .existsByProgramProgramIdAndUserUserId(
                         programId, user.getUserId())) {
 
             log.warn(

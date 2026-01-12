@@ -6,9 +6,7 @@ import com.questevent.entity.*;
 import com.questevent.enums.CompletionStatus;
 import com.questevent.enums.ReviewStatus;
 import com.questevent.enums.Role;
-import com.questevent.exception.InvalidOperationException;
-import com.questevent.exception.JudgeNotFoundException;
-import com.questevent.exception.SubmissionNotFoundException;
+import com.questevent.exception.*;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
 import com.questevent.repository.UserRepository;
@@ -79,6 +77,173 @@ class JudgeServiceImplTest {
         assertEquals(ReviewStatus.PENDING, result.get(0).reviewStatus());
     }
 
+    @Test
+    void getPendingSubmissions_shouldThrowUnauthorized_whenNotAuthenticated() {
+
+        SecurityContextHolder.clearContext();
+
+        UnauthorizedException ex = assertThrows(
+                UnauthorizedException.class,
+                () -> judgeService.getPendingSubmissionsForJudge(null)
+        );
+
+        assertEquals("Unauthorized", ex.getMessage());
+    }
+
+    @Test
+    void getPendingSubmissions_shouldThrowUserNotFound_whenUserMissing() {
+
+        UserPrincipal principal =
+                new UserPrincipal(99L, "missing@test.com", Role.JUDGE);
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(principal, null, List.of())
+        );
+
+        when(userRepository.findById(99L))
+                .thenReturn(Optional.empty());
+
+        UserNotFoundException ex = assertThrows(
+                UserNotFoundException.class,
+                () -> judgeService.getPendingSubmissionsForJudge(null)
+        );
+
+        assertEquals("User not found", ex.getMessage());
+    }
+
+
+    @Test
+    void getPendingSubmissionsForJudge_shouldReturnAllPending_whenOwner() {
+
+        User owner = new User();
+        owner.setUserId(1L);
+        owner.setRole(Role.OWNER);
+
+        ActivitySubmission submission = mockSubmission(owner);
+
+        mockAuthenticatedUser(owner);
+
+        when(userRepository.findById(owner.getUserId()))
+                .thenReturn(Optional.of(owner));
+
+        when(submissionRepository.findByReviewStatus(ReviewStatus.PENDING))
+                .thenReturn(List.of(submission));
+
+        List<JudgeSubmissionDTO> result =
+                judgeService.getPendingSubmissionsForJudge(null);
+
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void getPendingSubmissionsForActivity_shouldReturnAllPending_whenOwner() {
+
+        User owner = new User();
+        owner.setUserId(1L);
+        owner.setRole(Role.OWNER);
+
+        UUID activityId = UUID.randomUUID();
+        ActivitySubmission submission = mockSubmission(owner);
+
+        mockAuthenticatedUser(owner);
+
+        when(userRepository.findById(owner.getUserId()))
+                .thenReturn(Optional.of(owner));
+
+        when(submissionRepository
+                .findByReviewStatusAndActivityRegistrationActivityActivityId(
+                        ReviewStatus.PENDING,
+                        activityId))
+                .thenReturn(List.of(submission));
+
+        List<JudgeSubmissionDTO> result =
+                judgeService.getPendingSubmissionsForActivity(activityId, null);
+
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void getPendingSubmissionsForActivity_shouldReturnJudgeSubmissions() {
+
+        User judgeUser = mockJudgeUser();
+        UUID activityId = UUID.randomUUID();
+
+        ActivitySubmission submission = mockSubmission(judgeUser);
+
+        mockAuthenticatedUser(judgeUser);
+
+        when(userRepository.findById(judgeUser.getUserId()))
+                .thenReturn(Optional.of(judgeUser));
+
+        when(submissionRepository
+                .findByReviewStatusAndActivityRegistrationActivityActivityIdAndActivityRegistrationActivityProgramJudgeUserUserId(
+                        ReviewStatus.PENDING,
+                        activityId,
+                        judgeUser.getUserId()))
+                .thenReturn(List.of(submission));
+
+        List<JudgeSubmissionDTO> result =
+                judgeService.getPendingSubmissionsForActivity(activityId, null);
+
+        assertEquals(1, result.size());
+    }
+
+
+    @Test
+    void getAllSubmissionsForJudge_shouldReturnAll_whenOwner() {
+
+        User owner = new User();
+        owner.setUserId(1L);
+        owner.setRole(Role.OWNER);
+
+        ActivitySubmission submission = mockSubmission(owner);
+
+        mockAuthenticatedUser(owner);
+
+        when(userRepository.findById(owner.getUserId()))
+                .thenReturn(Optional.of(owner));
+
+        when(submissionRepository.findAll())
+                .thenReturn(List.of(submission));
+
+        List<JudgeSubmissionDTO> result =
+                judgeService.getAllSubmissionsForJudge(null);
+
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void getAllSubmissionsForJudge_shouldReturnJudgeSubmissions() {
+
+        User judgeUser = mockJudgeUser();
+        ActivitySubmission submission = mockSubmission(judgeUser);
+
+        mockAuthenticatedUser(judgeUser);
+
+        when(userRepository.findById(judgeUser.getUserId()))
+                .thenReturn(Optional.of(judgeUser));
+
+        when(submissionRepository
+                .findByActivityRegistrationActivityProgramJudgeUserUserId(
+                        judgeUser.getUserId()))
+                .thenReturn(List.of(submission));
+
+        List<JudgeSubmissionDTO> result =
+                judgeService.getAllSubmissionsForJudge(null);
+
+        assertEquals(1, result.size());
+    }
+
+
+
+
+
+
+
+
+
+
+
     /* ================= REVIEW ================= */
 
     @Test
@@ -136,12 +301,14 @@ class JudgeServiceImplTest {
 
         mockAuthenticatedUser(judgeUser);
 
-        when(submissionRepository.findById(submission.getSubmissionId()))
+        UUID submissionId = submission.getSubmissionId();
+
+        when(submissionRepository.findById(submissionId))
                 .thenReturn(Optional.of(submission));
 
         InvalidOperationException ex = assertThrows(
                 InvalidOperationException.class,
-                () -> judgeService.reviewSubmission(submission.getSubmissionId())
+                () -> judgeService.reviewSubmission(submissionId)
         );
 
         assertEquals("Submission already reviewed", ex.getMessage());
@@ -160,12 +327,14 @@ class JudgeServiceImplTest {
 
         mockAuthenticatedUser(judgeUser);
 
-        when(submissionRepository.findById(submission.getSubmissionId()))
+        UUID submissionId = submission.getSubmissionId();
+
+        when(submissionRepository.findById(submissionId))
                 .thenReturn(Optional.of(submission));
 
         JudgeNotFoundException ex = assertThrows(
                 JudgeNotFoundException.class,
-                () -> judgeService.reviewSubmission(submission.getSubmissionId())
+                () -> judgeService.reviewSubmission(submissionId)
         );
 
         assertEquals(
@@ -186,18 +355,21 @@ class JudgeServiceImplTest {
 
         mockAuthenticatedUser(judgeUser);
 
-        when(submissionRepository.findById(submission.getSubmissionId()))
+        UUID submissionId = submission.getSubmissionId();
+
+        when(submissionRepository.findById(submissionId))
                 .thenReturn(Optional.of(submission));
 
         InvalidOperationException ex = assertThrows(
                 InvalidOperationException.class,
-                () -> judgeService.reviewSubmission(submission.getSubmissionId())
+                () -> judgeService.reviewSubmission(submissionId)
         );
 
         assertEquals("Invalid reward gems", ex.getMessage());
     }
 
-    /* ================= HELPERS ================= */
+
+
 
     private void mockAuthenticatedUser(User user) {
         UserPrincipal principal =

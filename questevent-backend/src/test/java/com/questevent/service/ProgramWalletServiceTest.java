@@ -175,12 +175,14 @@ class ProgramWalletServiceTest {
     @Test
     void getWalletBalanceByWalletId_shouldThrowNotFound_whenMissing() {
 
-        when(programWalletRepository.findById(any()))
+        UUID walletId = UUID.randomUUID();
+
+        when(programWalletRepository.findById(walletId))
                 .thenReturn(Optional.empty());
 
         WalletNotFoundException ex = assertThrows(
                 WalletNotFoundException.class,
-                () -> programWalletService.getWalletBalanceByWalletId(UUID.randomUUID())
+                () -> programWalletService.getWalletBalanceByWalletId(walletId)
         );
 
         assertEquals("Program wallet not found", ex.getMessage());

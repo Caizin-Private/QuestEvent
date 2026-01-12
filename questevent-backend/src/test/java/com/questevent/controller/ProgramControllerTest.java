@@ -149,6 +149,156 @@ class ProgramControllerTest {
                 .andExpect(status().isNotFound());
     }
 
+    @Test
+    void getMyPrograms_success() throws Exception {
+
+        mockAuthenticatedUser(1L);
+
+        Program program = new Program();
+        program.setProgramId(UUID.randomUUID());
+        program.setUser(mockHost(1L));
+
+        when(programService.getMyPrograms())
+                .thenReturn(List.of(program));
+
+        mockMvc.perform(get("/api/programs/my-programs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
+    }
+
+    @Test
+    void getCompletedProgramsForUser_success() throws Exception {
+
+        mockAuthenticatedUser(1L);
+
+        Program program = new Program();
+        program.setProgramId(UUID.randomUUID());
+        program.setStatus(ProgramStatus.COMPLETED);
+        program.setUser(mockHost(1L));
+
+        when(programService.getCompletedProgramsForUser())
+                .thenReturn(List.of(program));
+
+        mockMvc.perform(get("/api/programs/my-completed-registrations"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
+    }
+
+    @Test
+    void getProgramsWhereUserIsJudge_success() throws Exception {
+
+        mockAuthenticatedUser(1L);
+
+        Program program = new Program();
+        program.setProgramId(UUID.randomUUID());
+        program.setUser(mockHost(2L));
+
+        when(programService.getProgramsWhereUserIsJudge())
+                .thenReturn(List.of(program));
+
+        mockMvc.perform(get("/api/programs/my-judge-programs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
+    }
+
+    @Test
+    void getActiveProgramsByUserDepartment_success() throws Exception {
+
+        mockAuthenticatedUser(1L);
+
+        Program program = new Program();
+        program.setProgramId(UUID.randomUUID());
+        program.setStatus(ProgramStatus.ACTIVE);
+        program.setDepartment(Department.IT);
+        program.setUser(mockHost(1L));
+
+        when(programService.getActiveProgramsByUserDepartment())
+                .thenReturn(List.of(program));
+
+        mockMvc.perform(get("/api/programs/active-by-department"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
+    }
+
+    @Test
+    void getDraftProgramsByHost_success() throws Exception {
+
+        mockAuthenticatedUser(1L);
+
+        Program program = new Program();
+        program.setProgramId(UUID.randomUUID());
+        program.setStatus(ProgramStatus.DRAFT);
+        program.setUser(mockHost(1L));
+
+        when(programService.getDraftProgramsByHost())
+                .thenReturn(List.of(program));
+
+        mockMvc.perform(get("/api/programs/my-draft-programs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
+    }
+
+    @Test
+    void changeProgramStatusToActive_success() throws Exception {
+
+        mockAuthenticatedUser(1L);
+
+        UUID programId = UUID.randomUUID();
+
+        Program program = new Program();
+        program.setProgramId(programId);
+        program.setStatus(ProgramStatus.ACTIVE);
+        program.setUser(mockHost(1L));
+
+        when(programService.changeProgramStatusToActive(programId))
+                .thenReturn(program);
+
+        mockMvc.perform(patch("/api/programs/{programId}/status-to-active", programId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ACTIVE"));
+    }
+
+    @Test
+    void updateProgram_notFound() throws Exception {
+
+        mockAuthenticatedUser(1L);
+
+        UUID programId = UUID.randomUUID();
+
+        when(programService.updateProgram(eq(programId), any()))
+                .thenThrow(new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Program not found"
+                ));
+
+        mockMvc.perform(put("/api/programs/{programId}", programId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new ProgramRequestDTO())))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deleteProgram_forbidden() throws Exception {
+
+        mockAuthenticatedUser(1L);
+
+        UUID programId = UUID.randomUUID();
+
+        doThrow(new ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                "Permission denied"
+        )).when(programService).deleteProgram(programId);
+
+        mockMvc.perform(delete("/api/programs/{programId}", programId))
+                .andExpect(status().isForbidden());
+    }
+
+
+
+
+
+
+
     /* ===================== GET ALL PROGRAMS ===================== */
 
     @Test

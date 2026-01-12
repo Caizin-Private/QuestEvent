@@ -4,6 +4,9 @@ import com.questevent.dto.ActivitySubmissionRequestDTO;
 import com.questevent.service.SubmissionService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -11,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.doNothing;
@@ -46,35 +50,12 @@ class SubmissionControllerTest {
         assertEquals("Submission successful", response.getBody());
     }
 
-    @Test
-    void submitActivity_shouldThrowException_whenUserNotRegistered() {
-
-        UUID activityId = UUID.randomUUID();
-        Long userId = 99L;
-
-        ActivitySubmissionRequestDTO request = new ActivitySubmissionRequestDTO();
-        request.setActivityId(activityId);
-        request.setUserId(userId);
-        request.setSubmissionUrl("https://github.com/user/project");
-
-        doThrow(new RuntimeException("User is not registered for this activity"))
-                .when(submissionService)
-                .submitActivity(activityId, userId, "https://github.com/user/project");
-
-        RuntimeException exception = assertThrows(
-                RuntimeException.class,
-                () -> submissionController.submitActivity(request)
-        );
-
-        assertEquals(
-                "User is not registered for this activity",
-                exception.getMessage()
-        );
-    }
-
-    @Test
-    void submitActivity_shouldThrowException_whenSubmissionAlreadyExists() {
-
+    @ParameterizedTest
+    @MethodSource("exceptionScenarios")
+    void submitActivity_shouldThrowException_forInvalidCases(
+            RuntimeException thrownException,
+            String expectedMessage
+    ) {
         UUID activityId = UUID.randomUUID();
         Long userId = 2L;
 
@@ -83,7 +64,7 @@ class SubmissionControllerTest {
         request.setUserId(userId);
         request.setSubmissionUrl("https://github.com/user/project");
 
-        doThrow(new RuntimeException("Submission already exists for this registration"))
+        doThrow(thrownException)
                 .when(submissionService)
                 .submitActivity(activityId, userId, "https://github.com/user/project");
 
@@ -92,35 +73,23 @@ class SubmissionControllerTest {
                 () -> submissionController.submitActivity(request)
         );
 
-        assertEquals(
-                "Submission already exists for this registration",
-                exception.getMessage()
-        );
+        assertEquals(expectedMessage, exception.getMessage());
     }
 
-    @Test
-    void submitActivity_shouldThrowException_whenActivityAlreadyCompleted() {
-
-        UUID activityId = UUID.randomUUID();
-        Long userId = 2L;
-
-        ActivitySubmissionRequestDTO request = new ActivitySubmissionRequestDTO();
-        request.setActivityId(activityId);
-        request.setUserId(userId);
-        request.setSubmissionUrl("https://github.com/user/project");
-
-        doThrow(new RuntimeException("Activity already completed. Submission not allowed."))
-                .when(submissionService)
-                .submitActivity(activityId, userId, "https://github.com/user/project");
-
-        RuntimeException exception = assertThrows(
-                RuntimeException.class,
-                () -> submissionController.submitActivity(request)
-        );
-
-        assertEquals(
-                "Activity already completed. Submission not allowed.",
-                exception.getMessage()
+    static Stream<Arguments> exceptionScenarios() {
+        return Stream.of(
+                Arguments.of(
+                        new RuntimeException("User is not registered for this activity"),
+                        "User is not registered for this activity"
+                ),
+                Arguments.of(
+                        new RuntimeException("Submission already exists for this registration"),
+                        "Submission already exists for this registration"
+                ),
+                Arguments.of(
+                        new RuntimeException("Activity already completed. Submission not allowed."),
+                        "Activity already completed. Submission not allowed."
+                )
         );
     }
 }

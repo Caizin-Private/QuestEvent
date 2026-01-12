@@ -1,16 +1,11 @@
 package com.questevent.service;
 
-import com.questevent.dto.ProgramRegistrationDTO;
-import com.questevent.dto.ProgramRegistrationRequestDTO;
-import com.questevent.dto.ProgramRegistrationResponseDTO;
-import com.questevent.dto.UserPrincipal;
+import com.questevent.dto.*;
 import com.questevent.entity.Program;
 import com.questevent.entity.ProgramRegistration;
 import com.questevent.entity.User;
 import com.questevent.enums.Role;
-import com.questevent.exception.ProgramNotFoundException;
-import com.questevent.exception.ResourceNotFoundException;
-import com.questevent.exception.UserNotFoundException;
+import com.questevent.exception.*;
 import com.questevent.repository.ProgramRegistrationRepository;
 import com.questevent.repository.ProgramRepository;
 import com.questevent.repository.UserRepository;
@@ -104,7 +99,7 @@ class ProgramRegistrationServiceTest {
         when(programRepository.findById(programId))
                 .thenReturn(Optional.of(program));
         when(programRegistrationRepository
-                .existsByProgram_ProgramIdAndUser_UserId(programId, userId))
+                .existsByProgramProgramIdAndUserUserId(programId, userId))
                 .thenReturn(false);
         when(programRegistrationRepository.save(any()))
                 .thenReturn(saved);
@@ -250,6 +245,194 @@ class ProgramRegistrationServiceTest {
                 ex.getMessage()
         );
     }
+
+    @Test
+    void registerParticipantForProgram_shouldThrowUnauthorized_whenNoAuth() {
+
+        SecurityContextHolder.clearContext();
+
+        ProgramRegistrationRequestDTO request =
+                new ProgramRegistrationRequestDTO();
+        request.setProgramId(UUID.randomUUID());
+
+        assertThrows(
+                UnauthorizedException.class,
+                () -> programRegistrationService.registerParticipantForProgram(request)
+        );
+    }
+
+    @Test
+    void registerParticipantForProgram_shouldThrowConflict_whenDuplicate() {
+
+        Long userId = 1L;
+        UUID programId = UUID.randomUUID();
+
+        mockAuthenticatedUser(userId);
+
+        ProgramRegistrationRequestDTO request =
+                new ProgramRegistrationRequestDTO();
+        request.setProgramId(programId);
+
+        User user = new User();
+        user.setUserId(userId);
+
+        Program program = new Program();
+        program.setProgramId(programId);
+
+        when(userRepository.findById(userId))
+                .thenReturn(Optional.of(user));
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.of(program));
+        when(programRegistrationRepository
+                .existsByProgramProgramIdAndUserUserId(programId, userId))
+                .thenReturn(true);
+
+        assertThrows(
+                ResourceConflictException.class,
+                () -> programRegistrationService.registerParticipantForProgram(request)
+        );
+    }
+
+    @Test
+    void addParticipantToProgram_shouldThrowProgramNotFound() {
+
+        UUID programId = UUID.randomUUID();
+
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.empty());
+
+        AddParticipantInProgramRequestDTO request =
+                new AddParticipantInProgramRequestDTO();
+        request.setUserId(1L);
+
+        assertThrows(
+                ProgramNotFoundException.class,
+                () -> programRegistrationService.addParticipantToProgram(programId, request)
+        );
+    }
+
+    @Test
+    void addParticipantToProgram_shouldThrowUserNotFound() {
+
+        UUID programId = UUID.randomUUID();
+
+        Program program = new Program();
+        program.setProgramId(programId);
+
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.of(program));
+        when(userRepository.findById(1L))
+                .thenReturn(Optional.empty());
+
+        AddParticipantInProgramRequestDTO request =
+                new AddParticipantInProgramRequestDTO();
+        request.setUserId(1L);
+
+        assertThrows(
+                UserNotFoundException.class,
+                () -> programRegistrationService.addParticipantToProgram(programId, request)
+        );
+    }
+
+
+    @Test
+    void addParticipantToProgram_shouldThrowConflict_whenDuplicate() {
+
+        UUID programId = UUID.randomUUID();
+        Long userId = 1L;
+
+        Program program = new Program();
+        program.setProgramId(programId);
+
+        User user = new User();
+        user.setUserId(userId);
+
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.of(program));
+        when(userRepository.findById(userId))
+                .thenReturn(Optional.of(user));
+        when(programRegistrationRepository
+                .existsByProgramProgramIdAndUserUserId(programId, userId))
+                .thenReturn(true);
+
+        AddParticipantInProgramRequestDTO request =
+                new AddParticipantInProgramRequestDTO();
+        request.setUserId(userId);
+
+        assertThrows(
+                ResourceConflictException.class,
+                () -> programRegistrationService.addParticipantToProgram(programId, request)
+        );
+    }
+
+    @Test
+    void getRegistrationsByUserId_success() {
+
+        Long userId = 1L;
+
+        User user = new User();
+        user.setUserId(userId);
+
+        Program program = new Program();
+        program.setProgramId(UUID.randomUUID());
+
+        ProgramRegistration reg = new ProgramRegistration();
+        reg.setUser(user);
+        reg.setProgram(program);
+
+        when(programRegistrationRepository.findByUserUserId(userId))
+                .thenReturn(List.of(reg));
+
+        List<ProgramRegistrationDTO> result =
+                programRegistrationService.getRegistrationsByUserId(userId);
+
+        assertEquals(1, result.size());
+    }
+
+
+    @Test
+    void deleteRegistrationByProgramAndUser_success() {
+
+        UUID programId = UUID.randomUUID();
+        Long userId = 1L;
+
+        ProgramRegistration reg = new ProgramRegistration();
+        reg.setProgramRegistrationId(UUID.randomUUID());
+
+        when(programRegistrationRepository
+                .findByProgramProgramIdAndUserUserId(programId, userId))
+                .thenReturn(Optional.of(reg));
+
+        assertDoesNotThrow(() ->
+                programRegistrationService
+                        .deleteRegistrationByProgramAndUser(programId, userId)
+        );
+
+        verify(programRegistrationRepository).delete(reg);
+    }
+
+
+    @Test
+    void deleteRegistrationByProgramAndUser_shouldThrowNotFound() {
+
+        UUID programId = UUID.randomUUID();
+        Long userId = 1L;
+
+        when(programRegistrationRepository
+                .findByProgramProgramIdAndUserUserId(programId, userId))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> programRegistrationService
+                        .deleteRegistrationByProgramAndUser(programId, userId)
+        );
+    }
+
+
+
+
+
 
     @Test
     void deleteRegistration_success() {

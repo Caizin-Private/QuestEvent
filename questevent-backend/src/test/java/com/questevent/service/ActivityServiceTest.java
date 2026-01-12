@@ -178,6 +178,124 @@ class ActivityServiceTest {
     }
 
     @Test
+    void getCompulsoryActivitiesByProgramId_success() {
+
+        UUID programId = UUID.randomUUID();
+
+        Activity a1 = new Activity();
+        Activity a2 = new Activity();
+
+        when(programRepository.existsById(programId))
+                .thenReturn(true);
+
+        when(activityRepository
+                .findByProgramProgramIdAndIsCompulsoryTrue(programId))
+                .thenReturn(List.of(a1, a2));
+
+        List<Activity> result =
+                activityService.getCompulsoryActivitiesByProgramId(programId);
+
+        assertEquals(2, result.size());
+
+        verify(programRepository).existsById(programId);
+        verify(activityRepository)
+                .findByProgramProgramIdAndIsCompulsoryTrue(programId);
+    }
+
+    @Test
+    void getCompulsoryActivitiesByProgramId_programNotFound() {
+
+        UUID programId = UUID.randomUUID();
+
+        when(programRepository.existsById(programId))
+                .thenReturn(false);
+
+        ProgramNotFoundException ex = assertThrows(
+                ProgramNotFoundException.class,
+                () -> activityService.getCompulsoryActivitiesByProgramId(programId)
+        );
+
+        assertEquals("Program not found", ex.getMessage());
+
+        verify(activityRepository, never())
+                .findByProgramProgramIdAndIsCompulsoryTrue(any());
+    }
+
+    @Test
+    void getActivitiesByProgramId_emptyList() {
+
+        UUID programId = UUID.randomUUID();
+
+        when(programRepository.existsById(programId))
+                .thenReturn(true);
+
+        when(activityRepository.findByProgramProgramId(programId))
+                .thenReturn(List.of());
+
+        List<Activity> result =
+                activityService.getActivitiesByProgramId(programId);
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void createActivity_mapsAllFieldsCorrectly() {
+
+        UUID programId = UUID.randomUUID();
+
+        Program program = new Program();
+        program.setProgramId(programId);
+
+        ActivityRequestDTO dto = new ActivityRequestDTO();
+        dto.setActivityName("Rules Test");
+        dto.setActivityDuration(30);
+        dto.setRewardGems(50);
+        dto.setActivityRulebook("Rules");
+        dto.setActivityDescription("Desc");
+        dto.setIsCompulsory(false);
+
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.of(program));
+
+        when(activityRepository.save(any(Activity.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        Activity result =
+                activityService.createActivity(programId, dto);
+
+        assertEquals("Rules Test", result.getActivityName());
+        assertEquals(30, result.getActivityDuration());
+        assertEquals(50L, result.getRewardGems());
+        assertEquals("Rules", result.getActivityRulebook());
+        assertEquals("Desc", result.getActivityDescription());
+        assertFalse(result.getIsCompulsory());
+    }
+
+    @Test
+    void deleteActivity_programMatchesExactly_success() {
+
+        UUID programId = UUID.randomUUID();
+        UUID activityId = UUID.randomUUID();
+
+        Program program = new Program();
+        program.setProgramId(programId);
+
+        Activity activity = new Activity();
+        activity.setActivityId(activityId);
+        activity.setProgram(program);
+
+        when(activityRepository.findById(activityId))
+                .thenReturn(Optional.of(activity));
+
+        activityService.deleteActivity(programId, activityId);
+
+        verify(activityRepository).delete(activity);
+    }
+
+
+
+    @Test
     void getActivitiesByProgramId_success() {
         UUID programId = UUID.randomUUID();
 

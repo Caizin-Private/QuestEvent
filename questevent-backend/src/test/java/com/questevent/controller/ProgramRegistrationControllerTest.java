@@ -3,6 +3,7 @@ package com.questevent.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.questevent.dto.AddParticipantInProgramRequestDTO;
 import com.questevent.dto.ProgramRegistrationDTO;
 import com.questevent.dto.ProgramRegistrationRequestDTO;
 import com.questevent.dto.ProgramRegistrationResponseDTO;
@@ -133,6 +134,95 @@ class ProgramRegistrationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.programTitle").value("Program 1"));
     }
+
+
+    @Test
+    void addParticipantByHost_success() throws Exception {
+
+        UUID programId = UUID.randomUUID();
+
+        AddParticipantInProgramRequestDTO request =
+                new AddParticipantInProgramRequestDTO();
+        request.setUserId(2L);
+
+        ProgramRegistrationResponseDTO response =
+                new ProgramRegistrationResponseDTO();
+        response.setProgramRegistrationId(UUID.randomUUID());
+        response.setProgramId(programId);
+        response.setUserId(2L);
+        response.setMessage("Successfully registered for program");
+
+        when(programRegistrationService
+                .addParticipantToProgram(eq(programId), any()))
+                .thenReturn(response);
+
+        mockMvc.perform(
+                        post("/api/program-registrations/programs/{programId}/participants",
+                                programId)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.userId").value(2L))
+                .andExpect(jsonPath("$.message")
+                        .value("Successfully registered for program"));
+    }
+
+    @Test
+    void getParticipantCount_success() throws Exception {
+
+        UUID programId = UUID.randomUUID();
+
+        when(programRegistrationService
+                .getParticipantCountForProgram(programId))
+                .thenReturn(5L);
+
+        mockMvc.perform(
+                        get("/api/program-registrations/programs/{programId}/count",
+                                programId))
+                .andExpect(status().isOk())
+                .andExpect(content().string("5"));
+    }
+
+
+    @Test
+    void removeParticipantByHost_success() throws Exception {
+
+        UUID programId = UUID.randomUUID();
+        Long userId = 2L;
+
+        doNothing().when(programRegistrationService)
+                .deleteRegistrationByProgramAndUser(programId, userId);
+
+        mockMvc.perform(
+                        delete("/api/program-registrations/programs/{programId}/participants/{userId}",
+                                programId, userId))
+                .andExpect(status().isNoContent());
+
+        verify(programRegistrationService)
+                .deleteRegistrationByProgramAndUser(programId, userId);
+    }
+
+    @Test
+    void removeParticipantByHost_notFound() throws Exception {
+
+        UUID programId = UUID.randomUUID();
+        Long userId = 99L;
+
+        doThrow(new RuntimeException("Registration not found"))
+                .when(programRegistrationService)
+                .deleteRegistrationByProgramAndUser(programId, userId);
+
+        mockMvc.perform(
+                        delete("/api/program-registrations/programs/{programId}/participants/{userId}",
+                                programId, userId))
+                .andExpect(status().isNotFound());
+    }
+
+
+
+
+
+
 
     @Test
     void getRegistrationById_notFound() throws Exception {

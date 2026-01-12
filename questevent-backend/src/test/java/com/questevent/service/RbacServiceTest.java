@@ -111,6 +111,172 @@ class RbacServiceTest {
         assertFalse(rbacService.canRegisterForActivity(authentication, activityId, userId));
         assertFalse(rbacService.canSubmitActivity(authentication, activityId, userId));
     }
+    @Test
+    void unknownPrincipal_returnsFalseEverywhere() {
+
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getPrincipal()).thenReturn("some-string");
+
+        assertFalse(rbacService.canViewProgram(authentication));
+        assertFalse(rbacService.canAccessUserProfile(authentication, 1L));
+    }
+
+    @Test
+    void jwt_preferredUsername_fallback_used() {
+
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .claim("preferred_username", "pref@test.com")
+                .build();
+
+        JwtAuthenticationToken jwtAuth =
+                new JwtAuthenticationToken(jwt, List.of());
+
+        when(userRepository.findByEmail("pref@test.com"))
+                .thenReturn(Optional.of(user));
+
+        assertTrue(rbacService.canViewProgram(jwtAuth));
+    }
+
+    @Test
+    void jwt_upn_fallback_used() {
+
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .claim("upn", "upn@test.com")
+                .build();
+
+        JwtAuthenticationToken jwtAuth =
+                new JwtAuthenticationToken(jwt, List.of());
+
+        when(userRepository.findByEmail("upn@test.com"))
+                .thenReturn(Optional.of(user));
+
+        assertTrue(rbacService.canViewProgram(jwtAuth));
+    }
+
+    @Test
+    void canAccessActivityRegistration_activityNull_returnsFalse() {
+
+        authenticate(user);
+
+        ActivityRegistration reg = new ActivityRegistration();
+        reg.setActivity(null);
+
+        when(activityRegistrationRepository.findById(any()))
+                .thenReturn(Optional.of(reg));
+
+        assertFalse(
+                rbacService.canAccessActivityRegistration(authentication, UUID.randomUUID())
+        );
+    }
+
+    @Test
+    void canAccessProgramRegistration_programNull_returnsFalse() {
+
+        authenticate(user);
+
+        ProgramRegistration reg = new ProgramRegistration();
+        reg.setProgram(null);
+
+        when(programRegistrationRepository.findById(any()))
+                .thenReturn(Optional.of(reg));
+
+        assertFalse(
+                rbacService.canAccessProgramRegistration(authentication, UUID.randomUUID())
+        );
+    }
+
+    @Test
+    void canVerifySubmission_activityNull_returnsFalse() {
+
+        authenticate(user);
+
+        ActivityRegistration reg = new ActivityRegistration();
+        reg.setActivity(null);
+
+        ActivitySubmission submission = new ActivitySubmission();
+        submission.setActivityRegistration(reg);
+
+        when(submissionRepository.findById(any()))
+                .thenReturn(Optional.of(submission));
+
+        assertFalse(
+                rbacService.canVerifySubmission(authentication, UUID.randomUUID())
+        );
+    }
+    @Test
+    void canAccessProgramWallet_walletUserMismatch_returnsFalse() {
+
+        authenticate(user);
+
+        ProgramWallet wallet = new ProgramWallet();
+        wallet.setUser(owner); // different user
+
+        when(programWalletRepository.findById(any()))
+                .thenReturn(Optional.of(wallet));
+
+        assertFalse(
+                rbacService.canAccessProgramWallet(authentication, UUID.randomUUID())
+        );
+    }
+
+    @Test
+    void canAccessMyProgramWallet_walletExists_returnsTrue() {
+
+        authenticate(user);
+
+        when(programWalletRepository
+                .findByUserUserIdAndProgramProgramId(userId, programId))
+                .thenReturn(Optional.of(new ProgramWallet()));
+
+        assertTrue(
+                rbacService.canAccessMyProgramWallet(authentication, programId)
+        );
+    }
+
+    @Test
+    void canRegisterForProgram_ownerAlreadyRegistered_returnsFalse() {
+
+        authenticate(user);
+
+        program.setUser(user);
+
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.of(program));
+
+        when(programRegistrationRepository
+                .existsByProgramProgramIdAndUserUserId(programId, userId))
+                .thenReturn(true);
+
+        assertFalse(
+                rbacService.canRegisterForProgram(authentication, programId, userId)
+        );
+    }
+
+    @Test
+    void canRegisterForActivity_duplicateActivityRegistration_returnsFalse() {
+
+        authenticate(user);
+
+        when(activityRepository.findById(activityId))
+                .thenReturn(Optional.of(activity));
+
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.of(program));
+
+        when(programRegistrationRepository
+                .existsByProgramProgramIdAndUserUserId(programId, userId))
+                .thenReturn(true);
+
+        when(activityRegistrationRepository
+                .existsByActivityActivityIdAndUserUserId(activityId, userId))
+                .thenReturn(true);
+
+        assertFalse(
+                rbacService.canRegisterForActivity(authentication, activityId, userId)
+        );
+    }
 
     @Test
     void jwtAuthentication_branch_covered() {
@@ -128,6 +294,312 @@ class RbacServiceTest {
 
         assertTrue(rbacService.canViewProgram(jwtAuth));
     }
+
+
+    @Test
+    void jwtAuthentication_userNotFound_returnsFalse() {
+
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .claim("email", "missing@test.com")
+                .build();
+
+        JwtAuthenticationToken jwtAuth =
+                new JwtAuthenticationToken(jwt, List.of());
+
+        when(userRepository.findByEmail("missing@test.com"))
+                .thenReturn(Optional.empty());
+
+        assertFalse(rbacService.canViewProgram(jwtAuth));
+    }
+
+    @Test
+    void oauth2User_allAttributesNull_returnsFalse() {
+
+        OAuth2User oauthUser = mock(OAuth2User.class);
+
+        when(oauthUser.getAttribute(any()))
+                .thenReturn(null);
+
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getPrincipal()).thenReturn(oauthUser);
+
+        assertFalse(rbacService.canViewProgram(authentication));
+    }
+
+    @Test
+    void canAccessProgramWalletsByProgram_judgeAllowed() {
+
+        authenticate(judgeUser);
+
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.of(program));
+
+        assertTrue(
+                rbacService.canAccessProgramWalletsByProgram(authentication, programId)
+        );
+    }
+
+    @Test
+    void canRegisterForProgram_userIdMismatch_returnsFalse() {
+
+        authenticate(user);
+
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.of(program));
+
+        assertFalse(
+                rbacService.canRegisterForProgram(authentication, programId, 999L)
+        );
+    }
+
+    @Test
+    void canRegisterForActivity_programIdNull_returnsFalse() {
+
+        authenticate(user);
+
+        Activity activityWithoutProgram = new Activity();
+        activityWithoutProgram.setActivityId(activityId);
+        activityWithoutProgram.setProgram(null);
+
+        when(activityRepository.findById(activityId))
+                .thenReturn(Optional.of(activityWithoutProgram));
+
+        assertFalse(
+                rbacService.canRegisterForActivity(authentication, activityId, userId)
+        );
+    }
+
+    @Test
+    void canSubmitActivity_roleNotUser_returnsFalse() {
+
+        authenticate(owner);
+
+        assertFalse(
+                rbacService.canSubmitActivity(authentication, activityId, ownerId)
+        );
+    }
+
+    @Test
+    void canSubmitActivity_submissionAlreadyExists_returnsFalse() {
+
+        authenticate(user);
+
+        ActivityRegistration reg = new ActivityRegistration();
+        reg.setActivityRegistrationId(UUID.randomUUID());
+
+        when(activityRegistrationRepository
+                .findByActivityActivityIdAndUserUserId(activityId, userId))
+                .thenReturn(Optional.of(reg));
+
+        when(submissionRepository
+                .existsByActivityRegistrationActivityRegistrationId(
+                        reg.getActivityRegistrationId()))
+                .thenReturn(true);
+
+        assertFalse(
+                rbacService.canSubmitActivity(authentication, activityId, userId)
+        );
+    }
+
+    @Test
+    void isJudgeForActivity_programNull_returnsFalse() {
+
+        authenticate(judgeUser);
+
+        Activity activityWithoutProgram = new Activity();
+        activityWithoutProgram.setActivityId(activityId);
+        activityWithoutProgram.setProgram(null);
+
+        when(activityRepository.findById(activityId))
+                .thenReturn(Optional.of(activityWithoutProgram));
+
+        assertFalse(
+                rbacService.isJudgeForActivity(authentication, activityId)
+        );
+    }
+
+
+    @Test
+    void canAccessMyProgramWallet_programUserMismatch_returnsFalse() {
+
+        authenticate(user);
+
+        Program otherProgram = new Program();
+        otherProgram.setProgramId(programId);
+        otherProgram.setUser(owner); // different user
+
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.of(otherProgram));
+
+        when(programWalletRepository
+                .findByUserUserIdAndProgramProgramId(userId, programId))
+                .thenReturn(Optional.empty());
+
+        assertFalse(
+                rbacService.canAccessMyProgramWallet(authentication, programId)
+        );
+    }
+
+
+    @Test
+    void canAccessProgramWalletsByProgram_programNotFound_returnsFalse() {
+
+        authenticate(user);
+
+        UUID pid = UUID.randomUUID();
+
+        when(programRepository.findById(pid))
+                .thenReturn(Optional.empty());
+
+        assertFalse(
+                rbacService.canAccessProgramWalletsByProgram(authentication, pid)
+        );
+    }
+
+    @Test
+    void canAccessProgramWalletsByProgram_programUserNull_returnsFalse() {
+
+        authenticate(user);
+
+        Program p = new Program();
+        p.setProgramId(programId);
+        p.setUser(null);
+
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.of(p));
+
+        assertFalse(
+                rbacService.canAccessProgramWalletsByProgram(authentication, programId)
+        );
+    }
+
+    @Test
+    void canRegisterForProgram_programNotFound_returnsFalse() {
+
+        authenticate(user);
+
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.empty());
+
+        assertFalse(
+                rbacService.canRegisterForProgram(authentication, programId, userId)
+        );
+    }
+
+
+    @Test
+    void canRegisterForActivity_programNotFound_returnsFalse() {
+
+        authenticate(user);
+
+        when(activityRepository.findById(activityId))
+                .thenReturn(Optional.of(activity));
+
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.empty());
+
+        assertFalse(
+                rbacService.canRegisterForActivity(authentication, activityId, userId)
+        );
+    }
+
+
+    @Test
+    void canSubmitActivity_registrationNotFound_returnsFalse() {
+
+        authenticate(user);
+
+        when(activityRegistrationRepository
+                .findByActivityActivityIdAndUserUserId(activityId, userId))
+                .thenReturn(Optional.empty());
+
+        assertFalse(
+                rbacService.canSubmitActivity(authentication, activityId, userId)
+        );
+    }
+
+    @Test
+    void canVerifySubmission_submissionNotFound_returnsFalse() {
+
+        authenticate(user);
+
+        UUID submissionId = UUID.randomUUID();
+
+        when(submissionRepository.findById(submissionId))
+                .thenReturn(Optional.empty());
+
+        assertFalse(
+                rbacService.canVerifySubmission(authentication, submissionId)
+        );
+    }
+
+    @Test
+    void canAccessProgramRegistration_notFound_returnsFalse() {
+
+        authenticate(user);
+
+        UUID regId = UUID.randomUUID();
+
+        when(programRegistrationRepository.findById(regId))
+                .thenReturn(Optional.empty());
+
+        assertFalse(
+                rbacService.canAccessProgramRegistration(authentication, regId)
+        );
+    }
+
+    @Test
+    void canAccessActivityRegistration_notFound_returnsFalse() {
+
+        authenticate(user);
+
+        UUID regId = UUID.randomUUID();
+
+        when(activityRegistrationRepository.findById(regId))
+                .thenReturn(Optional.empty());
+
+        assertFalse(
+                rbacService.canAccessActivityRegistration(authentication, regId)
+        );
+    }
+
+    @Test
+    void canViewProgram_authenticationNull_returnsFalse() {
+
+        assertFalse(
+                rbacService.canViewProgram(null)
+        );
+    }
+
+    @Test
+    void canJudgeAccessProgram_judgeUserMismatch_returnsFalse() {
+
+        authenticate(user);
+
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.of(program)); // judge is judgeUser
+
+        assertFalse(
+                rbacService.canJudgeAccessProgram(authentication, programId)
+        );
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     @Test
     void oauth2User_email_branch_covered() {
@@ -239,7 +711,7 @@ class RbacServiceTest {
                 .thenReturn(Optional.of(reg));
 
         when(submissionRepository
-                .existsByActivityRegistration_ActivityRegistrationId(regId))
+                .existsByActivityRegistrationActivityRegistrationId(regId))
                 .thenReturn(false);
 
         assertTrue(rbacService.canSubmitActivity(authentication, activityId, userId));

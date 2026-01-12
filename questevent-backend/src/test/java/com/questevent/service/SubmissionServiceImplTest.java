@@ -47,7 +47,7 @@ class SubmissionServiceImplTest {
                 .thenReturn(Optional.of(registration));
 
         when(submissionRepository
-                .existsByActivityRegistration_ActivityRegistrationId(registrationId))
+                .existsByActivityRegistrationActivityRegistrationId(registrationId))
                 .thenReturn(false);
 
         submissionService.submitActivity(
@@ -134,7 +134,7 @@ class SubmissionServiceImplTest {
                 .thenReturn(Optional.of(registration));
 
         when(submissionRepository
-                .existsByActivityRegistration_ActivityRegistrationId(registrationId))
+                .existsByActivityRegistrationActivityRegistrationId(registrationId))
                 .thenReturn(true);
 
         RuntimeException ex = assertThrows(

@@ -15,6 +15,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.security.core.context.SecurityContextHolder;
 import java.util.List;
@@ -99,6 +100,158 @@ class AuthTokenControllerTest {
                                 """))
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test
+    void verifyAuthSource_withAttributeAndHeader_shouldReturnSource() throws Exception {
+
+        mockMvc.perform(get("/api/auth/verify")
+                        .requestAttr("AUTH_SOURCE", "JWT")
+                        .header("Authorization", "Bearer token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.authenticationSource").value("JWT"))
+                .andExpect(jsonPath("$.hasAuthorizationHeader").value(true));
+    }
+
+    @Test
+    void verifyAuthSource_withoutAttribute_shouldReturnUnknown() throws Exception {
+
+        mockMvc.perform(get("/api/auth/verify"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.authenticationSource").value("UNKNOWN"))
+                .andExpect(jsonPath("$.hasAuthorizationHeader").value(false));
+    }
+
+    @Test
+    void generateTokens_withInvalidPrincipal_shouldFail() throws Exception {
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("invalid", null)
+        );
+
+        mockMvc.perform(get("/api/auth/token"))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    void refreshToken_validToken_userNotFound_shouldReturn500() throws Exception {
+
+        Mockito.when(jwtService.validateToken("good")).thenReturn(true);
+        Mockito.when(jwtService.isRefreshToken("good")).thenReturn(true);
+        Mockito.when(jwtService.extractUsername("good"))
+                .thenReturn("missing@mail.com");
+
+        Mockito.when(userRepository.findByEmail("missing@mail.com"))
+                .thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            { "refreshToken": "good" }
+                            """))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    void getCurrentUser_withUserDetailsPrincipal_shouldResolveUser() throws Exception {
+
+        org.springframework.security.core.userdetails.UserDetails userDetails =
+                new org.springframework.security.core.userdetails.User(
+                        "test@mail.com",
+                        "pass",
+                        List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                );
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(userDetails, null)
+        );
+
+        Mockito.when(userRepository.findByEmail("test@mail.com"))
+                .thenReturn(Optional.of(user));
+
+        mockMvc.perform(get("/api/auth/me"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("test@mail.com"))
+                .andExpect(jsonPath("$.role").value("USER"));
+    }
+
+    @Test
+    void verifyAuthSource_withAuthSourceHeader_shouldReturnSource() throws Exception {
+
+        mockMvc.perform(get("/api/auth/verify")
+                        .requestAttr("AUTH_SOURCE", "JWT")
+                        .header("Authorization", "Bearer token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.authenticationSource").value("JWT"))
+                .andExpect(jsonPath("$.hasAuthorizationHeader").value(true));
+    }
+
+    @Test
+    void verifyAuthSource_withoutAuthSource_shouldReturnUnknown() throws Exception {
+
+        mockMvc.perform(get("/api/auth/verify"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.authenticationSource").value("UNKNOWN"))
+                .andExpect(jsonPath("$.hasAuthorizationHeader").value(false));
+    }
+
+
+    @Test
+    void getCurrentUser_userDetailsButUserNotFound_shouldFail() throws Exception {
+
+        UserDetails userDetails =
+                new org.springframework.security.core.userdetails.User(
+                        "missing@mail.com",
+                        "pass",
+                        List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                );
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(userDetails, null)
+        );
+
+        Mockito.when(userRepository.findByEmail("missing@mail.com"))
+                .thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/auth/me"))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    void generateTokens_withUnsupportedPrincipal_shouldFail() throws Exception {
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("STRING_PRINCIPAL", null)
+        );
+
+        mockMvc.perform(get("/api/auth/token"))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    void refreshToken_validTokenButUserMissing_shouldFail() throws Exception {
+
+        Mockito.when(jwtService.validateToken("good")).thenReturn(true);
+        Mockito.when(jwtService.isRefreshToken("good")).thenReturn(true);
+        Mockito.when(jwtService.extractUsername("good"))
+                .thenReturn("missing@mail.com");
+
+        Mockito.when(userRepository.findByEmail("missing@mail.com"))
+                .thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            { "refreshToken": "good" }
+                            """))
+                .andExpect(status().isInternalServerError());
+    }
+
+
+
+
+
+
+
 
     @Test
     void refreshToken_valid_shouldReturnNewAccessToken() throws Exception {
