@@ -1,4 +1,4 @@
-name: Backend CD (Elastic Beanstalk)
+name: Beanstalk CD Deploy
 
 on:
   workflow_run:
@@ -6,92 +6,78 @@ on:
     types:
       - completed
     branches:
+      - master
       - release-*
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
-    if: github.event.workflow_run.conclusion == 'success'
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Setup Java (fixed to 21 – must match CI)
-      - name: Set up Java
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 21
-          cache: gradle
+          cache: maven
 
-      - name: Make Gradle executable
-        run: chmod +x questevent-backend/gradlew
-
-      # Build JAR (no tests in CD)
       - name: Build JAR
         working-directory: questevent-backend
-        run: ./gradlew clean bootJar -x test
+        run: mvn -U clean package -DskipTests
 
-      # Find JAR
-      - name: Locate JAR
-        id: jar
-        run: |
-          JAR_PATH=$(ls questevent-backend/build/libs/*.jar | head -n 1)
-          echo "path=$JAR_PATH" >> $GITHUB_OUTPUT
-
-      # Create deployment ZIP
-      - name: Create deployment ZIP
-        run: |
-          mkdir deploy
-          cp ${{ steps.jar.outputs.path }} deploy/application.jar
-          cd deploy
-          zip -r deploy.zip .
-          mv deploy.zip ..
-
-      # Commit-based version label
-      - name: Generate version label
-        id: version
-        run: |
-          COMMIT_SHA=$(git rev-parse --short HEAD)
-          echo "label=commit-${COMMIT_SHA}" >> $GITHUB_OUTPUT
-
-      # AWS credentials
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # Upload to S3
-      - name: Upload to S3
+      - name: Upload JAR to S3
+        working-directory: questevent-backend
         run: |
-          aws s3 cp deploy.zip \
-          s3://${{ secrets.EB_S3_BUCKET }}/${{ steps.version.outputs.label }}.zip
+          JAR_FILE=$(ls target/*.jar | head -n 1)
+          aws s3 cp "$JAR_FILE" s3://questeventproject-deployments/questevent-backend.jar
 
-      # Create EB version
-      - name: Create EB application version
+      - name: Set Version Label (Git Commit SHA)
+        run: |
+          SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-8)
+          echo "VERSION_LABEL=questevent-${SHORT_SHA}" >> $GITHUB_ENV
+
+      - name: Create Elastic Beanstalk Application Version
         run: |
           aws elasticbeanstalk create-application-version \
-            --application-name "${{ secrets.EB_APPLICATION_NAME }}" \
-            --version-label "${{ steps.version.outputs.label }}" \
-            --source-bundle \
-              S3Bucket="${{ secrets.EB_S3_BUCKET }}",S3Key="${{ steps.version.outputs.label }}.zip" \
-            --description "Commit ${{ github.sha }}"
+            --application-name "QuestEventTest" \
+            --version-label "$VERSION_LABEL" \
+            --source-bundle S3Bucket="questeventproject-deployments",S3Key="questevent-backend.jar" \
+            --process
 
-      # Deploy
+      - name: Wait for Beanstalk Version to be PROCESSED
+        run: |
+          while true; do
+            STATUS=$(aws elasticbeanstalk describe-application-versions \
+              --application-name "QuestEventTest" \
+              --version-label "$VERSION_LABEL" \
+              --query "ApplicationVersions[0].Status" \
+              --output text)
+
+            echo "Current status: $STATUS"
+            if [ "$STATUS" = "PROCESSED" ]; then
+              break
+            fi
+            sleep 5
+          done
+
       - name: Deploy to Elastic Beanstalk
         run: |
           aws elasticbeanstalk update-environment \
-            --application-name "${{ secrets.EB_APPLICATION_NAME }}" \
-            --environment-name "${{ secrets.EB_ENVIRONMENT_NAME }}" \
-            --version-label "${{ steps.version.outputs.label }}"
-
-      # Wait for completion
-      - name: Wait for deployment
-        run: |
-          aws elasticbeanstalk wait environment-updated \
-            --application-name "${{ secrets.EB_APPLICATION_NAME }}" \
-            --environment-name "${{ secrets.EB_ENVIRONMENT_NAME }}"
+            --application-name "QuestEventTest" \
+            --environment-name "QuestEventuTest-env" \
+            --version-label "$VERSION_LABEL"
