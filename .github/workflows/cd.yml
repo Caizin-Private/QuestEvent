@@ -41,10 +41,10 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Upload JAR to S3
-        working-directory: questevent-backend
         run: |
-          JAR_FILE=$(ls target/*.jar | head -n 1)
-          aws s3 cp "$JAR_FILE" s3://questeventproject-deployments/questevent-backend.jar
+          JAR_FILE=$(ls build/libs/*.jar | head -n 1)
+          aws s3 cp "$JAR_FILE" s3://questeventproject-deployments/${VERSION_LABEL}.jar
+      
 
       - name: Set Version Label (Git Commit SHA)
         run: |
@@ -56,8 +56,9 @@ jobs:
           aws elasticbeanstalk create-application-version \
             --application-name "QuestEventTest" \
             --version-label "$VERSION_LABEL" \
-            --source-bundle S3Bucket="questeventproject-deployments",S3Key="questevent-backend.jar" \
+            --source-bundle S3Bucket="questeventproject-deployments",S3Key="${VERSION_LABEL}.jar" \
             --process
+      
 
       - name: Wait for Beanstalk Version to be PROCESSED
         run: |
