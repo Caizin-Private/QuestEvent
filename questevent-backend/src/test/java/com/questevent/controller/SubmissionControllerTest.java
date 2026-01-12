@@ -61,11 +61,10 @@ class SubmissionControllerTest {
 
         ActivitySubmissionRequestDTO request = new ActivitySubmissionRequestDTO();
         request.setActivityId(activityId);
-        request.setUserId(userId);
         request.setSubmissionUrl("https://github.com/user/project");
 
         doNothing().when(submissionService)
-                .submitActivity(activityId, userId, "https://github.com/user/project");
+                .submitActivity(activityId, "https://github.com/user/project");
 
         ResponseEntity<String> response =
                 submissionController.submitActivity(request);
@@ -84,12 +83,11 @@ class SubmissionControllerTest {
     ) {
         ActivitySubmissionRequestDTO request = new ActivitySubmissionRequestDTO();
         request.setActivityId(activityId);
-        request.setUserId(userId);
-        request.setSubmissionUrl(submissionUrl);
+        request.setSubmissionUrl("https://github.com/user/project");
 
         doThrow(new RuntimeException(expectedMessage))
                 .when(submissionService)
-                .submitActivity(activityId, userId, submissionUrl);
+                .submitActivity(activityId,"https://github.com/user/project");
 
         Executable executable =
                 () -> submissionController.submitActivity(request);
@@ -109,12 +107,11 @@ class SubmissionControllerTest {
 
         ActivitySubmissionRequestDTO request = new ActivitySubmissionRequestDTO();
         request.setActivityId(activityId);
-        request.setUserId(userId);
         request.setSubmissionUrl("https://github.com/user/project");
 
         doThrow(new RuntimeException("Submission already exists for this registration"))
                 .when(submissionService)
-                .submitActivity(activityId, userId, "https://github.com/user/project");
+                .submitActivity(activityId, "https://github.com/user/project");
 
         RuntimeException exception = assertThrows(
                 RuntimeException.class,
@@ -135,12 +132,11 @@ class SubmissionControllerTest {
 
         ActivitySubmissionRequestDTO request = new ActivitySubmissionRequestDTO();
         request.setActivityId(activityId);
-        request.setUserId(userId);
         request.setSubmissionUrl("https://github.com/user/project");
 
         doThrow(new RuntimeException("Activity already completed. Submission not allowed."))
                 .when(submissionService)
-                .submitActivity(activityId, userId, "https://github.com/user/project");
+                .submitActivity(activityId, "https://github.com/user/project");
 
         RuntimeException exception = assertThrows(
                 RuntimeException.class,
