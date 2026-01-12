@@ -18,13 +18,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version-file: '.java-version'  # Reads from .java-version file
-          cache: 'gradle'
-
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
@@ -67,15 +60,24 @@ jobs:
 
       - name: Create Elastic Beanstalk application version
         run: |
-          aws elasticbeanstalk create-application-version --application-name ${{ secrets.EB_APPLICATION_NAME }} --version-label deploy-${{ steps.time.outputs.timestamp }} --source-bundle S3Bucket="${{ secrets.EB_S3_BUCKET }}",S3Key="deploy-${{ steps.time.outputs.timestamp }}.zip" --description "Deployed from GitHub Actions - Commit: ${{ github.sha }}"
+          aws elasticbeanstalk create-application-version \
+            --application-name ${{ secrets.EB_APPLICATION_NAME }} \
+            --version-label deploy-${{ steps.time.outputs.timestamp }} \
+            --source-bundle S3Bucket="${{ secrets.EB_S3_BUCKET }}",S3Key="deploy-${{ steps.time.outputs.timestamp }}.zip" \
+            --description "Deployed from GitHub Actions - Commit: ${{ github.sha }}"
 
       - name: Deploy to Elastic Beanstalk
         run: |
-          aws elasticbeanstalk update-environment --application-name ${{ secrets.EB_APPLICATION_NAME }} --environment-name ${{ secrets.EB_ENVIRONMENT_NAME }} --version-label deploy-${{ steps.time.outputs.timestamp }}
+          aws elasticbeanstalk update-environment \
+            --application-name ${{ secrets.EB_APPLICATION_NAME }} \
+            --environment-name ${{ secrets.EB_ENVIRONMENT_NAME }} \
+            --version-label deploy-${{ steps.time.outputs.timestamp }}
 
       - name: Wait for deployment
         run: |
-          aws elasticbeanstalk wait environment-updated --application-name ${{ secrets.EB_APPLICATION_NAME }} --environment-name ${{ secrets.EB_ENVIRONMENT_NAME }}
+          aws elasticbeanstalk wait environment-updated \
+            --application-name ${{ secrets.EB_APPLICATION_NAME }} \
+            --environment-name ${{ secrets.EB_ENVIRONMENT_NAME }}
 
       - name: Deployment status
         if: success()
