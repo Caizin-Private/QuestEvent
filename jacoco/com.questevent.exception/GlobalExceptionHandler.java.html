@@ -33,111 +33,120 @@ import java.util.Map;
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity&lt;?&gt; handleValidationErrors(MethodArgumentNotValidException ex) {
+    public ResponseEntity&lt;ApiErrorDTO&gt; handleValidationErrors(
+            MethodArgumentNotValidException ex) {
 
-<span class="nc" id="L38">        Map&lt;String, String&gt; fieldErrors = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L39">        String message = ex.getBindingResult()</span>
+<span class="nc" id="L40">                .getFieldErrors()</span>
+<span class="nc" id="L41">                .stream()</span>
+<span class="nc" id="L42">                .map(error -&gt; error.getField() + &quot;: &quot; + error.getDefaultMessage())</span>
+<span class="nc" id="L43">                .findFirst()</span>
+<span class="nc" id="L44">                .orElse(&quot;Request validation failed&quot;);</span>
 
-<span class="nc" id="L40">        ex.getBindingResult()</span>
-<span class="nc" id="L41">                .getFieldErrors()</span>
-<span class="nc" id="L42">                .forEach(err -&gt; fieldErrors.put(err.getField(), err.getDefaultMessage()));</span>
+<span class="nc" id="L46">        ApiErrorDTO apiError = ApiErrorDTO.builder()</span>
+<span class="nc" id="L47">                .status(HttpStatus.BAD_REQUEST.value())</span>
+<span class="nc" id="L48">                .message(message)</span>
+<span class="nc" id="L49">                .timestamp(Instant.now())</span>
+<span class="nc" id="L50">                .build();</span>
 
-<span class="nc" id="L44">        return ResponseEntity</span>
-<span class="nc" id="L45">                .status(HttpStatus.BAD_REQUEST)</span>
-<span class="nc" id="L46">                .body(fieldErrors);</span>
+<span class="nc" id="L52">        return ResponseEntity</span>
+<span class="nc" id="L53">                .status(HttpStatus.BAD_REQUEST)</span>
+<span class="nc" id="L54">                .body(apiError);</span>
     }
+
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleDatabaseError(DataIntegrityViolationException ex) {
-<span class="nc" id="L51">        return build(HttpStatus.BAD_REQUEST, &quot;Database constraint violation&quot;);</span>
+<span class="nc" id="L60">        return build(HttpStatus.BAD_REQUEST, &quot;Database constraint violation&quot;);</span>
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleIllegalArgument(IllegalArgumentException ex) {
-<span class="nc" id="L56">        return build(HttpStatus.BAD_REQUEST, ex.getMessage());</span>
+<span class="nc" id="L65">        return build(HttpStatus.BAD_REQUEST, ex.getMessage());</span>
     }
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleIllegalState(IllegalStateException ex) {
-<span class="nc" id="L61">        return build(HttpStatus.CONFLICT, ex.getMessage());</span>
+<span class="nc" id="L70">        return build(HttpStatus.CONFLICT, ex.getMessage());</span>
     }
 
 
     @ExceptionHandler(ProgramNotFoundException.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleProgramNotFound(ProgramNotFoundException ex) {
-<span class="nc" id="L67">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
+<span class="nc" id="L76">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
     }
 
     @ExceptionHandler(ActivityNotFoundException.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleActivityNotFound(ActivityNotFoundException ex) {
-<span class="nc" id="L72">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
+<span class="nc" id="L81">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
     }
 
     @ExceptionHandler(ResourceConflictException.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleResourceConflict(ResourceConflictException ex) {
-<span class="nc" id="L77">        return build(HttpStatus.CONFLICT, ex.getMessage());</span>
+<span class="nc" id="L86">        return build(HttpStatus.CONFLICT, ex.getMessage());</span>
     }
 
     @ExceptionHandler(WalletNotFoundException.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleWalletNotFound(WalletNotFoundException ex) {
-<span class="nc" id="L82">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
+<span class="nc" id="L91">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleResourceNotFound(ResourceNotFoundException ex) {
-<span class="nc" id="L87">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
+<span class="nc" id="L96">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
     }
 
 
     @ExceptionHandler(InvalidOperationException.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleInvalidOperation(InvalidOperationException ex) {
-<span class="nc" id="L93">        return build(HttpStatus.CONFLICT, ex.getMessage());</span>
+<span class="nc" id="L102">        return build(HttpStatus.CONFLICT, ex.getMessage());</span>
     }
     @ExceptionHandler(JudgeNotFoundException.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleJudgeNotFound(JudgeNotFoundException ex) {
-<span class="nc" id="L97">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
+<span class="nc" id="L106">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
     }
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleRuntime(RuntimeException ex) {
-<span class="nc" id="L102">        return build(HttpStatus.INTERNAL_SERVER_ERROR, &quot;Something went wrong&quot;);</span>
+<span class="nc" id="L111">        return build(HttpStatus.INTERNAL_SERVER_ERROR, &quot;Something went wrong&quot;);</span>
     }
     @ExceptionHandler(SubmissionNotFoundException.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleSubmissionNotFound(SubmissionNotFoundException ex) {
-<span class="nc" id="L106">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
+<span class="nc" id="L115">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
     }
 
     @ExceptionHandler(InvalidLeaderboardRequestException.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleInvalidLeaderboardRequest(
             InvalidLeaderboardRequestException ex) {
 
-<span class="nc" id="L113">        return build(HttpStatus.BAD_REQUEST, ex.getMessage());</span>
+<span class="nc" id="L122">        return build(HttpStatus.BAD_REQUEST, ex.getMessage());</span>
     }
 
     @ExceptionHandler(LeaderboardNotFoundException.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleLeaderboardNotFound(
             LeaderboardNotFoundException ex) {
 
-<span class="nc" id="L120">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
+<span class="nc" id="L129">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
     }
 
     @ExceptionHandler(LeaderboardFetchFailedException.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleLeaderboardFetchFailed(
             LeaderboardFetchFailedException ex) {
 
-<span class="nc" id="L127">        return build(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());</span>
+<span class="nc" id="L136">        return build(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());</span>
     }
 
 
 
     private ResponseEntity&lt;ApiErrorDTO&gt; build(HttpStatus status, String message) {
 
-<span class="nc" id="L134">        ApiErrorDTO error = new ApiErrorDTO(</span>
-<span class="nc" id="L135">                status.value(),</span>
+<span class="nc" id="L143">        ApiErrorDTO error = new ApiErrorDTO(</span>
+<span class="nc" id="L144">                status.value(),</span>
                 message,
-<span class="nc" id="L137">                Instant.now()</span>
+<span class="nc" id="L146">                Instant.now()</span>
         );
 
-<span class="nc" id="L140">        return ResponseEntity.status(status).body(error);</span>
+<span class="nc" id="L149">        return ResponseEntity.status(status).body(error);</span>
     }
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
