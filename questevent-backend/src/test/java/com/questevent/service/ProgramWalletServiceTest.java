@@ -14,6 +14,7 @@ import com.questevent.repository.ProgramWalletRepository;
 import com.questevent.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.function.Executable;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -175,16 +176,20 @@ class ProgramWalletServiceTest {
     @Test
     void getWalletBalanceByWalletId_shouldThrowNotFound_whenMissing() {
 
-        when(programWalletRepository.findById(any()))
+        UUID walletId = UUID.randomUUID();
+
+        when(programWalletRepository.findById(walletId))
                 .thenReturn(Optional.empty());
 
-        WalletNotFoundException ex = assertThrows(
-                WalletNotFoundException.class,
-                () -> programWalletService.getWalletBalanceByWalletId(UUID.randomUUID())
-        );
+        Executable executable =
+                () -> programWalletService.getWalletBalanceByWalletId(walletId);
+
+        WalletNotFoundException ex =
+                assertThrows(WalletNotFoundException.class, executable);
 
         assertEquals("Program wallet not found", ex.getMessage());
     }
+
 
     @Test
     void getProgramWalletsByProgramId_shouldReturnWallets() {

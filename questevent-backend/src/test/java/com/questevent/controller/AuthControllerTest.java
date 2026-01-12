@@ -14,7 +14,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -80,7 +79,7 @@ class AuthControllerTest {
     void shouldSaveProfileAndRedirect() throws Exception {
 
         when(authService.getLoggedInUserId(any())).thenReturn(1L);
-        doNothing().when(authService).completeProfile(eq(1L), eq(Department.IT), eq("MALE"));
+        doNothing().when(authService).completeProfile(1L, Department.IT, "MALE");
 
         mockMvc.perform(post("/complete-profile")
                         .param("department", "IT")

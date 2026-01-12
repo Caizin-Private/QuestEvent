@@ -5,7 +5,6 @@ import com.questevent.entity.ProgramWallet;
 import com.questevent.entity.User;
 import com.questevent.entity.UserWallet;
 import com.questevent.enums.ProgramStatus;
-import com.questevent.exception.ProgramNotFoundException;
 import com.questevent.exception.ResourceConflictException;
 import com.questevent.exception.WalletNotFoundException;
 import com.questevent.repository.ProgramRepository;
