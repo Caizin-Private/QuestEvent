@@ -1,291 +1,93 @@
-name: Beanstalk CD Deploy
+name: Deploy to Elastic Beanstalk
 
 on:
-
   workflow_run:
-
     workflows: ["Backend CI"]
-
     types:
-
       - completed
-
     branches:
-
       - master
-
       - release-*
-
   workflow_dispatch:
 
 jobs:
-
   deploy:
-
-    if: >
-
-      github.event.workflow_run.conclusion == 'success' &&
-
-      startsWith(github.event.workflow_run.head_branch, 'release-')
-
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout code
-
         uses: actions/checkout@v4
 
-      - name: Read Java version from Gradle
-
-        id: java_version
-
-        run: |
-
-          JAVA_VERSION=$(grep -oP 'JavaLanguageVersion.of\(\K[0-9]+' questevent-backend/build.gradle)
-
-          if [ -z "$JAVA_VERSION" ]; then
-
-            echo "Java version not found"
-
-            exit 1
-
-          fi
-
-          echo "java=$JAVA_VERSION" >> $GITHUB_OUTPUT
-
-      - name: Set up Java
-
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
-
         with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
 
-          distribution: temurin
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
-          java-version: ${{ steps.java_version.outputs.java }}
+      - name: Build with Gradle
+        run: ./gradlew clean build -x test
 
-          cache: gradle
+      - name: Run tests
+        run: ./gradlew test
 
-      - name: Make Gradle wrapper executable
-
-        run: chmod +x questevent-backend/gradlew
-
-      - name: Build JAR
-
-        working-directory: questevent-backend
-
-        run: ./gradlew bootJar -x test
-
-      - name: Generate Version Label
-
+      - name: Get artifact name
+        id: artifact
         run: |
+          ARTIFACT_PATH=$(find build/libs -name "*.jar" -not -name "*plain.jar" | head -n 1)
+          ARTIFACT_NAME=$(basename $ARTIFACT_PATH)
+          echo "path=$ARTIFACT_PATH" >> $GITHUB_OUTPUT
+          echo "name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
 
-          echo "VERSION_LABEL=questevent-${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
+      - name: Generate deployment package
+        run: |
+          mkdir -p deploy
+          cp ${{ steps.artifact.outputs.path }} deploy/application.jar
+          cd deploy
+          zip -r deploy.zip .
+          mv deploy.zip ../
+
+      - name: Get timestamp
+        id: time
+        run: echo "timestamp=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
 
       - name: Configure AWS credentials
-
-        uses: aws-actions/configure-aws-credentials@v3
-
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Upload JAR to S3
-
-        working-directory: questevent-backend
-
+      - name: Upload package to S3
         run: |
+          aws s3 cp deploy.zip s3://${{ secrets.EB_S3_BUCKET }}/deploy-${{ steps.time.outputs.timestamp }}.zip
 
-          JAR_FILE=$(ls build/libs/*.jar | head -n 1)
-
-          aws s3 cp "$JAR_FILE" s3://questevent-versions/${VERSION_LABEL}.jar
-
-      - name: Create Beanstalk Application Version
-
+      - name: Create Elastic Beanstalk application version
         run: |
-
           aws elasticbeanstalk create-application-version \
-
-            --application-name "QuestEventTest" \
-
-            --version-label "$VERSION_LABEL" \
-
-            --source-bundle S3Bucket="questevent-versions",S3Key="${VERSION_LABEL}.jar" \
-
-            --process
-
-      - name: Wait for Beanstalk Version to be PROCESSED
-
-        run: |
-
-          echo "Waiting for application version ${VERSION_LABEL} to be processed..."
-
-          MAX_ATTEMPTS=60
-
-          ATTEMPT=0
-
-          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-
-            # Get the status with better error handling
-
-            STATUS=$(aws elasticbeanstalk describe-application-versions \
-
-              --application-name "QuestEventTest" \
-
-              --version-labels "$VERSION_LABEL" \
-
-              --query "ApplicationVersions[0].Status" \
-
-              --output text 2>&1)
-
-            EXIT_CODE=$?
-
-            if [ $EXIT_CODE -ne 0 ]; then
-
-              echo "Error querying application version: $STATUS"
-
-              sleep 10
-
-              ATTEMPT=$((ATTEMPT + 1))
-
-              continue
-
-            fi
-
-            echo "Attempt $((ATTEMPT + 1))/$MAX_ATTEMPTS - Current status: $STATUS"
-
-            if [ "$STATUS" = "PROCESSED" ]; then
-
-              echo "✓ Version processed successfully!"
-
-              # Add a small buffer to ensure it's fully ready
-
-              echo "Waiting 5 additional seconds to ensure readiness..."
-
-              sleep 5
-
-              break
-
-            elif [ "$STATUS" = "FAILED" ]; then
-
-              echo "✗ Application version processing failed!"
-
-              exit 1
-
-            elif [ "$STATUS" = "None" ] || [ -z "$STATUS" ]; then
-
-              echo "⚠ Application version not found yet"
-
-            else
-
-              echo "⏳ Still processing..."
-
-            fi
-
-            sleep 10
-
-            ATTEMPT=$((ATTEMPT + 1))
-
-          done
-
-          if [ $ATTEMPT -ge $MAX_ATTEMPTS ]; then
-
-            echo "✗ Timeout waiting for application version to be processed"
-
-            exit 1
-
-          fi
+            --application-name ${{ secrets.EB_APPLICATION_NAME }} \
+            --version-label deploy-${{ steps.time.outputs.timestamp }} \
+            --source-bundle S3Bucket="${{ secrets.EB_S3_BUCKET }}",S3Key="deploy-${{ steps.time.outputs.timestamp }}.zip" \
+            --description "Deployed from GitHub Actions - Commit: ${{ github.sha }}"
 
       - name: Deploy to Elastic Beanstalk
-
         run: |
-
-          echo "Deploying ${VERSION_LABEL} to environment QuestEventuTest-env..."
-
           aws elasticbeanstalk update-environment \
+            --application-name ${{ secrets.EB_APPLICATION_NAME }} \
+            --environment-name ${{ secrets.EB_ENVIRONMENT_NAME }} \
+            --version-label deploy-${{ steps.time.outputs.timestamp }}
 
-            --application-name "QuestEventTest" \
-
-            --environment-name "QuestEventuTest-env" \
-
-            --version-label "$VERSION_LABEL"
-
-          echo "✓ Deployment initiated successfully!"
-
-      - name: Wait for Environment Update (Optional)
-
+      - name: Wait for deployment
         run: |
+          aws elasticbeanstalk wait environment-updated \
+            --application-name ${{ secrets.EB_APPLICATION_NAME }} \
+            --environment-name ${{ secrets.EB_ENVIRONMENT_NAME }}
 
-          echo "Monitoring environment update..."
-
-          MAX_ATTEMPTS=60
-
-          ATTEMPT=0
-
-          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-
-            ENV_STATUS=$(aws elasticbeanstalk describe-environments \
-
-              --application-name "QuestEventTest" \
-
-              --environment-names "QuestEventuTest-env" \
-
-              --query "Environments[0].Status" \
-
-              --output text)
-
-            HEALTH=$(aws elasticbeanstalk describe-environments \
-
-              --application-name "QuestEventTest" \
-
-              --environment-names "QuestEventuTest-env" \
-
-              --query "Environments[0].Health" \
-
-              --output text)
-
-            echo "Attempt $((ATTEMPT + 1))/$MAX_ATTEMPTS - Status: $ENV_STATUS, Health: $HEALTH"
-
-            if [ "$ENV_STATUS" = "Ready" ]; then
-
-              echo "✓ Environment is ready!"
-
-              if [ "$HEALTH" = "Green" ]; then
-
-                echo "✓ Environment health is Green!"
-
-                exit 0
-
-              elif [ "$HEALTH" = "Yellow" ]; then
-
-                echo "⚠ Environment health is Yellow (degraded but functional)"
-
-                exit 0
-
-              else
-
-                echo "⚠ Environment health is $HEALTH"
-
-                exit 0
-
-              fi
-
-            elif [ "$ENV_STATUS" = "Terminated" ]; then
-
-              echo "✗ Environment was terminated!"
-
-              exit 1
-
-            fi
-
-            sleep 15
-
-            ATTEMPT=$((ATTEMPT + 1))
-
-          done
-
-          echo "⚠ Deployment monitoring timeout - check AWS console for final status"
+      - name: Deployment status
+        if: success()
+        run: |
+          echo "Deployment successful!"
+          echo "Application deployed to Elastic Beanstalk environment: ${{ secrets.EB_ENVIRONMENT_NAME }}"
