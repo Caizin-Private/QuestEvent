@@ -1,4 +1,4 @@
-name: Deploy to Elastic Beanstalk
+name: Backend CD (Elastic Beanstalk)
 
 on:
   workflow_run:
@@ -6,54 +6,58 @@ on:
     types:
       - completed
     branches:
-      - master
       - release-*
   workflow_dispatch:
 
 jobs:
   deploy:
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK
+      # Setup Java (fixed to 21 – must match CI)
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version-file: .java-version
+          java-version: 21
           cache: gradle
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+      - name: Make Gradle executable
+        run: chmod +x questevent-backend/gradlew
 
-      - name: Build with Gradle
-        run: ./gradlew clean build -x test
+      # Build JAR (no tests in CD)
+      - name: Build JAR
+        working-directory: questevent-backend
+        run: ./gradlew clean bootJar -x test
 
-      - name: Run tests
-        run: ./gradlew test
-
-      - name: Locate JAR artifact
-        id: artifact
+      # Find JAR
+      - name: Locate JAR
+        id: jar
         run: |
-          ARTIFACT_PATH=$(find build/libs -name "*.jar" -not -name "*plain.jar" | head -n 1)
-          echo "path=$ARTIFACT_PATH" >> $GITHUB_OUTPUT
+          JAR_PATH=$(ls questevent-backend/build/libs/*.jar | head -n 1)
+          echo "path=$JAR_PATH" >> $GITHUB_OUTPUT
 
-      - name: Generate deployment ZIP
+      # Create deployment ZIP
+      - name: Create deployment ZIP
         run: |
-          mkdir -p deploy
-          cp ${{ steps.artifact.outputs.path }} deploy/application.jar
+          mkdir deploy
+          cp ${{ steps.jar.outputs.path }} deploy/application.jar
           cd deploy
           zip -r deploy.zip .
           mv deploy.zip ..
 
-      - name: Generate version label from commit
+      # Commit-based version label
+      - name: Generate version label
         id: version
         run: |
           COMMIT_SHA=$(git rev-parse --short HEAD)
           echo "label=commit-${COMMIT_SHA}" >> $GITHUB_OUTPUT
 
+      # AWS credentials
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -61,20 +65,23 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Upload package to S3
+      # Upload to S3
+      - name: Upload to S3
         run: |
           aws s3 cp deploy.zip \
           s3://${{ secrets.EB_S3_BUCKET }}/${{ steps.version.outputs.label }}.zip
 
-      - name: Create Elastic Beanstalk application version
+      # Create EB version
+      - name: Create EB application version
         run: |
           aws elasticbeanstalk create-application-version \
             --application-name "${{ secrets.EB_APPLICATION_NAME }}" \
             --version-label "${{ steps.version.outputs.label }}" \
             --source-bundle \
               S3Bucket="${{ secrets.EB_S3_BUCKET }}",S3Key="${{ steps.version.outputs.label }}.zip" \
-            --description "Commit ${{ github.sha }} by ${{ github.actor }}"
+            --description "Commit ${{ github.sha }}"
 
+      # Deploy
       - name: Deploy to Elastic Beanstalk
         run: |
           aws elasticbeanstalk update-environment \
@@ -82,15 +89,9 @@ jobs:
             --environment-name "${{ secrets.EB_ENVIRONMENT_NAME }}" \
             --version-label "${{ steps.version.outputs.label }}"
 
+      # Wait for completion
       - name: Wait for deployment
         run: |
           aws elasticbeanstalk wait environment-updated \
             --application-name "${{ secrets.EB_APPLICATION_NAME }}" \
             --environment-name "${{ secrets.EB_ENVIRONMENT_NAME }}"
-
-      - name: Deployment status
-        if: success()
-        run: |
-          echo "Deployment successful"
-          echo "Version: ${{ steps.version.outputs.label }}"
-          echo "Environment: ${{ secrets.EB_ENVIRONMENT_NAME }}"
