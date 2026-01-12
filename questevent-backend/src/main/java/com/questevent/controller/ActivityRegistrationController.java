@@ -47,7 +47,6 @@ public class ActivityRegistrationController {
         log.info("Self activity registration: activityId={}",
                 request.getActivityId());
 
-        try {
             ActivityRegistrationResponseDTO response =
                     activityRegistrationService.registerParticipantForActivity(request);
 
@@ -55,11 +54,6 @@ public class ActivityRegistrationController {
                     request.getActivityId());
 
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (RuntimeException e) {
-            log.warn("Activity registration failed: activityId={}, reason={}",
-                    request.getActivityId(), e.getMessage());
-            throw e;
-        }
     }
 
     @PreAuthorize("@rbac.canRegisterForActivity(authentication, #activityId, #request.userId)")
@@ -78,10 +72,10 @@ public class ActivityRegistrationController {
             @Parameter(description = "Activity ID", required = true) @PathVariable UUID activityId,
             @RequestBody AddParticipantInActivityRequestDTO request) {
 
-        log.info("Host adding participant to activity: activityId={}, userId={}",
+            log.info("Host adding participant to activity: activityId={}, userId={}",
                 activityId, request.getUserId());
 
-        try {
+
             ActivityRegistrationResponseDTO response =
                     activityRegistrationService.addParticipantToActivity(activityId, request);
 
@@ -89,11 +83,7 @@ public class ActivityRegistrationController {
                     activityId, request.getUserId());
 
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (RuntimeException e) {
-            log.warn("Failed to add participant: activityId={}, userId={}, reason={}",
-                    activityId, request.getUserId(), e.getMessage());
-            throw e;
-        }
+
     }
 
     @PreAuthorize("@rbac.isPlatformOwner(authentication)")
@@ -133,16 +123,11 @@ public class ActivityRegistrationController {
 
         log.info("Fetching activity registration id={}", id);
 
-        try {
             ActivityRegistrationDTO registration =
                     activityRegistrationService.getRegistrationById(id);
 
             log.debug("Activity registration found id={}", id);
             return ResponseEntity.ok(registration);
-        } catch (RuntimeException e) {
-            log.warn("Activity registration not found id={}", id);
-            return ResponseEntity.notFound().build();
-        }
     }
 
     @PreAuthorize("@rbac.canManageProgram(authentication, @rbac.getProgramIdByActivityId(#activityId)) "
@@ -259,17 +244,12 @@ public class ActivityRegistrationController {
         log.info("Updating completion status for registrationId={}, newStatus={}",
                 id, updateDTO.getCompletionStatus());
 
-        try {
+
             ActivityRegistrationDTO updated =
                     activityRegistrationService.updateCompletionStatus(id, updateDTO);
 
             log.info("Completion status updated for registrationId={}", id);
             return ResponseEntity.ok(updated);
-        } catch (RuntimeException e) {
-            log.warn("Failed to update completion status registrationId={}, reason={}",
-                    id, e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
     }
 
     @PreAuthorize("@rbac.canManageProgram(authentication, @rbac.getProgramIdByActivityId(#activityId))")
@@ -308,14 +288,9 @@ public class ActivityRegistrationController {
 
         log.warn("Deleting activity registration id={}", id);
 
-        try {
             activityRegistrationService.deleteRegistration(id);
             log.info("Activity registration deleted successfully id={}", id);
             return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            log.warn("Failed to delete activity registration id={}, reason={}",
-                    id, e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+
     }
 }

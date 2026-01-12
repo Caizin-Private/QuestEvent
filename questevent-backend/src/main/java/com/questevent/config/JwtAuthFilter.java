@@ -18,8 +18,6 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -28,7 +26,7 @@ import java.util.Optional;
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    private static final Logger logger = LoggerFactory.getLogger(JwtAuthFilter.class);
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
 
     private final UserRepository userRepository;
     private final JwtService jwtService;
@@ -75,7 +73,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 if (jwtService.validateToken(token)) {
                     UserPrincipal userPrincipal = jwtService.extractUserPrincipal(token);
 
-                    logger.info("✅ JWT TOKEN AUTHENTICATION - Path: {}, User: {} (ID: {}), Token used: YES",
+                    log.info("✅ JWT TOKEN AUTHENTICATION - Path: {}, User: {} (ID: {}), Token used: YES",
                             path, userPrincipal.email(), userPrincipal.userId());
 
                     UsernamePasswordAuthenticationToken authentication =
@@ -95,7 +93,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     return;
                 }
             } catch (Exception e) {
-                logger.warn("Invalid JWT token for path: {} - {}", path, e.getMessage());
+                log.warn("Invalid JWT token for path: {} - {}", path, e.getMessage());
 
                 if (isApiEndpoint && !allowOAuth2ForApi) {
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -108,7 +106,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
         }
         if (isApiEndpoint && !isPublicApiEndpoint && !allowOAuth2ForApi && !hasBearerToken) {
-            logger.error("❌ API endpoint requires JWT Bearer token - Path: {}, No Authorization header found", path);
+            log.error("❌ API endpoint requires JWT Bearer token - Path: {}, No Authorization header found", path);
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
             response.getWriter().write(
@@ -128,7 +126,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 token.getPrincipal() instanceof UserPrincipal) {
             String authSource = (String) request.getAttribute("AUTH_SOURCE");
             if (authSource == null && authHeader != null && authHeader.startsWith("Bearer ")) {
-                logger.debug("Authentication already set for path: {}", path);
+                log.debug("Authentication already set for path: {}", path);
             }
 
             filterChain.doFilter(request, response);
@@ -155,7 +153,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 if (userOpt.isPresent()) {
                     User user = userOpt.get();
 
-                    logger.info(
+                    log.info(
                             "🔵 OAUTH2 SESSION AUTHENTICATION - Path: {}, User: {} (ID: {})",
                             path, user.getEmail(), user.getUserId()
                     );
@@ -195,7 +193,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         } else {
             if (SecurityContextHolder.getContext().getAuthentication() == null ||
                     !SecurityContextHolder.getContext().getAuthentication().isAuthenticated()) {
-                logger.warn("⚠️ NO AUTHENTICATION - Path: {}, Authorization header present: {}",
+                log.warn("⚠️ NO AUTHENTICATION - Path: {}, Authorization header present: {}",
                         path, authHeader != null);
             }
         }
