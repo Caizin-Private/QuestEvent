@@ -18,8 +18,6 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -28,15 +26,15 @@ import java.util.Optional;
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-<span class="fc" id="L31">    private static final Logger logger = LoggerFactory.getLogger(JwtAuthFilter.class);</span>
+<span class="fc" id="L29">    private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);</span>
 
     private final UserRepository userRepository;
     private final JwtService jwtService;
 
-<span class="fc" id="L36">    public JwtAuthFilter(UserRepository userRepository, JwtService jwtService) {</span>
-<span class="fc" id="L37">        this.userRepository = userRepository;</span>
-<span class="fc" id="L38">        this.jwtService = jwtService;</span>
-<span class="fc" id="L39">    }</span>
+<span class="fc" id="L34">    public JwtAuthFilter(UserRepository userRepository, JwtService jwtService) {</span>
+<span class="fc" id="L35">        this.userRepository = userRepository;</span>
+<span class="fc" id="L36">        this.jwtService = jwtService;</span>
+<span class="fc" id="L37">    }</span>
 
     @Override
     protected void doFilterInternal(
@@ -45,168 +43,168 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-<span class="fc" id="L48">        String path = request.getRequestURI();</span>
+<span class="fc" id="L46">        String path = request.getRequestURI();</span>
 
         // Skip OAuth2 internal routes
-<span class="fc" id="L51">        if (</span>
-<span class="pc bpc" id="L52" title="1 of 2 branches missed.">                path.startsWith(&quot;/oauth2&quot;) ||</span>
-<span class="pc bpc" id="L53" title="1 of 2 branches missed.">                        path.startsWith(&quot;/login&quot;) ||</span>
-<span class="pc bpc" id="L54" title="1 of 2 branches missed.">                        path.startsWith(&quot;/error&quot;) ||</span>
-<span class="pc bpc" id="L55" title="1 of 2 branches missed.">                        path.startsWith(&quot;/css&quot;) ||</span>
-<span class="pc bpc" id="L56" title="1 of 2 branches missed.">                        path.startsWith(&quot;/js&quot;) ||</span>
-<span class="pc bpc" id="L57" title="1 of 2 branches missed.">                        path.startsWith(&quot;/images&quot;) ||</span>
-<span class="pc bpc" id="L58" title="1 of 2 branches missed.">                        path.startsWith(&quot;/favicon&quot;)</span>
+<span class="fc" id="L49">        if (</span>
+<span class="pc bpc" id="L50" title="1 of 2 branches missed.">                path.startsWith(&quot;/oauth2&quot;) ||</span>
+<span class="pc bpc" id="L51" title="1 of 2 branches missed.">                        path.startsWith(&quot;/login&quot;) ||</span>
+<span class="pc bpc" id="L52" title="1 of 2 branches missed.">                        path.startsWith(&quot;/error&quot;) ||</span>
+<span class="pc bpc" id="L53" title="1 of 2 branches missed.">                        path.startsWith(&quot;/css&quot;) ||</span>
+<span class="pc bpc" id="L54" title="1 of 2 branches missed.">                        path.startsWith(&quot;/js&quot;) ||</span>
+<span class="pc bpc" id="L55" title="1 of 2 branches missed.">                        path.startsWith(&quot;/images&quot;) ||</span>
+<span class="pc bpc" id="L56" title="1 of 2 branches missed.">                        path.startsWith(&quot;/favicon&quot;)</span>
         ) {
-<span class="nc" id="L60">            filterChain.doFilter(request, response);</span>
-<span class="nc" id="L61">            return;</span>
+<span class="nc" id="L58">            filterChain.doFilter(request, response);</span>
+<span class="nc" id="L59">            return;</span>
         }
 
-<span class="fc" id="L64">        boolean isApiEndpoint = path.startsWith(&quot;/api/&quot;);</span>
-<span class="pc bpc" id="L65" title="1 of 4 branches missed.">        boolean isAuthInfoEndpoint = path.equals(&quot;/api/auth&quot;) || path.equals(&quot;/api/auth/&quot;);</span>
-<span class="fc" id="L66">        boolean isTokenGenerationEndpoint = path.equals(&quot;/api/auth/token&quot;);</span>
-<span class="fc" id="L67">        boolean allowOAuth2ForApi = isTokenGenerationEndpoint; // Only allow OAuth2 for token generation</span>
-<span class="fc" id="L68">        boolean isPublicApiEndpoint = isAuthInfoEndpoint; // Public API endpoints that don't require auth</span>
+<span class="fc" id="L62">        boolean isApiEndpoint = path.startsWith(&quot;/api/&quot;);</span>
+<span class="pc bpc" id="L63" title="1 of 4 branches missed.">        boolean isAuthInfoEndpoint = path.equals(&quot;/api/auth&quot;) || path.equals(&quot;/api/auth/&quot;);</span>
+<span class="fc" id="L64">        boolean isTokenGenerationEndpoint = path.equals(&quot;/api/auth/token&quot;);</span>
+<span class="fc" id="L65">        boolean allowOAuth2ForApi = isTokenGenerationEndpoint; // Only allow OAuth2 for token generation</span>
+<span class="fc" id="L66">        boolean isPublicApiEndpoint = isAuthInfoEndpoint; // Public API endpoints that don't require auth</span>
 
-<span class="fc" id="L70">        String authHeader = request.getHeader(&quot;Authorization&quot;);</span>
-<span class="pc bpc" id="L71" title="1 of 4 branches missed.">        boolean hasBearerToken = authHeader != null &amp;&amp; authHeader.startsWith(&quot;Bearer &quot;);</span>
-<span class="fc bfc" id="L72" title="All 2 branches covered.">        if (hasBearerToken) {</span>
-<span class="fc" id="L73">            String token = authHeader.substring(7);</span>
+<span class="fc" id="L68">        String authHeader = request.getHeader(&quot;Authorization&quot;);</span>
+<span class="pc bpc" id="L69" title="1 of 4 branches missed.">        boolean hasBearerToken = authHeader != null &amp;&amp; authHeader.startsWith(&quot;Bearer &quot;);</span>
+<span class="fc bfc" id="L70" title="All 2 branches covered.">        if (hasBearerToken) {</span>
+<span class="fc" id="L71">            String token = authHeader.substring(7);</span>
             try {
-<span class="pc bpc" id="L75" title="1 of 2 branches missed.">                if (jwtService.validateToken(token)) {</span>
-<span class="fc" id="L76">                    UserPrincipal userPrincipal = jwtService.extractUserPrincipal(token);</span>
+<span class="pc bpc" id="L73" title="1 of 2 branches missed.">                if (jwtService.validateToken(token)) {</span>
+<span class="fc" id="L74">                    UserPrincipal userPrincipal = jwtService.extractUserPrincipal(token);</span>
 
-<span class="fc" id="L78">                    logger.info(&quot;✅ JWT TOKEN AUTHENTICATION - Path: {}, User: {} (ID: {}), Token used: YES&quot;,</span>
-<span class="fc" id="L79">                            path, userPrincipal.email(), userPrincipal.userId());</span>
+<span class="fc" id="L76">                    log.info(&quot;✅ JWT TOKEN AUTHENTICATION - Path: {}, User: {} (ID: {}), Token used: YES&quot;,</span>
+<span class="fc" id="L77">                            path, userPrincipal.email(), userPrincipal.userId());</span>
 
-<span class="fc" id="L81">                    UsernamePasswordAuthenticationToken authentication =</span>
+<span class="fc" id="L79">                    UsernamePasswordAuthenticationToken authentication =</span>
                             new UsernamePasswordAuthenticationToken(
                                     userPrincipal,
                                     null,
-<span class="fc" id="L85">                                    List.of(new SimpleGrantedAuthority(</span>
-<span class="fc" id="L86">                                            &quot;ROLE_&quot; + userPrincipal.role().name()</span>
+<span class="fc" id="L83">                                    List.of(new SimpleGrantedAuthority(</span>
+<span class="fc" id="L84">                                            &quot;ROLE_&quot; + userPrincipal.role().name()</span>
                                     ))
                             );
 
-<span class="fc" id="L90">                    request.setAttribute(&quot;AUTH_SOURCE&quot;, &quot;JWT_BEARER_TOKEN&quot;);</span>
-<span class="fc" id="L91">                    request.setAttribute(&quot;JWT_USER_ID&quot;, userPrincipal.userId());</span>
+<span class="fc" id="L88">                    request.setAttribute(&quot;AUTH_SOURCE&quot;, &quot;JWT_BEARER_TOKEN&quot;);</span>
+<span class="fc" id="L89">                    request.setAttribute(&quot;JWT_USER_ID&quot;, userPrincipal.userId());</span>
 
-<span class="fc" id="L93">                    SecurityContextHolder.getContext().setAuthentication(authentication);</span>
-<span class="fc" id="L94">                    filterChain.doFilter(request, response);</span>
-<span class="fc" id="L95">                    return;</span>
+<span class="fc" id="L91">                    SecurityContextHolder.getContext().setAuthentication(authentication);</span>
+<span class="fc" id="L92">                    filterChain.doFilter(request, response);</span>
+<span class="fc" id="L93">                    return;</span>
                 }
-<span class="fc" id="L97">            } catch (Exception e) {</span>
-<span class="fc" id="L98">                logger.warn(&quot;Invalid JWT token for path: {} - {}&quot;, path, e.getMessage());</span>
+<span class="fc" id="L95">            } catch (Exception e) {</span>
+<span class="fc" id="L96">                log.warn(&quot;Invalid JWT token for path: {} - {}&quot;, path, e.getMessage());</span>
 
-<span class="pc bpc" id="L100" title="2 of 4 branches missed.">                if (isApiEndpoint &amp;&amp; !allowOAuth2ForApi) {</span>
-<span class="fc" id="L101">                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);</span>
-<span class="fc" id="L102">                    response.setContentType(&quot;application/json&quot;);</span>
-<span class="fc" id="L103">                    response.getWriter().write(</span>
+<span class="pc bpc" id="L98" title="2 of 4 branches missed.">                if (isApiEndpoint &amp;&amp; !allowOAuth2ForApi) {</span>
+<span class="fc" id="L99">                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);</span>
+<span class="fc" id="L100">                    response.setContentType(&quot;application/json&quot;);</span>
+<span class="fc" id="L101">                    response.getWriter().write(</span>
                             &quot;{\&quot;error\&quot;:\&quot;Unauthorized\&quot;,\&quot;message\&quot;:\&quot;Valid JWT Bearer token required\&quot;}&quot;
                     );
-<span class="fc" id="L106">                    return;</span>
+<span class="fc" id="L104">                    return;</span>
                 }
-<span class="nc" id="L108">            }</span>
+<span class="nc" id="L106">            }</span>
         }
-<span class="pc bpc" id="L110" title="3 of 8 branches missed.">        if (isApiEndpoint &amp;&amp; !isPublicApiEndpoint &amp;&amp; !allowOAuth2ForApi &amp;&amp; !hasBearerToken) {</span>
-<span class="fc" id="L111">            logger.error(&quot;❌ API endpoint requires JWT Bearer token - Path: {}, No Authorization header found&quot;, path);</span>
-<span class="fc" id="L112">            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);</span>
-<span class="fc" id="L113">            response.setContentType(&quot;application/json&quot;);</span>
-<span class="fc" id="L114">            response.getWriter().write(</span>
+<span class="pc bpc" id="L108" title="3 of 8 branches missed.">        if (isApiEndpoint &amp;&amp; !isPublicApiEndpoint &amp;&amp; !allowOAuth2ForApi &amp;&amp; !hasBearerToken) {</span>
+<span class="fc" id="L109">            log.error(&quot;❌ API endpoint requires JWT Bearer token - Path: {}, No Authorization header found&quot;, path);</span>
+<span class="fc" id="L110">            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);</span>
+<span class="fc" id="L111">            response.setContentType(&quot;application/json&quot;);</span>
+<span class="fc" id="L112">            response.getWriter().write(</span>
                     &quot;{\&quot;error\&quot;:\&quot;Unauthorized\&quot;,\&quot;message\&quot;:\&quot;JWT Bearer token required\&quot;}&quot;
             );
-<span class="fc" id="L117">            return;</span>
+<span class="fc" id="L115">            return;</span>
         }
 
-<span class="pc bpc" id="L120" title="1 of 2 branches missed.">        if (isPublicApiEndpoint) {</span>
-<span class="fc" id="L121">            filterChain.doFilter(request, response);</span>
-<span class="fc" id="L122">            return;</span>
+<span class="pc bpc" id="L118" title="1 of 2 branches missed.">        if (isPublicApiEndpoint) {</span>
+<span class="fc" id="L119">            filterChain.doFilter(request, response);</span>
+<span class="fc" id="L120">            return;</span>
         }
 
         Authentication currentAuth =
-<span class="nc" id="L126">                SecurityContextHolder.getContext().getAuthentication();</span>
-<span class="nc bnc" id="L127" title="All 2 branches missed.">        if (currentAuth instanceof UsernamePasswordAuthenticationToken token &amp;&amp;</span>
-<span class="nc bnc" id="L128" title="All 2 branches missed.">                token.getPrincipal() instanceof UserPrincipal) {</span>
-<span class="nc" id="L129">            String authSource = (String) request.getAttribute(&quot;AUTH_SOURCE&quot;);</span>
-<span class="nc bnc" id="L130" title="All 6 branches missed.">            if (authSource == null &amp;&amp; authHeader != null &amp;&amp; authHeader.startsWith(&quot;Bearer &quot;)) {</span>
-<span class="nc" id="L131">                logger.debug(&quot;Authentication already set for path: {}&quot;, path);</span>
+<span class="nc" id="L124">                SecurityContextHolder.getContext().getAuthentication();</span>
+<span class="nc bnc" id="L125" title="All 2 branches missed.">        if (currentAuth instanceof UsernamePasswordAuthenticationToken token &amp;&amp;</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed.">                token.getPrincipal() instanceof UserPrincipal) {</span>
+<span class="nc" id="L127">            String authSource = (String) request.getAttribute(&quot;AUTH_SOURCE&quot;);</span>
+<span class="nc bnc" id="L128" title="All 6 branches missed.">            if (authSource == null &amp;&amp; authHeader != null &amp;&amp; authHeader.startsWith(&quot;Bearer &quot;)) {</span>
+<span class="nc" id="L129">                log.debug(&quot;Authentication already set for path: {}&quot;, path);</span>
             }
 
-<span class="nc" id="L134">            filterChain.doFilter(request, response);</span>
-<span class="nc" id="L135">            return;</span>
+<span class="nc" id="L132">            filterChain.doFilter(request, response);</span>
+<span class="nc" id="L133">            return;</span>
         }
-<span class="nc bnc" id="L137" title="All 2 branches missed.">        if (currentAuth instanceof OAuth2AuthenticationToken oauthToken) {</span>
+<span class="nc bnc" id="L135" title="All 2 branches missed.">        if (currentAuth instanceof OAuth2AuthenticationToken oauthToken) {</span>
 
-<span class="nc bnc" id="L139" title="All 4 branches missed.">            if (isApiEndpoint &amp;&amp; !allowOAuth2ForApi) {</span>
-<span class="nc" id="L140">                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);</span>
-<span class="nc" id="L141">                response.setContentType(&quot;application/json&quot;);</span>
-<span class="nc" id="L142">                response.getWriter().write(</span>
+<span class="nc bnc" id="L137" title="All 4 branches missed.">            if (isApiEndpoint &amp;&amp; !allowOAuth2ForApi) {</span>
+<span class="nc" id="L138">                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);</span>
+<span class="nc" id="L139">                response.setContentType(&quot;application/json&quot;);</span>
+<span class="nc" id="L140">                response.getWriter().write(</span>
                         &quot;{\&quot;error\&quot;:\&quot;Unauthorized\&quot;,\&quot;message\&quot;:\&quot;Use /api/auth/token to get JWT\&quot;}&quot;
                 );
-<span class="nc" id="L145">                return;</span>
+<span class="nc" id="L143">                return;</span>
             }
 
-<span class="nc" id="L148">            OAuth2User oauthUser = oauthToken.getPrincipal();</span>
+<span class="nc" id="L146">            OAuth2User oauthUser = oauthToken.getPrincipal();</span>
 
-<span class="nc" id="L150">            String email = resolveEmail(oauthUser);</span>
+<span class="nc" id="L148">            String email = resolveEmail(oauthUser);</span>
 
-<span class="nc bnc" id="L152" title="All 2 branches missed.">            if (email != null) {</span>
-<span class="nc" id="L153">                Optional&lt;User&gt; userOpt = userRepository.findByEmail(email);</span>
+<span class="nc bnc" id="L150" title="All 2 branches missed.">            if (email != null) {</span>
+<span class="nc" id="L151">                Optional&lt;User&gt; userOpt = userRepository.findByEmail(email);</span>
 
-<span class="nc bnc" id="L155" title="All 2 branches missed.">                if (userOpt.isPresent()) {</span>
-<span class="nc" id="L156">                    User user = userOpt.get();</span>
+<span class="nc bnc" id="L153" title="All 2 branches missed.">                if (userOpt.isPresent()) {</span>
+<span class="nc" id="L154">                    User user = userOpt.get();</span>
 
-<span class="nc" id="L158">                    logger.info(</span>
+<span class="nc" id="L156">                    log.info(</span>
                             &quot;🔵 OAUTH2 SESSION AUTHENTICATION - Path: {}, User: {} (ID: {})&quot;,
-<span class="nc" id="L160">                            path, user.getEmail(), user.getUserId()</span>
+<span class="nc" id="L158">                            path, user.getEmail(), user.getUserId()</span>
                     );
 
-<span class="nc" id="L163">                    UserPrincipal principal = new UserPrincipal(</span>
-<span class="nc" id="L164">                            user.getUserId(),</span>
-<span class="nc" id="L165">                            user.getEmail(),</span>
-<span class="nc" id="L166">                            user.getRole()</span>
+<span class="nc" id="L161">                    UserPrincipal principal = new UserPrincipal(</span>
+<span class="nc" id="L162">                            user.getUserId(),</span>
+<span class="nc" id="L163">                            user.getEmail(),</span>
+<span class="nc" id="L164">                            user.getRole()</span>
                     );
 
-<span class="nc" id="L169">                    UsernamePasswordAuthenticationToken newAuth =</span>
+<span class="nc" id="L167">                    UsernamePasswordAuthenticationToken newAuth =</span>
                             new UsernamePasswordAuthenticationToken(
                                     principal,
                                     null,
-<span class="nc" id="L173">                                    List.of(new SimpleGrantedAuthority(</span>
-<span class="nc" id="L174">                                            &quot;ROLE_&quot; + user.getRole().name()</span>
+<span class="nc" id="L171">                                    List.of(new SimpleGrantedAuthority(</span>
+<span class="nc" id="L172">                                            &quot;ROLE_&quot; + user.getRole().name()</span>
                                     ))
                             );
-<span class="nc" id="L177">                    request.setAttribute(&quot;AUTH_SOURCE&quot;, &quot;OAUTH2_SESSION&quot;);</span>
-<span class="nc" id="L178">                    request.setAttribute(&quot;OAUTH2_USER_ID&quot;, user.getUserId());</span>
+<span class="nc" id="L175">                    request.setAttribute(&quot;AUTH_SOURCE&quot;, &quot;OAUTH2_SESSION&quot;);</span>
+<span class="nc" id="L176">                    request.setAttribute(&quot;OAUTH2_USER_ID&quot;, user.getUserId());</span>
 
-<span class="nc" id="L180">                    SecurityContextHolder.getContext().setAuthentication(newAuth);</span>
+<span class="nc" id="L178">                    SecurityContextHolder.getContext().setAuthentication(newAuth);</span>
                 }
             }
         }
 
-<span class="nc bnc" id="L185" title="All 6 branches missed.">        if (isApiEndpoint &amp;&amp; !isPublicApiEndpoint &amp;&amp; !allowOAuth2ForApi) {</span>
-<span class="nc" id="L186">            Authentication finalAuth = SecurityContextHolder.getContext().getAuthentication();</span>
-<span class="nc bnc" id="L187" title="All 4 branches missed.">            if (finalAuth == null || !finalAuth.isAuthenticated()) {</span>
-<span class="nc" id="L188">                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);</span>
-<span class="nc" id="L189">                response.setContentType(&quot;application/json&quot;);</span>
-<span class="nc" id="L190">                response.getWriter().write(</span>
+<span class="nc bnc" id="L183" title="All 6 branches missed.">        if (isApiEndpoint &amp;&amp; !isPublicApiEndpoint &amp;&amp; !allowOAuth2ForApi) {</span>
+<span class="nc" id="L184">            Authentication finalAuth = SecurityContextHolder.getContext().getAuthentication();</span>
+<span class="nc bnc" id="L185" title="All 4 branches missed.">            if (finalAuth == null || !finalAuth.isAuthenticated()) {</span>
+<span class="nc" id="L186">                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);</span>
+<span class="nc" id="L187">                response.setContentType(&quot;application/json&quot;);</span>
+<span class="nc" id="L188">                response.getWriter().write(</span>
                         &quot;{\&quot;error\&quot;:\&quot;Unauthorized\&quot;,\&quot;message\&quot;:\&quot;JWT Bearer token required\&quot;}&quot;
                 );
-<span class="nc" id="L193">                return;</span>
+<span class="nc" id="L191">                return;</span>
             }
-<span class="nc" id="L195">        } else {</span>
-<span class="nc bnc" id="L196" title="All 2 branches missed.">            if (SecurityContextHolder.getContext().getAuthentication() == null ||</span>
-<span class="nc bnc" id="L197" title="All 2 branches missed.">                    !SecurityContextHolder.getContext().getAuthentication().isAuthenticated()) {</span>
-<span class="nc bnc" id="L198" title="All 2 branches missed.">                logger.warn(&quot;⚠️ NO AUTHENTICATION - Path: {}, Authorization header present: {}&quot;,</span>
-<span class="nc" id="L199">                        path, authHeader != null);</span>
+<span class="nc" id="L193">        } else {</span>
+<span class="nc bnc" id="L194" title="All 2 branches missed.">            if (SecurityContextHolder.getContext().getAuthentication() == null ||</span>
+<span class="nc bnc" id="L195" title="All 2 branches missed.">                    !SecurityContextHolder.getContext().getAuthentication().isAuthenticated()) {</span>
+<span class="nc bnc" id="L196" title="All 2 branches missed.">                log.warn(&quot;⚠️ NO AUTHENTICATION - Path: {}, Authorization header present: {}&quot;,</span>
+<span class="nc" id="L197">                        path, authHeader != null);</span>
             }
         }
 
-<span class="nc" id="L203">        filterChain.doFilter(request, response);</span>
-<span class="nc" id="L204">    }</span>
+<span class="nc" id="L201">        filterChain.doFilter(request, response);</span>
+<span class="nc" id="L202">    }</span>
     private String resolveEmail(OAuth2User oauthUser) {
-<span class="nc" id="L206">        String email = oauthUser.getAttribute(&quot;email&quot;);</span>
-<span class="nc bnc" id="L207" title="All 2 branches missed.">        if (email == null) email = oauthUser.getAttribute(&quot;preferred_username&quot;);</span>
-<span class="nc bnc" id="L208" title="All 2 branches missed.">        if (email == null) email = oauthUser.getAttribute(&quot;upn&quot;);</span>
-<span class="nc" id="L209">        return email;</span>
+<span class="nc" id="L204">        String email = oauthUser.getAttribute(&quot;email&quot;);</span>
+<span class="nc bnc" id="L205" title="All 2 branches missed.">        if (email == null) email = oauthUser.getAttribute(&quot;preferred_username&quot;);</span>
+<span class="nc bnc" id="L206" title="All 2 branches missed.">        if (email == null) email = oauthUser.getAttribute(&quot;upn&quot;);</span>
+<span class="nc" id="L207">        return email;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

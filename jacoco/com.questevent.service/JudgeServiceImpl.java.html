@@ -6,6 +6,7 @@ import com.questevent.entity.*;
 import com.questevent.enums.CompletionStatus;
 import com.questevent.enums.ReviewStatus;
 import com.questevent.enums.Role;
+import com.questevent.exception.*;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
 import com.questevent.repository.UserRepository;
@@ -23,7 +24,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-<span class="fc" id="L26">@Slf4j</span>
+<span class="fc" id="L27">@Slf4j</span>
 @Service
 @RequiredArgsConstructor
 public class JudgeServiceImpl implements JudgeService {
@@ -36,28 +37,27 @@ public class JudgeServiceImpl implements JudgeService {
     private User resolveCurrentUser() {
 
         Authentication authentication =
-<span class="fc" id="L39">                SecurityContextHolder.getContext().getAuthentication();</span>
+<span class="fc" id="L40">                SecurityContextHolder.getContext().getAuthentication();</span>
 
-<span class="pc bpc" id="L41" title="2 of 4 branches missed.">        if (authentication == null || !authentication.isAuthenticated()) {</span>
-<span class="nc" id="L42">            log.warn(&quot;Unauthorized access attempt to judge service&quot;);</span>
-<span class="nc" id="L43">            throw new ResponseStatusException(</span>
-                    HttpStatus.UNAUTHORIZED, &quot;Unauthorized&quot;);
+<span class="pc bpc" id="L42" title="2 of 4 branches missed.">        if (authentication == null || !authentication.isAuthenticated()) {</span>
+<span class="nc" id="L43">            log.warn(&quot;Unauthorized access attempt to judge service&quot;);</span>
+<span class="nc" id="L44">            throw new UnauthorizedException(&quot;Unauthorized&quot;);</span>
         }
 
-<span class="fc" id="L47">        Object principal = authentication.getPrincipal();</span>
 
-<span class="pc bpc" id="L49" title="1 of 2 branches missed.">        if (principal instanceof UserPrincipal p) {</span>
-<span class="fc" id="L50">            return userRepository.findById(p.userId())</span>
-<span class="fc" id="L51">                    .orElseThrow(() -&gt; {</span>
-<span class="nc" id="L52">                        log.error(&quot;Authenticated user not found | userId={}&quot;, p.userId());</span>
-<span class="nc" id="L53">                        return new ResponseStatusException(</span>
-                                HttpStatus.NOT_FOUND, &quot;User not found&quot;);
+<span class="fc" id="L48">        Object principal = authentication.getPrincipal();</span>
+
+<span class="pc bpc" id="L50" title="1 of 2 branches missed.">        if (principal instanceof UserPrincipal p) {</span>
+<span class="fc" id="L51">            return userRepository.findById(p.userId())</span>
+<span class="fc" id="L52">                    .orElseThrow(() -&gt; {</span>
+<span class="nc" id="L53">                        log.error(&quot;Authenticated user not found | userId={}&quot;, p.userId());</span>
+<span class="nc" id="L54">                        return new UserNotFoundException(&quot;User not found&quot;);</span>
                     });
+
         }
 
-<span class="nc" id="L58">        log.warn(&quot;Invalid authentication principal in judge service&quot;);</span>
-<span class="nc" id="L59">        throw new ResponseStatusException(</span>
-                HttpStatus.UNAUTHORIZED, &quot;Invalid authentication&quot;);
+<span class="nc" id="L59">        log.warn(&quot;Invalid authentication principal in judge service&quot;);</span>
+<span class="nc" id="L60">        throw new UnauthorizedException(&quot;Invalid authentication&quot;);</span>
     }
 
     @Override
@@ -195,85 +195,81 @@ public class JudgeServiceImpl implements JudgeService {
 <span class="fc" id="L195">        ActivitySubmission submission = submissionRepository.findById(submissionId)</span>
 <span class="fc" id="L196">                .orElseThrow(() -&gt; {</span>
 <span class="fc" id="L197">                    log.warn(&quot;Submission not found | submissionId={}&quot;, submissionId);</span>
-<span class="fc" id="L198">                    return new ResponseStatusException(</span>
-                            HttpStatus.NOT_FOUND, &quot;Submission not found&quot;);
+<span class="fc" id="L198">                    return new SubmissionNotFoundException(&quot;Submission not found&quot;);</span>
                 });
 
-<span class="fc bfc" id="L202" title="All 2 branches covered.">        if (submission.getReviewStatus() != ReviewStatus.PENDING) {</span>
-<span class="fc" id="L203">            log.warn(</span>
+<span class="fc bfc" id="L201" title="All 2 branches covered.">        if (submission.getReviewStatus() != ReviewStatus.PENDING) {</span>
+<span class="fc" id="L202">            log.warn(</span>
                     &quot;Submission already reviewed | submissionId={} | status={}&quot;,
                     submissionId,
-<span class="fc" id="L206">                    submission.getReviewStatus()</span>
+<span class="fc" id="L205">                    submission.getReviewStatus()</span>
             );
-<span class="fc" id="L208">            throw new ResponseStatusException(</span>
-                    HttpStatus.BAD_REQUEST,
-                    &quot;Submission already reviewed&quot;);
+<span class="fc" id="L207">            throw new InvalidOperationException(&quot;Submission already reviewed&quot;);</span>
         }
 
-<span class="fc" id="L213">        ActivityRegistration registration = submission.getActivityRegistration();</span>
-<span class="fc" id="L214">        Activity activity = registration.getActivity();</span>
-<span class="fc" id="L215">        Program program = activity.getProgram();</span>
+<span class="fc" id="L210">        ActivityRegistration registration = submission.getActivityRegistration();</span>
+<span class="fc" id="L211">        Activity activity = registration.getActivity();</span>
+<span class="fc" id="L212">        Program program = activity.getProgram();</span>
 
         // ✅ Judge already decided at program creation
-<span class="fc" id="L218">        Judge judge = program.getJudge();</span>
-<span class="fc bfc" id="L219" title="All 2 branches covered.">        if (judge == null) {</span>
-<span class="fc" id="L220">            log.error(</span>
-                    &quot;Judge not assigned to program | programId={}&quot;,
-<span class="fc" id="L222">                    program.getProgramId()</span>
+<span class="fc" id="L215">        Judge judge = program.getJudge();</span>
+<span class="fc bfc" id="L216" title="All 2 branches covered.">        if (judge == null) {</span>
+<span class="fc" id="L217">            log.error(</span>
+                    &quot;Judge not found for program | programId={}&quot;,
+<span class="fc" id="L219">                    program.getProgramId()</span>
             );
-<span class="fc" id="L224">            throw new ResponseStatusException(</span>
-                    HttpStatus.BAD_REQUEST,
-                    &quot;Judge not assigned to this program&quot;);
+<span class="fc" id="L221">            throw new JudgeNotFoundException(</span>
+                    &quot;Judge not assigned to this program&quot;
+            );
         }
 
-<span class="fc" id="L229">        Long rewardGems = activity.getRewardGems();</span>
-<span class="pc bpc" id="L230" title="1 of 4 branches missed.">        if (rewardGems == null || rewardGems &lt; 0) {</span>
-<span class="fc" id="L231">            log.error(</span>
+
+<span class="fc" id="L227">        Long rewardGems = activity.getRewardGems();</span>
+<span class="pc bpc" id="L228" title="1 of 4 branches missed.">        if (rewardGems == null || rewardGems &lt; 0) {</span>
+<span class="fc" id="L229">            log.error(</span>
                     &quot;Invalid reward gems | activityId={} | rewardGems={}&quot;,
-<span class="fc" id="L233">                    activity.getActivityId(),</span>
+<span class="fc" id="L231">                    activity.getActivityId(),</span>
                     rewardGems
             );
-<span class="fc" id="L236">            throw new ResponseStatusException(</span>
-                    HttpStatus.BAD_REQUEST,
-                    &quot;Invalid reward gems&quot;);
+<span class="fc" id="L234">            throw new InvalidOperationException(&quot;Invalid reward gems&quot;);</span>
         }
 
-<span class="fc" id="L241">        submission.setReviewedBy(judge);</span>
-<span class="fc" id="L242">        submission.setReviewStatus(ReviewStatus.APPROVED);</span>
-<span class="fc" id="L243">        submission.setAwardedGems(rewardGems);</span>
-<span class="fc" id="L244">        submission.setReviewedAt(Instant.now());</span>
-<span class="fc" id="L245">        submissionRepository.save(submission);</span>
+<span class="fc" id="L237">        submission.setReviewedBy(judge);</span>
+<span class="fc" id="L238">        submission.setReviewStatus(ReviewStatus.APPROVED);</span>
+<span class="fc" id="L239">        submission.setAwardedGems(rewardGems);</span>
+<span class="fc" id="L240">        submission.setReviewedAt(Instant.now());</span>
+<span class="fc" id="L241">        submissionRepository.save(submission);</span>
 
-<span class="fc" id="L247">        registration.setCompletionStatus(CompletionStatus.COMPLETED);</span>
-<span class="fc" id="L248">        registrationRepository.save(registration);</span>
+<span class="fc" id="L243">        registration.setCompletionStatus(CompletionStatus.COMPLETED);</span>
+<span class="fc" id="L244">        registrationRepository.save(registration);</span>
 
-<span class="fc" id="L250">        programWalletTransactionService.creditGems(</span>
-<span class="fc" id="L251">                registration.getUser(),</span>
+<span class="fc" id="L246">        programWalletTransactionService.creditGems(</span>
+<span class="fc" id="L247">                registration.getUser(),</span>
                 program,
                 rewardGems
         );
-<span class="fc" id="L255">        log.info(</span>
+<span class="fc" id="L251">        log.info(</span>
                 &quot;Submission reviewed &amp; approved | submissionId={} | programId={} | userId={} | awardedGems={}&quot;,
                 submissionId,
-<span class="fc" id="L258">                program.getProgramId(),</span>
-<span class="fc" id="L259">                registration.getUser().getUserId(),</span>
+<span class="fc" id="L254">                program.getProgramId(),</span>
+<span class="fc" id="L255">                registration.getUser().getUserId(),</span>
                 rewardGems
         );
-<span class="fc" id="L262">    }</span>
+<span class="fc" id="L258">    }</span>
     private JudgeSubmissionDTO mapToDto(ActivitySubmission submission) {
-<span class="fc" id="L264">        ActivityRegistration reg = submission.getActivityRegistration();</span>
+<span class="fc" id="L260">        ActivityRegistration reg = submission.getActivityRegistration();</span>
 
-<span class="fc" id="L266">        return new JudgeSubmissionDTO(</span>
-<span class="fc" id="L267">                submission.getSubmissionId(),</span>
-<span class="fc" id="L268">                reg.getActivity().getActivityId(),</span>
-<span class="fc" id="L269">                reg.getActivity().getActivityName(),</span>
-<span class="fc" id="L270">                reg.getUser().getUserId(),</span>
-<span class="fc" id="L271">                reg.getUser().getName(),</span>
-<span class="fc" id="L272">                submission.getSubmissionUrl(),</span>
-<span class="fc" id="L273">                submission.getAwardedGems(),</span>
-<span class="fc" id="L274">                submission.getSubmittedAt(),</span>
-<span class="fc" id="L275">                submission.getReviewedAt(),</span>
-<span class="fc" id="L276">                submission.getReviewStatus()</span>
+<span class="fc" id="L262">        return new JudgeSubmissionDTO(</span>
+<span class="fc" id="L263">                submission.getSubmissionId(),</span>
+<span class="fc" id="L264">                reg.getActivity().getActivityId(),</span>
+<span class="fc" id="L265">                reg.getActivity().getActivityName(),</span>
+<span class="fc" id="L266">                reg.getUser().getUserId(),</span>
+<span class="fc" id="L267">                reg.getUser().getName(),</span>
+<span class="fc" id="L268">                submission.getSubmissionUrl(),</span>
+<span class="fc" id="L269">                submission.getAwardedGems(),</span>
+<span class="fc" id="L270">                submission.getSubmittedAt(),</span>
+<span class="fc" id="L271">                submission.getReviewedAt(),</span>
+<span class="fc" id="L272">                submission.getReviewStatus()</span>
         );
     }
 }

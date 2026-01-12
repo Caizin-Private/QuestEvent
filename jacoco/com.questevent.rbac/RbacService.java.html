@@ -270,7 +270,7 @@ public class RbacService {
 <span class="fc" id="L270">        User user = currentUser(authentication);</span>
 <span class="pc bpc" id="L271" title="1 of 2 branches missed.">        if (user == null) return false;</span>
 
-<span class="pc bpc" id="L273" title="1 of 2 branches missed.">        if (user.getRole() == Role.OWNER) {</span>
+<span class="pc bpc" id="L273" title="1 of 2 branches missed.">        if (user.getRole() == Role.OWNER){</span>
 <span class="nc" id="L274">            return true;</span>
         }
 <span class="fc" id="L276">        return judgeRepository.findByUserUserId(user.getUserId()).isPresent();</span>

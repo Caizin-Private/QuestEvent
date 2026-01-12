@@ -45,7 +45,7 @@ public class ProgramController {
             summary = &quot;Create a new program&quot;,
             description = &quot;Creates a new program with the provided details&quot;
     )
-    @ApiResponses({
+    @ApiResponses(value={
             @ApiResponse(responseCode = &quot;201&quot;, description = &quot;Program created successfully&quot;),
             @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Invalid input&quot;),
             @ApiResponse(responseCode = &quot;401&quot;, description = &quot;Unauthorized&quot;)
@@ -156,7 +156,7 @@ public class ProgramController {
     }
 
     @PreAuthorize(&quot;@rbac.canManageProgram(authentication, #programId)&quot;)
-    @PutMapping(&quot;/{programId}&quot;)
+    @PatchMapping(&quot;/{programId}&quot;)
     @Operation(summary = &quot;Update program&quot;, description = &quot;Updates an existing program's information&quot;)
     @ApiResponses(value = {
             @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Program updated successfully&quot;),
