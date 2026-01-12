@@ -7,7 +7,7 @@ on:
       - completed
     branches:
       - master
-      - release-* # for release branch
+      - release-*
   workflow_dispatch:
 
 jobs:
@@ -21,9 +21,9 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version-file: '.java-version'
-          cache: 'gradle'
+          distribution: temurin
+          java-version-file: .java-version
+          cache: gradle
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -34,28 +34,25 @@ jobs:
       - name: Run tests
         run: ./gradlew test
 
-      - name: Get artifact name
+      - name: Locate JAR artifact
         id: artifact
         run: |
           ARTIFACT_PATH=$(find build/libs -name "*.jar" -not -name "*plain.jar" | head -n 1)
-          ARTIFACT_NAME=$(basename $ARTIFACT_PATH)
           echo "path=$ARTIFACT_PATH" >> $GITHUB_OUTPUT
-          echo "name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
 
-      - name: Generate deployment package
+      - name: Generate deployment ZIP
         run: |
           mkdir -p deploy
           cp ${{ steps.artifact.outputs.path }} deploy/application.jar
           cd deploy
           zip -r deploy.zip .
-          mv deploy.zip ../
+          mv deploy.zip ..
 
-      - name: Get version label with timestamp
+      - name: Generate version label from commit
         id: version
         run: |
-          TIMESTAMP=$(date +'%Y%m%d-%H%M%S')
           COMMIT_SHA=$(git rev-parse --short HEAD)
-          echo "label=deploy-${TIMESTAMP}-${COMMIT_SHA}" >> $GITHUB_OUTPUT
+          echo "label=commit-${COMMIT_SHA}" >> $GITHUB_OUTPUT
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -74,7 +71,8 @@ jobs:
           aws elasticbeanstalk create-application-version \
             --application-name "${{ secrets.EB_APPLICATION_NAME }}" \
             --version-label "${{ steps.version.outputs.label }}" \
-            --source-bundle S3Bucket="${{ secrets.EB_S3_BUCKET }}",S3Key="${{ steps.version.outputs.label }}.zip" \
+            --source-bundle \
+              S3Bucket="${{ secrets.EB_S3_BUCKET }}",S3Key="${{ steps.version.outputs.label }}.zip" \
             --description "Commit ${{ github.sha }} by ${{ github.actor }}"
 
       - name: Deploy to Elastic Beanstalk
@@ -93,6 +91,6 @@ jobs:
       - name: Deployment status
         if: success()
         run: |
-          echo "Deployment successful!"
+          echo "Deployment successful"
           echo "Version: ${{ steps.version.outputs.label }}"
           echo "Environment: ${{ secrets.EB_ENVIRONMENT_NAME }}"
