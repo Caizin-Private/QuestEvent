@@ -25,7 +25,9 @@ public class SecurityConfig {
 
         http
                 .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf
+                        // CSRF is required for browser-based OAuth2 login but Not for stateless JWT APIs
+                        .ignoringRequestMatchers("/api/**", "/logout"))
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(

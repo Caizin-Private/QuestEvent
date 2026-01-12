@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -56,7 +55,7 @@ public class JudgeController {
                     description = "Unauthorized – JWT missing or invalid"
             )
     })
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@rbac.canAccessJudgeSubmissions(authentication)")
     @GetMapping("/submissions/pending")
     public ResponseEntity<List<JudgeSubmissionDTO>> getPendingSubmissions(
             Authentication authentication
@@ -89,7 +88,7 @@ public class JudgeController {
                     description = "Activity not found"
             )
     })
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@rbac.isJudgeForActivity(authentication, #activityId)")
     @GetMapping("/submissions/pending/activity/{activityId}")
     public ResponseEntity<List<JudgeSubmissionDTO>> getPendingSubmissionsForActivity(
             @Parameter(
@@ -128,7 +127,7 @@ public class JudgeController {
                     description = "Unauthorized"
             )
     })
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@rbac.canAccessJudgeSubmissions(authentication)")
     @GetMapping("/submissions")
     public ResponseEntity<List<JudgeSubmissionDTO>> getAllSubmissions(
             Authentication authentication
@@ -166,7 +165,7 @@ public class JudgeController {
                     description = "Submission not found"
             )
     })
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@rbac.canVerifySubmission(authentication, #submissionId)")
     @PatchMapping("/submissions/{submissionId}/review")
     public ResponseEntity<Void> reviewSubmission(
             @Parameter(
