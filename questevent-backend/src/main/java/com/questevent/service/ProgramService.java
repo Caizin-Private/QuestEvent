@@ -66,7 +66,7 @@ public class ProgramService {
         User hostUser = userRepository.findById(p.userId())
                 .orElseThrow(() -> {
                     log.error("Host user not found | userId={}", p.userId());
-                    return new ProgramNotFoundException(PROGRAM_NOT_FOUND_MESSAGE);
+                    return new UserNotFoundException("User not found");
                 });
 
         User judgeUser = userRepository.findById(dto.getJudgeUserId())
