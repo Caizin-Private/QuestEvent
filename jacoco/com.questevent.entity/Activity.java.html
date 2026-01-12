@@ -4,8 +4,6 @@ import lombok.Data;
 import jakarta.persistence.Id;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -47,8 +45,8 @@ public class Activity {
 
     @PrePersist
     public void onCreate() {
-<span class="nc" id="L50">        this.createdAt = Instant.now();</span>
-<span class="nc" id="L51">    }</span>
+<span class="nc" id="L48">        this.createdAt = Instant.now();</span>
+<span class="nc" id="L49">    }</span>
 
     @Column(name = &quot;is_compulsory&quot;, nullable = false)
     private Boolean isCompulsory;
@@ -56,4 +54,4 @@ public class Activity {
     @OneToMany(mappedBy = &quot;activity&quot;, cascade = CascadeType.ALL, orphanRemoval = true)
     private List&lt;ActivityRegistration&gt; registrations;
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
