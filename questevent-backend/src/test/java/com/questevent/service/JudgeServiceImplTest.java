@@ -15,6 +15,7 @@ import com.questevent.repository.UserRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.function.Executable;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -136,13 +137,16 @@ class JudgeServiceImplTest {
 
         mockAuthenticatedUser(judgeUser);
 
-        when(submissionRepository.findById(submission.getSubmissionId()))
+        UUID submissionId = submission.getSubmissionId();
+
+        when(submissionRepository.findById(submissionId))
                 .thenReturn(Optional.of(submission));
 
-        InvalidOperationException ex = assertThrows(
-                InvalidOperationException.class,
-                () -> judgeService.reviewSubmission(submission.getSubmissionId())
-        );
+        Executable executable =
+                () -> judgeService.reviewSubmission(submissionId);
+
+        InvalidOperationException ex =
+                assertThrows(InvalidOperationException.class, executable);
 
         assertEquals("Submission already reviewed", ex.getMessage());
     }
@@ -160,13 +164,16 @@ class JudgeServiceImplTest {
 
         mockAuthenticatedUser(judgeUser);
 
-        when(submissionRepository.findById(submission.getSubmissionId()))
+        UUID submissionId = submission.getSubmissionId();
+
+        when(submissionRepository.findById(submissionId))
                 .thenReturn(Optional.of(submission));
 
-        JudgeNotFoundException ex = assertThrows(
-                JudgeNotFoundException.class,
-                () -> judgeService.reviewSubmission(submission.getSubmissionId())
-        );
+        Executable executable =
+                () -> judgeService.reviewSubmission(submissionId);
+
+        JudgeNotFoundException ex =
+                assertThrows(JudgeNotFoundException.class, executable);
 
         assertEquals(
                 "Judge not assigned to this program",
@@ -186,16 +193,20 @@ class JudgeServiceImplTest {
 
         mockAuthenticatedUser(judgeUser);
 
-        when(submissionRepository.findById(submission.getSubmissionId()))
+        UUID submissionId = submission.getSubmissionId();
+
+        when(submissionRepository.findById(submissionId))
                 .thenReturn(Optional.of(submission));
 
-        InvalidOperationException ex = assertThrows(
-                InvalidOperationException.class,
-                () -> judgeService.reviewSubmission(submission.getSubmissionId())
-        );
+        Executable executable =
+                () -> judgeService.reviewSubmission(submissionId);
+
+        InvalidOperationException ex =
+                assertThrows(InvalidOperationException.class, executable);
 
         assertEquals("Invalid reward gems", ex.getMessage());
     }
+
 
     /* ================= HELPERS ================= */
 

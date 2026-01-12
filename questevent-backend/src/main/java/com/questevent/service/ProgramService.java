@@ -29,6 +29,8 @@ import java.util.UUID;
 @Service
 public class ProgramService {
 
+    private static final String PROGRAM_NOT_FOUND_MESSAGE = "Program not found";
+
     private final ProgramRepository programRepository;
     private final UserRepository userRepository;
     private final JudgeRepository judgeRepository;
@@ -64,7 +66,7 @@ public class ProgramService {
         User hostUser = userRepository.findById(p.userId())
                 .orElseThrow(() -> {
                     log.error("Host user not found | userId={}", p.userId());
-                    return new UserNotFoundException("User not found");
+                    return new ProgramNotFoundException(PROGRAM_NOT_FOUND_MESSAGE);
                 });
 
         User judgeUser = userRepository.findById(dto.getJudgeUserId())
@@ -126,7 +128,7 @@ public class ProgramService {
         Program existingProgram = programRepository.findById(programId)
                 .orElseThrow(() -> {
                     log.error("Program not found | programId={}", programId);
-                    return new ProgramNotFoundException("Program not found");
+                    return new ProgramNotFoundException(PROGRAM_NOT_FOUND_MESSAGE);
                 });
 
         if (!existingProgram.getUser().getUserId().equals(hostUser.getUserId())) {
@@ -224,7 +226,7 @@ public class ProgramService {
         return programRepository.findById(programId)
                 .orElseThrow(() -> {
                     log.warn("Program not found | programId={}", programId);
-                    return new ProgramNotFoundException("Program not found");
+                    return new ProgramNotFoundException(PROGRAM_NOT_FOUND_MESSAGE);
                 });
     }
 
@@ -246,7 +248,7 @@ public class ProgramService {
         Program program = programRepository.findById(programId)
                 .orElseThrow(() -> {
                     log.warn("Program not found | programId={}", programId);
-                    return new ProgramNotFoundException("Program not found");
+                    return new ProgramNotFoundException(PROGRAM_NOT_FOUND_MESSAGE);
                 });
 
         if (!program.getUser().getUserId().equals(hostUser.getUserId())) {
@@ -359,7 +361,7 @@ public class ProgramService {
         Program program = programRepository.findById(programId)
                 .orElseThrow(() -> {
                     log.warn("Program not found | programId={}", programId);
-                    return new ProgramNotFoundException("Program not found");
+                    return new ProgramNotFoundException(PROGRAM_NOT_FOUND_MESSAGE);
                 });
 
         if (!program.getUser().getUserId().equals(currentUser.getUserId())) {

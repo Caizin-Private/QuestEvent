@@ -1,6 +1,5 @@
 package com.questevent.config;
 import com.questevent.dto.UserPrincipal;
-import com.questevent.entity.User;
 import com.questevent.enums.Role;
 import com.questevent.repository.UserRepository;
 import com.questevent.service.JwtService;
@@ -14,8 +13,6 @@ import org.mockito.*;
 import org.springframework.security.core.context.SecurityContextHolder;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
