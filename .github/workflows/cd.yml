@@ -7,7 +7,7 @@ on:
       - completed
     branches:
       - master
-      - release-*
+      - release-* #for release branch
   workflow_dispatch:
 
 jobs:
