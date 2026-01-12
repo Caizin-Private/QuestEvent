@@ -41,19 +41,20 @@ public class SubmissionController {
             @RequestBody ActivitySubmissionRequestDTO request
     ) {
 <span class="fc" id="L43">        log.info(&quot;Submitting activity work: activityId={}, userId={}&quot;,</span>
-<span class="fc" id="L44">                request.getActivityId());</span>
+<span class="fc" id="L44">                request.getActivityId(), request.getUserId());</span>
 
 <span class="fc" id="L46">        submissionService.submitActivity(</span>
 <span class="fc" id="L47">                request.getActivityId(),</span>
-<span class="fc" id="L48">                request.getSubmissionUrl()</span>
+<span class="fc" id="L48">                request.getUserId(),</span>
+<span class="fc" id="L49">                request.getSubmissionUrl()</span>
         );
 
-<span class="fc" id="L51">        log.info(&quot;Activity submission successful: activityId={}, userId={}&quot;,</span>
-<span class="fc" id="L52">                request.getActivityId());</span>
+<span class="fc" id="L52">        log.info(&quot;Activity submission successful: activityId={}, userId={}&quot;,</span>
+<span class="fc" id="L53">                request.getActivityId(), request.getUserId());</span>
 
-<span class="fc" id="L54">        return ResponseEntity</span>
-<span class="fc" id="L55">                .status(HttpStatus.CREATED)</span>
-<span class="fc" id="L56">                .body(&quot;Submission successful&quot;);</span>
+<span class="fc" id="L55">        return ResponseEntity</span>
+<span class="fc" id="L56">                .status(HttpStatus.CREATED)</span>
+<span class="fc" id="L57">                .body(&quot;Submission successful&quot;);</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
