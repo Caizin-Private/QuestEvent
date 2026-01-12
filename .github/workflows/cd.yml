@@ -7,7 +7,7 @@ on:
       - completed
     branches:
       - master
-      - release-* #on release branch
+      - release-*
   workflow_dispatch:
 
 jobs:
@@ -17,6 +17,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version-file: '.java-version'
+          cache: 'gradle'
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -43,9 +50,13 @@ jobs:
           zip -r deploy.zip .
           mv deploy.zip ../
 
-      - name: Get commit id
-        id: commit
-        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - name: Get version label with timestamp
+        id: version
+        run: |
+          TIMESTAMP=$(date +'%Y%m%d-%H%M%S')
+          COMMIT_SHA=$(git rev-parse --short HEAD)
+          echo "label=deploy-${TIMESTAMP}-${COMMIT_SHA}" >> $GITHUB_OUTPUT
+          echo "timestamp=${TIMESTAMP}" >> $GITHUB_OUTPUT
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -55,32 +66,20 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Upload package to S3
-        run: |
-          aws s3 cp deploy.zip s3://${{ secrets.EB_S3_BUCKET }}/deploy-${{ steps.time.outputs.timestamp }}.zip
+        run: aws s3 cp deploy.zip s3://${{ secrets.EB_S3_BUCKET }}/${{ steps.version.outputs.label }}.zip
 
       - name: Create Elastic Beanstalk application version
-        run: |
-          aws elasticbeanstalk create-application-version \
-            --application-name ${{ secrets.EB_APPLICATION_NAME }} \
-            --version-label deploy-${{ steps.time.outputs.timestamp }} \
-            --source-bundle S3Bucket="${{ secrets.EB_S3_BUCKET }}",S3Key="deploy-${{ steps.time.outputs.timestamp }}.zip" \
-            --description "Deployed from GitHub Actions - Commit: ${{ github.sha }}"
+        run: aws elasticbeanstalk create-application-version --application-name ${{ secrets.EB_APPLICATION_NAME }} --version-label ${{ steps.version.outputs.label }} --source-bundle S3Bucket="${{ secrets.EB_S3_BUCKET }}",S3Key="${{ steps.version.outputs.label }}.zip" --description "Commit ${{ github.sha }} by ${{ github.actor }}"
 
       - name: Deploy to Elastic Beanstalk
-        run: |
-          aws elasticbeanstalk update-environment \
-            --application-name ${{ secrets.EB_APPLICATION_NAME }} \
-            --environment-name ${{ secrets.EB_ENVIRONMENT_NAME }} \
-            --version-label deploy-${{ steps.time.outputs.timestamp }}
+        run: aws elasticbeanstalk update-environment --application-name ${{ secrets.EB_APPLICATION_NAME }} --environment-name ${{ secrets.EB_ENVIRONMENT_NAME }} --version-label ${{ steps.version.outputs.label }}
 
       - name: Wait for deployment
-        run: |
-          aws elasticbeanstalk wait environment-updated \
-            --application-name ${{ secrets.EB_APPLICATION_NAME }} \
-            --environment-name ${{ secrets.EB_ENVIRONMENT_NAME }}
+        run: aws elasticbeanstalk wait environment-updated --application-name ${{ secrets.EB_APPLICATION_NAME }} --environment-name ${{ secrets.EB_ENVIRONMENT_NAME }}
 
       - name: Deployment status
         if: success()
         run: |
           echo "Deployment successful!"
+          echo "Version: ${{ steps.version.outputs.label }}"
           echo "Application deployed to Elastic Beanstalk environment: ${{ secrets.EB_ENVIRONMENT_NAME }}"
