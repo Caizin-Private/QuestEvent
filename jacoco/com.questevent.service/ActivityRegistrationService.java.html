@@ -1,0 +1,378 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ActivityRegistrationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">questevent-backend</a> &gt; <a href="index.source.html" class="el_package">com.questevent.service</a> &gt; <span class="el_source">ActivityRegistrationService.java</span></div><h1>ActivityRegistrationService.java</h1><pre class="source lang-java linenums">package com.questevent.service;
+
+import com.questevent.dto.*;
+import com.questevent.entity.Activity;
+import com.questevent.entity.ActivityRegistration;
+import com.questevent.entity.Program;
+import com.questevent.entity.User;
+import com.questevent.enums.CompletionStatus;
+import com.questevent.exception.*;
+import com.questevent.repository.ActivityRegistrationRepository;
+import com.questevent.repository.ActivityRepository;
+import com.questevent.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+<span class="fc" id="L24">@Slf4j</span>
+@Service
+@RequiredArgsConstructor
+public class ActivityRegistrationService {
+
+    private final ActivityRegistrationRepository activityRegistrationRepository;
+    private final ActivityRepository activityRepository;
+    private final UserRepository userRepository;
+
+    @Transactional
+    public ActivityRegistrationResponseDTO registerParticipantForActivity(
+            ActivityRegistrationRequestDTO request) {
+
+<span class="fc" id="L37">        log.debug(</span>
+                &quot;Register participant for activity requested | activityId={}&quot;,
+<span class="fc" id="L39">                request.getActivityId()</span>
+        );
+
+        Authentication authentication =
+<span class="fc" id="L43">                SecurityContextHolder.getContext().getAuthentication();</span>
+
+<span class="pc bpc" id="L45" title="2 of 4 branches missed.">        if (authentication == null || !authentication.isAuthenticated()</span>
+<span class="pc bpc" id="L46" title="1 of 2 branches missed.">                || !(authentication.getPrincipal() instanceof UserPrincipal principal)) {</span>
+<span class="nc" id="L47">            log.warn(&quot;Unauthorized activity registration attempt&quot;);</span>
+<span class="nc" id="L48">            throw new UnauthorizedException(&quot;Unauthorized&quot;);</span>
+        }
+
+<span class="fc" id="L51">        Long userId = principal.userId();</span>
+
+<span class="fc" id="L53">        User user = userRepository.findById(userId)</span>
+<span class="fc" id="L54">                .orElseThrow(() -&gt; {</span>
+<span class="fc" id="L55">                    log.error(&quot;User not found | userId={}&quot;, userId);</span>
+<span class="fc" id="L56">                    return new UserNotFoundException(&quot;User not found&quot;);</span>
+                });
+
+<span class="fc" id="L59">        Activity activity = activityRepository.findById(request.getActivityId())</span>
+<span class="fc" id="L60">                .orElseThrow(() -&gt; {</span>
+<span class="fc" id="L61">                    log.error(&quot;Activity not found | activityId={}&quot;, request.getActivityId());</span>
+<span class="fc" id="L62">                    return new ActivityNotFoundException(&quot;Activity not found&quot;);</span>
+                });
+
+<span class="fc" id="L65">        validateCompulsoryActivities(activity, userId);</span>
+
+<span class="fc" id="L67">        if (activityRegistrationRepository</span>
+<span class="fc bfc" id="L68" title="All 2 branches covered.">                .existsByActivity_ActivityIdAndUser_UserId(</span>
+<span class="fc" id="L69">                        activity.getActivityId(), userId)) {</span>
+
+<span class="fc" id="L71">            log.warn(</span>
+                    &quot;Duplicate activity registration blocked | activityId={} | userId={}&quot;,
+<span class="fc" id="L73">                    activity.getActivityId(),</span>
+                    userId
+            );
+<span class="fc" id="L76">            throw new ResourceConflictException(</span>
+                    &quot;User already registered for this activity&quot;
+            );
+        }
+
+<span class="fc" id="L81">        ActivityRegistration registration = new ActivityRegistration();</span>
+<span class="fc" id="L82">        registration.setActivity(activity);</span>
+<span class="fc" id="L83">        registration.setUser(user);</span>
+<span class="fc" id="L84">        registration.setCompletionStatus(</span>
+<span class="pc bpc" id="L85" title="1 of 2 branches missed.">                request.getCompletionStatus() != null</span>
+<span class="fc" id="L86">                        ? request.getCompletionStatus()</span>
+<span class="nc" id="L87">                        : CompletionStatus.NOT_COMPLETED</span>
+        );
+
+<span class="fc" id="L90">        ActivityRegistration saved =</span>
+<span class="fc" id="L91">                activityRegistrationRepository.save(registration);</span>
+
+<span class="fc" id="L93">        log.info(</span>
+                &quot;User registered for activity | registrationId={} | activityId={} | userId={}&quot;,
+<span class="fc" id="L95">                saved.getActivityRegistrationId(),</span>
+<span class="fc" id="L96">                activity.getActivityId(),</span>
+                userId
+        );
+
+<span class="fc" id="L100">        return mapToResponseDTO(saved);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public List&lt;ActivityRegistrationDTO&gt; getAllRegistrations() {
+<span class="nc" id="L105">        log.info(&quot;Fetching all activity registrations&quot;);</span>
+<span class="nc" id="L106">        return activityRegistrationRepository.findAll()</span>
+<span class="nc" id="L107">                .stream()</span>
+<span class="nc" id="L108">                .map(this::mapToDTO)</span>
+<span class="nc" id="L109">                .collect(Collectors.toList());</span>
+    }
+
+    @Transactional(readOnly = true)
+    public ActivityRegistrationDTO getRegistrationById(UUID id) {
+
+<span class="nc" id="L115">        log.debug(&quot;Fetching activity registration | registrationId={}&quot;, id);</span>
+
+<span class="nc" id="L117">        ActivityRegistration registration =</span>
+<span class="nc" id="L118">                activityRegistrationRepository.findById(id)</span>
+<span class="nc" id="L119">                        .orElseThrow(() -&gt; {</span>
+<span class="nc" id="L120">                            log.warn(&quot;Registration not found | registrationId={}&quot;, id);</span>
+<span class="nc" id="L121">                            return new ResourceNotFoundException(</span>
+                                    &quot;Registration not found&quot;
+                            );
+                        });
+
+<span class="nc" id="L126">        return mapToDTO(registration);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public List&lt;ActivityRegistrationDTO&gt; getRegistrationsByActivityId(UUID activityId) {
+
+<span class="nc" id="L132">        log.debug(&quot;Fetching registrations by activity | activityId={}&quot;, activityId);</span>
+
+<span class="nc" id="L134">        return activityRegistrationRepository.findByActivityActivityId(activityId)</span>
+<span class="nc" id="L135">                .stream()</span>
+<span class="nc" id="L136">                .map(this::mapToDTO)</span>
+<span class="nc" id="L137">                .collect(Collectors.toList());</span>
+    }
+
+    @Transactional(readOnly = true)
+    public List&lt;ActivityRegistrationDTO&gt; getRegistrationsByUserId(Long userId) {
+
+<span class="nc" id="L143">        log.debug(&quot;Fetching registrations by user | userId={}&quot;, userId);</span>
+
+<span class="nc" id="L145">        return activityRegistrationRepository.findByUserUserId(userId)</span>
+<span class="nc" id="L146">                .stream()</span>
+<span class="nc" id="L147">                .map(this::mapToDTO)</span>
+<span class="nc" id="L148">                .collect(Collectors.toList());</span>
+    }
+
+    @Transactional(readOnly = true)
+    public List&lt;ActivityRegistrationDTO&gt; getRegistrationsByActivityIdAndStatus(
+            UUID activityId,
+            CompletionStatus status) {
+
+<span class="nc" id="L156">        log.debug(</span>
+                &quot;Fetching registrations by activity and status | activityId={} | status={}&quot;,
+                activityId,
+                status
+        );
+
+<span class="nc" id="L162">        return activityRegistrationRepository</span>
+<span class="nc" id="L163">                .findByActivityActivityIdAndCompletionStatus(activityId, status)</span>
+<span class="nc" id="L164">                .stream()</span>
+<span class="nc" id="L165">                .map(this::mapToDTO)</span>
+<span class="nc" id="L166">                .collect(Collectors.toList());</span>
+    }
+
+    @Transactional(readOnly = true)
+    public List&lt;ActivityRegistrationDTO&gt; getRegistrationsByUserIdAndStatus(
+            Long userId,
+            CompletionStatus status) {
+
+<span class="nc" id="L174">        log.debug(</span>
+                &quot;Fetching registrations by user and status | userId={} | status={}&quot;,
+                userId,
+                status
+        );
+
+<span class="nc" id="L180">        return activityRegistrationRepository</span>
+<span class="nc" id="L181">                .findByUserUserIdAndCompletionStatus(userId, status)</span>
+<span class="nc" id="L182">                .stream()</span>
+<span class="nc" id="L183">                .map(this::mapToDTO)</span>
+<span class="nc" id="L184">                .collect(Collectors.toList());</span>
+    }
+
+    @Transactional
+    public ActivityRegistrationDTO updateCompletionStatus(
+            UUID id,
+            ActivityCompletionUpdateDTO updateDTO) {
+
+<span class="nc" id="L192">        log.debug(</span>
+                &quot;Updating completion status | registrationId={} | status={}&quot;,
+                id,
+<span class="nc" id="L195">                updateDTO.getCompletionStatus()</span>
+        );
+
+<span class="nc" id="L198">        ActivityRegistration registration =</span>
+<span class="nc" id="L199">                activityRegistrationRepository.findById(id)</span>
+<span class="nc" id="L200">                        .orElseThrow(() -&gt; {</span>
+<span class="nc" id="L201">                            log.warn(&quot;Registration not found | registrationId={}&quot;, id);</span>
+<span class="nc" id="L202">                            return new ResourceNotFoundException(</span>
+                                    &quot;Registration not found&quot;
+                            );
+                        });
+
+<span class="nc" id="L207">        registration.setCompletionStatus(updateDTO.getCompletionStatus());</span>
+
+<span class="nc" id="L209">        ActivityRegistration updated =</span>
+<span class="nc" id="L210">                activityRegistrationRepository.save(registration);</span>
+
+<span class="nc" id="L212">        log.info(</span>
+                &quot;Completion status updated | registrationId={} | status={}&quot;,
+                id,
+<span class="nc" id="L215">                updated.getCompletionStatus()</span>
+        );
+
+<span class="nc" id="L218">        return mapToDTO(updated);</span>
+    }
+
+    @Transactional
+    public void deleteRegistration(UUID id) {
+
+<span class="fc" id="L224">        log.debug(&quot;Delete activity registration requested | registrationId={}&quot;, id);</span>
+
+<span class="fc bfc" id="L226" title="All 2 branches covered.">        if (!activityRegistrationRepository.existsById(id)) {</span>
+<span class="fc" id="L227">            log.warn(&quot;Registration not found while deleting | registrationId={}&quot;, id);</span>
+<span class="fc" id="L228">            throw new ResourceNotFoundException(&quot;Registration not found&quot;);</span>
+        }
+
+<span class="fc" id="L231">        activityRegistrationRepository.deleteById(id);</span>
+
+<span class="fc" id="L233">        log.info(&quot;Activity registration deleted | registrationId={}&quot;, id);</span>
+<span class="fc" id="L234">    }</span>
+
+    @Transactional(readOnly = true)
+    public long getParticipantCountForActivity(UUID activityId) {
+
+<span class="nc" id="L239">        long count =</span>
+<span class="nc" id="L240">                activityRegistrationRepository.countByActivityActivityId(activityId);</span>
+
+<span class="nc" id="L242">        log.info(</span>
+                &quot;Participant count fetched | activityId={} | count={}&quot;,
+                activityId,
+<span class="nc" id="L245">                count</span>
+        );
+
+<span class="nc" id="L248">        return count;</span>
+    }
+
+    private void validateCompulsoryActivities(Activity activity, Long userId) {
+
+<span class="pc bpc" id="L253" title="1 of 2 branches missed.">        if (Boolean.TRUE.equals(activity.getIsCompulsory())) {</span>
+<span class="nc" id="L254">            return;</span>
+        }
+
+<span class="fc" id="L257">        Program program = activity.getProgram();</span>
+<span class="pc bpc" id="L258" title="1 of 2 branches missed.">        if (program == null) {</span>
+<span class="fc" id="L259">            return;</span>
+        }
+
+<span class="nc" id="L262">        UUID programId = program.getProgramId();</span>
+
+<span class="nc" id="L264">        List&lt;Activity&gt; compulsoryActivities =</span>
+<span class="nc" id="L265">                activityRepository.findByProgram_ProgramIdAndIsCompulsoryTrue(programId);</span>
+
+<span class="nc bnc" id="L267" title="All 2 branches missed.">        for (Activity compulsory : compulsoryActivities) {</span>
+
+<span class="nc" id="L269">            boolean completed =</span>
+                    activityRegistrationRepository
+<span class="nc" id="L271">                            .existsByActivity_ActivityIdAndUser_UserIdAndCompletionStatus(</span>
+<span class="nc" id="L272">                                    compulsory.getActivityId(),</span>
+                                    userId,
+                                    CompletionStatus.COMPLETED
+                            );
+
+<span class="nc bnc" id="L277" title="All 2 branches missed.">            if (!completed) {</span>
+<span class="nc" id="L278">                log.warn(</span>
+                        &quot;Compulsory activity not completed | compulsoryActivityId={} | userId={}&quot;,
+<span class="nc" id="L280">                        compulsory.getActivityId(),</span>
+                        userId
+                );
+<span class="nc" id="L283">                throw new InvalidOperationException(</span>
+                        &quot;Complete compulsory activity '&quot;
+<span class="nc" id="L285">                                + compulsory.getActivityName()</span>
+                                + &quot;' before registering for this activity&quot;
+                );
+            }
+<span class="nc" id="L289">        }</span>
+<span class="nc" id="L290">    }</span>
+
+    private ActivityRegistrationDTO mapToDTO(ActivityRegistration registration) {
+<span class="nc" id="L293">        return new ActivityRegistrationDTO(</span>
+<span class="nc" id="L294">                registration.getActivityRegistrationId(),</span>
+<span class="nc" id="L295">                registration.getActivity().getActivityId(),</span>
+<span class="nc" id="L296">                registration.getActivity().getActivityName(),</span>
+<span class="nc" id="L297">                registration.getUser().getUserId(),</span>
+<span class="nc" id="L298">                registration.getUser().getName(),</span>
+<span class="nc" id="L299">                registration.getCompletionStatus()</span>
+        );
+    }
+
+    private ActivityRegistrationResponseDTO mapToResponseDTO(
+            ActivityRegistration registration) {
+
+<span class="fc" id="L306">        ActivityRegistrationResponseDTO dto =</span>
+                new ActivityRegistrationResponseDTO();
+
+<span class="fc" id="L309">        dto.setActivityRegistrationId(registration.getActivityRegistrationId());</span>
+<span class="fc" id="L310">        dto.setActivityId(registration.getActivity().getActivityId());</span>
+<span class="fc" id="L311">        dto.setActivityName(registration.getActivity().getActivityName());</span>
+<span class="fc" id="L312">        dto.setUserId(registration.getUser().getUserId());</span>
+<span class="fc" id="L313">        dto.setUserName(registration.getUser().getName());</span>
+<span class="fc" id="L314">        dto.setUserEmail(registration.getUser().getEmail());</span>
+<span class="fc" id="L315">        dto.setCompletionStatus(registration.getCompletionStatus());</span>
+<span class="fc" id="L316">        dto.setRewardGems(registration.getActivity().getRewardGems());</span>
+<span class="fc" id="L317">        dto.setMessage(&quot;Successfully registered for activity&quot;);</span>
+
+<span class="fc" id="L319">        return dto;</span>
+    }
+
+    @Transactional
+    public ActivityRegistrationResponseDTO addParticipantToActivity(
+            UUID activityId,
+            AddParticipantInActivityRequestDTO request) {
+
+<span class="fc" id="L327">        log.debug(</span>
+                &quot;Admin adding participant to activity | activityId={} | userId={}&quot;,
+                activityId,
+<span class="fc" id="L330">                request.getUserId()</span>
+        );
+
+<span class="fc" id="L333">        Activity activity = activityRepository.findById(activityId)</span>
+<span class="fc" id="L334">                .orElseThrow(() -&gt; {</span>
+<span class="nc" id="L335">                    log.error(&quot;Activity not found | activityId={}&quot;, activityId);</span>
+<span class="nc" id="L336">                    return new ActivityNotFoundException(&quot;Activity not found&quot;);</span>
+                });
+
+<span class="fc" id="L339">        User user = userRepository.findById(request.getUserId())</span>
+<span class="fc" id="L340">                .orElseThrow(() -&gt; {</span>
+<span class="nc" id="L341">                    log.error(&quot;User not found | userId={}&quot;, request.getUserId());</span>
+<span class="nc" id="L342">                    return new UserNotFoundException(&quot;User not found&quot;);</span>
+                });
+
+<span class="fc" id="L345">        if (activityRegistrationRepository</span>
+<span class="pc bpc" id="L346" title="1 of 2 branches missed.">                .existsByActivity_ActivityIdAndUser_UserId(</span>
+<span class="fc" id="L347">                        activity.getActivityId(),</span>
+<span class="fc" id="L348">                        user.getUserId())) {</span>
+
+<span class="nc" id="L350">            log.warn(</span>
+                    &quot;Duplicate activity registration blocked (admin) | activityId={} | userId={}&quot;,
+<span class="nc" id="L352">                    activity.getActivityId(),</span>
+<span class="nc" id="L353">                    user.getUserId()</span>
+            );
+<span class="nc" id="L355">            throw new ResourceConflictException(</span>
+                    &quot;User already registered for this activity&quot;
+            );
+        }
+
+<span class="fc" id="L360">        ActivityRegistration registration = new ActivityRegistration();</span>
+<span class="fc" id="L361">        registration.setActivity(activity);</span>
+<span class="fc" id="L362">        registration.setUser(user);</span>
+<span class="fc" id="L363">        registration.setCompletionStatus(CompletionStatus.NOT_COMPLETED);</span>
+
+<span class="fc" id="L365">        ActivityRegistration saved =</span>
+<span class="fc" id="L366">                activityRegistrationRepository.save(registration);</span>
+
+<span class="fc" id="L368">        log.info(</span>
+                &quot;Participant added to activity | registrationId={} | activityId={} | userId={}&quot;,
+<span class="fc" id="L370">                saved.getActivityRegistrationId(),</span>
+                activityId,
+<span class="fc" id="L372">                user.getUserId()</span>
+        );
+
+<span class="fc" id="L375">        return mapToResponseDTO(saved);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

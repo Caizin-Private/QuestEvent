@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProgramController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">questevent-backend</a> &gt; <a href="index.source.html" class="el_package">com.questevent.controller</a> &gt; <span class="el_source">ProgramController.java</span></div><h1>ProgramController.java</h1><pre class="source lang-java linenums">package com.questevent.controller;
+
+import com.questevent.dto.ProgramRequestDTO;
+import com.questevent.dto.ProgramResponseDTO;
+import com.questevent.entity.Program;
+import com.questevent.service.ProgramService;
+import com.questevent.service.ProgramWalletTransactionService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+@RequestMapping(&quot;/api/programs&quot;)
+@Tag(name = &quot;Programs&quot;, description = &quot;Program management APIs&quot;)
+public class ProgramController {
+
+<span class="fc" id="L29">    private static final Logger log = LoggerFactory.getLogger(ProgramController.class);</span>
+
+    private final ProgramService programService;
+    private final ProgramWalletTransactionService programWalletTransactionService;
+
+    @Autowired
+    public ProgramController(
+            ProgramService programService,
+            ProgramWalletTransactionService programWalletTransactionService
+<span class="fc" id="L38">    ) {</span>
+<span class="fc" id="L39">        this.programService = programService;</span>
+<span class="fc" id="L40">        this.programWalletTransactionService = programWalletTransactionService;</span>
+<span class="fc" id="L41">    }</span>
+
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @Operation(
+            summary = &quot;Create a new program&quot;,
+            description = &quot;Creates a new program with the provided details&quot;
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = &quot;201&quot;, description = &quot;Program created successfully&quot;),
+            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Invalid input&quot;),
+            @ApiResponse(responseCode = &quot;401&quot;, description = &quot;Unauthorized&quot;)
+    })
+    @PostMapping
+    public ResponseEntity&lt;ProgramResponseDTO&gt; createProgram(@RequestBody ProgramRequestDTO dto) {
+<span class="fc" id="L55">        log.info(&quot;Creating new program with title='{}'&quot;, dto.getProgramTitle());</span>
+
+<span class="fc" id="L57">        Program created = programService.createProgram(dto);</span>
+
+<span class="fc" id="L59">        log.info(&quot;Program created successfully with programId={}&quot;, created.getProgramId());</span>
+<span class="fc" id="L60">        return ResponseEntity</span>
+<span class="fc" id="L61">                .status(HttpStatus.CREATED)</span>
+<span class="fc" id="L62">                .body(convertToResponseDTO(created));</span>
+    }
+
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @GetMapping
+    @Operation(summary = &quot;Get all programs&quot;, description = &quot;Retrieves a list of all programs&quot;)
+    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Successfully retrieved list of programs&quot;)
+    public ResponseEntity&lt;List&lt;ProgramResponseDTO&gt;&gt; getAllPrograms() {
+<span class="fc" id="L70">        log.info(&quot;Fetching all programs&quot;);</span>
+
+<span class="fc" id="L72">        List&lt;Program&gt; programs = programService.getAllPrograms();</span>
+<span class="fc" id="L73">        log.debug(&quot;Total programs fetched={}&quot;, programs.size());</span>
+
+<span class="fc" id="L75">        return ResponseEntity.ok(</span>
+<span class="fc" id="L76">                programs.stream().map(this::convertToResponseDTO).toList()</span>
+        );
+    }
+
+    @PreAuthorize(&quot;isAuthenticated() and @rbac.canViewProgram(authentication, #programId)&quot;)
+    @GetMapping(&quot;/{programId}&quot;)
+    @Operation(summary = &quot;Get program by ID&quot;, description = &quot;Retrieves a specific program by its ID&quot;)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Program found&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Program not found&quot;)
+    })
+    public ResponseEntity&lt;ProgramResponseDTO&gt; getProgramById(@Parameter(description = &quot;Program ID&quot;, required = true) @PathVariable UUID programId) {
+<span class="fc" id="L88">        log.info(&quot;Fetching program with programId={}&quot;, programId);</span>
+
+<span class="fc" id="L90">        Program program = programService.getProgramById(programId);</span>
+
+<span class="fc" id="L92">        log.debug(&quot;Program fetched: programId={}, status={}&quot;,</span>
+<span class="fc" id="L93">                program.getProgramId(), program.getStatus());</span>
+
+<span class="fc" id="L95">        return ResponseEntity.ok(convertToResponseDTO(program));</span>
+    }
+
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @GetMapping(&quot;/my-programs&quot;)
+    @Operation(summary = &quot;Get all my hosted programs&quot;, description = &quot;Retrieves all programs hosted by the current user&quot;)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Successfully retrieved programs&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;User not found&quot;)
+    })
+    public ResponseEntity&lt;List&lt;ProgramResponseDTO&gt;&gt; getMyPrograms() {
+<span class="nc" id="L106">        log.info(&quot;Fetching programs hosted by current user&quot;);</span>
+
+<span class="nc" id="L108">        List&lt;Program&gt; programs = programService.getMyPrograms();</span>
+<span class="nc" id="L109">        log.debug(&quot;Hosted programs count={}&quot;, programs.size());</span>
+
+<span class="nc" id="L111">        return ResponseEntity.ok(</span>
+<span class="nc" id="L112">                programs.stream().map(this::convertToResponseDTO).toList()</span>
+        );
+    }
+
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @GetMapping(&quot;/my-completed-registrations&quot;)
+    @Operation(
+            summary = &quot;Get completed programs where user is registered&quot;,
+            description = &quot;Retrieves all programs where the user has registered and program status is COMPLETED&quot;
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Successfully retrieved programs&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;User not found&quot;)
+    })
+    public ResponseEntity&lt;List&lt;ProgramResponseDTO&gt;&gt; getCompletedProgramsForUser() {
+<span class="nc" id="L127">        log.info(&quot;Fetching completed programs for current user&quot;);</span>
+
+<span class="nc" id="L129">        List&lt;Program&gt; programs = programService.getCompletedProgramsForUser();</span>
+<span class="nc" id="L130">        log.debug(&quot;Completed registered programs count={}&quot;, programs.size());</span>
+
+<span class="nc" id="L132">        return ResponseEntity.ok(</span>
+<span class="nc" id="L133">                programs.stream().map(this::convertToResponseDTO).toList()</span>
+        );
+    }
+
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @GetMapping(&quot;/my-judge-programs&quot;)
+    @Operation(
+            summary = &quot;Get programs where user is assigned as judge&quot;,
+            description = &quot;Retrieves all programs where the current user is assigned as a judge&quot;
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Successfully retrieved programs&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;User not found&quot;)
+    })
+    public ResponseEntity&lt;List&lt;ProgramResponseDTO&gt;&gt; getProgramsWhereUserIsJudge() {
+<span class="nc" id="L148">        log.info(&quot;Fetching programs where current user is judge&quot;);</span>
+
+<span class="nc" id="L150">        List&lt;Program&gt; programs = programService.getProgramsWhereUserIsJudge();</span>
+<span class="nc" id="L151">        log.debug(&quot;Judge programs count={}&quot;, programs.size());</span>
+
+<span class="nc" id="L153">        return ResponseEntity.ok(</span>
+<span class="nc" id="L154">                programs.stream().map(this::convertToResponseDTO).toList()</span>
+        );
+    }
+
+    @PreAuthorize(&quot;@rbac.canManageProgram(authentication, #programId)&quot;)
+    @PutMapping(&quot;/{programId}&quot;)
+    @Operation(summary = &quot;Update program&quot;, description = &quot;Updates an existing program's information&quot;)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Program updated successfully&quot;),
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Permission denied&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Program not found&quot;)
+    })
+    public ResponseEntity&lt;ProgramResponseDTO&gt; updateProgram(
+            @Parameter(description = &quot;Program ID&quot;, required = true)
+            @PathVariable UUID programId,
+            @RequestBody ProgramRequestDTO dto
+    ) {
+<span class="fc" id="L171">        log.info(&quot;Updating program programId={}&quot;, programId);</span>
+
+<span class="fc" id="L173">        Program updated = programService.updateProgram(programId, dto);</span>
+
+<span class="fc" id="L175">        log.info(&quot;Program updated successfully programId={}&quot;, programId);</span>
+<span class="fc" id="L176">        return ResponseEntity.ok(convertToResponseDTO(updated));</span>
+    }
+
+    @PreAuthorize(&quot;@rbac.canManageProgram(authentication, #programId)&quot;)
+    @PostMapping(&quot;/{programId}/settle&quot;)
+    @Operation(summary = &quot;Settle program wallets&quot;, description = &quot;Settles all program wallets for a specific program&quot;)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Program wallets settled successfully&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Program not found&quot;)
+    })
+    public ResponseEntity&lt;String&gt; settleProgram(
+            @Parameter(description = &quot;Program ID&quot;, required = true)
+            @PathVariable UUID programId) {
+<span class="fc" id="L189">        log.info(&quot;Manually settling wallets for programId={}&quot;, programId);</span>
+
+<span class="fc" id="L191">        programWalletTransactionService.manuallySettleExpiredProgramWallets(programId);</span>
+
+<span class="fc" id="L193">        log.info(&quot;Program wallets settled successfully for programId={}&quot;, programId);</span>
+<span class="fc" id="L194">        return ResponseEntity.ok(&quot;Program settled successfully&quot;);</span>
+    }
+
+    @PreAuthorize(&quot;@rbac.canManageProgram(authentication, #programId)&quot;)
+    @DeleteMapping(&quot;/{programId}&quot;)
+    @Operation(summary = &quot;Delete program&quot;, description = &quot;Deletes a program from the system&quot;)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;204&quot;, description = &quot;Program deleted successfully&quot;),
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Permission denied&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Program not found&quot;)
+    })
+    public ResponseEntity&lt;Void&gt; deleteProgram(
+            @Parameter(description = &quot;Program ID&quot;, required = true)
+            @PathVariable UUID programId) {
+<span class="fc" id="L208">        log.warn(&quot;Deleting program programId={}&quot;, programId);</span>
+
+<span class="fc" id="L210">        programService.deleteProgram(programId);</span>
+
+<span class="fc" id="L212">        log.info(&quot;Program deleted successfully programId={}&quot;, programId);</span>
+<span class="fc" id="L213">        return ResponseEntity.noContent().build();</span>
+    }
+
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @GetMapping(&quot;/active-by-department&quot;)
+    @Operation(
+            summary = &quot;Get active programs by user's department&quot;,
+            description = &quot;Retrieves all programs with ACTIVE status that match the user's department&quot;
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Successfully retrieved programs&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;User not found&quot;)
+    })
+    public ResponseEntity&lt;List&lt;ProgramResponseDTO&gt;&gt; getActiveProgramsByUserDepartment() {
+<span class="nc" id="L227">        log.info(&quot;Fetching active programs by user's department&quot;);</span>
+
+<span class="nc" id="L229">        List&lt;Program&gt; programs = programService.getActiveProgramsByUserDepartment();</span>
+<span class="nc" id="L230">        log.debug(&quot;Active department programs count={}&quot;, programs.size());</span>
+
+<span class="nc" id="L232">        return ResponseEntity.ok(</span>
+<span class="nc" id="L233">                programs.stream().map(this::convertToResponseDTO).toList()</span>
+        );
+    }
+
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @GetMapping(&quot;/my-draft-programs&quot;)
+    @Operation(
+            summary = &quot;Get draft programs hosted by user&quot;,
+            description = &quot;Retrieves all programs with DRAFT status that are hosted by the current user&quot;
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Successfully retrieved programs&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;User not found&quot;)
+    })
+    public ResponseEntity&lt;List&lt;ProgramResponseDTO&gt;&gt; getDraftProgramsByHost() {
+<span class="nc" id="L248">        log.info(&quot;Fetching draft programs hosted by current user&quot;);</span>
+
+<span class="nc" id="L250">        List&lt;Program&gt; programs = programService.getDraftProgramsByHost();</span>
+<span class="nc" id="L251">        log.debug(&quot;Draft programs count={}&quot;, programs.size());</span>
+
+<span class="nc" id="L253">        return ResponseEntity.ok(</span>
+<span class="nc" id="L254">                programs.stream().map(this::convertToResponseDTO).toList()</span>
+        );
+    }
+
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @PatchMapping(&quot;/{programId}/status-to-active&quot;)
+    @Operation(
+            summary = &quot;Change program status from ACTIVE to DRAFT&quot;,
+            description = &quot;Changes the status of a program from ACTIVE to DRAFT. Only works for programs hosted by the current user.&quot;
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Program status changed successfully&quot;),
+            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Program status must be ACTIVE&quot;),
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Permission denied&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Program or user not found&quot;)
+    })
+    public ResponseEntity&lt;ProgramResponseDTO&gt; changeProgramStatusToActive(
+            @PathVariable UUID programId
+    ) {
+<span class="nc" id="L273">        log.info(&quot;Changing program status to ACTIVE for programId={}&quot;, programId);</span>
+
+<span class="nc" id="L275">        Program updated = programService.changeProgramStatusToActive(programId);</span>
+
+<span class="nc" id="L277">        log.info(&quot;Program status updated to ACTIVE programId={}&quot;, programId);</span>
+<span class="nc" id="L278">        return ResponseEntity.ok(convertToResponseDTO(updated));</span>
+    }
+
+    private ProgramResponseDTO convertToResponseDTO(Program program) {
+<span class="fc" id="L282">        log.debug(&quot;Converting Program entity to ProgramResponseDTO programId={}&quot;,</span>
+<span class="fc" id="L283">                program.getProgramId());</span>
+
+<span class="fc" id="L285">        ProgramResponseDTO response = new ProgramResponseDTO();</span>
+<span class="fc" id="L286">        response.setProgramId(program.getProgramId());</span>
+<span class="fc" id="L287">        response.setProgramTitle(program.getProgramTitle());</span>
+<span class="fc" id="L288">        response.setProgramDescription(program.getProgramDescription());</span>
+<span class="fc" id="L289">        response.setDepartment(program.getDepartment());</span>
+<span class="fc" id="L290">        response.setStartDate(program.getStartDate());</span>
+<span class="fc" id="L291">        response.setEndDate(program.getEndDate());</span>
+<span class="fc" id="L292">        response.setStatus(program.getStatus());</span>
+<span class="fc" id="L293">        response.setHostUserId(program.getUser().getUserId());</span>
+
+<span class="pc bpc" id="L295" title="3 of 4 branches missed.">        if (program.getJudge() != null &amp;&amp; program.getJudge().getUser() != null) {</span>
+<span class="nc" id="L296">            response.setJudgeUserId(program.getJudge().getUser().getUserId());</span>
+        }
+<span class="fc" id="L298">        response.setCreatedAt(program.getCreatedAt());</span>
+<span class="fc" id="L299">        response.setUpdatedAt(program.getUpdatedAt());</span>
+
+<span class="fc" id="L301">        return response;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
