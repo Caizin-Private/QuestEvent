@@ -32,18 +32,19 @@ public class UserWalletController {
             summary = &quot;Get my wallet balance&quot;,
             description = &quot;Returns wallet balance of the authenticated user&quot;
     )
-    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Wallet retrieved successfully&quot;)
-    @ApiResponse(responseCode = &quot;401&quot;, description = &quot;Unauthorized&quot;)
-    @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Wallet not found&quot;)
+    @ApiResponses({
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Wallet retrieved successfully&quot;),
+            @ApiResponse(responseCode = &quot;401&quot;, description = &quot;Unauthorized&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Wallet not found&quot;)
+    })
     public ResponseEntity&lt;UserWalletBalanceDTO&gt; getWalletBalance() {
+<span class="fc" id="L41">        log.info(&quot;Fetching wallet balance for authenticated user&quot;);</span>
 
-<span class="fc" id="L40">        log.info(&quot;Fetching wallet balance for authenticated user&quot;);</span>
+<span class="fc" id="L43">        UserWalletBalanceDTO balanceDTO = userWalletService.getMyWalletBalance();</span>
 
-<span class="fc" id="L42">        UserWalletBalanceDTO balanceDTO = userWalletService.getMyWalletBalance();</span>
+<span class="fc" id="L45">        log.debug(&quot;Wallet balance fetched: gems={}&quot;, balanceDTO.getGems());</span>
 
-<span class="fc" id="L44">        log.debug(&quot;Wallet balance fetched: gems={}&quot;, balanceDTO.getGems());</span>
-
-<span class="fc" id="L46">        return ResponseEntity.ok(balanceDTO);</span>
+<span class="fc" id="L47">        return ResponseEntity.ok(balanceDTO);</span>
     }
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

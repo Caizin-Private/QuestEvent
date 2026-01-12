@@ -38,7 +38,7 @@ public class UserController {
             summary = &quot;Create a new user&quot;,
             description = &quot;Creates a new user (Platform Owner only)&quot;
     )
-    @ApiResponses(value = {
+    @ApiResponses({
             @ApiResponse(responseCode = &quot;201&quot;, description = &quot;User created successfully&quot;),
             @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Invalid input&quot;),
             @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Forbidden - Platform Owner only&quot;)
@@ -138,4 +138,4 @@ public class UserController {
 <span class="fc" id="L138">        return ResponseEntity.noContent().build();</span>
     }
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
