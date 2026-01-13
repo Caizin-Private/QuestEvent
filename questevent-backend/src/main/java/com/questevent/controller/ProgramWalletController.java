@@ -1,7 +1,6 @@
 package com.questevent.controller;
 
 import com.questevent.dto.ProgramWalletBalanceDTO;
-import com.questevent.entity.ProgramWallet;
 import com.questevent.service.ProgramWalletService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -13,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 import java.util.UUID;
 

@@ -255,7 +255,7 @@ class ProgramServiceTest {
 
         when(userRepository.findById(authUserId))
                 .thenReturn(Optional.of(authUser));
-        when(programRepository.findByUser_UserId(authUserId))
+        when(programRepository.findByUserUserId(authUserId))
                 .thenReturn(List.of(program));
 
         List<Program> result = programService.getMyPrograms();

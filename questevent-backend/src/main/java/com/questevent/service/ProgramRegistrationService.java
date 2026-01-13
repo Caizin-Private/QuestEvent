@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -65,7 +64,7 @@ public class ProgramRegistrationService {
                 });
 
         if (programRegistrationRepository
-                .existsByProgram_ProgramIdAndUser_UserId(
+                .existsByProgramProgramIdAndUserUserId(
                         program.getProgramId(), userId)) {
 
             log.warn(
@@ -122,7 +121,7 @@ public class ProgramRegistrationService {
                 });
 
         if (programRegistrationRepository
-                .existsByProgram_ProgramIdAndUser_UserId(
+                .existsByProgramProgramIdAndUserUserId(
                         programId, user.getUserId())) {
 
             log.warn(

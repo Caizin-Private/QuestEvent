@@ -104,7 +104,7 @@ class ProgramRegistrationServiceTest {
         when(programRepository.findById(programId))
                 .thenReturn(Optional.of(program));
         when(programRegistrationRepository
-                .existsByProgram_ProgramIdAndUser_UserId(programId, userId))
+                .existsByProgramProgramIdAndUserUserId(programId, userId))
                 .thenReturn(false);
         when(programRegistrationRepository.save(any()))
                 .thenReturn(saved);

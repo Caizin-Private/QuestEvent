@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -65,7 +64,7 @@ public class ActivityRegistrationService {
         validateCompulsoryActivities(activity, userId);
 
         if (activityRegistrationRepository
-                .existsByActivity_ActivityIdAndUser_UserId(
+                .existsByActivityActivityIdAndUserUserId(
                         activity.getActivityId(), userId)) {
 
             log.warn(
@@ -262,13 +261,13 @@ public class ActivityRegistrationService {
         UUID programId = program.getProgramId();
 
         List<Activity> compulsoryActivities =
-                activityRepository.findByProgram_ProgramIdAndIsCompulsoryTrue(programId);
+                activityRepository.findByProgramProgramIdAndIsCompulsoryTrue(programId);
 
         for (Activity compulsory : compulsoryActivities) {
 
             boolean completed =
                     activityRegistrationRepository
-                            .existsByActivity_ActivityIdAndUser_UserIdAndCompletionStatus(
+                            .existsByActivityActivityIdAndUserUserIdAndCompletionStatus(
                                     compulsory.getActivityId(),
                                     userId,
                                     CompletionStatus.COMPLETED
@@ -343,7 +342,7 @@ public class ActivityRegistrationService {
                 });
 
         if (activityRegistrationRepository
-                .existsByActivity_ActivityIdAndUser_UserId(
+                .existsByActivityActivityIdAndUserUserId(
                         activity.getActivityId(),
                         user.getUserId())) {
 

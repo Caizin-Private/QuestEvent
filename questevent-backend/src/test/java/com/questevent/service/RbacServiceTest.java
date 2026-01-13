@@ -274,7 +274,7 @@ class RbacServiceTest {
                 .thenReturn(Optional.of(reg));
 
         when(submissionRepository
-                .existsByActivityRegistration_ActivityRegistrationId(regId))
+                .existsByActivityRegistrationActivityRegistrationId(regId))
                 .thenReturn(false);
 
         assertTrue(rbacService.canSubmitActivity(authentication, activityId, userId));

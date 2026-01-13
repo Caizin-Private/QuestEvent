@@ -220,7 +220,7 @@ public class ProgramService {
         }
 
         log.info("Fetching programs created by user | userId={}", hostUser.getUserId());
-        return programRepository.findByUser_UserId(hostUser.getUserId());
+        return programRepository.findByUserUserId(hostUser.getUserId());
     }
 
     public Program getProgramById(UUID programId) {
@@ -344,7 +344,7 @@ public class ProgramService {
         }
 
         log.info("Fetching draft programs | hostUserId={}", currentUser.getUserId());
-        return programRepository.findByStatusAndUser_UserId(
+        return programRepository.findByStatusAndUserUserId(
                 ProgramStatus.DRAFT,
                 currentUser.getUserId()
         );

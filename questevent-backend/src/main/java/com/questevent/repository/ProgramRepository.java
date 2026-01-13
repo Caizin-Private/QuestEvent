@@ -13,13 +13,13 @@ import java.util.UUID;
 
 public interface ProgramRepository extends JpaRepository<Program, UUID> {
 
-    List<Program> findByUser_UserId(Long userId);
+    List<Program> findByUserUserId(Long userId);
 
     List<Program> findByStatusAndEndDateBefore(ProgramStatus status, LocalDateTime now);
 
     List<Program> findByStatusAndDepartment(ProgramStatus status, Department department);
 
-    List<Program> findByStatusAndUser_UserId(ProgramStatus status, Long userId);
+    List<Program> findByStatusAndUserUserId(ProgramStatus status, Long userId);
 
     @Query("SELECT p FROM Program p WHERE p.judge.user.userId = :userId")
     List<Program> findByJudgeUserId(@Param("userId") Long userId);

@@ -368,7 +368,7 @@ public class RbacService {
         if (program.getUser() != null &&
                 user.getUserId().equals(program.getUser().getUserId())) {
             return !programRegistrationRepository
-                    .existsByProgram_ProgramIdAndUser_UserId(programId, userId);
+                    .existsByProgramProgramIdAndUserUserId(programId, userId);
         }
 
         if (!user.getUserId().equals(userId)) {
@@ -376,7 +376,7 @@ public class RbacService {
         }
 
         return !programRegistrationRepository
-                .existsByProgram_ProgramIdAndUser_UserId(programId, userId);
+                .existsByProgramProgramIdAndUserUserId(programId, userId);
     }
 
     public boolean canRegisterForActivity(
@@ -401,20 +401,20 @@ public class RbacService {
         if (program == null) return false;
 
         if (program.getUser() != null && user.getUserId().equals(program.getUser().getUserId())) {
-            if (!programRegistrationRepository.existsByProgram_ProgramIdAndUser_UserId(programId, userId)) {
+            if (!programRegistrationRepository.existsByProgramProgramIdAndUserUserId(programId, userId)) {
                 return false;
             }
-            return !activityRegistrationRepository.existsByActivity_ActivityIdAndUser_UserId(activityId, userId);
+            return !activityRegistrationRepository.existsByActivityActivityIdAndUserUserId(activityId, userId);
         }
 
         if (!user.getUserId().equals(userId)) {
             return false;
         }
 
-        if (!programRegistrationRepository.existsByProgram_ProgramIdAndUser_UserId(programId, userId)) {
+        if (!programRegistrationRepository.existsByProgramProgramIdAndUserUserId(programId, userId)) {
             return false;
         }
-        return !activityRegistrationRepository.existsByActivity_ActivityIdAndUser_UserId(activityId, userId);
+        return !activityRegistrationRepository.existsByActivityActivityIdAndUserUserId(activityId, userId);
     }
 
     public boolean canSubmitActivity(
@@ -452,7 +452,7 @@ public class RbacService {
 
         // Submission must not already exist
         return !submissionRepository
-                .existsByActivityRegistration_ActivityRegistrationId(
+                .existsByActivityRegistrationActivityRegistrationId(
                         registration.getActivityRegistrationId()
                 );
     }

@@ -190,7 +190,7 @@ class ActivityServiceTest {
         when(programRepository.existsById(programId))
                 .thenReturn(true);
 
-        when(activityRepository.findByProgram_ProgramId(programId))
+        when(activityRepository.findByProgramProgramId(programId))
                 .thenReturn(List.of(activity1, activity2));
 
         List<Activity> result =
@@ -199,7 +199,7 @@ class ActivityServiceTest {
         assertEquals(2, result.size());
 
         verify(programRepository).existsById(programId);
-        verify(activityRepository).findByProgram_ProgramId(programId);
+        verify(activityRepository).findByProgramProgramId(programId);
     }
 
     @Test

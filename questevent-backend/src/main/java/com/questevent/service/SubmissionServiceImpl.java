@@ -73,7 +73,7 @@ public class SubmissionServiceImpl implements SubmissionService {
         }
 
         boolean alreadySubmitted = submissionRepository
-                .existsByActivityRegistration_ActivityRegistrationId(
+                .existsByActivityRegistrationActivityRegistrationId(
                         registration.getActivityRegistrationId()
                 );
 

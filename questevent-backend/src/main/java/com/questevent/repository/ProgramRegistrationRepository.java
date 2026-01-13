@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public interface ProgramRegistrationRepository extends JpaRepository<ProgramRegistration, UUID> {
 
-    boolean existsByProgram_ProgramIdAndUser_UserId(UUID programId, Long userId);
+    boolean existsByProgramProgramIdAndUserUserId(UUID programId, Long userId);
 
     List<ProgramRegistration> findByProgramProgramId(UUID programId);
 
