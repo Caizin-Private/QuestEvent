@@ -6,45 +6,64 @@ on:
       - master
       - fix-auth-config
 
+env:
+  AWS_REGION: ap-south-1
+  ECR_REPOSITORY: questevent-backend
+  ECS_CLUSTER: questevent-cluster
+  ECS_SERVICE: questevent-backend-task-service-w2yv7ryu
+  TASK_DEF_FILE: questevent-backend/ecs-task-def.json
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
+      # ---------------- AWS LOGIN ----------------
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_ECS }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_ECS }}
-          aws-region: ap-south-1
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Login to ECR
+      # ---------------- BUILD JAR ----------------
+      - name: Build Spring Boot JAR (Gradle)
+        working-directory: questevent-backend
+        run: |
+          chmod +x gradlew
+          ./gradlew clean build -x test
+
+      # ---------------- ECR LOGIN ----------------
+      - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build app
-        run: ./gradlew clean build -x test
-
+      # ---------------- DOCKER BUILD & PUSH ----------------
       - name: Build and push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: latest
         run: |
-          docker build -t ${{ steps.login-ecr.outputs.registry }}/questevent-backend:latest .
-          docker push ${{ steps.login-ecr.outputs.registry }}/questevent-backend:latest
+          docker build -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG questevent-backend
+          docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
 
-      - name: Render task definition
-        id: render
+      # ---------------- UPDATE TASK DEF IMAGE ----------------
+      - name: Render ECS task definition
+        id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: ecs-task-def.json
+          task-definition: ${{ env.TASK_DEF_FILE }}
           container-name: questevent
-          image: ${{ steps.login-ecr.outputs.registry }}/questevent-backend:latest
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
 
-      - name: Deploy to ECS
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      # ---------------- DEPLOY TO ECS ----------------
+      - name: Deploy to Amazon ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          task-definition: ${{ steps.render.outputs.task-definition }}
-          cluster: questevent-cluster
-          service: questevent-backend-task-service-w2yv7ryu
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
