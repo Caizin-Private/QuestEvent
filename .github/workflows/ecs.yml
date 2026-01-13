@@ -37,6 +37,7 @@ jobs:
       - name: Deploy to ECS (Force new deployment)
         run: |
           aws ecs update-service \
-            --cluster questevent-cluster \
-            --service questevent-backend-service \
-            --force-new-deployment
+          --cluster questevent-cluster \
+          --service questevent-backend-task-service-w2yv7ryu \
+          --force-new-deployment
+
