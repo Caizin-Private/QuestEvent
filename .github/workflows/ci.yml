@@ -78,10 +78,3 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
 
-      - name: Upload Build Artifact
-        if: startsWith(github.ref, 'refs/heads/release-v')
-        uses: actions/upload-artifact@v4
-        with:
-          name: application-jar
-          path: questevent-backend/build/libs/*.jar
-          retention-days: 1
