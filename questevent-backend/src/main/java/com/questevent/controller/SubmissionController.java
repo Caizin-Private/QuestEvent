@@ -1,6 +1,7 @@
 package com.questevent.controller;
 
 import com.questevent.dto.ActivitySubmissionRequestDTO;
+import com.questevent.dto.SubmissionDetailsResponseDTO;
 import com.questevent.dto.SubmissionStatusResponseDTO;
 import com.questevent.service.SubmissionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import com.questevent.service.SubmissionQueryService;
 
@@ -62,7 +64,7 @@ public class SubmissionController {
     }
 
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/{activityId}/status")
     @Operation(
             summary = "Get submission status",
@@ -81,5 +83,31 @@ public class SubmissionController {
         return ResponseEntity.ok(
                 submissionQueryService.getSubmissionStatus(activityId)
         );
+    }
+
+
+
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/{activityId}")
+    @Operation(
+            summary = "Get submission details",
+            description = "Fetch the logged-in user's submission details for an activity"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Submission details fetched successfully"),
+            @ApiResponse(responseCode = "404", description = "Submission not found"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
+    })
+    public ResponseEntity<SubmissionDetailsResponseDTO> getSubmissionDetails(
+            @PathVariable UUID activityId,
+            Authentication authentication
+    ) {
+        log.info("Fetching submission details | activityId={}", activityId);
+
+        SubmissionDetailsResponseDTO response =
+                submissionQueryService.getSubmissionDetails(activityId, authentication);
+
+        return ResponseEntity.ok(response);
     }
 }

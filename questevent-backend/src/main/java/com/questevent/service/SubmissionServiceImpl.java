@@ -4,6 +4,7 @@ import com.questevent.dto.UserPrincipal;
 import com.questevent.entity.ActivityRegistration;
 import com.questevent.entity.ActivitySubmission;
 import com.questevent.enums.CompletionStatus;
+import com.questevent.enums.ReviewStatus;
 import com.questevent.exception.InvalidOperationException;
 import com.questevent.exception.ResourceConflictException;
 import com.questevent.exception.ResourceNotFoundException;
@@ -60,33 +61,47 @@ public class SubmissionServiceImpl implements SubmissionService {
                     );
                 });
 
-        if (registration.getCompletionStatus() == CompletionStatus.COMPLETED) {
+        ActivitySubmission existingSubmission =
+                submissionRepository
+                        .findByActivityRegistration_ActivityRegistrationId(
+                                registration.getActivityRegistrationId()
+                        )
+                        .orElse(null);
+
+
+        if (existingSubmission != null &&
+                existingSubmission.getReviewStatus() == ReviewStatus.APPROVED) {
+
             log.warn(
-                    "Resubmission attempt blocked | activityId={} | userId={} | registrationId={}",
+                    "Resubmission blocked (already approved) | activityId={} | userId={}",
                     activityId,
-                    userId,
-                    registration.getActivityRegistrationId()
+                    userId
             );
+
             throw new InvalidOperationException(
-                    "Activity already completed. Submission not allowed."
+                    "Submission already approved. Resubmission not allowed."
             );
         }
 
-        boolean alreadySubmitted = submissionRepository
-                .existsByActivityRegistration_ActivityRegistrationId(
-                        registration.getActivityRegistrationId()
-                );
+        if (existingSubmission != null) {
 
-        if (alreadySubmitted) {
-            log.warn(
-                    "Duplicate submission detected | activityId={} | userId={} | registrationId={}",
+            log.info(
+                    "Resubmitting activity | activityId={} | userId={} | submissionId={}",
                     activityId,
                     userId,
-                    registration.getActivityRegistrationId()
+                    existingSubmission.getSubmissionId()
             );
-            throw new ResourceConflictException(
-                    "Submission already exists for this registration"
-            );
+
+            existingSubmission.setSubmissionUrl(submissionUrl);
+            existingSubmission.setReviewStatus(ReviewStatus.PENDING);
+            existingSubmission.setRejectionReason(null);
+            existingSubmission.setReviewedAt(null);
+
+            registration.setCompletionStatus(CompletionStatus.COMPLETED);
+
+            submissionRepository.save(existingSubmission);
+            registrationRepository.save(registration);
+            return;
         }
 
         ActivitySubmission submission = new ActivitySubmission();

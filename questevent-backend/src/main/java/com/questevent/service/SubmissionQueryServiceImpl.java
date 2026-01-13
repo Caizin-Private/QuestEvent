@@ -1,5 +1,6 @@
 package com.questevent.service;
 
+import com.questevent.dto.SubmissionDetailsResponseDTO;
 import com.questevent.dto.SubmissionStatusResponseDTO;
 import com.questevent.dto.UserPrincipal;
 import com.questevent.entity.ActivitySubmission;
@@ -20,6 +21,38 @@ import java.util.UUID;
 public class SubmissionQueryServiceImpl implements SubmissionQueryService {
 
     private final ActivitySubmissionRepository submissionRepository;
+
+
+    @Override
+    public SubmissionDetailsResponseDTO getSubmissionDetails(
+            UUID activityId,
+            Authentication authentication
+    ) {
+        UserPrincipal principal =
+                (UserPrincipal) authentication.getPrincipal();
+
+        ActivitySubmission submission =
+                submissionRepository
+                        .findByActivityRegistrationActivityActivityIdAndActivityRegistrationUserUserId(
+                                activityId,
+                                principal.userId()
+                        )
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Submission not found for this activity"
+                                )
+                        );
+
+        return new SubmissionDetailsResponseDTO(
+                submission.getSubmissionId(),
+                activityId,
+                submission.getSubmissionUrl(),
+                submission.getReviewStatus(),
+                submission.getRejectionReason(),
+                submission.getAwardedGems(),
+                submission.getReviewedAt()
+        );
+    }
 
     @Override
     @Transactional(Transactional.TxType.SUPPORTS)

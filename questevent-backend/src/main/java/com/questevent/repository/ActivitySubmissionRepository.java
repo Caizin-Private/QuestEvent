@@ -19,6 +19,21 @@ public interface ActivitySubmissionRepository
             UUID activityRegistrationId
     );
 
+    Optional<ActivitySubmission>
+    findByActivityRegistration_ActivityRegistrationId(UUID activityRegistrationId);
+
+
+    Optional<ActivitySubmission>
+    findByActivityRegistrationActivityActivityIdAndActivityRegistrationUserUserId(
+            UUID activityId,
+            Long userId
+    );
+
+    long countByReviewStatusAndActivityRegistration_Activity_Program_Judge_User_UserId(
+            ReviewStatus reviewStatus,
+            Long judgeUserId
+    );
+
 
     List<ActivitySubmission>
     findByActivityRegistrationActivityActivityId(

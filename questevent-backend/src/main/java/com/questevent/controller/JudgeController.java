@@ -1,6 +1,9 @@
 package com.questevent.controller;
 
 import com.questevent.dto.JudgeSubmissionDTO;
+import com.questevent.dto.JudgeSubmissionDetailsDTO;
+import com.questevent.dto.JudgeSubmissionStatsDTO;
+import com.questevent.dto.RejectSubmissionRequestDTO;
 import com.questevent.service.JudgeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -184,4 +187,94 @@ public class JudgeController {
         log.info("Submission reviewed successfully submissionId={}", submissionId);
         return ResponseEntity.ok().build();
     }
+
+
+    @Operation(
+            summary = "Reject a submission",
+            description = "Rejects a submission with a reason. " +
+                    "Only the assigned judge can reject a pending submission."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Submission rejected successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Submission already reviewed or invalid"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized – Judge not assigned"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Submission not found"
+            )
+    })
+    @PreAuthorize("isAuthenticated()")
+    @PatchMapping("/submissions/{submissionId}/reject")
+    public ResponseEntity<Void> rejectSubmission(
+            @PathVariable UUID submissionId,
+            @RequestBody RejectSubmissionRequestDTO request,
+            Authentication authentication
+    ) {
+        log.info("Rejecting submission submissionId={}", submissionId);
+
+        judgeService.rejectSubmission(submissionId, request.reason(),authentication);
+
+        log.info("Submission rejected successfully submissionId={}", submissionId);
+        return ResponseEntity.ok().build();
+    }
+
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/submissions/{submissionId}")
+    @Operation(
+            summary = "Get submission details for judge",
+            description = "Fetch full submission details for review. " +
+                    "Only the assigned judge can access."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Submission details fetched"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Submission not found")
+    })
+    public ResponseEntity<JudgeSubmissionDetailsDTO> getSubmissionDetails(
+            @PathVariable UUID submissionId,
+            Authentication authentication
+    ) {
+        log.info("Fetching submission details for judge | submissionId={}", submissionId);
+
+        return ResponseEntity.ok(
+                judgeService.getSubmissionDetails(submissionId, authentication)
+        );
+    }
+
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/submissions/stats")
+    @Operation(
+            summary = "Get submission statistics for judge",
+            description = "Returns counts of pending, approved, and rejected submissions " +
+                    "for programs judged by the logged-in judge"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Submission stats fetched"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    public ResponseEntity<JudgeSubmissionStatsDTO> getSubmissionStats(
+            Authentication authentication
+    ) {
+        log.info("Fetching submission stats for judge");
+
+        return ResponseEntity.ok(
+                judgeService.getSubmissionStats(authentication)
+        );
+    }
+
+
+
+
 }
