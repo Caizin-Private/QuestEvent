@@ -33,6 +33,10 @@ public class ActivitySubmission {
     private ActivityRegistration activityRegistration;
 
 
+    @Column(nullable = false, updatable = false)
+    private Instant createdAt;
+
+
     @Enumerated(EnumType.STRING)
     @Column(name = "review_status", nullable = false)
     private ReviewStatus reviewStatus = ReviewStatus.PENDING;
