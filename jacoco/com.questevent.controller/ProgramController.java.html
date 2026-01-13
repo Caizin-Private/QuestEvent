@@ -45,7 +45,7 @@ public class ProgramController {
             summary = &quot;Create a new program&quot;,
             description = &quot;Creates a new program with the provided details&quot;
     )
-    @ApiResponses(value={
+    @ApiResponses({
             @ApiResponse(responseCode = &quot;201&quot;, description = &quot;Program created successfully&quot;),
             @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Invalid input&quot;),
             @ApiResponse(responseCode = &quot;401&quot;, description = &quot;Unauthorized&quot;)

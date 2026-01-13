@@ -163,7 +163,7 @@ public class ProgramRegistrationService {
 <span class="fc" id="L163">        return programRegistrationRepository.findAll()</span>
 <span class="fc" id="L164">                .stream()</span>
 <span class="fc" id="L165">                .map(this::mapToDTO)</span>
-<span class="fc" id="L166">                .toList();</span>
+<span class="fc" id="L166">                .collect(Collectors.toList());</span>
     }
 
     @Transactional(readOnly = true)
@@ -191,7 +191,7 @@ public class ProgramRegistrationService {
 <span class="nc" id="L191">        return programRegistrationRepository.findByProgramProgramId(programId)</span>
 <span class="nc" id="L192">                .stream()</span>
 <span class="nc" id="L193">                .map(this::mapToDTO)</span>
-<span class="nc" id="L194">                .toList();</span>
+<span class="nc" id="L194">                .collect(Collectors.toList());</span>
     }
 
     @Transactional(readOnly = true)
@@ -202,7 +202,7 @@ public class ProgramRegistrationService {
 <span class="nc" id="L202">        return programRegistrationRepository.findByUserUserId(userId)</span>
 <span class="nc" id="L203">                .stream()</span>
 <span class="nc" id="L204">                .map(this::mapToDTO)</span>
-<span class="nc" id="L205">                .toList();</span>
+<span class="nc" id="L205">                .collect(Collectors.toList());</span>
     }
 
     @Transactional
