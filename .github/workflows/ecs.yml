@@ -10,25 +10,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: questevent-backend
-
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Java 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 21
-
-      - name: Grant execute permission to gradlew
-        run: chmod +x gradlew
-
-      - name: Build JAR
-        run: ./gradlew clean build
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -37,22 +21,30 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_ECS }}
           aws-region: ap-south-1
 
-      - name: Login to Amazon ECR
+      - name: Login to ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Build app
+        run: ./gradlew clean build -x test
+
       - name: Build and push Docker image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPO: questevent-backend
-          IMAGE_TAG: latest
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+          docker build -t ${{ steps.login-ecr.outputs.registry }}/questevent-backend:latest .
+          docker push ${{ steps.login-ecr.outputs.registry }}/questevent-backend:latest
+
+      - name: Render task definition
+        id: render
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ecs-task-def.json
+          container-name: questevent
+          image: ${{ steps.login-ecr.outputs.registry }}/questevent-backend:latest
 
       - name: Deploy to ECS
-        run: |
-          aws ecs update-service \
-            --cluster questevent-cluster \
-            --service questevent-backend-task-service-w2yv7ryu \
-            --force-new-deployment
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.render.outputs.task-definition }}
+          cluster: questevent-cluster
+          service: questevent-backend-task-service-w2yv7ryu
+          wait-for-service-stability: true
