@@ -106,7 +106,7 @@ public class JudgeServiceImpl implements JudgeService {
 
     @Override
     @Transactional
-    public void rejectSubmission(UUID submissionId, String reason ,Authentication authentication) {
+    public void rejectSubmission(UUID submissionId,Authentication authentication) {
 
         log.debug("Review submission requested | submissionId={}", submissionId);
 
@@ -126,7 +126,6 @@ public class JudgeServiceImpl implements JudgeService {
         validateJudgeAssignment(submission, authentication);
 
         submission.setReviewStatus(ReviewStatus.REJECTED);
-        submission.setRejectionReason(reason);
         submission.setReviewedAt(Instant.now());
 
         ActivityRegistration registration =
@@ -200,7 +199,6 @@ public class JudgeServiceImpl implements JudgeService {
                 submission.getActivityRegistration().getUser().getEmail(),
                 submission.getSubmissionUrl(),
                 submission.getReviewStatus(),
-                submission.getRejectionReason(),
                 submission.getReviewedAt()
         );
     }

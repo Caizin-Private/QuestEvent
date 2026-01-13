@@ -3,7 +3,6 @@ package com.questevent.controller;
 import com.questevent.dto.JudgeSubmissionDTO;
 import com.questevent.dto.JudgeSubmissionDetailsDTO;
 import com.questevent.dto.JudgeSubmissionStatsDTO;
-import com.questevent.dto.RejectSubmissionRequestDTO;
 import com.questevent.service.JudgeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -12,7 +11,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -216,12 +214,11 @@ public class JudgeController {
     @PatchMapping("/submissions/{submissionId}/reject")
     public ResponseEntity<Void> rejectSubmission(
             @PathVariable UUID submissionId,
-            @RequestBody RejectSubmissionRequestDTO request,
             Authentication authentication
     ) {
         log.info("Rejecting submission submissionId={}", submissionId);
 
-        judgeService.rejectSubmission(submissionId, request.reason(),authentication);
+        judgeService.rejectSubmission(submissionId,authentication);
 
         log.info("Submission rejected successfully submissionId={}", submissionId);
         return ResponseEntity.ok().build();

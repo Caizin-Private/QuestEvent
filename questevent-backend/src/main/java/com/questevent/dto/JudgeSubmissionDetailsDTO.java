@@ -13,6 +13,5 @@ public record JudgeSubmissionDetailsDTO(
         String userEmail,
         String submissionUrl,
         ReviewStatus reviewStatus,
-        String rejectionReason,
         Instant reviewedAt
 ) {}

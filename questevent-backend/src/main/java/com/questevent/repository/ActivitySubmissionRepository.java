@@ -20,7 +20,7 @@ public interface ActivitySubmissionRepository
     );
 
     List<ActivitySubmission>
-    findAllByActivityRegistration_User_UserIdOrderByCreatedAtDesc(Long userId);
+    findAllByActivityRegistration_User_UserId(Long userId);
 
 
     Optional<ActivitySubmission>

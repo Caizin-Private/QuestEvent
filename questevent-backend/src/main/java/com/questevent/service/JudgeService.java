@@ -26,7 +26,7 @@ public interface JudgeService {
             Authentication authentication
     );
 
-    void rejectSubmission(UUID submissionId, String reason, Authentication authentication);
+    void rejectSubmission(UUID submissionId, Authentication authentication);
 
     void reviewSubmission(UUID submissionId);
 

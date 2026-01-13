@@ -94,7 +94,6 @@ public class SubmissionServiceImpl implements SubmissionService {
 
             existingSubmission.setSubmissionUrl(submissionUrl);
             existingSubmission.setReviewStatus(ReviewStatus.PENDING);
-            existingSubmission.setRejectionReason(null);
             existingSubmission.setReviewedAt(null);
 
             registration.setCompletionStatus(CompletionStatus.COMPLETED);
@@ -169,7 +168,6 @@ public class SubmissionServiceImpl implements SubmissionService {
 
         submission.setSubmissionUrl(submissionUrl);
         submission.setReviewStatus(ReviewStatus.PENDING);
-        submission.setRejectionReason(null);
         submission.setReviewedAt(null);
 
 

@@ -50,7 +50,6 @@ public class SubmissionQueryServiceImpl implements SubmissionQueryService {
                 activityId,
                 submission.getSubmissionUrl(),
                 submission.getReviewStatus(),
-                submission.getRejectionReason(),
                 submission.getAwardedGems(),
                 submission.getReviewedAt()
         );
@@ -66,7 +65,7 @@ public class SubmissionQueryServiceImpl implements SubmissionQueryService {
 
         List<ActivitySubmission> submissions =
                 submissionRepository
-                        .findAllByActivityRegistration_User_UserIdOrderByCreatedAtDesc(
+                        .findAllByActivityRegistration_User_UserId(
                                 principal.userId()
                         );
 

@@ -10,7 +10,6 @@ public record SubmissionDetailsResponseDTO(
         UUID activityId,
         String submissionUrl,
         ReviewStatus reviewStatus,
-        String rejectionReason,
         Long awardedGems,
         Instant reviewedAt
 ) {}
