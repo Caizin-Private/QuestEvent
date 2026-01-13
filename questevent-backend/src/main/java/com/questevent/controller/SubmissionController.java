@@ -1,6 +1,7 @@
 package com.questevent.controller;
 
 import com.questevent.dto.ActivitySubmissionRequestDTO;
+import com.questevent.dto.SubmissionStatusResponseDTO;
 import com.questevent.service.SubmissionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -13,6 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.questevent.service.SubmissionQueryService;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/submissions")
@@ -24,6 +28,7 @@ public class SubmissionController {
             LoggerFactory.getLogger(SubmissionController.class);
 
     private final SubmissionService submissionService;
+    private final SubmissionQueryService submissionQueryService;
 
     @PreAuthorize("@rbac.canSubmitActivity(authentication, #request.activityId, authentication.principal.userId)")
     @PostMapping
@@ -54,5 +59,27 @@ public class SubmissionController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body("Submission successful");
+    }
+
+
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/{activityId}/status")
+    @Operation(
+            summary = "Get submission status",
+            description = "Allows a user to check whether their submission is pending, approved, or rejected"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Submission status fetched"),
+            @ApiResponse(responseCode = "404", description = "Submission not found"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
+    })
+    public ResponseEntity<SubmissionStatusResponseDTO> getSubmissionStatus(
+            @PathVariable UUID activityId
+    ) {
+        log.info("Fetching submission status: activityId={}", activityId);
+
+        return ResponseEntity.ok(
+                submissionQueryService.getSubmissionStatus(activityId)
+        );
     }
 }
