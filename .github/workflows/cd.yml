@@ -6,7 +6,8 @@ on:
     types:
       - completed
     branches:
-      - "release-v*"
+      - release-v*
+      - master
   workflow_dispatch:
 
 env:
