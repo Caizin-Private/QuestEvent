@@ -106,7 +106,7 @@ public class ActivityRegistrationService {
         return activityRegistrationRepository.findAll()
                 .stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -134,7 +134,7 @@ public class ActivityRegistrationService {
         return activityRegistrationRepository.findByActivityActivityId(activityId)
                 .stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -145,7 +145,7 @@ public class ActivityRegistrationService {
         return activityRegistrationRepository.findByUserUserId(userId)
                 .stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -163,7 +163,7 @@ public class ActivityRegistrationService {
                 .findByActivityActivityIdAndCompletionStatus(activityId, status)
                 .stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -181,7 +181,7 @@ public class ActivityRegistrationService {
                 .findByUserUserIdAndCompletionStatus(userId, status)
                 .stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional

@@ -17,6 +17,7 @@ import com.questevent.repository.UserRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -183,15 +184,18 @@ class ProgramServiceTest {
         User authUser = new User();
         authUser.setUserId(authUserId);
 
+        ProgramRequestDTO requestDTO = new ProgramRequestDTO();
+
         when(userRepository.findById(authUserId))
                 .thenReturn(Optional.of(authUser));
         when(programRepository.findById(programId))
                 .thenReturn(Optional.empty());
 
-        ProgramNotFoundException ex = assertThrows(
-                ProgramNotFoundException.class,
-                () -> programService.updateProgram(programId, new ProgramRequestDTO())
-        );
+        Executable executable =
+                () -> programService.updateProgram(programId, requestDTO);
+
+        ProgramNotFoundException ex =
+                assertThrows(ProgramNotFoundException.class, executable);
 
         assertEquals("Program not found", ex.getMessage());
     }
@@ -215,21 +219,25 @@ class ProgramServiceTest {
         program.setProgramId(programId);
         program.setUser(otherUser);
 
+        ProgramRequestDTO requestDTO = new ProgramRequestDTO();
+
         when(userRepository.findById(authUserId))
                 .thenReturn(Optional.of(authUser));
         when(programRepository.findById(programId))
                 .thenReturn(Optional.of(program));
 
-        AccessDeniedException ex = assertThrows(
-                AccessDeniedException.class,
-                () -> programService.updateProgram(programId, new ProgramRequestDTO())
-        );
+        Executable executable =
+                () -> programService.updateProgram(programId, requestDTO);
+
+        AccessDeniedException ex =
+                assertThrows(AccessDeniedException.class, executable);
 
         assertEquals(
                 "You do not have permission to update this program",
                 ex.getMessage()
         );
     }
+
 
     @Test
     void getMyPrograms_success() {

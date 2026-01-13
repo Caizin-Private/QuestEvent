@@ -38,7 +38,7 @@ public class UserController {
             summary = "Create a new user",
             description = "Creates a new user (Platform Owner only)"
     )
-    @ApiResponses({
+    @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "User created successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid input"),
             @ApiResponse(responseCode = "403", description = "Forbidden - Platform Owner only")

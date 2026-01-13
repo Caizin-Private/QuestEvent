@@ -4,6 +4,10 @@ import com.questevent.dto.ActivitySubmissionRequestDTO;
 import com.questevent.service.SubmissionService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.function.Executable;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -11,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.doNothing;
@@ -24,6 +29,29 @@ class SubmissionControllerTest {
 
     @InjectMocks
     private SubmissionController submissionController;
+
+    static Stream<Arguments> submitActivityExceptionProvider() {
+        return Stream.of(
+                Arguments.of(
+                        UUID.randomUUID(),
+                        99L,
+                        "https://github.com/user/project",
+                        "User is not registered for this activity"
+                ),
+                Arguments.of(
+                        UUID.randomUUID(),
+                        100L,
+                        "https://github.com/user/project",
+                        "Submission already exists"
+                ),
+                Arguments.of(
+                        UUID.randomUUID(),
+                        101L,
+                        "https://github.com/user/project",
+                        "Activity is closed"
+                )
+        );
+    }
 
     @Test
     void submitActivity_shouldReturnCreated_whenSubmissionIsSuccessful() {
@@ -45,30 +73,31 @@ class SubmissionControllerTest {
         assertEquals("Submission successful", response.getBody());
     }
 
-    @Test
-    void submitActivity_shouldThrowException_whenUserNotRegistered() {
-
-        UUID activityId = UUID.randomUUID();
-        Long userId = 99L;
-
+    @ParameterizedTest
+    @MethodSource("submitActivityExceptionProvider")
+    void submitActivity_shouldThrowException(
+            UUID activityId,
+            Long userId,
+            String submissionUrl,
+            String expectedMessage
+    ) {
         ActivitySubmissionRequestDTO request = new ActivitySubmissionRequestDTO();
         request.setActivityId(activityId);
         request.setSubmissionUrl("https://github.com/user/project");
 
-        doThrow(new RuntimeException("User is not registered for this activity"))
+        doThrow(new RuntimeException(expectedMessage))
                 .when(submissionService)
                 .submitActivity(activityId,"https://github.com/user/project");
 
-        RuntimeException exception = assertThrows(
-                RuntimeException.class,
-                () -> submissionController.submitActivity(request)
-        );
+        Executable executable =
+                () -> submissionController.submitActivity(request);
 
-        assertEquals(
-                "User is not registered for this activity",
-                exception.getMessage()
-        );
+        RuntimeException exception =
+                assertThrows(RuntimeException.class, executable);
+
+        assertEquals(expectedMessage, exception.getMessage());
     }
+
 
     @Test
     void submitActivity_shouldThrowException_whenSubmissionAlreadyExists() {

@@ -45,19 +45,13 @@ public class ProgramRegistrationController {
         log.info("Self registration request: programId={}",
                 request.getProgramId());
 
-        try {
-            ProgramRegistrationResponseDTO response =
-                    programRegistrationService.registerParticipantForProgram(request);
+        ProgramRegistrationResponseDTO response =
+                programRegistrationService.registerParticipantForProgram(request);
 
-            log.info("Self registration successful: programId={}",
-                    request.getProgramId());
+        log.info("Self registration successful: programId={}",
+                request.getProgramId());
 
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (RuntimeException e) {
-            log.warn("Self registration failed: programId={}, reason={}",
-                    request.getProgramId(), e.getMessage());
-            throw e;
-        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PreAuthorize("@rbac.canManageProgram(authentication, #programId)")

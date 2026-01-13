@@ -7,6 +7,7 @@ import com.questevent.dto.ActivityRegistrationRequestDTO;
 import com.questevent.dto.ActivityRegistrationResponseDTO;
 import com.questevent.dto.AddParticipantInActivityRequestDTO;
 import com.questevent.enums.CompletionStatus;
+import com.questevent.exception.ResourceNotFoundException;
 import com.questevent.service.ActivityRegistrationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -156,7 +157,7 @@ class ActivityRegistrationControllerTest {
     @Test
     void getRegistrationById_notFound() throws Exception {
         when(activityRegistrationService.getRegistrationById(any(UUID.class)))
-                .thenThrow(new RuntimeException("Registration not found"));
+                .thenThrow(new ResourceNotFoundException("Registration not found"));
 
         mockMvc.perform(get("/api/activity-registrations/{id}", UUID.randomUUID()))
                 .andExpect(status().isNotFound());
@@ -239,7 +240,7 @@ class ActivityRegistrationControllerTest {
     void updateCompletionStatus_notFound() throws Exception {
         when(activityRegistrationService
                 .updateCompletionStatus(any(UUID.class), any()))
-                .thenThrow(new RuntimeException("Registration not found"));
+                .thenThrow(new ResourceNotFoundException("Registration not found"));
 
         ActivityCompletionUpdateDTO updateDTO = new ActivityCompletionUpdateDTO();
         updateDTO.setCompletionStatus(CompletionStatus.COMPLETED);
@@ -261,11 +262,13 @@ class ActivityRegistrationControllerTest {
 
     @Test
     void deleteRegistration_notFound() throws Exception {
-        doThrow(new RuntimeException("Registration not found"))
+
+        doThrow(new ResourceNotFoundException("Registration not found"))
                 .when(activityRegistrationService)
                 .deleteRegistration(any(UUID.class));
 
         mockMvc.perform(delete("/api/activity-registrations/{id}", UUID.randomUUID()))
                 .andExpect(status().isNotFound());
     }
+
 }
