@@ -22,11 +22,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
+      # -----------------------------
+      # Checkout
+      # -----------------------------
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch || github.ref }}
 
-
+      # -----------------------------
+      # Read Java version from Gradle
+      # -----------------------------
       - name: Read Java version from Gradle
         id: java_version
         run: |
@@ -36,31 +42,38 @@ jobs:
           fi
           echo "java=$JAVA_VERSION" >> $GITHUB_OUTPUT
 
-
+      # -----------------------------
+      # Setup Java
+      # -----------------------------
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           java-version: ${{ steps.java_version.outputs.java }}
 
-
+      # -----------------------------
+      # Download artifact from CI workflow
+      # -----------------------------
       - name: Download artifact
-        uses: actions/download-artifact@v4
+        uses: dawidd6/action-download-artifact@v3
         with:
+          workflow: ci.yml
           name: application-jar
           path: target/
-          merge-multiple: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
+          run_id: ${{ github.event.workflow_run.id }}
 
-
+      # -----------------------------
+      # Get timestamp and SHA
+      # -----------------------------
       - name: Get timestamp and SHA
         id: vars
         run: |
           echo "timestamp=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_OUTPUT
           echo "sha=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
 
-
+      # -----------------------------
+      # Create deployment package
+      # -----------------------------
       - name: Create deployment package
         run: |
           mkdir -p deploy
