@@ -111,4 +111,33 @@ public class SubmissionController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("isAuthenticated()")
+    @PatchMapping("/{activityId}/resubmit")
+    @Operation(
+            summary = "Resubmit activity work",
+            description = "Allows a user to resubmit work for a rejected submission"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Resubmission successful"),
+            @ApiResponse(responseCode = "400", description = "Submission is not rejected"),
+            @ApiResponse(responseCode = "404", description = "Submission not found"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
+    })
+    public ResponseEntity<String> resubmitActivity(
+            @PathVariable UUID activityId,
+            @RequestBody ActivitySubmissionRequestDTO request,
+            Authentication authentication
+    ) {
+        log.info("Resubmitting activity | activityId={}", activityId);
+
+        submissionService.resubmitActivity(
+                activityId,
+                request.getSubmissionUrl(),
+                authentication
+        );
+
+        return ResponseEntity.ok("Resubmission Successful");
+    }
+
+
 }
