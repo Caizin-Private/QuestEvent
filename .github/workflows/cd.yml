@@ -1,13 +1,9 @@
 name: Beanstalk CD Deploy
 
 on:
-  workflow_run:
-    workflows: ["Backend CI"]
-    types:
-      - completed
+  push:
     branches:
-      - release-v*
-      - master
+      - "release-v*"
   workflow_dispatch:
 
 env:
@@ -19,32 +15,24 @@ env:
 
 jobs:
   deploy:
-    # Only run if CI was successful
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
 
     steps:
-      # -----------------------------
-      # Checkout
-      # -----------------------------
+
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # -----------------------------
-      # Read Java version from Gradle
-      # -----------------------------
+
       - name: Read Java version from Gradle
         id: java_version
         run: |
           JAVA_VERSION=$(grep -oP 'JavaLanguageVersion.of\(\K[0-9]+' questevent-backend/build.gradle || true)
           if [ -z "$JAVA_VERSION" ]; then
-            JAVA_VERSION="21"
+            JAVA_VERSION="17"
           fi
           echo "java=$JAVA_VERSION" >> $GITHUB_OUTPUT
 
-      # -----------------------------
-      # Setup Java
-      # -----------------------------
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -52,27 +40,21 @@ jobs:
           java-version: ${{ steps.java_version.outputs.java }}
           cache: gradle
 
-      # -----------------------------
-      # Build the application
-      # -----------------------------
+
       - name: Build with Gradle
         working-directory: questevent-backend
         run: |
           chmod +x gradlew
           ./gradlew clean build -x test
 
-      # -----------------------------
-      # Get timestamp and SHA
-      # -----------------------------
+
       - name: Get timestamp and SHA
         id: vars
         run: |
           echo "timestamp=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_OUTPUT
           echo "sha=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
 
-      # -----------------------------
-      # Create deployment package
-      # -----------------------------
+
       - name: Create deployment package
         run: |
           mkdir -p deploy
@@ -84,9 +66,7 @@ jobs:
           
           cd deploy && zip -r ../deploy-package.zip .
 
-      # -----------------------------
-      # Configure AWS credentials
-      # -----------------------------
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -94,9 +74,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # -----------------------------
-      # Upload to S3 and Deploy
-      # -----------------------------
+
       - name: Upload to S3 and Deploy
         run: |
           S3_BUCKET="elasticbeanstalk-${{ env.AWS_REGION }}-${{ env.AWS_ACCOUNT_ID }}"
@@ -115,8 +93,6 @@ jobs:
             --environment-name ${{ env.EB_ENVIRONMENT_NAME }} \
             --version-label "${VERSION_LABEL}"
 
-      # -----------------------------
-      # Final Summary
-      # -----------------------------
+
       - name: Final Summary
-        run: echo "🚀 Deployment to ${{ env.EB_ENVIRONMENT_NAME }} completed using Java ${{ steps.java_version.outputs.java }}!" >> $GITHUB_STEP_SUMMARY
+        run: echo " Deployment to ${{ env.EB_ENVIRONMENT_NAME }} completed using Java ${{ steps.java_version.outputs.java }}!" >> $GITHUB_STEP_SUMMARY
