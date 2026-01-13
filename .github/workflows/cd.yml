@@ -6,76 +6,105 @@ on:
     types:
       - completed
     branches:
-      - master
-      - release-*
+      - "release-v*"
   workflow_dispatch:
 
-permissions:
-  contents: read
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  EB_APPLICATION_NAME: ${{ secrets.EB_APPLICATION_NAME }}
+  EB_ENVIRONMENT_NAME: ${{ secrets.EB_ENVIRONMENT_NAME }}
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  JAVA_DISTRIBUTION: 'corretto'
 
 jobs:
   deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Java
+
+      - name: Read Java version from Gradle
+        id: java_version
+        run: |
+          JAVA_VERSION=$(grep -oP 'JavaLanguageVersion.of\(\K[0-9]+' questevent-backend/build.gradle || true)
+          if [ -z "$JAVA_VERSION" ]; then
+            JAVA_VERSION="17"
+          fi
+          echo "java=$JAVA_VERSION" >> $GITHUB_OUTPUT
+
+
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: 21
-          cache: gradle
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          java-version: ${{ steps.java_version.outputs.java }}
 
-      - name: Build JAR (Gradle)
-        run: ./gradlew clean build -x test
 
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: application-jar
+          path: target/
+          merge-multiple: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+
+      - name: Get timestamp and SHA
+        id: vars
+        run: |
+          echo "timestamp=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_OUTPUT
+          echo "sha=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+
+
+      - name: Create deployment package
+        run: |
+          mkdir -p deploy
+          find target/ -name "*.jar" ! -name "*-plain.jar" -exec cp {} deploy/application.jar \;
+          
+          cat > deploy/Procfile << 'EOF'
+          web: java -jar application.jar
+          EOF
+          
+          cd deploy && zip -r ../deploy-package.zip .
+
+      # -----------------------------
+      # Configure AWS credentials
+      # -----------------------------
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Set Version Label (Git Commit SHA)
+      # -----------------------------
+      # Upload to S3 and Deploy
+      # -----------------------------
+      - name: Upload to S3 and Deploy
         run: |
-          SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-8)
-          echo "VERSION_LABEL=questevent-${SHORT_SHA}" >> $GITHUB_ENV
-
-      - name: Upload JAR to S3
-        run: |
-          JAR_FILE=$(ls build/libs/*.jar | head -n 1)
-          aws s3 cp "$JAR_FILE" s3://questeventproject-deployments/${VERSION_LABEL}.jar
-
-      - name: Create Elastic Beanstalk Application Version
-        run: |
+          S3_BUCKET="elasticbeanstalk-${{ env.AWS_REGION }}-${{ env.AWS_ACCOUNT_ID }}"
+          S3_KEY="app-${{ steps.vars.outputs.timestamp }}.zip"
+          VERSION_LABEL="v-${{ steps.vars.outputs.timestamp }}-${{ steps.vars.outputs.sha }}"
+          
+          aws s3 cp deploy-package.zip s3://${S3_BUCKET}/${S3_KEY}
+          
           aws elasticbeanstalk create-application-version \
-            --application-name "QuestEventTest" \
-            --version-label "$VERSION_LABEL" \
-            --source-bundle S3Bucket="questeventproject-deployments",S3Key="${VERSION_LABEL}.jar" \
-            --process
-
-      - name: Wait for Beanstalk Version to be PROCESSED
-        run: |
-          while true; do
-            STATUS=$(aws elasticbeanstalk describe-application-versions \
-              --application-name "QuestEventTest" \
-              --version-label "$VERSION_LABEL" \
-              --query "ApplicationVersions[0].Status" \
-              --output text)
-
-            echo "Current status: $STATUS"
-            if [ "$STATUS" = "PROCESSED" ]; then
-              break
-            fi
-            sleep 5
-          done
-
-      - name: Deploy to Elastic Beanstalk
-        run: |
+            --application-name ${{ env.EB_APPLICATION_NAME }} \
+            --version-label "${VERSION_LABEL}" \
+            --source-bundle S3Bucket="${S3_BUCKET}",S3Key="${S3_KEY}"
+          
           aws elasticbeanstalk update-environment \
-            --application-name "QuestEventTest" \
-            --environment-name "QuestEventuTest-env" \
-            --version-label "$VERSION_LABEL"
+            --application-name ${{ env.EB_APPLICATION_NAME }} \
+            --environment-name ${{ env.EB_ENVIRONMENT_NAME }} \
+            --version-label "${VERSION_LABEL}"
+
+      # -----------------------------
+      # Final Summary
+      # -----------------------------
+      - name: Final Summary
+        run: echo "🚀 Deployment to ${{ env.EB_ENVIRONMENT_NAME }} completed using Java ${{ steps.java_version.outputs.java }}!" >> $GITHUB_STEP_SUMMARY

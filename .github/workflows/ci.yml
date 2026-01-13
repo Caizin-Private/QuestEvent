@@ -2,62 +2,62 @@ name: Backend CI
 
 on:
   pull_request:
-    branches:
-      - master
+    branches: [ master ]
   push:
-    branches:
-      - release-*
+    branches: [ "release-v*" ]
 
 permissions:
   contents: write
   pull-requests: write
 
+env:
+  JAVA_DISTRIBUTION: 'corretto'
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      java_version: ${{ steps.java_version.outputs.java }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Read Java version from Gradle
-      - name: Read Java version
+
+      - name: Read Java version from Gradle
         id: java_version
         run: |
           JAVA_VERSION=$(grep -oP 'JavaLanguageVersion.of\(\K[0-9]+' questevent-backend/build.gradle || true)
           if [ -z "$JAVA_VERSION" ]; then
-            echo "Java version not found"
-            exit 1
+            JAVA_VERSION="21"
           fi
           echo "java=$JAVA_VERSION" >> $GITHUB_OUTPUT
 
-      # Setup Java
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
           java-version: ${{ steps.java_version.outputs.java }}
           cache: gradle
 
-      # Gradle permission
-      - name: Make Gradle executable
-        run: chmod +x questevent-backend/gradlew
 
-      # Build & Test
-      - name: Build and Test
+      - name: Build and test with Gradle
         working-directory: questevent-backend
-        run: ./gradlew clean build jacocoTestReport
+        run: |
+          chmod +x gradlew
+          ./gradlew clean build jacocoTestReport
 
-      # Upload coverage report
-      - name: Upload JaCoCo report
+
+      - name: Upload test coverage report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: jacoco-test-coverage
           path: questevent-backend/build/reports/jacoco/test/html
 
-      # Publish coverage to GitHub Pages
-      - name: Publish JaCoCo to GitHub Pages
+
+      - name: Publish JaCoCo report to GitHub Pages
         if: always()
         uses: peaceiris/actions-gh-pages@v4
         with:
@@ -67,8 +67,8 @@ jobs:
           destination_dir: jacoco
           disable_nojekyll: true
 
-      # Comment coverage on PR
-      - name: Comment coverage on PR
+
+      - name: Comment JaCoCo coverage on PR
         if: >
           github.event_name == 'pull_request' &&
           github.event.pull_request.head.repo.full_name == github.repository
@@ -76,3 +76,12 @@ jobs:
         with:
           paths: questevent-backend/build/reports/jacoco/test/jacocoTestReport.xml
           token: ${{ secrets.GITHUB_TOKEN }}
+
+
+      - name: Upload Build Artifact
+        if: startsWith(github.ref, 'refs/heads/release-v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: application-jar
+          path: questevent-backend/build/libs/*.jar
+          retention-days: 1
