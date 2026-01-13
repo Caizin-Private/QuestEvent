@@ -1,7 +1,10 @@
 name: Beanstalk CD Deploy
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Backend CI"]
+    types:
+      - completed
     branches:
       - "release-v*"
   workflow_dispatch:
@@ -15,6 +18,8 @@ env:
 
 jobs:
   deploy:
+    # Only run if CI was successful
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -32,7 +37,7 @@ jobs:
         run: |
           JAVA_VERSION=$(grep -oP 'JavaLanguageVersion.of\(\K[0-9]+' questevent-backend/build.gradle || true)
           if [ -z "$JAVA_VERSION" ]; then
-            JAVA_VERSION="17"
+            JAVA_VERSION="21"
           fi
           echo "java=$JAVA_VERSION" >> $GITHUB_OUTPUT
 
