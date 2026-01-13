@@ -122,4 +122,69 @@ public class SubmissionServiceImpl implements SubmissionService {
         );
     }
 
+
+    @Override
+    @Transactional
+    public void resubmitActivity(UUID activityId, String submissionUrl, Authentication authentication) {
+        UserPrincipal principal =
+                (UserPrincipal) authentication.getPrincipal();
+
+        Long userId = principal.userId();
+
+        log.debug(
+                "Resubmit activity requested | activityId={} | userId={}",
+                activityId,
+                userId
+        );
+
+        ActivityRegistration registration =
+                registrationRepository
+                        .findByActivityActivityIdAndUserUserId(
+                                activityId,
+                                userId
+                        )
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "User is not registered for this activity"
+                                )
+                        );
+
+        ActivitySubmission submission =
+                submissionRepository
+                        .findByActivityRegistration_ActivityRegistrationId(
+                                registration.getActivityRegistrationId()
+                        )
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Submission not found"
+                                )
+                        );
+
+        if (submission.getReviewStatus() != ReviewStatus.REJECTED) {
+            throw new InvalidOperationException(
+                    "Only rejected submissions can be resubmitted"
+            );
+        }
+
+
+        submission.setSubmissionUrl(submissionUrl);
+        submission.setReviewStatus(ReviewStatus.PENDING);
+        submission.setRejectionReason(null);
+        submission.setReviewedAt(null);
+
+
+        registration.setCompletionStatus(CompletionStatus.COMPLETED);
+
+        submissionRepository.save(submission);
+        registrationRepository.save(registration);
+
+        log.info(
+                "Activity resubmitted successfully | activityId={} | userId={} | submissionId={}",
+                activityId,
+                userId,
+                submission.getSubmissionId()
+        );
+    }
+
+
 }

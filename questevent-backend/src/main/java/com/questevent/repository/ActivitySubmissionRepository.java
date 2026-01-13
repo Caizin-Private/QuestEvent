@@ -19,6 +19,10 @@ public interface ActivitySubmissionRepository
             UUID activityRegistrationId
     );
 
+    List<ActivitySubmission>
+    findAllByActivityRegistration_User_UserIdOrderByCreatedAtDesc(Long userId);
+
+
     Optional<ActivitySubmission>
     findByActivityRegistration_ActivityRegistrationId(UUID activityRegistrationId);
 

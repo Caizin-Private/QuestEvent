@@ -89,7 +89,7 @@ public class SubmissionController {
 
 
     @PreAuthorize("isAuthenticated()")
-    @GetMapping("/{activityId}")
+    @GetMapping("/{activityId}/submission-details")
     @Operation(
             summary = "Get submission details",
             description = "Fetch the logged-in user's submission details for an activity"
@@ -110,4 +110,5 @@ public class SubmissionController {
 
         return ResponseEntity.ok(response);
     }
+
 }

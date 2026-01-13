@@ -3,16 +3,18 @@ package com.questevent.service;
 import com.questevent.dto.SubmissionDetailsResponseDTO;
 import com.questevent.dto.SubmissionStatusResponseDTO;
 import com.questevent.dto.UserPrincipal;
+import com.questevent.dto.UserSubmissionSummaryDTO;
 import com.questevent.entity.ActivitySubmission;
 import com.questevent.exception.ResourceNotFoundException;
 import com.questevent.repository.ActivitySubmissionRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -55,7 +57,38 @@ public class SubmissionQueryServiceImpl implements SubmissionQueryService {
     }
 
     @Override
-    @Transactional(Transactional.TxType.SUPPORTS)
+    @Transactional(readOnly = true)
+    public List<UserSubmissionSummaryDTO> getMySubmissions(
+            Authentication authentication
+    ) {
+        UserPrincipal principal =
+                (UserPrincipal) authentication.getPrincipal();
+
+        List<ActivitySubmission> submissions =
+                submissionRepository
+                        .findAllByActivityRegistration_User_UserIdOrderByCreatedAtDesc(
+                                principal.userId()
+                        );
+
+        return submissions.stream()
+                .map(submission -> new UserSubmissionSummaryDTO(
+                        submission.getSubmissionId(),
+                        submission.getActivityRegistration()
+                                .getActivity()
+                                .getActivityId(),
+                        submission.getActivityRegistration()
+                                .getActivity()
+                                .getActivityName(),
+                        submission.getReviewStatus(),
+                        submission.getSubmittedAt(),
+                        submission.getReviewedAt()
+                ))
+                .toList();
+    }
+
+
+    @Override
+    @Transactional(readOnly = true)
     public SubmissionStatusResponseDTO getSubmissionStatus(UUID activityId) {
 
         Authentication authentication =
