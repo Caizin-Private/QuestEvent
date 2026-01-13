@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice(basePackages = "com.questevent")
@@ -30,6 +29,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiErrorDTO> handleAccessDenied(AccessDeniedException ex) {
         return build(HttpStatus.FORBIDDEN, "You do not have permission to access this resource");
+    }
+
+    @ExceptionHandler(UnsupportedPrincipalException.class)
+    public ResponseEntity<Map<String, Object>> handleUnsupportedPrincipal(
+            UnsupportedPrincipalException ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("message", ex.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

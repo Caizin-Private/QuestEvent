@@ -2,6 +2,7 @@ package com.questevent.service;
 
 import com.questevent.dto.UserPrincipal;
 import com.questevent.enums.Role;
+import com.questevent.exception.InvalidAccessTokenException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -35,6 +36,8 @@ public class JwtService {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
+    private static final String TOKEN_TYPE_KEY = "tokenType";
+
     public String generateAccessToken(UserPrincipal userPrincipal) {
 
         log.debug(
@@ -47,7 +50,7 @@ public class JwtService {
         claims.put("userId", userPrincipal.userId());
         claims.put("email", userPrincipal.email());
         claims.put("role", userPrincipal.role().name());
-        claims.put("tokenType", "ACCESS");
+        claims.put(TOKEN_TYPE_KEY, "ACCESS");
 
         String token =
                 createToken(claims, userPrincipal.email(), accessExpiration);
@@ -68,7 +71,7 @@ public class JwtService {
         );
 
         Map<String, Object> claims = new HashMap<>();
-        claims.put("tokenType", "REFRESH");
+        claims.put(TOKEN_TYPE_KEY, "REFRESH");
 
         String token =
                 createToken(claims, userPrincipal.email(), refreshExpiration);
@@ -120,7 +123,7 @@ public class JwtService {
     public boolean isRefreshToken(String token) {
         Claims claims = extractAllClaims(token);
         boolean isRefresh =
-                "REFRESH".equals(claims.get("tokenType", String.class));
+                "REFRESH".equals(claims.get(TOKEN_TYPE_KEY, String.class));
 
         log.debug("Token type check | isRefresh={}", isRefresh);
         return isRefresh;
@@ -129,7 +132,7 @@ public class JwtService {
     public boolean isAccessToken(String token) {
         Claims claims = extractAllClaims(token);
         boolean isAccess =
-                "ACCESS".equals(claims.get("tokenType", String.class));
+                "ACCESS".equals(claims.get(TOKEN_TYPE_KEY, String.class));
 
         log.debug("Token type check | isAccess={}", isAccess);
         return isAccess;
@@ -170,7 +173,7 @@ public class JwtService {
 
         if (userId == null || email == null || roleStr == null) {
             log.error("Invalid ACCESS token: missing required claims");
-            throw new RuntimeException("Invalid ACCESS token: missing required claims");
+            throw new InvalidAccessTokenException("Invalid ACCESS token: missing required claims");
         }
 
         Role role = Role.valueOf(roleStr);

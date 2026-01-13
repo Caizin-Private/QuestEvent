@@ -3,6 +3,7 @@ package com.questevent.service;
 import com.questevent.entity.User;
 import com.questevent.entity.UserWallet;
 import com.questevent.enums.Department;
+import com.questevent.exception.UserNotAuthenticatedException;
 import com.questevent.repository.UserRepository;
 import com.questevent.repository.UserWalletRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -44,7 +45,7 @@ public class AuthService {
 
         if (session == null || session.getAttribute(SESSION_USER_ID) == null) {
             log.warn("Unauthorized access attempt — no session or userId");
-            throw new RuntimeException("User not logged in");
+            throw new UserNotAuthenticatedException();
         }
 
         Long userId = (Long) session.getAttribute(SESSION_USER_ID);
