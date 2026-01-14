@@ -1,148 +1,181 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">questevent-backend</a> &gt; <a href="index.source.html" class="el_package">com.questevent.service</a> &gt; <span class="el_source">UserService.java</span></div><h1>UserService.java</h1><pre class="source lang-java linenums">package com.questevent.service;
 
+import com.questevent.dto.UserPrincipal;
 import com.questevent.dto.UserResponseDto;
 import com.questevent.entity.User;
 import com.questevent.exception.UserNotFoundException;
 import com.questevent.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
-<span class="fc" id="L14">@Slf4j</span>
+<span class="fc" id="L18">@Slf4j</span>
 @Service
 public class UserService {
 
     private final UserRepository userRepository;
     private final UserWalletService userWalletService;
 
-<span class="fc" id="L21">    public UserService(UserRepository userRepository, UserWalletService userWalletService) {</span>
-<span class="fc" id="L22">        this.userRepository = userRepository;</span>
-<span class="fc" id="L23">        this.userWalletService = userWalletService;</span>
-<span class="fc" id="L24">    }</span>
+<span class="fc" id="L25">    public UserService(UserRepository userRepository, UserWalletService userWalletService) {</span>
+<span class="fc" id="L26">        this.userRepository = userRepository;</span>
+<span class="fc" id="L27">        this.userWalletService = userWalletService;</span>
+<span class="fc" id="L28">    }</span>
 
     public List&lt;User&gt; getAllUsers() {
 
-<span class="fc" id="L28">        log.debug(&quot;Fetching all users&quot;);</span>
+<span class="fc" id="L32">        log.debug(&quot;Fetching all users&quot;);</span>
 
-<span class="fc" id="L30">        List&lt;User&gt; users = userRepository.findAll();</span>
+<span class="fc" id="L34">        List&lt;User&gt; users = userRepository.findAll();</span>
 
-<span class="fc" id="L32">        log.info(&quot;Fetched all users | count={}&quot;, users.size());</span>
+<span class="fc" id="L36">        log.info(&quot;Fetched all users | count={}&quot;, users.size());</span>
 
-<span class="fc" id="L34">        return users;</span>
+<span class="fc" id="L38">        return users;</span>
     }
 
-    public User getUserById(Long id) {
+    public User getUser() {
+<span class="fc" id="L42">        User currentUser = getCurrentUser();</span>
 
-<span class="fc" id="L39">        log.debug(&quot;Fetching user by id | userId={}&quot;, id);</span>
+<span class="pc bpc" id="L44" title="1 of 2 branches missed.">        if (currentUser == null) {</span>
+<span class="nc" id="L45">            throw new UserNotFoundException(&quot;Authenticated user not found&quot;);</span>
+        }
 
-<span class="fc" id="L41">        return userRepository.findById(id)</span>
-<span class="fc" id="L42">                .orElseThrow(() -&gt; {</span>
-<span class="fc" id="L43">                    log.warn(&quot;User not found | userId={}&quot;, id);</span>
-<span class="fc" id="L44">                    return new UserNotFoundException(&quot;User not found with id &quot; + id);</span>
-                });
+<span class="fc" id="L48">        log.debug(&quot;Fetching user by id | userId={}&quot;, currentUser.getUserId());</span>
+
+<span class="fc" id="L50">        return userRepository.findById(currentUser.getUserId())</span>
+<span class="fc" id="L51">                .orElseThrow(() -&gt;</span>
+<span class="nc" id="L52">                        new UserNotFoundException(</span>
+<span class="nc" id="L53">                                &quot;User not found with id &quot; + currentUser.getUserId()</span>
+                        )
+                );
     }
 
     public User addUser(User user) {
 
-<span class="fc" id="L50">        log.debug(</span>
+<span class="fc" id="L60">        log.debug(</span>
                 &quot;Adding new user | email={} | role={}&quot;,
-<span class="fc" id="L52">                user.getEmail(),</span>
-<span class="fc" id="L53">                user.getRole()</span>
+<span class="fc" id="L62">                user.getEmail(),</span>
+<span class="fc" id="L63">                user.getRole()</span>
         );
 
-<span class="fc" id="L56">        userRepository.save(user);</span>
-<span class="fc" id="L57">        userWalletService.createWalletForUser(user);</span>
+<span class="fc" id="L66">        userRepository.save(user);</span>
+<span class="fc" id="L67">        userWalletService.createWalletForUser(user);</span>
 
-<span class="fc" id="L59">        log.info(</span>
+<span class="fc" id="L69">        log.info(</span>
                 &quot;User created successfully | userId={}&quot;,
-<span class="fc" id="L61">                user.getUserId()</span>
+<span class="fc" id="L71">                user.getUserId()</span>
         );
 
-<span class="fc" id="L64">        return user;</span>
+<span class="fc" id="L74">        return user;</span>
     }
 
-    public User updateUser(Long id, User updatedUser) {
+    public User updateUser(User updatedUser) {
 
-<span class="fc" id="L69">        log.debug(&quot;Updating user | userId={}&quot;, id);</span>
-
-<span class="fc" id="L71">        User user = getUserById(id);</span>
-
-<span class="fc" id="L73">        user.setName(updatedUser.getName());</span>
-<span class="fc" id="L74">        user.setEmail(updatedUser.getEmail());</span>
-<span class="fc" id="L75">        user.setDepartment(updatedUser.getDepartment());</span>
-<span class="fc" id="L76">        user.setGender(updatedUser.getGender());</span>
-<span class="fc" id="L77">        user.setRole(updatedUser.getRole());</span>
-
-<span class="pc bpc" id="L79" title="1 of 2 branches missed.">        if(updatedUser.getWallet() != null) {</span>
-<span class="nc" id="L80">            updatedUser.getWallet().setUser(user);</span>
-<span class="nc" id="L81">            user.setWallet(updatedUser.getWallet());</span>
+<span class="fc" id="L79">        User user = getCurrentUser();</span>
+<span class="pc bpc" id="L80" title="1 of 2 branches missed.">        if (user == null) {</span>
+<span class="nc" id="L81">            throw new UserNotFoundException(&quot;Authenticated user not found&quot;);</span>
         }
 
-<span class="pc bpc" id="L84" title="1 of 2 branches missed.">        if(updatedUser.getHostedPrograms() != null)</span>
-<span class="nc" id="L85">            user.setHostedPrograms(updatedUser.getHostedPrograms());</span>
+<span class="fc" id="L84">        log.debug(&quot;Updating user | userId={}&quot;, user.getUserId());</span>
+<span class="fc" id="L85">        user.setName(updatedUser.getName());</span>
+<span class="fc" id="L86">        user.setEmail(updatedUser.getEmail());</span>
+<span class="fc" id="L87">        user.setDepartment(updatedUser.getDepartment());</span>
+<span class="fc" id="L88">        user.setGender(updatedUser.getGender());</span>
 
-<span class="pc bpc" id="L87" title="1 of 2 branches missed.">        if(updatedUser.getActivityRegistrations() != null)</span>
-<span class="nc" id="L88">            user.setActivityRegistrations(updatedUser.getActivityRegistrations());</span>
+<span class="pc bpc" id="L90" title="1 of 2 branches missed.">        if(updatedUser.getWallet() != null) {</span>
+<span class="nc" id="L91">            updatedUser.getWallet().setUser(user);</span>
+<span class="nc" id="L92">            user.setWallet(updatedUser.getWallet());</span>
+        }
 
-<span class="pc bpc" id="L90" title="1 of 2 branches missed.">        if(updatedUser.getProgramRegistrations() != null)</span>
-<span class="nc" id="L91">            user.setProgramRegistrations(updatedUser.getProgramRegistrations());</span>
+<span class="pc bpc" id="L95" title="1 of 2 branches missed.">        if(updatedUser.getHostedPrograms() != null)</span>
+<span class="nc" id="L96">            user.setHostedPrograms(updatedUser.getHostedPrograms());</span>
 
-<span class="pc bpc" id="L93" title="1 of 2 branches missed.">        if(updatedUser.getProgramWallets() != null)</span>
-<span class="nc" id="L94">            user.setProgramWallets(updatedUser.getProgramWallets());</span>
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">        if(updatedUser.getActivityRegistrations() != null)</span>
+<span class="nc" id="L99">            user.setActivityRegistrations(updatedUser.getActivityRegistrations());</span>
 
-<span class="fc" id="L96">        User saved = userRepository.save(user);</span>
+<span class="pc bpc" id="L101" title="1 of 2 branches missed.">        if(updatedUser.getProgramRegistrations() != null)</span>
+<span class="nc" id="L102">            user.setProgramRegistrations(updatedUser.getProgramRegistrations());</span>
 
-<span class="fc" id="L98">        log.info(</span>
+<span class="pc bpc" id="L104" title="1 of 2 branches missed.">        if(updatedUser.getProgramWallets() != null)</span>
+<span class="nc" id="L105">            user.setProgramWallets(updatedUser.getProgramWallets());</span>
+
+<span class="fc" id="L107">        User saved = userRepository.save(user);</span>
+
+<span class="fc" id="L109">        log.info(</span>
                 &quot;User updated successfully | userId={}&quot;,
-<span class="fc" id="L100">                saved.getUserId()</span>
+<span class="fc" id="L111">                saved.getUserId()</span>
         );
 
-<span class="fc" id="L103">        return saved;</span>
+<span class="fc" id="L114">        return saved;</span>
     }
 
     public void deleteUser(Long id) {
 
-<span class="fc" id="L108">        log.debug(&quot;Deleting user | userId={}&quot;, id);</span>
+<span class="fc" id="L119">        log.debug(&quot;Deleting user | userId={}&quot;, id);</span>
 
-<span class="fc" id="L110">        userRepository.deleteById(id);</span>
+<span class="fc" id="L121">        userRepository.deleteById(id);</span>
 
-<span class="fc" id="L112">        log.info(&quot;User deleted | userId={}&quot;, id);</span>
-<span class="fc" id="L113">    }</span>
+<span class="fc" id="L123">        log.info(&quot;User deleted | userId={}&quot;, id);</span>
+<span class="fc" id="L124">    }</span>
 
     public List&lt;SimpleGrantedAuthority&gt; getAuthorities(User user) {
 
-<span class="fc" id="L117">        log.debug(</span>
+<span class="fc" id="L128">        log.debug(</span>
                 &quot;Resolving authorities | userId={} | role={}&quot;,
-<span class="fc" id="L119">                user.getUserId(),</span>
-<span class="fc" id="L120">                user.getRole()</span>
+<span class="fc" id="L130">                user.getUserId(),</span>
+<span class="fc" id="L131">                user.getRole()</span>
         );
 
-<span class="fc" id="L123">        return List.of(</span>
-<span class="fc" id="L124">                new SimpleGrantedAuthority(&quot;ROLE_&quot; + user.getRole().name())</span>
+<span class="fc" id="L134">        return List.of(</span>
+<span class="fc" id="L135">                new SimpleGrantedAuthority(&quot;ROLE_&quot; + user.getRole().name())</span>
         );
     }
+
+    private User getCurrentUser() {
+        Authentication authentication =
+<span class="fc" id="L141">                SecurityContextHolder.getContext().getAuthentication();</span>
+
+<span class="pc bpc" id="L143" title="2 of 4 branches missed.">        if (authentication == null || !authentication.isAuthenticated()) {</span>
+<span class="nc" id="L144">            throw new UserNotFoundException(&quot;Unauthenticated user&quot;);</span>
+        }
+
+<span class="fc" id="L147">        Object principal = authentication.getPrincipal();</span>
+<span class="pc bpc" id="L148" title="1 of 2 branches missed.">        if (!(principal instanceof UserPrincipal p)) {</span>
+<span class="nc" id="L149">            throw new UserNotFoundException(&quot;Invalid authentication principal&quot;);</span>
+        }
+
+<span class="fc" id="L152">        return userRepository.findById(p.userId())</span>
+<span class="fc" id="L153">                .orElseThrow(() -&gt;</span>
+<span class="fc" id="L154">                        new UserNotFoundException(</span>
+<span class="fc" id="L155">                                &quot;User not found with id &quot; + p.userId()</span>
+                        )
+                );
+    }
+
 
     public UserResponseDto convertToDto(User user) {
 
-<span class="fc" id="L130">        log.debug(</span>
+<span class="fc" id="L163">        log.debug(</span>
                 &quot;Converting User to UserResponseDto | userId={}&quot;,
-<span class="fc" id="L132">                user.getUserId()</span>
+<span class="fc" id="L165">                user.getUserId()</span>
         );
 
-<span class="fc" id="L135">        UserResponseDto userDto = new UserResponseDto();</span>
-<span class="fc" id="L136">        userDto.setUserId(user.getUserId());</span>
-<span class="fc" id="L137">        userDto.setName(user.getName());</span>
-<span class="fc" id="L138">        userDto.setEmail(user.getEmail());</span>
-<span class="fc" id="L139">        userDto.setDepartment(user.getDepartment());</span>
-<span class="fc" id="L140">        userDto.setGender(user.getGender());</span>
-<span class="fc" id="L141">        userDto.setRole(user.getRole());</span>
-<span class="fc" id="L142">        userDto.setCreatedAt(user.getCreatedAt());</span>
-<span class="fc" id="L143">        userDto.setUpdatedAt(user.getUpdatedAt());</span>
+<span class="fc" id="L168">        UserResponseDto userDto = new UserResponseDto();</span>
+<span class="fc" id="L169">        userDto.setUserId(user.getUserId());</span>
+<span class="fc" id="L170">        userDto.setName(user.getName());</span>
+<span class="fc" id="L171">        userDto.setEmail(user.getEmail());</span>
+<span class="fc" id="L172">        userDto.setDepartment(user.getDepartment());</span>
+<span class="fc" id="L173">        userDto.setGender(user.getGender());</span>
+<span class="fc" id="L174">        userDto.setRole(user.getRole());</span>
+<span class="fc" id="L175">        userDto.setCreatedAt(user.getCreatedAt());</span>
+<span class="fc" id="L176">        userDto.setUpdatedAt(user.getUpdatedAt());</span>
 
-<span class="fc" id="L145">        return userDto;</span>
+<span class="fc" id="L178">        return userDto;</span>
     }
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

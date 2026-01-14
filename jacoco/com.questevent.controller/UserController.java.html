@@ -4,7 +4,6 @@ import com.questevent.dto.UserResponseDto;
 import com.questevent.entity.User;
 import com.questevent.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -17,20 +16,19 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping(&quot;/api/users&quot;)
 @Tag(name = &quot;Users&quot;, description = &quot;User management APIs&quot;)
 public class UserController {
 
-<span class="fc" id="L27">    private static final Logger log = LoggerFactory.getLogger(UserController.class);</span>
+<span class="fc" id="L25">    private static final Logger log = LoggerFactory.getLogger(UserController.class);</span>
 
     private final UserService userService;
 
-<span class="fc" id="L31">    public UserController(UserService userService) {</span>
-<span class="fc" id="L32">        this.userService = userService;</span>
-<span class="fc" id="L33">    }</span>
+<span class="fc" id="L29">    public UserController(UserService userService) {</span>
+<span class="fc" id="L30">        this.userService = userService;</span>
+<span class="fc" id="L31">    }</span>
 
     @PreAuthorize(&quot;@rbac.isPlatformOwner(authentication)&quot;)
     @PostMapping
@@ -38,7 +36,7 @@ public class UserController {
             summary = &quot;Create a new user&quot;,
             description = &quot;Creates a new user (Platform Owner only)&quot;
     )
-    @ApiResponses({
+    @ApiResponses(value = {
             @ApiResponse(responseCode = &quot;201&quot;, description = &quot;User created successfully&quot;),
             @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Invalid input&quot;),
             @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Forbidden - Platform Owner only&quot;)
@@ -46,15 +44,15 @@ public class UserController {
     public ResponseEntity&lt;UserResponseDto&gt; createUser(
             @Valid @RequestBody User user) {
 
-<span class="fc" id="L49">        log.info(&quot;Received request to create a new user&quot;);</span>
+<span class="fc" id="L47">        log.info(&quot;Received request to create a new user&quot;);</span>
 
-<span class="fc" id="L51">        User savedUser = userService.addUser(user);</span>
+<span class="fc" id="L49">        User savedUser = userService.addUser(user);</span>
 
-<span class="fc" id="L53">        log.info(&quot;User created successfully with id={}&quot;, savedUser.getUserId());</span>
+<span class="fc" id="L51">        log.info(&quot;User created successfully with id={}&quot;, savedUser.getUserId());</span>
 
-<span class="fc" id="L55">        return ResponseEntity</span>
-<span class="fc" id="L56">                .status(HttpStatus.CREATED)</span>
-<span class="fc" id="L57">                .body(userService.convertToDto(savedUser));</span>
+<span class="fc" id="L53">        return ResponseEntity</span>
+<span class="fc" id="L54">                .status(HttpStatus.CREATED)</span>
+<span class="fc" id="L55">                .body(userService.convertToDto(savedUser));</span>
     }
 
     @PreAuthorize(&quot;@rbac.isPlatformOwner(authentication)&quot;)
@@ -64,58 +62,51 @@ public class UserController {
     @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Forbidden - Platform Owner only&quot;)
     public ResponseEntity&lt;List&lt;UserResponseDto&gt;&gt; getAllUsers() {
 
-<span class="fc" id="L67">        log.info(&quot;Fetching all users&quot;);</span>
+<span class="fc" id="L65">        log.info(&quot;Fetching all users&quot;);</span>
 
-<span class="fc" id="L69">        List&lt;UserResponseDto&gt; users = userService.getAllUsers()</span>
-<span class="fc" id="L70">                .stream()</span>
-<span class="fc" id="L71">                .map(userService::convertToDto)</span>
-<span class="fc" id="L72">                .toList();</span>
+<span class="fc" id="L67">        List&lt;UserResponseDto&gt; users = userService.getAllUsers()</span>
+<span class="fc" id="L68">                .stream()</span>
+<span class="fc" id="L69">                .map(userService::convertToDto)</span>
+<span class="fc" id="L70">                .toList();</span>
 
-<span class="fc" id="L74">        log.debug(&quot;Total users fetched: {}&quot;, users.size());</span>
+<span class="fc" id="L72">        log.debug(&quot;Total users fetched: {}&quot;, users.size());</span>
 
-<span class="fc" id="L76">        return ResponseEntity.ok(users);</span>
+<span class="fc" id="L74">        return ResponseEntity.ok(users);</span>
     }
 
-    @PreAuthorize(&quot;@rbac.canAccessUserProfile(authentication, #id)&quot;)
-    @GetMapping(&quot;/{id}&quot;)
-    @Operation(summary = &quot;Get user by ID&quot;, description = &quot;Retrieves a specific user by ID (Owner or self)&quot;)
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @GetMapping(&quot;/me&quot;)   // ✅ FIX: distinct path, no PathVariable
+    @Operation(summary = &quot;Get current user&quot;, description = &quot;Retrieves the logged-in user's profile&quot;)
     @ApiResponses(value = {
             @ApiResponse(responseCode = &quot;200&quot;, description = &quot;User found&quot;),
             @ApiResponse(responseCode = &quot;404&quot;, description = &quot;User not found&quot;),
-            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Forbidden - Access denied&quot;)
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Forbidden&quot;)
     })
-    public ResponseEntity&lt;UserResponseDto&gt; getUser(
-            @Parameter(description = &quot;User ID&quot;, required = true)
-            @PathVariable Long id) {
+    public ResponseEntity&lt;UserResponseDto&gt; getCurrentUser() {
 
-<span class="fc" id="L91">        log.info(&quot;Fetching user with id={}&quot;, id);</span>
+<span class="fc" id="L87">        log.info(&quot;Fetching current logged-in user&quot;);</span>
 
-<span class="fc" id="L93">        User user = userService.getUserById(id);</span>
+<span class="fc" id="L89">        User user = userService.getUser();</span>
 
-<span class="fc" id="L95">        log.debug(&quot;User fetched successfully with id={}&quot;, id);</span>
-
-<span class="fc" id="L97">        return ResponseEntity.ok(userService.convertToDto(user));</span>
+<span class="fc" id="L91">        return ResponseEntity.ok(userService.convertToDto(user));</span>
     }
 
-    @PreAuthorize(&quot;@rbac.canAccessUserProfile(authentication, #id)&quot;)
-    @PutMapping(&quot;/{id}&quot;)
-    @Operation(summary = &quot;Update user&quot;, description = &quot;Updates user information (Owner or self)&quot;)
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @PutMapping(&quot;/me&quot;)   // ✅ FIX: distinct path, no PathVariable
+    @Operation(summary = &quot;Update current user&quot;, description = &quot;Updates logged-in user's profile&quot;)
     @ApiResponses(value = {
             @ApiResponse(responseCode = &quot;200&quot;, description = &quot;User updated successfully&quot;),
             @ApiResponse(responseCode = &quot;404&quot;, description = &quot;User not found&quot;),
-            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Forbidden - Access denied&quot;)
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Forbidden&quot;)
     })
-    public ResponseEntity&lt;UserResponseDto&gt; updateUser(
-            @PathVariable Long id,
+    public ResponseEntity&lt;UserResponseDto&gt; updateCurrentUser(
             @Valid @RequestBody User user) {
 
-<span class="fc" id="L112">        log.info(&quot;Updating user with id={}&quot;, id);</span>
+<span class="fc" id="L105">        log.info(&quot;Updating current logged-in user&quot;);</span>
 
-<span class="fc" id="L114">        User updatedUser = userService.updateUser(id, user);</span>
+<span class="fc" id="L107">        User updatedUser = userService.updateUser(user);</span>
 
-<span class="fc" id="L116">        log.info(&quot;User updated successfully with id={}&quot;, id);</span>
-
-<span class="fc" id="L118">        return ResponseEntity.ok(userService.convertToDto(updatedUser));</span>
+<span class="fc" id="L109">        return ResponseEntity.ok(userService.convertToDto(updatedUser));</span>
     }
 
     @PreAuthorize(&quot;@rbac.isPlatformOwner(authentication)&quot;)
@@ -129,13 +120,13 @@ public class UserController {
     public ResponseEntity&lt;Void&gt; deleteUser(
             @PathVariable Long id) {
 
-<span class="fc" id="L132">        log.warn(&quot;Deleting user with id={}&quot;, id);</span>
+<span class="fc" id="L123">        log.warn(&quot;Deleting user with id={}&quot;, id);</span>
 
-<span class="fc" id="L134">        userService.deleteUser(id);</span>
+<span class="fc" id="L125">        userService.deleteUser(id);</span>
 
-<span class="fc" id="L136">        log.info(&quot;User deleted successfully with id={}&quot;, id);</span>
+<span class="fc" id="L127">        log.info(&quot;User deleted successfully with id={}&quot;, id);</span>
 
-<span class="fc" id="L138">        return ResponseEntity.noContent().build();</span>
+<span class="fc" id="L129">        return ResponseEntity.noContent().build();</span>
     }
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
