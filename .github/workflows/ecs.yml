@@ -10,7 +10,7 @@ env:
   AWS_REGION: ap-south-1
   ECR_REPOSITORY: questevent-backend
   ECS_CLUSTER: questevent-cluster
-  ECS_SERVICE: questevent-backend-task-service-w2yv7ryu
+  ECS_SERVICE: questevent-backend-task-service-zo8h4boq
   TASK_DEF_FILE: questevent-backend/ecs-task-def.json
 
 jobs:
