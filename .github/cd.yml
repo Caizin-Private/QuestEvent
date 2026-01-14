@@ -3,7 +3,7 @@ name: Beanstalk CD Deploy
 on:
   push:
     branches:
-      - "release-v8"
+      - release-v8
   workflow_dispatch:
 
 env:
