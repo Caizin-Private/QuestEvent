@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [ master ]
   push:
-    branches: [ "release-v*" ]
+    branches: [ release-v8 ]
 
 permissions:
   contents: write
