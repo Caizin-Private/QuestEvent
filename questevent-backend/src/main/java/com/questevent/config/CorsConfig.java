@@ -16,7 +16,7 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://localhost:8080",
-                "http://localhost:3000",
+                "http://localhost:3000","http://localhost:3003",
                 "http://d33m3dyxosqoxf.cloudfront.net",
                 "https://d33m3dyxosqoxf.cloudfront.net",
                 "http://questeventutest-env.eba-k6h77htc.us-west-2.elasticbeanstalk.com",

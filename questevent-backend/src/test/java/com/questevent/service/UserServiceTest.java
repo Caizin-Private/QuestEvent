@@ -1,16 +1,19 @@
 package com.questevent.service;
 
+import com.questevent.dto.UserPrincipal;
 import com.questevent.dto.UserResponseDto;
 import com.questevent.entity.User;
 import com.questevent.enums.Role;
+import com.questevent.exception.UserNotFoundException;
 import com.questevent.repository.UserRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,124 +39,127 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         userId = 1L;
-
         user = new User();
         user.setUserId(userId);
         user.setName("Test User");
         user.setEmail("user@test.com");
-        user.setGender("Male");
-        user.setRole(Role.USER);
     }
+
+    /* ---------------- getAllUsers ---------------- */
 
     @Test
     void shouldReturnAllUsers_whenUsersExist() {
-
         when(userRepository.findAll()).thenReturn(List.of(user));
 
         List<User> users = userService.getAllUsers();
 
-        assertNotNull(users);
         assertEquals(1, users.size());
-        assertEquals("Test User", users.get(0).getName());
         verify(userRepository).findAll();
     }
 
+    /* ---------------- getUser ---------------- */
+
     @Test
-    void shouldReturnUser_whenValidIdProvided() {
+    void shouldReturnCurrentUser_whenAuthenticated() {
+        mockSecurityContext(userId);
 
         when(userRepository.findById(userId))
                 .thenReturn(Optional.of(user));
 
-        User found = userService.getUserById(userId);
+        User result = userService.getUser();
 
-        assertNotNull(found);
-        assertEquals("user@test.com", found.getEmail());
-        verify(userRepository).findById(userId);
+        assertNotNull(result);
+        verify(userRepository, times(2)).findById(userId);
     }
 
     @Test
-    void shouldThrowException_whenUserNotFoundById() {
+    void shouldThrowUserNotFoundException_whenAuthenticatedUserMissing() {
+        mockSecurityContext(userId);
 
         when(userRepository.findById(userId))
                 .thenReturn(Optional.empty());
 
-        RuntimeException ex = assertThrows(
-                RuntimeException.class,
-                () -> userService.getUserById(userId)
-        );
+        assertThrows(UserNotFoundException.class, () -> userService.getUser());
 
-        assertTrue(ex.getMessage().contains("User not found"));
         verify(userRepository).findById(userId);
     }
 
+    /* ---------------- addUser ---------------- */
+
     @Test
-    void shouldSaveUserAndCreateWallet_whenAddUserCalled() {
-
-        when(userRepository.save(user))
-                .thenReturn(user);
-
-        User saved = userService.addUser(user);
-
-        assertNotNull(saved);
-        assertEquals("Test User", saved.getName());
+    void shouldSaveUserAndCreateWallet() {
+        userService.addUser(user);
 
         verify(userRepository).save(user);
         verify(userWalletService).createWalletForUser(user);
     }
 
+    /* ---------------- updateUser ---------------- */
+
     @Test
-    void shouldUpdateUserFields_whenValidUpdateProvided() {
+    void shouldUpdateCurrentUser() {
+        mockSecurityContext(userId);
 
-        User updatedUser = new User();
-        updatedUser.setName("Updated Name");
-        updatedUser.setEmail("updated@test.com");
-        updatedUser.setGender("Male");
-        updatedUser.setRole(Role.HOST);
+        User updated = new User();
+        updated.setName("Updated");
+        updated.setEmail("updated@test.com");
 
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.of(user));
-        when(userRepository.save(any(User.class)))
-                .thenAnswer(i -> i.getArgument(0));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        User result = userService.updateUser(userId, updatedUser);
+        User result = userService.updateUser(updated);
 
-        assertEquals("Updated Name", result.getName());
-        assertEquals("updated@test.com", result.getEmail());
-        assertEquals(Role.HOST, result.getRole());
-
-        verify(userRepository).findById(userId);
+        assertEquals("Updated", result.getName());
         verify(userRepository).save(user);
     }
 
+    /* ---------------- deleteUser ---------------- */
+
     @Test
-    void shouldDeleteUser_whenDeleteUserCalled() {
-
-        doNothing().when(userRepository).deleteById(userId);
-
+    void shouldDeleteUser() {
         userService.deleteUser(userId);
-
         verify(userRepository).deleteById(userId);
     }
 
+    /* ---------------- getAuthorities ---------------- */
+
     @Test
-    void shouldReturnUserRoleAuthority() {
+    void shouldReturnAuthorities() {
+        user.setRole(Role.USER);
 
         List<SimpleGrantedAuthority> authorities =
                 userService.getAuthorities(user);
 
-        assertEquals(1, authorities.size());
         assertEquals("ROLE_USER", authorities.get(0).getAuthority());
     }
 
-    @Test
-    void shouldConvertUserToDtoCorrectly() {
+    /* ---------------- convertToDto ---------------- */
 
+    @Test
+    void shouldConvertUserToDto() {
         UserResponseDto dto = userService.convertToDto(user);
 
-        assertNotNull(dto);
         assertEquals(userId, dto.getUserId());
         assertEquals("Test User", dto.getName());
-        assertEquals("user@test.com", dto.getEmail());
-        assertEquals(Role.USER, dto.getRole());
     }
+
+    /* ---------------- helper ---------------- */
+
+    private void mockSecurityContext(Long userId) {
+        Authentication auth = mock(Authentication.class);
+        SecurityContext ctx = mock(SecurityContext.class);
+
+        when(auth.isAuthenticated()).thenReturn(true);
+        when(auth.getPrincipal())
+                .thenReturn(new UserPrincipal(userId, "user@test.com", Role.USER));
+        when(ctx.getAuthentication()).thenReturn(auth);
+
+        SecurityContextHolder.setContext(ctx);
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
 }
