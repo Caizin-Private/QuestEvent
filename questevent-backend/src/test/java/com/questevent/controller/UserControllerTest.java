@@ -53,6 +53,7 @@ class UserControllerTest {
                 userController.createUser(user);
 
         assertEquals(201, response.getStatusCode().value());
+        assertNotNull(response.getBody());
         assertEquals("Test", response.getBody().getName());
     }
 
@@ -66,32 +67,35 @@ class UserControllerTest {
                 userController.getAllUsers();
 
         assertEquals(200, response.getStatusCode().value());
+        assertNotNull(response.getBody());
         assertEquals(1, response.getBody().size());
     }
 
     @Test
-    void getUserById_success() {
+    void getCurrentUser_success() {
 
-        Mockito.when(userService.getUserById(1L)).thenReturn(user);
+        Mockito.when(userService.getUser()).thenReturn(user);
         Mockito.when(userService.convertToDto(user)).thenReturn(dto);
 
         ResponseEntity<UserResponseDto> response =
-                userController.getUser(1L);
+                userController.getCurrentUser();
 
         assertEquals(200, response.getStatusCode().value());
+        assertNotNull(response.getBody());
         assertEquals("User@test.com", response.getBody().getEmail());
     }
 
     @Test
-    void updateUser_success() {
+    void updateCurrentUser_success() {
 
-        Mockito.when(userService.updateUser(1L, user)).thenReturn(user);
+        Mockito.when(userService.updateUser(user)).thenReturn(user);
         Mockito.when(userService.convertToDto(user)).thenReturn(dto);
 
         ResponseEntity<UserResponseDto> response =
-                userController.updateUser(1L, user);
+                userController.updateCurrentUser(user);
 
         assertEquals(200, response.getStatusCode().value());
+        assertNotNull(response.getBody());
         assertEquals("Test", response.getBody().getName());
     }
 
