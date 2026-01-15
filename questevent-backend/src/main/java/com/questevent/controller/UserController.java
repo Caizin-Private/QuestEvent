@@ -4,7 +4,6 @@ import com.questevent.dto.UserResponseDto;
 import com.questevent.entity.User;
 import com.questevent.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -17,7 +16,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/users")
@@ -76,44 +74,37 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
-    @PreAuthorize("@rbac.canAccessUserProfile(authentication, #id)")
-    @GetMapping("/{id}")
-    @Operation(summary = "Get user by ID", description = "Retrieves a specific user by ID (Owner or self)")
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/me")   // ✅ FIX: distinct path, no PathVariable
+    @Operation(summary = "Get current user", description = "Retrieves the logged-in user's profile")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User found"),
             @ApiResponse(responseCode = "404", description = "User not found"),
-            @ApiResponse(responseCode = "403", description = "Forbidden - Access denied")
+            @ApiResponse(responseCode = "403", description = "Forbidden")
     })
-    public ResponseEntity<UserResponseDto> getUser(
-            @Parameter(description = "User ID", required = true)
-            @PathVariable Long id) {
+    public ResponseEntity<UserResponseDto> getCurrentUser() {
 
-        log.info("Fetching user with id={}", id);
+        log.info("Fetching current logged-in user");
 
-        User user = userService.getUserById(id);
-
-        log.debug("User fetched successfully with id={}", id);
+        User user = userService.getUser();
 
         return ResponseEntity.ok(userService.convertToDto(user));
     }
 
-    @PreAuthorize("@rbac.canAccessUserProfile(authentication, #id)")
-    @PutMapping("/{id}")
-    @Operation(summary = "Update user", description = "Updates user information (Owner or self)")
+    @PreAuthorize("isAuthenticated()")
+    @PutMapping("/me")   // ✅ FIX: distinct path, no PathVariable
+    @Operation(summary = "Update current user", description = "Updates logged-in user's profile")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User updated successfully"),
             @ApiResponse(responseCode = "404", description = "User not found"),
-            @ApiResponse(responseCode = "403", description = "Forbidden - Access denied")
+            @ApiResponse(responseCode = "403", description = "Forbidden")
     })
-    public ResponseEntity<UserResponseDto> updateUser(
-            @PathVariable Long id,
+    public ResponseEntity<UserResponseDto> updateCurrentUser(
             @Valid @RequestBody User user) {
 
-        log.info("Updating user with id={}", id);
+        log.info("Updating current logged-in user");
 
-        User updatedUser = userService.updateUser(id, user);
-
-        log.info("User updated successfully with id={}", id);
+        User updatedUser = userService.updateUser(user);
 
         return ResponseEntity.ok(userService.convertToDto(updatedUser));
     }

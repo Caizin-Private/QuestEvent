@@ -1,11 +1,15 @@
 package com.questevent.service;
 
+import com.questevent.dto.UserPrincipal;
 import com.questevent.dto.UserResponseDto;
 import com.questevent.entity.User;
 import com.questevent.exception.UserNotFoundException;
 import com.questevent.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,15 +38,21 @@ public class UserService {
         return users;
     }
 
-    public User getUserById(Long id) {
+    public User getUser() {
+        User currentUser = getCurrentUser();
 
-        log.debug("Fetching user by id | userId={}", id);
+        if (currentUser == null) {
+            throw new UserNotFoundException("Authenticated user not found");
+        }
 
-        return userRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.warn("User not found | userId={}", id);
-                    return new UserNotFoundException("User not found with id " + id);
-                });
+        log.debug("Fetching user by id | userId={}", currentUser.getUserId());
+
+        return userRepository.findById(currentUser.getUserId())
+                .orElseThrow(() ->
+                        new UserNotFoundException(
+                                "User not found with id " + currentUser.getUserId()
+                        )
+                );
     }
 
     public User addUser(User user) {
@@ -64,17 +74,18 @@ public class UserService {
         return user;
     }
 
-    public User updateUser(Long id, User updatedUser) {
+    public User updateUser(User updatedUser) {
 
-        log.debug("Updating user | userId={}", id);
+        User user = getCurrentUser();
+        if (user == null) {
+            throw new UserNotFoundException("Authenticated user not found");
+        }
 
-        User user = getUserById(id);
-
+        log.debug("Updating user | userId={}", user.getUserId());
         user.setName(updatedUser.getName());
         user.setEmail(updatedUser.getEmail());
         user.setDepartment(updatedUser.getDepartment());
         user.setGender(updatedUser.getGender());
-        user.setRole(updatedUser.getRole());
 
         if(updatedUser.getWallet() != null) {
             updatedUser.getWallet().setUser(user);
@@ -124,6 +135,28 @@ public class UserService {
                 new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
         );
     }
+
+    private User getCurrentUser() {
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new UserNotFoundException("Unauthenticated user");
+        }
+
+        Object principal = authentication.getPrincipal();
+        if (!(principal instanceof UserPrincipal p)) {
+            throw new UserNotFoundException("Invalid authentication principal");
+        }
+
+        return userRepository.findById(p.userId())
+                .orElseThrow(() ->
+                        new UserNotFoundException(
+                                "User not found with id " + p.userId()
+                        )
+                );
+    }
+
 
     public UserResponseDto convertToDto(User user) {
 
