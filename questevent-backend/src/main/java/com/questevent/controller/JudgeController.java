@@ -153,6 +153,7 @@ public class JudgeController {
             @ApiResponse(
                     responseCode = "200",
                     description = "Submission reviewed successfully"
+
             ),
             @ApiResponse(
                     responseCode = "400",
