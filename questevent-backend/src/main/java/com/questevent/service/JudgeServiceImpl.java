@@ -1,6 +1,8 @@
 package com.questevent.service;
 
 import com.questevent.dto.JudgeSubmissionDTO;
+import com.questevent.dto.JudgeSubmissionDetailsDTO;
+import com.questevent.dto.JudgeSubmissionStatsDTO;
 import com.questevent.dto.UserPrincipal;
 import com.questevent.entity.*;
 import com.questevent.enums.CompletionStatus;
@@ -9,6 +11,7 @@ import com.questevent.enums.Role;
 import com.questevent.exception.*;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
+import com.questevent.repository.JudgeRepository;
 import com.questevent.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -100,6 +103,145 @@ public class JudgeServiceImpl implements JudgeService {
 
         return result;
     }
+
+    @Override
+    @Transactional
+    public void rejectSubmission(UUID submissionId,Authentication authentication) {
+
+        log.debug("Review submission requested | submissionId={}", submissionId);
+
+        ActivitySubmission submission = submissionRepository.findById(submissionId)
+                .orElseThrow(() -> {
+                    log.warn("Submission not found | submissionId={}", submissionId);
+                    return new SubmissionNotFoundException("Submission not found");
+                });
+
+        if (submission.getReviewStatus() != ReviewStatus.PENDING) {
+            throw new InvalidSubmissionStateException(
+                    "Submission already reviewed"
+            );
+        }
+
+
+        validateJudgeAssignment(submission, authentication);
+
+        submission.setReviewStatus(ReviewStatus.REJECTED);
+        submission.setReviewedAt(Instant.now());
+
+        ActivityRegistration registration =
+                submission.getActivityRegistration();
+
+        registration.setCompletionStatus(CompletionStatus.NOT_COMPLETED);
+        registrationRepository.save(registration);
+        submissionRepository.save(submission);
+    }
+
+
+    private void validateJudgeAssignment(
+            ActivitySubmission submission,
+            Authentication authentication
+    ) {
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+
+      Program program = submission.getActivityRegistration()
+                .getActivity()
+                .getProgram();
+
+        Judge judge = program.getJudge();
+        if (judge == null) {
+            throw new JudgeNotFoundException(
+                    "Judge not assigned to this program"
+            );
+        }
+
+        if (!judge.getUser().getUserId().equals(principal.userId())) {
+            throw new AccessDeniedException(
+                    "Only the assigned judge can reject this submission"
+            );
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public JudgeSubmissionDetailsDTO getSubmissionDetails(
+            UUID submissionId,
+            Authentication authentication
+    ) {
+        UserPrincipal principal =
+                (UserPrincipal) authentication.getPrincipal();
+
+        ActivitySubmission submission =
+                submissionRepository.findById(submissionId)
+                        .orElseThrow(() ->
+                                new SubmissionNotFoundException(
+                                        "Submission not found"
+                                )
+                        );
+
+        Program program = submission
+                .getActivityRegistration()
+                .getActivity()
+                .getProgram();
+
+        Judge judge = program.getJudge();
+        if (judge == null ||
+                !judge.getUser().getUserId().equals(principal.userId())) {
+            throw new AccessDeniedException(
+                    "Only the assigned judge can view this submission"
+            );
+        }
+
+        return new JudgeSubmissionDetailsDTO(
+                submission.getSubmissionId(),
+                submission.getActivityRegistration().getActivity().getActivityId(),
+                submission.getActivityRegistration().getActivity().getActivityName(),
+                submission.getActivityRegistration().getUser().getUserId(),
+                submission.getActivityRegistration().getUser().getEmail(),
+                submission.getSubmissionUrl(),
+                submission.getReviewStatus(),
+                submission.getReviewedAt()
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public JudgeSubmissionStatsDTO getSubmissionStats(
+            Authentication authentication
+    ) {
+        UserPrincipal principal =
+                (UserPrincipal) authentication.getPrincipal();
+
+        Long judgeUserId = principal.userId();
+
+        long pending =
+                submissionRepository
+                        .countByReviewStatusAndActivityRegistration_Activity_Program_Judge_User_UserId(
+                                ReviewStatus.PENDING,
+                                judgeUserId
+                        );
+
+        long approved =
+                submissionRepository
+                        .countByReviewStatusAndActivityRegistration_Activity_Program_Judge_User_UserId(
+                                ReviewStatus.APPROVED,
+                                judgeUserId
+                        );
+
+        long rejected =
+                submissionRepository
+                        .countByReviewStatusAndActivityRegistration_Activity_Program_Judge_User_UserId(
+                                ReviewStatus.REJECTED,
+                                judgeUserId
+                        );
+
+        return new JudgeSubmissionStatsDTO(
+                pending,
+                approved,
+                rejected
+        );
+    }
+
+
 
     @Override
     @Transactional(readOnly = true)
@@ -256,6 +398,7 @@ public class JudgeServiceImpl implements JudgeService {
                 rewardGems
         );
     }
+
     private JudgeSubmissionDTO mapToDto(ActivitySubmission submission) {
         ActivityRegistration reg = submission.getActivityRegistration();
 

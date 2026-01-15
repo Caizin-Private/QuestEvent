@@ -33,6 +33,8 @@ public class ActivitySubmission {
     private ActivityRegistration activityRegistration;
 
 
+
+
     @Enumerated(EnumType.STRING)
     @Column(name = "review_status", nullable = false)
     private ReviewStatus reviewStatus = ReviewStatus.PENDING;
@@ -49,6 +51,7 @@ public class ActivitySubmission {
 
     @Column(name = "reviewed_at")
     private Instant reviewedAt;
+
 
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(
