@@ -3,7 +3,7 @@ name: Beanstalk CD Deploy
 on:
   push:
     branches:
-      - release-v*
+      - release-*
       - master
   workflow_dispatch:
 
