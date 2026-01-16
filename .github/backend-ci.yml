@@ -2,9 +2,10 @@ name: Backend CI
 
 on:
   pull_request:
-    branches: [ master ]
-  push:
-    branches: [ release-v8 ]
+    branches:
+      - develop
+      - master
+      - 'release/**'
 
 permissions:
   contents: write
@@ -76,5 +77,3 @@ jobs:
         with:
           paths: questevent-backend/build/reports/jacoco/test/jacocoTestReport.xml
           token: ${{ secrets.GITHUB_TOKEN }}
-
-
