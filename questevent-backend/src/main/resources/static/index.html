@@ -33,7 +33,7 @@
         auth: {
             clientId: "8dfa7db6-153c-4137-91c7-4262f361c8c6",
             authority: "https://login.microsoftonline.com/f7b92ef4-239a-49ad-aff6-679ec33dea08",
-            redirectUri: "http://localhost:8080"
+            redirectUri: "https://questevent.online/login/oauth2/code/azure"
         },
         cache: {
             cacheLocation: "sessionStorage",
@@ -41,8 +41,10 @@
         }
     };
 
+    const API_SCOPE = "api://8dfa7db6-153c-4137-91c7-4262f361c8c6/access_as_user";
+
     const msalInstance = new msal.PublicClientApplication(msalConfig);
-    let idToken = null;
+    let accessToken = null;
 
     /* ================= ELEMENTS ================= */
 
@@ -64,7 +66,6 @@
 
         if (response?.account) {
             msalInstance.setActiveAccount(response.account);
-            idToken = response.idToken;
         }
 
         let account = msalInstance.getActiveAccount();
@@ -83,13 +84,12 @@
 
         showLoggedIn(account);
 
-        // Get ID token silently (cached)
         const tokenResponse = await msalInstance.acquireTokenSilent({
-            scopes: ["openid", "profile", "email"],
+            scopes: [API_SCOPE],
             account
         });
 
-        idToken = tokenResponse.idToken;
+        accessToken = tokenResponse.accessToken;
     }
 
     init();
@@ -111,33 +111,34 @@
 
     loginBtn.onclick = () => {
         msalInstance.loginRedirect({
-            scopes: ["openid", "profile", "email"]
+            scopes: [API_SCOPE]
         });
     };
 
     apiBtn.onclick = async () => {
         apiResult.innerHTML = "Calling API...";
 
-        const response = await fetch("/api/leaderboard/global", {
+        const response = await fetch("http://localhost:8080/api/leaderboard/global", {
             headers: {
-                "Authorization": `Bearer ${idToken}`
+                "Authorization": `Bearer ${accessToken}`
             }
         });
 
+        const text = await response.text();
+
         if (!response.ok) {
-            const text = await response.text();
             apiResult.innerHTML = `<pre>HTTP ${response.status}\n${text}</pre>`;
             return;
         }
 
-        const data = await response.json();
-        apiResult.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        apiResult.innerHTML = `<pre>${text}</pre>`;
     };
 
     logoutBtn.onclick = () => {
         msalInstance.logoutRedirect();
     };
 </script>
+
 
 </body>
 </html>
