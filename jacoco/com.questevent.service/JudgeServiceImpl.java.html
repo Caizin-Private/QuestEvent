@@ -11,23 +11,19 @@ import com.questevent.enums.Role;
 import com.questevent.exception.*;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
-import com.questevent.repository.JudgeRepository;
 import com.questevent.repository.UserRepository;
+import com.questevent.utils.SecurityUserResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-<span class="fc" id="L30">@Slf4j</span>
+<span class="fc" id="L26">@Slf4j</span>
 @Service
 @RequiredArgsConstructor
 public class JudgeServiceImpl implements JudgeService {
@@ -36,31 +32,16 @@ public class JudgeServiceImpl implements JudgeService {
     private final ActivityRegistrationRepository registrationRepository;
     private final ProgramWalletTransactionService programWalletTransactionService;
     private final UserRepository userRepository;
+    private final SecurityUserResolver securityUserResolver; // ✅ added
 
     private User resolveCurrentUser() {
+<span class="nc" id="L38">        UserPrincipal principal =</span>
+<span class="nc" id="L39">                securityUserResolver.getCurrentUserPrincipal();</span>
 
-        Authentication authentication =
-<span class="fc" id="L43">                SecurityContextHolder.getContext().getAuthentication();</span>
-
-<span class="pc bpc" id="L45" title="2 of 4 branches missed.">        if (authentication == null || !authentication.isAuthenticated()) {</span>
-<span class="nc" id="L46">            log.warn(&quot;Unauthorized access attempt to judge service&quot;);</span>
-<span class="nc" id="L47">            throw new UnauthorizedException(&quot;Unauthorized&quot;);</span>
-        }
-
-
-<span class="fc" id="L51">        Object principal = authentication.getPrincipal();</span>
-
-<span class="pc bpc" id="L53" title="1 of 2 branches missed.">        if (principal instanceof UserPrincipal p) {</span>
-<span class="fc" id="L54">            return userRepository.findById(p.userId())</span>
-<span class="fc" id="L55">                    .orElseThrow(() -&gt; {</span>
-<span class="nc" id="L56">                        log.error(&quot;Authenticated user not found | userId={}&quot;, p.userId());</span>
-<span class="nc" id="L57">                        return new UserNotFoundException(&quot;User not found&quot;);</span>
-                    });
-
-        }
-
-<span class="nc" id="L62">        log.warn(&quot;Invalid authentication principal in judge service&quot;);</span>
-<span class="nc" id="L63">        throw new UnauthorizedException(&quot;Invalid authentication&quot;);</span>
+<span class="nc" id="L41">        return userRepository.findById(principal.userId())</span>
+<span class="nc" id="L42">                .orElseThrow(() -&gt;</span>
+<span class="nc" id="L43">                        new UserNotFoundException(&quot;User not found&quot;)</span>
+                );
     }
 
     @Override
@@ -68,180 +49,160 @@ public class JudgeServiceImpl implements JudgeService {
     public List&lt;JudgeSubmissionDTO&gt; getPendingSubmissionsForJudge(
             Authentication ignored
     ) {
-<span class="fc" id="L71">        User user = resolveCurrentUser();</span>
+<span class="nc" id="L52">        User user = resolveCurrentUser();</span>
 
-<span class="fc" id="L73">        log.debug(</span>
-                &quot;Fetching pending submissions for judge | userId={} | role={}&quot;,
-<span class="fc" id="L75">                user.getUserId(),</span>
-<span class="fc" id="L76">                user.getRole()</span>
-        );
-
-        List&lt;JudgeSubmissionDTO&gt; result;
-
-<span class="pc bpc" id="L81" title="1 of 2 branches missed.">        if (user.getRole() == Role.OWNER) {</span>
-<span class="nc" id="L82">            result = submissionRepository</span>
-<span class="nc" id="L83">                    .findByReviewStatus(ReviewStatus.PENDING)</span>
-<span class="nc" id="L84">                    .stream()</span>
-<span class="nc" id="L85">                    .map(this::mapToDto)</span>
-<span class="nc" id="L86">                    .toList();</span>
-        } else {
-<span class="fc" id="L88">            result = submissionRepository</span>
-<span class="fc" id="L89">                    .findByReviewStatusAndActivityRegistrationActivityProgramJudgeUserUserId(</span>
-                            ReviewStatus.PENDING,
-<span class="fc" id="L91">                            user.getUserId()</span>
-                    )
-<span class="fc" id="L93">                    .stream()</span>
-<span class="fc" id="L94">                    .map(this::mapToDto)</span>
-<span class="fc" id="L95">                    .toList();</span>
+<span class="nc bnc" id="L54" title="All 2 branches missed.">        if (user.getRole() == Role.OWNER) {</span>
+<span class="nc" id="L55">            return submissionRepository</span>
+<span class="nc" id="L56">                    .findByReviewStatus(ReviewStatus.PENDING)</span>
+<span class="nc" id="L57">                    .stream()</span>
+<span class="nc" id="L58">                    .map(this::mapToDto)</span>
+<span class="nc" id="L59">                    .toList();</span>
         }
 
-<span class="fc" id="L98">        log.info(</span>
-                &quot;Pending submissions fetched | userId={} | count={}&quot;,
-<span class="fc" id="L100">                user.getUserId(),</span>
-<span class="fc" id="L101">                result.size()</span>
-        );
-
-<span class="fc" id="L104">        return result;</span>
+<span class="nc" id="L62">        return submissionRepository</span>
+<span class="nc" id="L63">                .findByReviewStatusAndActivityRegistrationActivityProgramJudgeUserUserId(</span>
+                        ReviewStatus.PENDING,
+<span class="nc" id="L65">                        user.getUserId()</span>
+                )
+<span class="nc" id="L67">                .stream()</span>
+<span class="nc" id="L68">                .map(this::mapToDto)</span>
+<span class="nc" id="L69">                .toList();</span>
     }
 
     @Override
     @Transactional
-    public void rejectSubmission(UUID submissionId,Authentication authentication) {
+    public void rejectSubmission(
+            UUID submissionId,
+            Authentication ignored
+    ) {
 
-<span class="nc" id="L111">        log.debug(&quot;Review submission requested | submissionId={}&quot;, submissionId);</span>
+<span class="nc" id="L79">        ActivitySubmission submission = submissionRepository.findById(submissionId)</span>
+<span class="nc" id="L80">                .orElseThrow(() -&gt;</span>
+<span class="nc" id="L81">                        new SubmissionNotFoundException(&quot;Submission not found&quot;)</span>
+                );
 
-<span class="nc" id="L113">        ActivitySubmission submission = submissionRepository.findById(submissionId)</span>
-<span class="nc" id="L114">                .orElseThrow(() -&gt; {</span>
-<span class="nc" id="L115">                    log.warn(&quot;Submission not found | submissionId={}&quot;, submissionId);</span>
-<span class="nc" id="L116">                    return new SubmissionNotFoundException(&quot;Submission not found&quot;);</span>
-                });
-
-<span class="nc bnc" id="L119" title="All 2 branches missed.">        if (submission.getReviewStatus() != ReviewStatus.PENDING) {</span>
-<span class="nc" id="L120">            throw new InvalidSubmissionStateException(</span>
+<span class="nc bnc" id="L84" title="All 2 branches missed.">        if (submission.getReviewStatus() != ReviewStatus.PENDING) {</span>
+<span class="nc" id="L85">            throw new InvalidSubmissionStateException(</span>
                     &quot;Submission already reviewed&quot;
             );
         }
 
+<span class="nc" id="L90">        validateJudgeAssignment(submission);</span>
 
-<span class="nc" id="L126">        validateJudgeAssignment(submission, authentication);</span>
+<span class="nc" id="L92">        submission.setReviewStatus(ReviewStatus.REJECTED);</span>
+<span class="nc" id="L93">        submission.setReviewedAt(Instant.now());</span>
 
-<span class="nc" id="L128">        submission.setReviewStatus(ReviewStatus.REJECTED);</span>
-<span class="nc" id="L129">        submission.setReviewedAt(Instant.now());</span>
+<span class="nc" id="L95">        ActivityRegistration registration =</span>
+<span class="nc" id="L96">                submission.getActivityRegistration();</span>
 
-<span class="nc" id="L131">        ActivityRegistration registration =</span>
-<span class="nc" id="L132">                submission.getActivityRegistration();</span>
+<span class="nc" id="L98">        registration.setCompletionStatus(CompletionStatus.NOT_COMPLETED);</span>
+<span class="nc" id="L99">        registrationRepository.save(registration);</span>
+<span class="nc" id="L100">        submissionRepository.save(submission);</span>
+<span class="nc" id="L101">    }</span>
 
-<span class="nc" id="L134">        registration.setCompletionStatus(CompletionStatus.NOT_COMPLETED);</span>
-<span class="nc" id="L135">        registrationRepository.save(registration);</span>
-<span class="nc" id="L136">        submissionRepository.save(submission);</span>
-<span class="nc" id="L137">    }</span>
+    private void validateJudgeAssignment(ActivitySubmission submission) {
 
+<span class="nc" id="L105">        UserPrincipal principal =</span>
+<span class="nc" id="L106">                securityUserResolver.getCurrentUserPrincipal();</span>
 
-    private void validateJudgeAssignment(
-            ActivitySubmission submission,
-            Authentication authentication
-    ) {
-<span class="nc" id="L144">        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();</span>
+<span class="nc" id="L108">        Program program = submission</span>
+<span class="nc" id="L109">                .getActivityRegistration()</span>
+<span class="nc" id="L110">                .getActivity()</span>
+<span class="nc" id="L111">                .getProgram();</span>
 
-<span class="nc" id="L146">      Program program = submission.getActivityRegistration()</span>
-<span class="nc" id="L147">                .getActivity()</span>
-<span class="nc" id="L148">                .getProgram();</span>
-
-<span class="nc" id="L150">        Judge judge = program.getJudge();</span>
-<span class="nc bnc" id="L151" title="All 2 branches missed.">        if (judge == null) {</span>
-<span class="nc" id="L152">            throw new JudgeNotFoundException(</span>
+<span class="nc" id="L113">        Judge judge = program.getJudge();</span>
+<span class="nc bnc" id="L114" title="All 2 branches missed.">        if (judge == null) {</span>
+<span class="nc" id="L115">            throw new JudgeNotFoundException(</span>
                     &quot;Judge not assigned to this program&quot;
             );
         }
 
-<span class="nc bnc" id="L157" title="All 2 branches missed.">        if (!judge.getUser().getUserId().equals(principal.userId())) {</span>
-<span class="nc" id="L158">            throw new AccessDeniedException(</span>
+<span class="nc bnc" id="L120" title="All 2 branches missed.">        if (!judge.getUser().getUserId().equals(principal.userId())) {</span>
+<span class="nc" id="L121">            throw new AccessDeniedException(</span>
                     &quot;Only the assigned judge can reject this submission&quot;
             );
         }
-<span class="nc" id="L162">    }</span>
+<span class="nc" id="L125">    }</span>
 
     @Override
     @Transactional(readOnly = true)
     public JudgeSubmissionDetailsDTO getSubmissionDetails(
             UUID submissionId,
-            Authentication authentication
+            Authentication ignored
     ) {
-<span class="nc" id="L170">        UserPrincipal principal =</span>
-<span class="nc" id="L171">                (UserPrincipal) authentication.getPrincipal();</span>
+<span class="nc" id="L133">        UserPrincipal principal =</span>
+<span class="nc" id="L134">                securityUserResolver.getCurrentUserPrincipal();</span>
 
-<span class="nc" id="L173">        ActivitySubmission submission =</span>
-<span class="nc" id="L174">                submissionRepository.findById(submissionId)</span>
-<span class="nc" id="L175">                        .orElseThrow(() -&gt;</span>
-<span class="nc" id="L176">                                new SubmissionNotFoundException(</span>
+<span class="nc" id="L136">        ActivitySubmission submission =</span>
+<span class="nc" id="L137">                submissionRepository.findById(submissionId)</span>
+<span class="nc" id="L138">                        .orElseThrow(() -&gt;</span>
+<span class="nc" id="L139">                                new SubmissionNotFoundException(</span>
                                         &quot;Submission not found&quot;
                                 )
                         );
 
-<span class="nc" id="L181">        Program program = submission</span>
-<span class="nc" id="L182">                .getActivityRegistration()</span>
-<span class="nc" id="L183">                .getActivity()</span>
-<span class="nc" id="L184">                .getProgram();</span>
+<span class="nc" id="L144">        Program program =</span>
+<span class="nc" id="L145">                submission.getActivityRegistration()</span>
+<span class="nc" id="L146">                        .getActivity()</span>
+<span class="nc" id="L147">                        .getProgram();</span>
 
-<span class="nc" id="L186">        Judge judge = program.getJudge();</span>
-<span class="nc bnc" id="L187" title="All 2 branches missed.">        if (judge == null ||</span>
-<span class="nc bnc" id="L188" title="All 2 branches missed.">                !judge.getUser().getUserId().equals(principal.userId())) {</span>
-<span class="nc" id="L189">            throw new AccessDeniedException(</span>
+<span class="nc" id="L149">        Judge judge = program.getJudge();</span>
+<span class="nc bnc" id="L150" title="All 2 branches missed.">        if (judge == null ||</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">                !judge.getUser().getUserId().equals(principal.userId())) {</span>
+<span class="nc" id="L152">            throw new AccessDeniedException(</span>
                     &quot;Only the assigned judge can view this submission&quot;
             );
         }
 
-<span class="nc" id="L194">        return new JudgeSubmissionDetailsDTO(</span>
-<span class="nc" id="L195">                submission.getSubmissionId(),</span>
-<span class="nc" id="L196">                submission.getActivityRegistration().getActivity().getActivityId(),</span>
-<span class="nc" id="L197">                submission.getActivityRegistration().getActivity().getActivityName(),</span>
-<span class="nc" id="L198">                submission.getActivityRegistration().getUser().getUserId(),</span>
-<span class="nc" id="L199">                submission.getActivityRegistration().getUser().getEmail(),</span>
-<span class="nc" id="L200">                submission.getSubmissionUrl(),</span>
-<span class="nc" id="L201">                submission.getReviewStatus(),</span>
-<span class="nc" id="L202">                submission.getReviewedAt()</span>
+<span class="nc" id="L157">        return new JudgeSubmissionDetailsDTO(</span>
+<span class="nc" id="L158">                submission.getSubmissionId(),</span>
+<span class="nc" id="L159">                submission.getActivityRegistration().getActivity().getActivityId(),</span>
+<span class="nc" id="L160">                submission.getActivityRegistration().getActivity().getActivityName(),</span>
+<span class="nc" id="L161">                submission.getActivityRegistration().getUser().getUserId(),</span>
+<span class="nc" id="L162">                submission.getActivityRegistration().getUser().getEmail(),</span>
+<span class="nc" id="L163">                submission.getSubmissionUrl(),</span>
+<span class="nc" id="L164">                submission.getReviewStatus(),</span>
+<span class="nc" id="L165">                submission.getReviewedAt()</span>
         );
     }
 
     @Override
     @Transactional(readOnly = true)
     public JudgeSubmissionStatsDTO getSubmissionStats(
-            Authentication authentication
+            Authentication ignored
     ) {
-<span class="nc" id="L211">        UserPrincipal principal =</span>
-<span class="nc" id="L212">                (UserPrincipal) authentication.getPrincipal();</span>
+<span class="nc" id="L174">        UserPrincipal principal =</span>
+<span class="nc" id="L175">                securityUserResolver.getCurrentUserPrincipal();</span>
 
-<span class="nc" id="L214">        Long judgeUserId = principal.userId();</span>
+<span class="nc" id="L177">        Long judgeUserId = principal.userId();</span>
 
-<span class="nc" id="L216">        long pending =</span>
+<span class="nc" id="L179">        long pending =</span>
                 submissionRepository
-<span class="nc" id="L218">                        .countByReviewStatusAndActivityRegistration_Activity_Program_Judge_User_UserId(</span>
+<span class="nc" id="L181">                        .countByReviewStatusAndActivityRegistration_Activity_Program_Judge_User_UserId(</span>
                                 ReviewStatus.PENDING,
                                 judgeUserId
                         );
 
-<span class="nc" id="L223">        long approved =</span>
+<span class="nc" id="L186">        long approved =</span>
                 submissionRepository
-<span class="nc" id="L225">                        .countByReviewStatusAndActivityRegistration_Activity_Program_Judge_User_UserId(</span>
+<span class="nc" id="L188">                        .countByReviewStatusAndActivityRegistration_Activity_Program_Judge_User_UserId(</span>
                                 ReviewStatus.APPROVED,
                                 judgeUserId
                         );
 
-<span class="nc" id="L230">        long rejected =</span>
+<span class="nc" id="L193">        long rejected =</span>
                 submissionRepository
-<span class="nc" id="L232">                        .countByReviewStatusAndActivityRegistration_Activity_Program_Judge_User_UserId(</span>
+<span class="nc" id="L195">                        .countByReviewStatusAndActivityRegistration_Activity_Program_Judge_User_UserId(</span>
                                 ReviewStatus.REJECTED,
                                 judgeUserId
                         );
 
-<span class="nc" id="L237">        return new JudgeSubmissionStatsDTO(</span>
+<span class="nc" id="L200">        return new JudgeSubmissionStatsDTO(</span>
                 pending,
                 approved,
                 rejected
         );
     }
-
-
 
     @Override
     @Transactional(readOnly = true)
@@ -249,44 +210,28 @@ public class JudgeServiceImpl implements JudgeService {
             UUID activityId,
             Authentication ignored
     ) {
-<span class="nc" id="L252">        User user = resolveCurrentUser();</span>
+<span class="nc" id="L213">        User user = resolveCurrentUser();</span>
 
-<span class="nc" id="L254">        log.debug(</span>
-                &quot;Fetching pending submissions for activity | activityId={} | userId={}&quot;,
-                activityId,
-<span class="nc" id="L257">                user.getUserId()</span>
-        );
-
-        List&lt;JudgeSubmissionDTO&gt; result;
-
-<span class="nc bnc" id="L262" title="All 2 branches missed.">        if (user.getRole() == Role.OWNER) {</span>
-<span class="nc" id="L263">            result = submissionRepository</span>
-<span class="nc" id="L264">                    .findByReviewStatusAndActivityRegistrationActivityActivityId(</span>
+<span class="nc bnc" id="L215" title="All 2 branches missed.">        if (user.getRole() == Role.OWNER) {</span>
+<span class="nc" id="L216">            return submissionRepository</span>
+<span class="nc" id="L217">                    .findByReviewStatusAndActivityRegistrationActivityActivityId(</span>
                             ReviewStatus.PENDING,
                             activityId
                     )
-<span class="nc" id="L268">                    .stream()</span>
-<span class="nc" id="L269">                    .map(this::mapToDto)</span>
-<span class="nc" id="L270">                    .toList();</span>
-        } else {
-<span class="nc" id="L272">            result = submissionRepository</span>
-<span class="nc" id="L273">                    .findByReviewStatusAndActivityRegistrationActivityActivityIdAndActivityRegistrationActivityProgramJudgeUserUserId(</span>
-                            ReviewStatus.PENDING,
-                            activityId,
-<span class="nc" id="L276">                            user.getUserId()</span>
-                    )
-<span class="nc" id="L278">                    .stream()</span>
-<span class="nc" id="L279">                    .map(this::mapToDto)</span>
-<span class="nc" id="L280">                    .toList();</span>
+<span class="nc" id="L221">                    .stream()</span>
+<span class="nc" id="L222">                    .map(this::mapToDto)</span>
+<span class="nc" id="L223">                    .toList();</span>
         }
 
-<span class="nc" id="L283">        log.info(</span>
-                &quot;Pending submissions fetched for activity | activityId={} | count={}&quot;,
-                activityId,
-<span class="nc" id="L286">                result.size()</span>
-        );
-
-<span class="nc" id="L289">        return result;</span>
+<span class="nc" id="L226">        return submissionRepository</span>
+<span class="nc" id="L227">                .findByReviewStatusAndActivityRegistrationActivityActivityIdAndActivityRegistrationActivityProgramJudgeUserUserId(</span>
+                        ReviewStatus.PENDING,
+                        activityId,
+<span class="nc" id="L230">                        user.getUserId()</span>
+                )
+<span class="nc" id="L232">                .stream()</span>
+<span class="nc" id="L233">                .map(this::mapToDto)</span>
+<span class="nc" id="L234">                .toList();</span>
     }
 
     @Override
@@ -294,127 +239,90 @@ public class JudgeServiceImpl implements JudgeService {
     public List&lt;JudgeSubmissionDTO&gt; getAllSubmissionsForJudge(
             Authentication ignored
     ) {
-<span class="nc" id="L297">        User user = resolveCurrentUser();</span>
+<span class="nc" id="L242">        User user = resolveCurrentUser();</span>
 
-<span class="nc" id="L299">        log.debug(</span>
-                &quot;Fetching all submissions for judge | userId={} | role={}&quot;,
-<span class="nc" id="L301">                user.getUserId(),</span>
-<span class="nc" id="L302">                user.getRole()</span>
-        );
-
-        List&lt;JudgeSubmissionDTO&gt; result;
-
-<span class="nc bnc" id="L307" title="All 2 branches missed.">        if (user.getRole() == Role.OWNER) {</span>
-<span class="nc" id="L308">            result = submissionRepository.findAll()</span>
-<span class="nc" id="L309">                    .stream()</span>
-<span class="nc" id="L310">                    .map(this::mapToDto)</span>
-<span class="nc" id="L311">                    .toList();</span>
-        } else {
-<span class="nc" id="L313">            result = submissionRepository</span>
-<span class="nc" id="L314">                    .findByActivityRegistrationActivityProgramJudgeUserUserId(</span>
-<span class="nc" id="L315">                            user.getUserId()</span>
-                    )
-<span class="nc" id="L317">                    .stream()</span>
-<span class="nc" id="L318">                    .map(this::mapToDto)</span>
-<span class="nc" id="L319">                    .toList();</span>
+<span class="nc bnc" id="L244" title="All 2 branches missed.">        if (user.getRole() == Role.OWNER) {</span>
+<span class="nc" id="L245">            return submissionRepository.findAll()</span>
+<span class="nc" id="L246">                    .stream()</span>
+<span class="nc" id="L247">                    .map(this::mapToDto)</span>
+<span class="nc" id="L248">                    .toList();</span>
         }
 
-<span class="nc" id="L322">        log.info(</span>
-                &quot;All submissions fetched | userId={} | count={}&quot;,
-<span class="nc" id="L324">                user.getUserId(),</span>
-<span class="nc" id="L325">                result.size()</span>
-        );
-
-<span class="nc" id="L328">        return result;</span>
+<span class="nc" id="L251">        return submissionRepository</span>
+<span class="nc" id="L252">                .findByActivityRegistrationActivityProgramJudgeUserUserId(</span>
+<span class="nc" id="L253">                        user.getUserId()</span>
+                )
+<span class="nc" id="L255">                .stream()</span>
+<span class="nc" id="L256">                .map(this::mapToDto)</span>
+<span class="nc" id="L257">                .toList();</span>
     }
 
     @Override
     @Transactional
     public void reviewSubmission(UUID submissionId) {
 
-<span class="fc" id="L335">        log.debug(&quot;Review submission requested | submissionId={}&quot;, submissionId);</span>
+<span class="fc" id="L264">        ActivitySubmission submission = submissionRepository.findById(submissionId)</span>
+<span class="fc" id="L265">                .orElseThrow(() -&gt;</span>
+<span class="fc" id="L266">                        new SubmissionNotFoundException(&quot;Submission not found&quot;)</span>
+                );
 
-<span class="fc" id="L337">        ActivitySubmission submission = submissionRepository.findById(submissionId)</span>
-<span class="fc" id="L338">                .orElseThrow(() -&gt; {</span>
-<span class="fc" id="L339">                    log.warn(&quot;Submission not found | submissionId={}&quot;, submissionId);</span>
-<span class="fc" id="L340">                    return new SubmissionNotFoundException(&quot;Submission not found&quot;);</span>
-                });
-
-<span class="fc bfc" id="L343" title="All 2 branches covered.">        if (submission.getReviewStatus() != ReviewStatus.PENDING) {</span>
-<span class="fc" id="L344">            log.warn(</span>
-                    &quot;Submission already reviewed | submissionId={} | status={}&quot;,
-                    submissionId,
-<span class="fc" id="L347">                    submission.getReviewStatus()</span>
+<span class="fc bfc" id="L269" title="All 2 branches covered.">        if (submission.getReviewStatus() != ReviewStatus.PENDING) {</span>
+<span class="fc" id="L270">            throw new InvalidOperationException(</span>
+                    &quot;Submission already reviewed&quot;
             );
-<span class="fc" id="L349">            throw new InvalidOperationException(&quot;Submission already reviewed&quot;);</span>
         }
 
-<span class="fc" id="L352">        ActivityRegistration registration = submission.getActivityRegistration();</span>
-<span class="fc" id="L353">        Activity activity = registration.getActivity();</span>
-<span class="fc" id="L354">        Program program = activity.getProgram();</span>
+<span class="fc" id="L275">        ActivityRegistration registration =</span>
+<span class="fc" id="L276">                submission.getActivityRegistration();</span>
 
-        // ✅ Judge already decided at program creation
-<span class="fc" id="L357">        Judge judge = program.getJudge();</span>
-<span class="fc bfc" id="L358" title="All 2 branches covered.">        if (judge == null) {</span>
-<span class="fc" id="L359">            log.error(</span>
-                    &quot;Judge not found for program | programId={}&quot;,
-<span class="fc" id="L361">                    program.getProgramId()</span>
-            );
-<span class="fc" id="L363">            throw new JudgeNotFoundException(</span>
+<span class="fc" id="L278">        Activity activity = registration.getActivity();</span>
+<span class="fc" id="L279">        Program program = activity.getProgram();</span>
+
+<span class="fc" id="L281">        Judge judge = program.getJudge();</span>
+<span class="fc bfc" id="L282" title="All 2 branches covered.">        if (judge == null) {</span>
+<span class="fc" id="L283">            throw new JudgeNotFoundException(</span>
                     &quot;Judge not assigned to this program&quot;
             );
         }
 
-
-<span class="fc" id="L369">        Long rewardGems = activity.getRewardGems();</span>
-<span class="pc bpc" id="L370" title="1 of 4 branches missed.">        if (rewardGems == null || rewardGems &lt; 0) {</span>
-<span class="fc" id="L371">            log.error(</span>
-                    &quot;Invalid reward gems | activityId={} | rewardGems={}&quot;,
-<span class="fc" id="L373">                    activity.getActivityId(),</span>
-                    rewardGems
-            );
-<span class="fc" id="L376">            throw new InvalidOperationException(&quot;Invalid reward gems&quot;);</span>
+<span class="fc" id="L288">        Long rewardGems = activity.getRewardGems();</span>
+<span class="pc bpc" id="L289" title="1 of 4 branches missed.">        if (rewardGems == null || rewardGems &lt; 0) {</span>
+<span class="fc" id="L290">            throw new InvalidOperationException(&quot;Invalid reward gems&quot;);</span>
         }
 
-<span class="fc" id="L379">        submission.setReviewedBy(judge);</span>
-<span class="fc" id="L380">        submission.setReviewStatus(ReviewStatus.APPROVED);</span>
-<span class="fc" id="L381">        submission.setAwardedGems(rewardGems);</span>
-<span class="fc" id="L382">        submission.setReviewedAt(Instant.now());</span>
-<span class="fc" id="L383">        submissionRepository.save(submission);</span>
+<span class="fc" id="L293">        submission.setReviewedBy(judge);</span>
+<span class="fc" id="L294">        submission.setReviewStatus(ReviewStatus.APPROVED);</span>
+<span class="fc" id="L295">        submission.setAwardedGems(rewardGems);</span>
+<span class="fc" id="L296">        submission.setReviewedAt(Instant.now());</span>
+<span class="fc" id="L297">        submissionRepository.save(submission);</span>
 
-<span class="fc" id="L385">        registration.setCompletionStatus(CompletionStatus.COMPLETED);</span>
-<span class="fc" id="L386">        registrationRepository.save(registration);</span>
+<span class="fc" id="L299">        registration.setCompletionStatus(CompletionStatus.COMPLETED);</span>
+<span class="fc" id="L300">        registrationRepository.save(registration);</span>
 
-<span class="fc" id="L388">        programWalletTransactionService.creditGems(</span>
-<span class="fc" id="L389">                registration.getUser(),</span>
+<span class="fc" id="L302">        programWalletTransactionService.creditGems(</span>
+<span class="fc" id="L303">                registration.getUser(),</span>
                 program,
                 rewardGems
         );
-<span class="fc" id="L393">        log.info(</span>
-                &quot;Submission reviewed &amp; approved | submissionId={} | programId={} | userId={} | awardedGems={}&quot;,
-                submissionId,
-<span class="fc" id="L396">                program.getProgramId(),</span>
-<span class="fc" id="L397">                registration.getUser().getUserId(),</span>
-                rewardGems
-        );
-<span class="fc" id="L400">    }</span>
+<span class="fc" id="L307">    }</span>
 
     private JudgeSubmissionDTO mapToDto(ActivitySubmission submission) {
-<span class="fc" id="L403">        ActivityRegistration reg = submission.getActivityRegistration();</span>
 
-<span class="fc" id="L405">        return new JudgeSubmissionDTO(</span>
-<span class="fc" id="L406">                submission.getSubmissionId(),</span>
-<span class="fc" id="L407">                reg.getActivity().getActivityId(),</span>
-<span class="fc" id="L408">                reg.getActivity().getActivityName(),</span>
-<span class="fc" id="L409">                reg.getUser().getUserId(),</span>
-<span class="fc" id="L410">                reg.getUser().getName(),</span>
-<span class="fc" id="L411">                submission.getSubmissionUrl(),</span>
-<span class="fc" id="L412">                submission.getAwardedGems(),</span>
-<span class="fc" id="L413">                submission.getSubmittedAt(),</span>
-<span class="fc" id="L414">                submission.getReviewedAt(),</span>
-<span class="fc" id="L415">                submission.getReviewStatus()</span>
+<span class="nc" id="L311">        ActivityRegistration reg =</span>
+<span class="nc" id="L312">                submission.getActivityRegistration();</span>
+
+<span class="nc" id="L314">        return new JudgeSubmissionDTO(</span>
+<span class="nc" id="L315">                submission.getSubmissionId(),</span>
+<span class="nc" id="L316">                reg.getActivity().getActivityId(),</span>
+<span class="nc" id="L317">                reg.getActivity().getActivityName(),</span>
+<span class="nc" id="L318">                reg.getUser().getUserId(),</span>
+<span class="nc" id="L319">                reg.getUser().getName(),</span>
+<span class="nc" id="L320">                submission.getSubmissionUrl(),</span>
+<span class="nc" id="L321">                submission.getAwardedGems(),</span>
+<span class="nc" id="L322">                submission.getSubmittedAt(),</span>
+<span class="nc" id="L323">                submission.getReviewedAt(),</span>
+<span class="nc" id="L324">                submission.getReviewStatus()</span>
         );
     }
 }
-
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

@@ -6,29 +6,25 @@ import com.questevent.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+<span class="fc" id="L21">@Slf4j</span>
 @RestController
 @RequestMapping(&quot;/api/users&quot;)
-@Tag(name = &quot;Users&quot;, description = &quot;User management APIs&quot;)
+@RequiredArgsConstructor
 public class UserController {
 
-<span class="fc" id="L25">    private static final Logger log = LoggerFactory.getLogger(UserController.class);</span>
-
     private final UserService userService;
-
-<span class="fc" id="L29">    public UserController(UserService userService) {</span>
-<span class="fc" id="L30">        this.userService = userService;</span>
-<span class="fc" id="L31">    }</span>
 
     @PreAuthorize(&quot;@rbac.isPlatformOwner(authentication)&quot;)
     @PostMapping
@@ -39,94 +35,122 @@ public class UserController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = &quot;201&quot;, description = &quot;User created successfully&quot;),
             @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Invalid input&quot;),
-            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Forbidden - Platform Owner only&quot;)
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Forbidden - Platform Owner only&quot;),
+            @ApiResponse(responseCode = &quot;500&quot;, description = &quot;Internal server error&quot;)
     })
     public ResponseEntity&lt;UserResponseDto&gt; createUser(
             @Valid @RequestBody User user) {
 
-<span class="fc" id="L47">        log.info(&quot;Received request to create a new user&quot;);</span>
+<span class="fc" id="L44">        log.info(&quot;Creating new user&quot;);</span>
 
-<span class="fc" id="L49">        User savedUser = userService.addUser(user);</span>
+<span class="fc" id="L46">        User savedUser = userService.addUser(user);</span>
 
-<span class="fc" id="L51">        log.info(&quot;User created successfully with id={}&quot;, savedUser.getUserId());</span>
-
-<span class="fc" id="L53">        return ResponseEntity</span>
-<span class="fc" id="L54">                .status(HttpStatus.CREATED)</span>
-<span class="fc" id="L55">                .body(userService.convertToDto(savedUser));</span>
+<span class="fc" id="L48">        return ResponseEntity</span>
+<span class="fc" id="L49">                .status(HttpStatus.CREATED)</span>
+<span class="fc" id="L50">                .body(userService.convertToDto(savedUser));</span>
     }
 
     @PreAuthorize(&quot;@rbac.isPlatformOwner(authentication)&quot;)
     @GetMapping
-    @Operation(summary = &quot;Get all users&quot;, description = &quot;Retrieves a list of all users (Platform Owner only)&quot;)
-    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Successfully retrieved list of users&quot;)
-    @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Forbidden - Platform Owner only&quot;)
+    @Operation(
+            summary = &quot;Get all users&quot;,
+            description = &quot;Fetch all users (Platform Owner only)&quot;
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Users fetched successfully&quot;),
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Forbidden - Platform Owner only&quot;),
+            @ApiResponse(responseCode = &quot;500&quot;, description = &quot;Internal server error&quot;)
+    })
     public ResponseEntity&lt;List&lt;UserResponseDto&gt;&gt; getAllUsers() {
 
-<span class="fc" id="L65">        log.info(&quot;Fetching all users&quot;);</span>
-
-<span class="fc" id="L67">        List&lt;UserResponseDto&gt; users = userService.getAllUsers()</span>
-<span class="fc" id="L68">                .stream()</span>
-<span class="fc" id="L69">                .map(userService::convertToDto)</span>
-<span class="fc" id="L70">                .toList();</span>
-
-<span class="fc" id="L72">        log.debug(&quot;Total users fetched: {}&quot;, users.size());</span>
-
-<span class="fc" id="L74">        return ResponseEntity.ok(users);</span>
-    }
-
-    @PreAuthorize(&quot;isAuthenticated()&quot;)
-    @GetMapping(&quot;/me&quot;)   // ✅ FIX: distinct path, no PathVariable
-    @Operation(summary = &quot;Get current user&quot;, description = &quot;Retrieves the logged-in user's profile&quot;)
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;User found&quot;),
-            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;User not found&quot;),
-            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Forbidden&quot;)
-    })
-    public ResponseEntity&lt;UserResponseDto&gt; getCurrentUser() {
-
-<span class="fc" id="L87">        log.info(&quot;Fetching current logged-in user&quot;);</span>
-
-<span class="fc" id="L89">        User user = userService.getUser();</span>
-
-<span class="fc" id="L91">        return ResponseEntity.ok(userService.convertToDto(user));</span>
-    }
-
-    @PreAuthorize(&quot;isAuthenticated()&quot;)
-    @PutMapping(&quot;/me&quot;)   // ✅ FIX: distinct path, no PathVariable
-    @Operation(summary = &quot;Update current user&quot;, description = &quot;Updates logged-in user's profile&quot;)
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;User updated successfully&quot;),
-            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;User not found&quot;),
-            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Forbidden&quot;)
-    })
-    public ResponseEntity&lt;UserResponseDto&gt; updateCurrentUser(
-            @Valid @RequestBody User user) {
-
-<span class="fc" id="L105">        log.info(&quot;Updating current logged-in user&quot;);</span>
-
-<span class="fc" id="L107">        User updatedUser = userService.updateUser(user);</span>
-
-<span class="fc" id="L109">        return ResponseEntity.ok(userService.convertToDto(updatedUser));</span>
+<span class="fc" id="L66">        return ResponseEntity.ok(</span>
+<span class="fc" id="L67">                userService.getAllUsers()</span>
+        );
     }
 
     @PreAuthorize(&quot;@rbac.isPlatformOwner(authentication)&quot;)
-    @DeleteMapping(&quot;/{id}&quot;)
-    @Operation(summary = &quot;Delete user&quot;, description = &quot;Deletes a user (Platform Owner only)&quot;)
+    @GetMapping(&quot;/{userId}&quot;)
+    @Operation(
+            summary = &quot;Get user by ID&quot;,
+            description = &quot;Fetch a user by user ID (Platform Owner only)&quot;
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;User fetched successfully&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;User not found&quot;),
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Forbidden - Platform Owner only&quot;),
+            @ApiResponse(responseCode = &quot;500&quot;, description = &quot;Internal server error&quot;)
+    })
+    public ResponseEntity&lt;UserResponseDto&gt; getUserById(
+            @PathVariable Long userId) {
+
+<span class="fc" id="L86">        return ResponseEntity.ok(</span>
+<span class="fc" id="L87">                userService.getUserById(userId)</span>
+        );
+    }
+
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @GetMapping(&quot;/me&quot;)
+    @Operation(
+            summary = &quot;Get current user&quot;,
+            description = &quot;Fetch details of the currently logged-in user&quot;
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Current user fetched successfully&quot;),
+            @ApiResponse(responseCode = &quot;401&quot;, description = &quot;Unauthorized&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;User not found&quot;),
+            @ApiResponse(responseCode = &quot;500&quot;, description = &quot;Internal server error&quot;)
+    })
+    public ResponseEntity&lt;UserResponseDto&gt; getCurrentUser(@AuthenticationPrincipal Jwt jwt) {
+
+<span class="fc" id="L105">        return ResponseEntity.ok(</span>
+<span class="fc" id="L106">                userService.getCurrentUser(jwt)</span>
+        );
+    }
+
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @PutMapping(&quot;/me&quot;)
+    @Operation(
+            summary = &quot;Update current user&quot;,
+            description = &quot;Updates logged-in user's profile&quot;
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;User updated successfully&quot;),
+            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Invalid input&quot;),
+            @ApiResponse(responseCode = &quot;401&quot;, description = &quot;Unauthorized&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;User not found&quot;),
+            @ApiResponse(responseCode = &quot;500&quot;, description = &quot;Internal server error&quot;)
+    })
+    public ResponseEntity&lt;UserResponseDto&gt; updateCurrentUser(
+            @Valid @RequestBody User user,
+            @AuthenticationPrincipal Jwt jwt) {
+
+<span class="fc" id="L127">        log.info(&quot;Updating current logged-in user&quot;);</span>
+
+<span class="fc" id="L129">        User updatedUser = userService.updateCurrentUser(jwt, user);</span>
+
+<span class="fc" id="L131">        return ResponseEntity.ok(</span>
+<span class="fc" id="L132">                userService.convertToDto(updatedUser)</span>
+        );
+    }
+
+    @PreAuthorize(&quot;@rbac.isPlatformOwner(authentication)&quot;)
+    @DeleteMapping(&quot;/{userId}&quot;)
+    @Operation(
+            summary = &quot;Delete user by ID&quot;,
+            description = &quot;Deletes a user by user ID (Platform Owner only)&quot;
+    )
     @ApiResponses(value = {
             @ApiResponse(responseCode = &quot;204&quot;, description = &quot;User deleted successfully&quot;),
             @ApiResponse(responseCode = &quot;404&quot;, description = &quot;User not found&quot;),
-            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Forbidden - Platform Owner only&quot;)
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Forbidden - Platform Owner only&quot;),
+            @ApiResponse(responseCode = &quot;500&quot;, description = &quot;Internal server error&quot;)
     })
     public ResponseEntity&lt;Void&gt; deleteUser(
-            @PathVariable Long id) {
+            @PathVariable Long userId) {
 
-<span class="fc" id="L123">        log.warn(&quot;Deleting user with id={}&quot;, id);</span>
+<span class="fc" id="L151">        userService.deleteUser(userId);</span>
 
-<span class="fc" id="L125">        userService.deleteUser(id);</span>
-
-<span class="fc" id="L127">        log.info(&quot;User deleted successfully with id={}&quot;, id);</span>
-
-<span class="fc" id="L129">        return ResponseEntity.noContent().build();</span>
+<span class="fc" id="L153">        return ResponseEntity.noContent().build();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

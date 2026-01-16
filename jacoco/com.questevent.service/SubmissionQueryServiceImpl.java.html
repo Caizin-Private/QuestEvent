@@ -7,11 +7,11 @@ import com.questevent.dto.UserSubmissionSummaryDTO;
 import com.questevent.entity.ActivitySubmission;
 import com.questevent.exception.ResourceNotFoundException;
 import com.questevent.repository.ActivitySubmissionRepository;
-import org.springframework.transaction.annotation.Transactional;
+import com.questevent.utils.SecurityUserResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,15 +23,15 @@ import java.util.UUID;
 public class SubmissionQueryServiceImpl implements SubmissionQueryService {
 
     private final ActivitySubmissionRepository submissionRepository;
-
+    private final SecurityUserResolver securityUserResolver; // ✅ added
 
     @Override
     public SubmissionDetailsResponseDTO getSubmissionDetails(
             UUID activityId,
-            Authentication authentication
+            Authentication ignored
     ) {
 <span class="nc" id="L33">        UserPrincipal principal =</span>
-<span class="nc" id="L34">                (UserPrincipal) authentication.getPrincipal();</span>
+<span class="nc" id="L34">                securityUserResolver.getCurrentUserPrincipal();</span>
 
 <span class="nc" id="L36">        ActivitySubmission submission =</span>
                 submissionRepository
@@ -58,10 +58,10 @@ public class SubmissionQueryServiceImpl implements SubmissionQueryService {
     @Override
     @Transactional(readOnly = true)
     public List&lt;UserSubmissionSummaryDTO&gt; getMySubmissions(
-            Authentication authentication
+            Authentication ignored
     ) {
 <span class="nc" id="L63">        UserPrincipal principal =</span>
-<span class="nc" id="L64">                (UserPrincipal) authentication.getPrincipal();</span>
+<span class="nc" id="L64">                securityUserResolver.getCurrentUserPrincipal();</span>
 
 <span class="nc" id="L66">        List&lt;ActivitySubmission&gt; submissions =</span>
                 submissionRepository
@@ -85,48 +85,35 @@ public class SubmissionQueryServiceImpl implements SubmissionQueryService {
 <span class="nc" id="L85">                .toList();</span>
     }
 
-
     @Override
     @Transactional(readOnly = true)
     public SubmissionStatusResponseDTO getSubmissionStatus(UUID activityId) {
 
-        Authentication authentication =
-<span class="nc" id="L94">                SecurityContextHolder.getContext().getAuthentication();</span>
+<span class="nc" id="L92">        UserPrincipal principal =</span>
+<span class="nc" id="L93">                securityUserResolver.getCurrentUserPrincipal();</span>
 
-<span class="nc bnc" id="L96" title="All 4 branches missed.">        if (authentication == null || !authentication.isAuthenticated()</span>
-<span class="nc bnc" id="L97" title="All 2 branches missed.">                || !(authentication.getPrincipal() instanceof UserPrincipal principal)) {</span>
+<span class="nc" id="L95">        Long userId = principal.userId();</span>
 
-<span class="nc" id="L99">            log.warn(&quot;Authenticated user not found while fetching submission status&quot;);</span>
-<span class="nc" id="L100">            throw new ResourceNotFoundException(&quot;User not found&quot;);</span>
-        }
-
-<span class="nc" id="L103">        Long userId = principal.userId();</span>
-
-<span class="nc" id="L105">        log.debug(</span>
+<span class="nc" id="L97">        log.debug(</span>
                 &quot;Fetching submission status | activityId={} | userId={}&quot;,
                 activityId,
                 userId
         );
 
-<span class="nc" id="L111">        ActivitySubmission submission =</span>
+<span class="nc" id="L103">        ActivitySubmission submission =</span>
                 submissionRepository
-<span class="nc" id="L113">                        .findUserSubmissionForActivity(activityId, userId)</span>
-<span class="nc" id="L114">                        .orElseThrow(() -&gt; {</span>
-<span class="nc" id="L115">                            log.warn(</span>
-                                    &quot;Submission not found | activityId={} | userId={}&quot;,
-                                    activityId,
-                                    userId
-                            );
-<span class="nc" id="L120">                            return new ResourceNotFoundException(&quot;Submission not found&quot;);</span>
-                        });
+<span class="nc" id="L105">                        .findUserSubmissionForActivity(activityId, userId)</span>
+<span class="nc" id="L106">                        .orElseThrow(() -&gt;</span>
+<span class="nc" id="L107">                                new ResourceNotFoundException(&quot;Submission not found&quot;)</span>
+                        );
 
-<span class="nc" id="L123">        return SubmissionStatusResponseDTO.builder()</span>
-<span class="nc" id="L124">                .submissionId(submission.getSubmissionId())</span>
-<span class="nc" id="L125">                .reviewStatus(submission.getReviewStatus())</span>
-<span class="nc" id="L126">                .submittedAt(submission.getSubmittedAt())</span>
-<span class="nc" id="L127">                .reviewedAt(submission.getReviewedAt())</span>
-<span class="nc" id="L128">                .awardedGems(submission.getAwardedGems())</span>
-<span class="nc" id="L129">                .build();</span>
+<span class="nc" id="L110">        return SubmissionStatusResponseDTO.builder()</span>
+<span class="nc" id="L111">                .submissionId(submission.getSubmissionId())</span>
+<span class="nc" id="L112">                .reviewStatus(submission.getReviewStatus())</span>
+<span class="nc" id="L113">                .submittedAt(submission.getSubmittedAt())</span>
+<span class="nc" id="L114">                .reviewedAt(submission.getReviewedAt())</span>
+<span class="nc" id="L115">                .awardedGems(submission.getAwardedGems())</span>
+<span class="nc" id="L116">                .build();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

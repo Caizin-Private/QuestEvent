@@ -19,7 +19,7 @@ import java.util.Map;
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleUserNotFound(UserNotFoundException ex) {
-<span class="nc" id="L22">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
+<span class="fc" id="L22">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
     }
 
     @ExceptionHandler(UnauthorizedException.class)
@@ -140,13 +140,13 @@ import java.util.Map;
 
     private ResponseEntity&lt;ApiErrorDTO&gt; build(HttpStatus status, String message) {
 
-<span class="nc" id="L143">        ApiErrorDTO error = new ApiErrorDTO(</span>
-<span class="nc" id="L144">                status.value(),</span>
+<span class="fc" id="L143">        ApiErrorDTO error = new ApiErrorDTO(</span>
+<span class="fc" id="L144">                status.value(),</span>
                 message,
-<span class="nc" id="L146">                Instant.now()</span>
+<span class="fc" id="L146">                Instant.now()</span>
         );
 
-<span class="nc" id="L149">        return ResponseEntity.status(status).body(error);</span>
+<span class="fc" id="L149">        return ResponseEntity.status(status).body(error);</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
