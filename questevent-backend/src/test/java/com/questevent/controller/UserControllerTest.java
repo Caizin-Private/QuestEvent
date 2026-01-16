@@ -1,112 +1,160 @@
-//package com.questevent.controller;
-//
-//import com.questevent.dto.UserResponseDto;
-//import com.questevent.entity.User;
-//import com.questevent.service.UserService;
-//import org.junit.jupiter.api.BeforeEach;
-//import org.junit.jupiter.api.Test;
-//import org.junit.jupiter.api.extension.ExtendWith;
-//import org.mockito.InjectMocks;
-//import org.mockito.Mock;
-//import org.mockito.Mockito;
-//import org.mockito.junit.jupiter.MockitoExtension;
-//import org.springframework.http.ResponseEntity;
-//
-//import java.util.List;
-//
-//import static org.junit.jupiter.api.Assertions.*;
-//
-//@ExtendWith(MockitoExtension.class)
-//class UserControllerTest {
-//
-//    @Mock
-//    private UserService userService;
-//
-//    @InjectMocks
-//    private UserController userController;
-//
-//    private User user;
-//    private UserResponseDto dto;
-//
-//    @BeforeEach
-//    void setup() {
-//        user = new User();
-//        user.setUserId(1L);
-//        user.setName("Test");
-//        user.setEmail("User@test.com");
-//        user.setGender("Male");
-//
-//        dto = new UserResponseDto();
-//        dto.setUserId(1L);
-//        dto.setName("Test");
-//        dto.setEmail("User@test.com");
-//        dto.setGender("Male");
-//    }
-//
-//    @Test
-//    void createUser_success() {
-//
-//        Mockito.when(userService.addUser(user)).thenReturn(user);
-//        Mockito.when(userService.convertToDto(user)).thenReturn(dto);
-//
-//        ResponseEntity<UserResponseDto> response =
-//                userController.createUser(user);
-//
-//        assertEquals(201, response.getStatusCode().value());
-//        assertNotNull(response.getBody());
-//        assertEquals("Test", response.getBody().getName());
-//    }
-//
-//    @Test
-//    void getAllUsers_success() {
-//
-//        Mockito.when(userService.getAllUsers()).thenReturn(List.of(user));
-//        Mockito.when(userService.convertToDto(user)).thenReturn(dto);
-//
-//        ResponseEntity<List<UserResponseDto>> response =
-//                userController.getAllUsers();
-//
-//        assertEquals(200, response.getStatusCode().value());
-//        assertNotNull(response.getBody());
-//        assertEquals(1, response.getBody().size());
-//    }
-//
-//    @Test
-//    void getCurrentUser_success() {
-//
-//        Mockito.when(userService.getUser()).thenReturn(user);
-//        Mockito.when(userService.convertToDto(user)).thenReturn(dto);
-//
-//        ResponseEntity<UserResponseDto> response =
-//                userController.getCurrentUser();
-//
-//        assertEquals(200, response.getStatusCode().value());
-//        assertNotNull(response.getBody());
-//        assertEquals("User@test.com", response.getBody().getEmail());
-//    }
-//
-//    @Test
-//    void updateCurrentUser_success() {
-//
-//        Mockito.when(userService.updateUser(user)).thenReturn(user);
-//        Mockito.when(userService.convertToDto(user)).thenReturn(dto);
-//
-//        ResponseEntity<UserResponseDto> response =
-//                userController.updateCurrentUser(user);
-//
-//        assertEquals(200, response.getStatusCode().value());
-//        assertNotNull(response.getBody());
-//        assertEquals("Test", response.getBody().getName());
-//    }
-//
-//    @Test
-//    void deleteUser_success() {
-//
-//        Mockito.doNothing().when(userService).deleteUser(1L);
-//
-//        ResponseEntity<Void> response =
-//                userController.deleteUser(1L);
-//
-//        assertEquals(204, response.getStatusCode().value());
-//    }
-//}
+package com.questevent.controller;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.questevent.config.SecurityConfig;
+import com.questevent.dto.UserResponseDto;
+import com.questevent.entity.User;
+import com.questevent.rbac.RbacService;
+import com.questevent.service.UserService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@WebMvcTest(UserController.class)
+@Import(SecurityConfig.class)
+@AutoConfigureMockMvc(addFilters = true)
+class UserControllerTest {
+
+    @Autowired
+    MockMvc mockMvc;
+
+    @Autowired
+    ObjectMapper objectMapper;
+
+    @MockBean
+    UserService userService;
+
+    @MockBean
+    RbacService rbac;
+
+    @MockBean
+    JwtDecoder jwtDecoder;
+
+    Jwt jwtToken() {
+        return new Jwt(
+                "token",
+                Instant.now(),
+                Instant.now().plusSeconds(3600),
+                Map.of("alg", "none"),
+                Map.of("email", "test@company.com")
+        );
+    }
+
+    User user() {
+        User u = new User();
+        u.setName("Test");
+        u.setEmail("test@company.com");
+        return u;
+    }
+
+    UserResponseDto dto() {
+        return new UserResponseDto(
+                1L,
+                "Test",
+                "test@company.com",
+                null,
+                null,
+                null
+        );
+    }
+
+    @BeforeEach
+    void setup() {
+        when(jwtDecoder.decode(anyString())).thenReturn(jwtToken());
+    }
+
+    @Test
+    void getCurrentUser_success() throws Exception {
+        when(userService.getCurrentUser(any(Jwt.class))).thenReturn(dto());
+
+        mockMvc.perform(
+                        get("/api/users/me")
+                                .with(jwt().jwt(jwtToken()))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("test@company.com"));
+    }
+
+    @Test
+    void updateCurrentUser_success() throws Exception {
+        when(userService.updateCurrentUser(any(), any())).thenReturn(user());
+        when(userService.convertToDto(any())).thenReturn(dto());
+
+        mockMvc.perform(
+                        put("/api/users/me")
+                                .with(jwt().jwt(jwtToken()))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(user()))
+                )
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void getAllUsers_success() throws Exception {
+        when(rbac.isPlatformOwner(any())).thenReturn(true);
+        when(userService.getAllUsers()).thenReturn(List.of(dto()));
+
+        mockMvc.perform(
+                        get("/api/users")
+                                .with(jwt().jwt(jwtToken()))
+                )
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void getUserById_success() throws Exception {
+        when(rbac.isPlatformOwner(any())).thenReturn(true);
+        when(userService.getUserById(1L)).thenReturn(dto());
+
+        mockMvc.perform(
+                        get("/api/users/1")
+                                .with(jwt().jwt(jwtToken()))
+                )
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void createUser_success() throws Exception {
+        when(rbac.isPlatformOwner(any())).thenReturn(true);
+        when(userService.addUser(any())).thenReturn(user());
+        when(userService.convertToDto(any())).thenReturn(dto());
+
+        mockMvc.perform(
+                        post("/api/users")
+                                .with(jwt().jwt(jwtToken()))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(user()))
+                )
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void deleteUser_success() throws Exception {
+        when(rbac.isPlatformOwner(any())).thenReturn(true);
+
+        mockMvc.perform(
+                        delete("/api/users/1")
+                                .with(jwt().jwt(jwtToken()))
+                )
+                .andExpect(status().isNoContent());
+    }
+}

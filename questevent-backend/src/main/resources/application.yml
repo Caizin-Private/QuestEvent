@@ -22,23 +22,6 @@ spring:
 
   security:
     oauth2:
-#      client:
-#        registration:
-#          azure:
-#            client-id: 8dfa7db6-153c-4137-91c7-4262f361c8c6
-#            client-secret: -yY8Q~AIhV2MN-wsdkxzWvciLQC0hG8LRH5flaID
-#            scope:
-#              - openid
-#              - profile
-#              - email
-#
-#            redirect-uri: "https://questevent.online/login/oauth2/code/azure"
-#            client-name: Azure AD
-#
-#        provider:
-#          azure:
-#            issuer-uri: https://login.microsoftonline.com/f7b92ef4-239a-49ad-aff6-679ec33dea08/v2.0
-
       resourceserver:
         jwt:
           issuer-uri: https://login.microsoftonline.com/f7b92ef4-239a-49ad-aff6-679ec33dea08/v2.0
@@ -51,18 +34,9 @@ server:
       protocol-header: X-Forwarded-Proto
       remote-ip-header: X-Forwarded-For
 
-#jwt:
-#  secret: eIRIbe+6tVbbcYtOOR/PUpK6YQQ9Psm3YIa+BnBdhG0=
-#  access-expiration: 900000
-#  refresh-expiration: 1800000
-
 logging:
   level:
-    root: INFO
-    com.questevent: DEBUG
-    org.springframework.security: INFO
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.web: DEBUG
 
   file:
     path: logs

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>QuestEvent</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #user-section { display: none; }
+        pre { background: #f4f4f4; padding: 10px; }
+    </style>
+</head>
+<body>
+
+<h1>QuestEvent</h1>
+
+<div id="login-section">
+    <button id="loginBtn">Login with Microsoft</button>
+</div>
+
+<div id="user-section">
+    <h2>Welcome, <span id="user-name"></span>!</h2>
+    <button id="apiBtn">Test API</button>
+    <button id="logoutBtn">Logout</button>
+    <div id="api-result"></div>
+</div>
+
+<script src="/js/msal-browser.min.js"></script>
+
+<script>
+    /* ================= CONFIG ================= */
+
+    const msalConfig = {
+        auth: {
+            clientId: "8dfa7db6-153c-4137-91c7-4262f361c8c6",
+            authority: "https://login.microsoftonline.com/f7b92ef4-239a-49ad-aff6-679ec33dea08",
+            redirectUri: "http://localhost:8080"
+        },
+        cache: {
+            cacheLocation: "sessionStorage",
+            storeAuthStateInCookie: false
+        }
+    };
+
+    const msalInstance = new msal.PublicClientApplication(msalConfig);
+    let idToken = null;
+
+    /* ================= ELEMENTS ================= */
+
+    const loginSection = document.getElementById("login-section");
+    const userSection  = document.getElementById("user-section");
+    const userName     = document.getElementById("user-name");
+    const apiResult    = document.getElementById("api-result");
+
+    const loginBtn  = document.getElementById("loginBtn");
+    const apiBtn    = document.getElementById("apiBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    /* ================= INIT ================= */
+
+    async function init() {
+        await msalInstance.initialize();
+
+        const response = await msalInstance.handleRedirectPromise();
+
+        if (response?.account) {
+            msalInstance.setActiveAccount(response.account);
+            idToken = response.idToken;
+        }
+
+        let account = msalInstance.getActiveAccount();
+        if (!account) {
+            const accounts = msalInstance.getAllAccounts();
+            if (accounts.length > 0) {
+                account = accounts[0];
+                msalInstance.setActiveAccount(account);
+            }
+        }
+
+        if (!account) {
+            showLoggedOut();
+            return;
+        }
+
+        showLoggedIn(account);
+
+        // Get ID token silently (cached)
+        const tokenResponse = await msalInstance.acquireTokenSilent({
+            scopes: ["openid", "profile", "email"],
+            account
+        });
+
+        idToken = tokenResponse.idToken;
+    }
+
+    init();
+
+    /* ================= UI ================= */
+
+    function showLoggedIn(account) {
+        loginSection.style.display = "none";
+        userSection.style.display = "block";
+        userName.textContent = account.name;
+    }
+
+    function showLoggedOut() {
+        loginSection.style.display = "block";
+        userSection.style.display = "none";
+    }
+
+    /* ================= ACTIONS ================= */
+
+    loginBtn.onclick = () => {
+        msalInstance.loginRedirect({
+            scopes: ["openid", "profile", "email"]
+        });
+    };
+
+    apiBtn.onclick = async () => {
+        apiResult.innerHTML = "Calling API...";
+
+        const response = await fetch("/api/leaderboard/global", {
+            headers: {
+                "Authorization": `Bearer ${idToken}`
+            }
+        });
+
+        if (!response.ok) {
+            const text = await response.text();
+            apiResult.innerHTML = `<pre>HTTP ${response.status}\n${text}</pre>`;
+            return;
+        }
+
+        const data = await response.json();
+        apiResult.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+    };
+
+    logoutBtn.onclick = () => {
+        msalInstance.logoutRedirect();
+    };
+</script>
+
+</body>
+</html>

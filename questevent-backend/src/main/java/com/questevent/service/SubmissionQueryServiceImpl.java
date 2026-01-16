@@ -7,11 +7,11 @@ import com.questevent.dto.UserSubmissionSummaryDTO;
 import com.questevent.entity.ActivitySubmission;
 import com.questevent.exception.ResourceNotFoundException;
 import com.questevent.repository.ActivitySubmissionRepository;
-import org.springframework.transaction.annotation.Transactional;
+import com.questevent.utils.SecurityUserResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,15 +23,15 @@ import java.util.UUID;
 public class SubmissionQueryServiceImpl implements SubmissionQueryService {
 
     private final ActivitySubmissionRepository submissionRepository;
-
+    private final SecurityUserResolver securityUserResolver; // ✅ added
 
     @Override
     public SubmissionDetailsResponseDTO getSubmissionDetails(
             UUID activityId,
-            Authentication authentication
+            Authentication ignored
     ) {
         UserPrincipal principal =
-                (UserPrincipal) authentication.getPrincipal();
+                securityUserResolver.getCurrentUserPrincipal();
 
         ActivitySubmission submission =
                 submissionRepository
@@ -58,10 +58,10 @@ public class SubmissionQueryServiceImpl implements SubmissionQueryService {
     @Override
     @Transactional(readOnly = true)
     public List<UserSubmissionSummaryDTO> getMySubmissions(
-            Authentication authentication
+            Authentication ignored
     ) {
         UserPrincipal principal =
-                (UserPrincipal) authentication.getPrincipal();
+                securityUserResolver.getCurrentUserPrincipal();
 
         List<ActivitySubmission> submissions =
                 submissionRepository
@@ -85,20 +85,12 @@ public class SubmissionQueryServiceImpl implements SubmissionQueryService {
                 .toList();
     }
 
-
     @Override
     @Transactional(readOnly = true)
     public SubmissionStatusResponseDTO getSubmissionStatus(UUID activityId) {
 
-        Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || !authentication.isAuthenticated()
-                || !(authentication.getPrincipal() instanceof UserPrincipal principal)) {
-
-            log.warn("Authenticated user not found while fetching submission status");
-            throw new ResourceNotFoundException("User not found");
-        }
+        UserPrincipal principal =
+                securityUserResolver.getCurrentUserPrincipal();
 
         Long userId = principal.userId();
 
@@ -111,14 +103,9 @@ public class SubmissionQueryServiceImpl implements SubmissionQueryService {
         ActivitySubmission submission =
                 submissionRepository
                         .findUserSubmissionForActivity(activityId, userId)
-                        .orElseThrow(() -> {
-                            log.warn(
-                                    "Submission not found | activityId={} | userId={}",
-                                    activityId,
-                                    userId
-                            );
-                            return new ResourceNotFoundException("Submission not found");
-                        });
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException("Submission not found")
+                        );
 
         return SubmissionStatusResponseDTO.builder()
                 .submissionId(submission.getSubmissionId())

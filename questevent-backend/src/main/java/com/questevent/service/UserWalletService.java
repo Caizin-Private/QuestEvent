@@ -1,6 +1,5 @@
 package com.questevent.service;
 
-import com.questevent.dto.UserPrincipal;
 import com.questevent.dto.UserWalletBalanceDTO;
 import com.questevent.entity.User;
 import com.questevent.entity.UserWallet;
@@ -14,11 +13,9 @@ import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
-
-import static org.springframework.http.HttpStatus.NOT_FOUND;
-import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @Service
 @Slf4j
@@ -63,28 +60,30 @@ public class UserWalletService {
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
 
-        if (authentication == null || !authentication.isAuthenticated()) {
-            log.warn("Unauthenticated request to fetch wallet balance");
-            throw new UnauthorizedException("Unauthenticated request");
+        if (!(authentication instanceof JwtAuthenticationToken jwtAuth)) {
+            log.warn("Invalid authentication type: {}", authentication);
+            throw new UnauthorizedException("Invalid authentication");
         }
 
-        Object principal = authentication.getPrincipal();
-        if (!(principal instanceof UserPrincipal p)) {
-            log.warn("Invalid authentication principal: {}", principal);
-            throw new UnauthorizedException("Invalid authentication principal");
+        Jwt jwt = jwtAuth.getToken();
+
+        String email = jwt.getClaimAsString("email");
+        if (email == null || email.isBlank()) {
+            log.warn("JWT does not contain email claim");
+            throw new UnauthorizedException("Invalid token");
         }
 
-        log.debug("Fetching wallet balance for userId={}", p.userId());
+        log.debug("Fetching wallet balance for email={}", email);
 
-        User user = userRepository.findById(p.userId())
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> {
-                    log.warn("User not found for userId={}", p.userId());
+                    log.warn("User not found for email={}", email);
                     return new UserNotFoundException("User not found");
                 });
 
         UserWallet wallet = user.getWallet();
         if (wallet == null) {
-            log.warn("Wallet not found for userId={}", p.userId());
+            log.warn("Wallet not found for userId={}", user.getUserId());
             throw new WalletNotFoundException("Wallet not found");
         }
 
@@ -96,7 +95,7 @@ public class UserWalletService {
 
         log.info(
                 "Wallet balance fetched for userId={}, walletId={}, gems={}",
-                p.userId(),
+                user.getUserId(),
                 wallet.getWalletId(),
                 wallet.getGems()
         );
