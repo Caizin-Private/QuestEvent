@@ -1,19 +1,25 @@
 package com.questevent.dto;
 
+import com.questevent.entity.User;
 import com.questevent.enums.Department;
 import com.questevent.enums.Role;
-import lombok.Data;
 
-import java.time.Instant;
-
-@Data
-public class UserResponseDto {
-    private Long userId;
-    private String name;
-    private String email;
-    private Department department;
-    private String gender;
-    private Role role;
-    private Instant createdAt;
-    private Instant updatedAt;
+public record UserResponseDto(
+        Long userId,
+        String name,
+        String email,
+        Department department,
+        String gender,
+        Role role
+) {
+    public static UserResponseDto from(User user) {
+        return new UserResponseDto(
+                user.getUserId(),
+                user.getName(),
+                user.getEmail(),
+                user.getDepartment(),
+                user.getGender(),
+                user.getRole()
+        );
+    }
 }
