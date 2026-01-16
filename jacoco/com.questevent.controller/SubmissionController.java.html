@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SubmissionController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">questevent-backend</a> &gt; <a href="index.source.html" class="el_package">com.questevent.controller</a> &gt; <span class="el_source">SubmissionController.java</span></div><h1>SubmissionController.java</h1><pre class="source lang-java linenums">package com.questevent.controller;
 
 import com.questevent.dto.ActivitySubmissionRequestDTO;
+import com.questevent.dto.SubmissionDetailsResponseDTO;
+import com.questevent.dto.SubmissionStatusResponseDTO;
 import com.questevent.service.SubmissionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -12,7 +14,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import com.questevent.service.SubmissionQueryService;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping(&quot;/api/submissions&quot;)
@@ -20,10 +26,11 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = &quot;Activity Submissions&quot;, description = &quot;APIs for submitting activity work&quot;)
 public class SubmissionController {
 
-<span class="fc" id="L23">    private static final Logger log =</span>
-<span class="fc" id="L24">            LoggerFactory.getLogger(SubmissionController.class);</span>
+<span class="fc" id="L29">    private static final Logger log =</span>
+<span class="fc" id="L30">            LoggerFactory.getLogger(SubmissionController.class);</span>
 
     private final SubmissionService submissionService;
+    private final SubmissionQueryService submissionQueryService;
 
     @PreAuthorize(&quot;@rbac.canSubmitActivity(authentication, #request.activityId, authentication.principal.userId)&quot;)
     @PostMapping
@@ -40,20 +47,98 @@ public class SubmissionController {
     public ResponseEntity&lt;String&gt; submitActivity(
             @RequestBody ActivitySubmissionRequestDTO request
     ) {
-<span class="fc" id="L43">        log.info(&quot;Submitting activity work: activityId={}, userId={}&quot;,</span>
-<span class="fc" id="L44">                request.getActivityId());</span>
+<span class="fc" id="L50">        log.info(&quot;Submitting activity work: activityId={}, userId={}&quot;,</span>
+<span class="fc" id="L51">                request.getActivityId());</span>
 
-<span class="fc" id="L46">        submissionService.submitActivity(</span>
-<span class="fc" id="L47">                request.getActivityId(),</span>
-<span class="fc" id="L48">                request.getSubmissionUrl()</span>
+<span class="fc" id="L53">        submissionService.submitActivity(</span>
+<span class="fc" id="L54">                request.getActivityId(),</span>
+<span class="fc" id="L55">                request.getSubmissionUrl()</span>
         );
 
-<span class="fc" id="L51">        log.info(&quot;Activity submission successful: activityId={}, userId={}&quot;,</span>
-<span class="fc" id="L52">                request.getActivityId());</span>
+<span class="fc" id="L58">        log.info(&quot;Activity submission successful: activityId={}, userId={}&quot;,</span>
+<span class="fc" id="L59">                request.getActivityId());</span>
 
-<span class="fc" id="L54">        return ResponseEntity</span>
-<span class="fc" id="L55">                .status(HttpStatus.CREATED)</span>
-<span class="fc" id="L56">                .body(&quot;Submission successful&quot;);</span>
+<span class="fc" id="L61">        return ResponseEntity</span>
+<span class="fc" id="L62">                .status(HttpStatus.CREATED)</span>
+<span class="fc" id="L63">                .body(&quot;Submission successful&quot;);</span>
     }
+
+
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @GetMapping(&quot;/{activityId}/status&quot;)
+    @Operation(
+            summary = &quot;Get submission status&quot;,
+            description = &quot;Allows a user to check whether their submission is pending, approved, or rejected&quot;
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Submission status fetched&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Submission not found&quot;),
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied&quot;)
+    })
+    public ResponseEntity&lt;SubmissionStatusResponseDTO&gt; getSubmissionStatus(
+            @PathVariable UUID activityId
+    ) {
+<span class="nc" id="L81">        log.info(&quot;Fetching submission status: activityId={}&quot;, activityId);</span>
+
+<span class="nc" id="L83">        return ResponseEntity.ok(</span>
+<span class="nc" id="L84">                submissionQueryService.getSubmissionStatus(activityId)</span>
+        );
+    }
+
+
+
+
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @GetMapping(&quot;/{activityId}/submission-details&quot;)
+    @Operation(
+            summary = &quot;Get submission details&quot;,
+            description = &quot;Fetch the logged-in user's submission details for an activity&quot;
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Submission details fetched successfully&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Submission not found&quot;),
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied&quot;)
+    })
+    public ResponseEntity&lt;SubmissionDetailsResponseDTO&gt; getSubmissionDetails(
+            @PathVariable UUID activityId,
+            Authentication authentication
+    ) {
+<span class="nc" id="L106">        log.info(&quot;Fetching submission details | activityId={}&quot;, activityId);</span>
+
+<span class="nc" id="L108">        SubmissionDetailsResponseDTO response =</span>
+<span class="nc" id="L109">                submissionQueryService.getSubmissionDetails(activityId, authentication);</span>
+
+<span class="nc" id="L111">        return ResponseEntity.ok(response);</span>
+    }
+
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @PatchMapping(&quot;/{activityId}/resubmit&quot;)
+    @Operation(
+            summary = &quot;Resubmit activity work&quot;,
+            description = &quot;Allows a user to resubmit work for a rejected submission&quot;
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Resubmission successful&quot;),
+            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Submission is not rejected&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Submission not found&quot;),
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied&quot;)
+    })
+    public ResponseEntity&lt;String&gt; resubmitActivity(
+            @PathVariable UUID activityId,
+            @RequestBody ActivitySubmissionRequestDTO request,
+            Authentication authentication
+    ) {
+<span class="nc" id="L131">        log.info(&quot;Resubmitting activity | activityId={}&quot;, activityId);</span>
+
+<span class="nc" id="L133">        submissionService.resubmitActivity(</span>
+                activityId,
+<span class="nc" id="L135">                request.getSubmissionUrl(),</span>
+                authentication
+        );
+
+<span class="nc" id="L139">        return ResponseEntity.ok(&quot;Resubmission Successful&quot;);</span>
+    }
+
+
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

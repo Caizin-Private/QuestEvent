@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JudgeController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">questevent-backend</a> &gt; <a href="index.source.html" class="el_package">com.questevent.controller</a> &gt; <span class="el_source">JudgeController.java</span></div><h1>JudgeController.java</h1><pre class="source lang-java linenums">package com.questevent.controller;
 
 import com.questevent.dto.JudgeSubmissionDTO;
+import com.questevent.dto.JudgeSubmissionDetailsDTO;
+import com.questevent.dto.JudgeSubmissionStatsDTO;
 import com.questevent.service.JudgeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -9,7 +11,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -32,8 +33,8 @@ import java.util.UUID;
 )
 public class JudgeController {
 
-<span class="fc" id="L35">    private static final Logger log =</span>
-<span class="fc" id="L36">            LoggerFactory.getLogger(JudgeController.class);</span>
+<span class="fc" id="L36">    private static final Logger log =</span>
+<span class="fc" id="L37">            LoggerFactory.getLogger(JudgeController.class);</span>
 
     private final JudgeService judgeService;
 
@@ -61,13 +62,13 @@ public class JudgeController {
     public ResponseEntity&lt;List&lt;JudgeSubmissionDTO&gt;&gt; getPendingSubmissions(
             Authentication authentication
     ) {
-<span class="fc" id="L64">        log.info(&quot;Fetching pending submissions for judge&quot;);</span>
+<span class="fc" id="L65">        log.info(&quot;Fetching pending submissions for judge&quot;);</span>
 
-<span class="fc" id="L66">        List&lt;JudgeSubmissionDTO&gt; submissions =</span>
-<span class="fc" id="L67">                judgeService.getPendingSubmissionsForJudge(authentication);</span>
+<span class="fc" id="L67">        List&lt;JudgeSubmissionDTO&gt; submissions =</span>
+<span class="fc" id="L68">                judgeService.getPendingSubmissionsForJudge(authentication);</span>
 
-<span class="fc" id="L69">        log.debug(&quot;Pending submissions fetched, count={}&quot;, submissions.size());</span>
-<span class="fc" id="L70">        return ResponseEntity.ok(submissions);</span>
+<span class="fc" id="L70">        log.debug(&quot;Pending submissions fetched, count={}&quot;, submissions.size());</span>
+<span class="fc" id="L71">        return ResponseEntity.ok(submissions);</span>
     }
 
     @Operation(
@@ -101,15 +102,15 @@ public class JudgeController {
             @PathVariable UUID activityId,
             Authentication authentication
     ) {
-<span class="fc" id="L104">        log.info(&quot;Fetching pending submissions for activityId={}&quot;, activityId);</span>
+<span class="fc" id="L105">        log.info(&quot;Fetching pending submissions for activityId={}&quot;, activityId);</span>
 
-<span class="fc" id="L106">        List&lt;JudgeSubmissionDTO&gt; submissions =</span>
-<span class="fc" id="L107">                judgeService.getPendingSubmissionsForActivity(activityId, authentication);</span>
+<span class="fc" id="L107">        List&lt;JudgeSubmissionDTO&gt; submissions =</span>
+<span class="fc" id="L108">                judgeService.getPendingSubmissionsForActivity(activityId, authentication);</span>
 
-<span class="fc" id="L109">        log.debug(&quot;Pending submissions fetched for activityId={}, count={}&quot;,</span>
-<span class="fc" id="L110">                activityId, submissions.size());</span>
+<span class="fc" id="L110">        log.debug(&quot;Pending submissions fetched for activityId={}, count={}&quot;,</span>
+<span class="fc" id="L111">                activityId, submissions.size());</span>
 
-<span class="fc" id="L112">        return ResponseEntity.ok(submissions);</span>
+<span class="fc" id="L113">        return ResponseEntity.ok(submissions);</span>
     }
 
     @Operation(
@@ -133,13 +134,13 @@ public class JudgeController {
     public ResponseEntity&lt;List&lt;JudgeSubmissionDTO&gt;&gt; getAllSubmissions(
             Authentication authentication
     ) {
-<span class="fc" id="L136">        log.info(&quot;Fetching all submissions for judge&quot;);</span>
+<span class="fc" id="L137">        log.info(&quot;Fetching all submissions for judge&quot;);</span>
 
-<span class="fc" id="L138">        List&lt;JudgeSubmissionDTO&gt; submissions =</span>
-<span class="fc" id="L139">                judgeService.getAllSubmissionsForJudge(authentication);</span>
+<span class="fc" id="L139">        List&lt;JudgeSubmissionDTO&gt; submissions =</span>
+<span class="fc" id="L140">                judgeService.getAllSubmissionsForJudge(authentication);</span>
 
-<span class="fc" id="L141">        log.debug(&quot;All submissions fetched, count={}&quot;, submissions.size());</span>
-<span class="fc" id="L142">        return ResponseEntity.ok(submissions);</span>
+<span class="fc" id="L142">        log.debug(&quot;All submissions fetched, count={}&quot;, submissions.size());</span>
+<span class="fc" id="L143">        return ResponseEntity.ok(submissions);</span>
     }
 
     @Operation(
@@ -152,6 +153,7 @@ public class JudgeController {
             @ApiResponse(
                     responseCode = &quot;200&quot;,
                     description = &quot;Submission reviewed successfully&quot;
+
             ),
             @ApiResponse(
                     responseCode = &quot;400&quot;,
@@ -177,12 +179,101 @@ public class JudgeController {
             )
             @PathVariable UUID submissionId
     ) {
-<span class="fc" id="L180">        log.info(&quot;Reviewing submission submissionId={}&quot;, submissionId);</span>
+<span class="fc" id="L182">        log.info(&quot;Reviewing submission submissionId={}&quot;, submissionId);</span>
 
-<span class="fc" id="L182">        judgeService.reviewSubmission(submissionId);</span>
+<span class="fc" id="L184">        judgeService.reviewSubmission(submissionId);</span>
 
-<span class="fc" id="L184">        log.info(&quot;Submission reviewed successfully submissionId={}&quot;, submissionId);</span>
-<span class="fc" id="L185">        return ResponseEntity.ok().build();</span>
+<span class="fc" id="L186">        log.info(&quot;Submission reviewed successfully submissionId={}&quot;, submissionId);</span>
+<span class="fc" id="L187">        return ResponseEntity.ok().build();</span>
     }
+
+
+    @Operation(
+            summary = &quot;Reject a submission&quot;,
+            description = &quot;Rejects a submission with a reason. &quot; +
+                    &quot;Only the assigned judge can reject a pending submission.&quot;
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = &quot;200&quot;,
+                    description = &quot;Submission rejected successfully&quot;
+            ),
+            @ApiResponse(
+                    responseCode = &quot;400&quot;,
+                    description = &quot;Submission already reviewed or invalid&quot;
+            ),
+            @ApiResponse(
+                    responseCode = &quot;401&quot;,
+                    description = &quot;Unauthorized – Judge not assigned&quot;
+            ),
+            @ApiResponse(
+                    responseCode = &quot;404&quot;,
+                    description = &quot;Submission not found&quot;
+            )
+    })
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @PatchMapping(&quot;/submissions/{submissionId}/reject&quot;)
+    public ResponseEntity&lt;Void&gt; rejectSubmission(
+            @PathVariable UUID submissionId,
+            Authentication authentication
+    ) {
+<span class="nc" id="L220">        log.info(&quot;Rejecting submission submissionId={}&quot;, submissionId);</span>
+
+<span class="nc" id="L222">        judgeService.rejectSubmission(submissionId,authentication);</span>
+
+<span class="nc" id="L224">        log.info(&quot;Submission rejected successfully submissionId={}&quot;, submissionId);</span>
+<span class="nc" id="L225">        return ResponseEntity.ok().build();</span>
+    }
+
+
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @GetMapping(&quot;/submissions/{submissionId}&quot;)
+    @Operation(
+            summary = &quot;Get submission details for judge&quot;,
+            description = &quot;Fetch full submission details for review. &quot; +
+                    &quot;Only the assigned judge can access.&quot;
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Submission details fetched&quot;),
+            @ApiResponse(responseCode = &quot;401&quot;, description = &quot;Unauthorized&quot;),
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Submission not found&quot;)
+    })
+    public ResponseEntity&lt;JudgeSubmissionDetailsDTO&gt; getSubmissionDetails(
+            @PathVariable UUID submissionId,
+            Authentication authentication
+    ) {
+<span class="nc" id="L246">        log.info(&quot;Fetching submission details for judge | submissionId={}&quot;, submissionId);</span>
+
+<span class="nc" id="L248">        return ResponseEntity.ok(</span>
+<span class="nc" id="L249">                judgeService.getSubmissionDetails(submissionId, authentication)</span>
+        );
+    }
+
+
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @GetMapping(&quot;/submissions/stats&quot;)
+    @Operation(
+            summary = &quot;Get submission statistics for judge&quot;,
+            description = &quot;Returns counts of pending, approved, and rejected submissions &quot; +
+                    &quot;for programs judged by the logged-in judge&quot;
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Submission stats fetched&quot;),
+            @ApiResponse(responseCode = &quot;401&quot;, description = &quot;Unauthorized&quot;)
+    })
+    public ResponseEntity&lt;JudgeSubmissionStatsDTO&gt; getSubmissionStats(
+            Authentication authentication
+    ) {
+<span class="nc" id="L268">        log.info(&quot;Fetching submission stats for judge&quot;);</span>
+
+<span class="nc" id="L270">        return ResponseEntity.ok(</span>
+<span class="nc" id="L271">                judgeService.getSubmissionStats(authentication)</span>
+        );
+    }
+
+
+
+
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
