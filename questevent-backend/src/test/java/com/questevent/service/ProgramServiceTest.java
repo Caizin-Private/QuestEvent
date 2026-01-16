@@ -14,7 +14,7 @@ import com.questevent.repository.JudgeRepository;
 import com.questevent.repository.ProgramRegistrationRepository;
 import com.questevent.repository.ProgramRepository;
 import com.questevent.repository.UserRepository;
-import org.junit.jupiter.api.AfterEach;
+import com.questevent.utils.SecurityUserResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
@@ -22,10 +22,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 import java.util.Optional;
@@ -49,6 +45,9 @@ class ProgramServiceTest {
     @Mock
     private JudgeRepository judgeRepository;
 
+    @Mock
+    private SecurityUserResolver securityUserResolver; // ✅ REQUIRED
+
     @InjectMocks
     private ProgramService programService;
 
@@ -57,22 +56,17 @@ class ProgramServiceTest {
         MockitoAnnotations.openMocks(this);
     }
 
-    @AfterEach
-    void clearSecurityContext() {
-        SecurityContextHolder.clearContext();
-    }
-
     private void mockAuthenticatedUser(Long userId) {
         UserPrincipal principal =
                 new UserPrincipal(userId, "test@questevent.com", Role.USER);
 
-        Authentication authentication =
-                new UsernamePasswordAuthenticationToken(principal, null, List.of());
-
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(authentication);
-        SecurityContextHolder.setContext(context);
+        when(securityUserResolver.getCurrentUserPrincipal())
+                .thenReturn(principal);
     }
+
+    /* =====================================================
+       CREATE PROGRAM
+       ===================================================== */
 
     @Test
     void createProgram_success() {
@@ -138,6 +132,10 @@ class ProgramServiceTest {
         assertEquals("User not found", ex.getMessage());
     }
 
+    /* =====================================================
+       UPDATE PROGRAM
+       ===================================================== */
+
     @Test
     void updateProgram_success() {
 
@@ -152,11 +150,11 @@ class ProgramServiceTest {
         Program existingProgram = new Program();
         existingProgram.setProgramId(programId);
         existingProgram.setProgramTitle("Old Title");
-        existingProgram.setProgramDescription("Old Description"); // should NOT change
+        existingProgram.setProgramDescription("Old Description");
         existingProgram.setUser(authUser);
 
         ProgramRequestDTO dto = new ProgramRequestDTO();
-        dto.setProgramTitle("New Title"); // PATCH only this field
+        dto.setProgramTitle("New Title");
 
         when(userRepository.findById(authUserId))
                 .thenReturn(Optional.of(authUser));
@@ -169,9 +167,8 @@ class ProgramServiceTest {
                 programService.updateProgram(programId, dto);
 
         assertEquals("New Title", result.getProgramTitle());
-        assertEquals("Old Description", result.getProgramDescription()); // unchanged
+        assertEquals("Old Description", result.getProgramDescription());
     }
-
 
     @Test
     void updateProgram_programNotFound() {
@@ -184,15 +181,13 @@ class ProgramServiceTest {
         User authUser = new User();
         authUser.setUserId(authUserId);
 
-        ProgramRequestDTO requestDTO = new ProgramRequestDTO();
-
         when(userRepository.findById(authUserId))
                 .thenReturn(Optional.of(authUser));
         when(programRepository.findById(programId))
                 .thenReturn(Optional.empty());
 
         Executable executable =
-                () -> programService.updateProgram(programId, requestDTO);
+                () -> programService.updateProgram(programId, new ProgramRequestDTO());
 
         ProgramNotFoundException ex =
                 assertThrows(ProgramNotFoundException.class, executable);
@@ -219,18 +214,15 @@ class ProgramServiceTest {
         program.setProgramId(programId);
         program.setUser(otherUser);
 
-        ProgramRequestDTO requestDTO = new ProgramRequestDTO();
-
         when(userRepository.findById(authUserId))
                 .thenReturn(Optional.of(authUser));
         when(programRepository.findById(programId))
                 .thenReturn(Optional.of(program));
 
-        Executable executable =
-                () -> programService.updateProgram(programId, requestDTO);
-
-        AccessDeniedException ex =
-                assertThrows(AccessDeniedException.class, executable);
+        AccessDeniedException ex = assertThrows(
+                AccessDeniedException.class,
+                () -> programService.updateProgram(programId, new ProgramRequestDTO())
+        );
 
         assertEquals(
                 "You do not have permission to update this program",
@@ -238,23 +230,18 @@ class ProgramServiceTest {
         );
     }
 
+    /* =====================================================
+       FETCH / DELETE
+       ===================================================== */
 
     @Test
     void getMyPrograms_success() {
 
         Long authUserId = 1L;
-        UUID programId = UUID.randomUUID();
-
         mockAuthenticatedUser(authUserId);
 
-        User authUser = new User();
-        authUser.setUserId(authUserId);
-
         Program program = new Program();
-        program.setProgramId(programId);
 
-        when(userRepository.findById(authUserId))
-                .thenReturn(Optional.of(authUser));
         when(programRepository.findByUser_UserId(authUserId))
                 .thenReturn(List.of(program));
 
@@ -294,8 +281,6 @@ class ProgramServiceTest {
         program.setProgramId(programId);
         program.setUser(authUser);
 
-        when(userRepository.findById(authUserId))
-                .thenReturn(Optional.of(authUser));
         when(programRepository.findById(programId))
                 .thenReturn(Optional.of(program));
 
@@ -304,15 +289,15 @@ class ProgramServiceTest {
         verify(programRepository).delete(program);
     }
 
+    /* =====================================================
+       COMPLETED PROGRAMS
+       ===================================================== */
+
     @Test
     void getCompletedProgramsForUser_success() {
 
         Long authUserId = 1L;
-
         mockAuthenticatedUser(authUserId);
-
-        User authUser = new User();
-        authUser.setUserId(authUserId);
 
         Program completedProgram = new Program();
         completedProgram.setStatus(ProgramStatus.COMPLETED);
@@ -326,8 +311,6 @@ class ProgramServiceTest {
         ProgramRegistration reg2 = new ProgramRegistration();
         reg2.setProgram(activeProgram);
 
-        when(userRepository.findById(authUserId))
-                .thenReturn(Optional.of(authUser));
         when(programRegistrationRepository.findByUserUserId(authUserId))
                 .thenReturn(List.of(reg1, reg2));
 

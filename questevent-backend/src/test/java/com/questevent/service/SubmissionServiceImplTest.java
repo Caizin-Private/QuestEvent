@@ -12,22 +12,19 @@ import com.questevent.exception.InvalidOperationException;
 import com.questevent.exception.ResourceNotFoundException;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import com.questevent.utils.SecurityUserResolver;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+
 @ExtendWith(MockitoExtension.class)
 class SubmissionServiceImplTest {
 
@@ -38,39 +35,28 @@ class SubmissionServiceImplTest {
     private ActivitySubmissionRepository submissionRepository;
 
     @Mock
-    private Authentication authentication;
-
-    @Mock
-    private SecurityContext securityContext;
+    private SecurityUserResolver securityUserResolver; // ✅ REQUIRED
 
     @InjectMocks
     private SubmissionServiceImpl submissionService;
 
     private static final Long USER_ID = 1L;
 
-    @BeforeEach
-    void setUpSecurityContext() {
-
-        UserPrincipal principal = new UserPrincipal(
-                USER_ID,
-                "test@example.com",
-                Role.USER
-        );
-
-        when(authentication.isAuthenticated()).thenReturn(true);
-        when(authentication.getPrincipal()).thenReturn(principal);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-
-        SecurityContextHolder.setContext(securityContext);
-    }
-
-    @AfterEach
-    void clearSecurityContext() {
-        SecurityContextHolder.clearContext();
+    private void mockAuthenticatedUser() {
+        when(securityUserResolver.getCurrentUserPrincipal())
+                .thenReturn(
+                        new UserPrincipal(
+                                USER_ID,
+                                "test@example.com",
+                                Role.USER
+                        )
+                );
     }
 
     @Test
     void submitActivity_shouldCreateNewSubmissionSuccessfully() {
+
+        mockAuthenticatedUser();
 
         UUID activityId = UUID.randomUUID();
         UUID registrationId = UUID.randomUUID();
@@ -99,6 +85,8 @@ class SubmissionServiceImplTest {
 
     @Test
     void submitActivity_shouldResubmitIfSubmissionExistsAndNotApproved() {
+
+        mockAuthenticatedUser();
 
         UUID activityId = UUID.randomUUID();
         UUID registrationId = UUID.randomUUID();
@@ -130,6 +118,8 @@ class SubmissionServiceImplTest {
 
     @Test
     void submitActivity_shouldThrowIfSubmissionAlreadyApproved() {
+
+        mockAuthenticatedUser();
 
         UUID activityId = UUID.randomUUID();
         UUID registrationId = UUID.randomUUID();
@@ -164,6 +154,8 @@ class SubmissionServiceImplTest {
     @Test
     void submitActivity_shouldThrowIfUserNotRegistered() {
 
+        mockAuthenticatedUser();
+
         when(registrationRepository
                 .findByActivityActivityIdAndUserUserId(any(), any()))
                 .thenReturn(Optional.empty());
@@ -180,22 +172,6 @@ class SubmissionServiceImplTest {
                 "User is not registered for this activity",
                 ex.getMessage()
         );
-    }
-
-    @Test
-    void submitActivity_shouldThrowIfPrincipalInvalid() {
-
-        when(authentication.getPrincipal()).thenReturn("anonymousUser");
-
-        ResourceNotFoundException ex = assertThrows(
-                ResourceNotFoundException.class,
-                () -> submissionService.submitActivity(
-                        UUID.randomUUID(),
-                        "url"
-                )
-        );
-
-        assertEquals("User not found", ex.getMessage());
     }
 
     private ActivityRegistration mockRegistration(
