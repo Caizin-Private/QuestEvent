@@ -29,39 +29,41 @@ public class SecurityConfig {
             if (scopes == null) return List.of();
 
             return scopes.stream()
-                    .map(scope -> (GrantedAuthority) new SimpleGrantedAuthority("SCOPE_" + scope))
+                    .map(scope ->
+                            (GrantedAuthority)
+                                    new SimpleGrantedAuthority("SCOPE_" + scope)
+                    )
                     .toList();
         });
-
 
         http
                 .csrf(AbstractHttpConfigurer::disable)
 
                 .authorizeHttpRequests(auth -> auth
-                        // Allow frontend & static resources
+
                         .requestMatchers(
                                 "/",
                                 "/index.html",
-                                "/js/**",
-                                "/css/**",
                                 "/favicon.ico",
+                                "/css/**",
+                                "/js/**",
+                                "/images/**"
+                        ).permitAll()
+
+                        .requestMatchers(
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/v3/api-docs",
                                 "/v3/api-docs/**"
                         ).permitAll()
 
-                        // All APIs require authentication
                         .requestMatchers("/api/**").authenticated()
-
-                        // Everything else secured
-                        .anyRequest().authenticated()
+                        .anyRequest().denyAll()
                 )
 
-                // Resource server validates Microsoft-issued JWT (ID token)
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt
-                                .jwtAuthenticationConverter(jwtAuthenticationConverter)
+                .oauth2ResourceServer(oauth2 ->
+                        oauth2.jwt(jwt ->
+                                jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)
                         )
                 );
 
