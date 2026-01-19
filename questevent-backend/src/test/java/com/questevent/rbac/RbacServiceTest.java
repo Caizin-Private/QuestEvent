@@ -12,8 +12,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -162,7 +160,7 @@ class RbacServiceTest {
                 .thenReturn(false);
 
         assertThat(
-                rbacService.canSubmitActivity(auth, activityId, 1L)
+                rbacService.canSubmitActivity(auth, activityId)
         ).isTrue();
     }
 
@@ -188,7 +186,7 @@ class RbacServiceTest {
                 .thenReturn(true);
 
         assertThat(
-                rbacService.canSubmitActivity(auth, activityId, 1L)
+                rbacService.canSubmitActivity(auth, activityId)
         ).isFalse();
     }
 
