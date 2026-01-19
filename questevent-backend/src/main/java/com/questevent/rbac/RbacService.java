@@ -140,6 +140,51 @@ public class RbacService {
                 .orElse(false);
     }
 
+    public boolean canRegisterForActivity(
+            Authentication authentication,
+            UUID activityId
+    ) {
+        User user = currentUser(authentication);
+        if (user == null) return false;
+
+        // User must be registered for the program
+        return activityRegistrationRepository
+                .findByActivityActivityIdAndUserUserId(
+                        activityId,
+                        user.getUserId()
+                )
+                .isEmpty();
+    }
+
+    public boolean canAccessActivityRegistration(
+            Authentication authentication,
+            UUID registrationId
+    ) {
+        User user = currentUser(authentication);
+        if (user == null) return false;
+        if (isOwner(user)) return true;
+
+        return activityRegistrationRepository.findById(registrationId)
+                .map(reg ->
+                        reg.getUser().getUserId().equals(user.getUserId()) ||
+                                reg.getActivity()
+                                        .getProgram()
+                                        .getUser()
+                                        .getUserId()
+                                        .equals(user.getUserId()) ||
+                                (
+                                        reg.getActivity().getProgram().getJudge() != null &&
+                                                reg.getActivity()
+                                                        .getProgram()
+                                                        .getJudge()
+                                                        .getUser()
+                                                        .getUserId()
+                                                        .equals(user.getUserId())
+                                )
+                )
+                .orElse(false);
+    }
+
     public boolean canSubmitActivity(
             Authentication authentication,
             UUID activityId)
