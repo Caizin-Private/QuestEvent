@@ -142,15 +142,14 @@ public class RbacService {
 
     public boolean canSubmitActivity(
             Authentication authentication,
-            UUID activityId,
-            Long userId
-    ) {
+            UUID activityId)
+    {
         User user = currentUser(authentication);
-        if (user == null || !user.getUserId().equals(userId)) return false;
+        if (user == null) return false;
 
         ActivityRegistration reg =
                 activityRegistrationRepository
-                        .findByActivityActivityIdAndUserUserId(activityId, userId)
+                        .findByActivityActivityIdAndUserUserId(activityId, user.getUserId())
                         .orElse(null);
 
         if (reg == null) return false;
