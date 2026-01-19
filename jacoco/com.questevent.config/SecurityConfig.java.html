@@ -2,28 +2,44 @@
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
+import java.util.List;
+
 @Configuration
 @EnableWebSecurity
-<span class="fc" id="L12">public class SecurityConfig {</span>
+@EnableMethodSecurity(prePostEnabled = true)
+<span class="fc" id="L19">public class SecurityConfig {</span>
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        // ID tokens do NOT contain &quot;scp&quot; → no authority mapping needed
-<span class="fc" id="L18">        JwtAuthenticationConverter jwtAuthenticationConverter =</span>
+<span class="fc" id="L24">        JwtAuthenticationConverter jwtAuthenticationConverter =</span>
                 new JwtAuthenticationConverter();
 
-<span class="fc" id="L21">        http</span>
-<span class="fc" id="L22">                .csrf(csrf -&gt; csrf.disable())</span>
+<span class="fc" id="L27">        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwt -&gt; {</span>
+<span class="nc" id="L28">            List&lt;String&gt; scopes = jwt.getClaimAsStringList(&quot;scp&quot;);</span>
+<span class="nc bnc" id="L29" title="All 2 branches missed.">            if (scopes == null) return List.of();</span>
 
-<span class="fc" id="L24">                .authorizeHttpRequests(auth -&gt; auth</span>
+<span class="nc" id="L31">            return scopes.stream()</span>
+<span class="nc" id="L32">                    .map(scope -&gt; (GrantedAuthority) new SimpleGrantedAuthority(&quot;SCOPE_&quot; + scope))</span>
+<span class="nc" id="L33">                    .toList();</span>
+        });
+
+
+<span class="fc" id="L37">        http</span>
+<span class="fc" id="L38">                .csrf(AbstractHttpConfigurer::disable)</span>
+
+<span class="fc" id="L40">                .authorizeHttpRequests(auth -&gt; auth</span>
                         // Allow frontend &amp; static resources
-<span class="fc" id="L26">                        .requestMatchers(</span>
+<span class="fc" id="L42">                        .requestMatchers(</span>
                                 &quot;/&quot;,
                                 &quot;/index.html&quot;,
                                 &quot;/js/**&quot;,
@@ -33,23 +49,23 @@ import org.springframework.security.web.SecurityFilterChain;
                                 &quot;/swagger-ui/**&quot;,
                                 &quot;/v3/api-docs&quot;,
                                 &quot;/v3/api-docs/**&quot;
-<span class="fc" id="L36">                        ).permitAll()</span>
+<span class="fc" id="L52">                        ).permitAll()</span>
 
                         // All APIs require authentication
-<span class="fc" id="L39">                        .requestMatchers(&quot;/api/**&quot;).authenticated()</span>
+<span class="fc" id="L55">                        .requestMatchers(&quot;/api/**&quot;).authenticated()</span>
 
                         // Everything else secured
-<span class="fc" id="L42">                        .anyRequest().authenticated()</span>
+<span class="fc" id="L58">                        .anyRequest().authenticated()</span>
                 )
 
                 // Resource server validates Microsoft-issued JWT (ID token)
-<span class="fc" id="L46">                .oauth2ResourceServer(oauth2 -&gt; oauth2</span>
-<span class="fc" id="L47">                        .jwt(jwt -&gt; jwt</span>
-<span class="fc" id="L48">                                .jwtAuthenticationConverter(jwtAuthenticationConverter)</span>
+<span class="fc" id="L62">                .oauth2ResourceServer(oauth2 -&gt; oauth2</span>
+<span class="fc" id="L63">                        .jwt(jwt -&gt; jwt</span>
+<span class="fc" id="L64">                                .jwtAuthenticationConverter(jwtAuthenticationConverter)</span>
                         )
                 );
 
-<span class="fc" id="L52">        return http.build();</span>
+<span class="fc" id="L68">        return http.build();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

@@ -255,7 +255,7 @@ public class ProgramController {
         );
     }
 
-    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @PreAuthorize(&quot;@rbac.canManageProgram(authentication, #programId)&quot;)
     @PatchMapping(&quot;/{programId}/status-to-active&quot;)
     @Operation(
             summary = &quot;Change program status from ACTIVE to DRAFT&quot;,

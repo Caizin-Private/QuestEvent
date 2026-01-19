@@ -2,8 +2,8 @@
 
 import com.questevent.dto.UserPrincipal;
 import com.questevent.entity.User;
+import com.questevent.enums.Role;
 import com.questevent.exception.UnauthorizedException;
-import com.questevent.exception.UserNotFoundException;
 import com.questevent.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -18,32 +18,36 @@ public class SecurityUserResolver {
 
     private final UserRepository userRepository;
 
-    public UserPrincipal getCurrentUserPrincipal() {
+    public User getCurrentUser() {
 
         Authentication authentication =
-<span class="nc" id="L24">                SecurityContextHolder.getContext().getAuthentication();</span>
+<span class="fc" id="L24">                SecurityContextHolder.getContext().getAuthentication();</span>
 
-<span class="nc bnc" id="L26" title="All 2 branches missed.">        if (!(authentication instanceof JwtAuthenticationToken jwtAuth)) {</span>
+<span class="pc bpc" id="L26" title="1 of 2 branches missed.">        if (!(authentication instanceof JwtAuthenticationToken jwtAuth)) {</span>
 <span class="nc" id="L27">            throw new UnauthorizedException(&quot;Invalid authentication&quot;);</span>
         }
 
-<span class="nc" id="L30">        Jwt jwt = jwtAuth.getToken();</span>
+<span class="fc" id="L30">        Jwt jwt = jwtAuth.getToken();</span>
 
-<span class="nc" id="L32">        String email = jwt.getClaimAsString(&quot;email&quot;);</span>
-<span class="nc bnc" id="L33" title="All 2 branches missed.">        if (email == null) {</span>
-<span class="nc" id="L34">            throw new UnauthorizedException(&quot;Invalid token&quot;);</span>
+<span class="fc" id="L32">        String email = jwt.getClaimAsString(&quot;preferred_username&quot;);</span>
+<span class="pc bpc" id="L33" title="1 of 2 branches missed.">        if (email == null) {</span>
+<span class="fc" id="L34">            email = jwt.getClaimAsString(&quot;email&quot;);</span>
+        }
+<span class="pc bpc" id="L36" title="1 of 2 branches missed.">        if (email == null) {</span>
+<span class="nc" id="L37">            throw new UnauthorizedException(&quot;No email in token&quot;);</span>
         }
 
-<span class="nc" id="L37">        User user = userRepository.findByEmail(email)</span>
-<span class="nc" id="L38">                .orElseThrow(() -&gt;</span>
-<span class="nc" id="L39">                        new UserNotFoundException(&quot;User not found&quot;)</span>
-                );
+<span class="fc" id="L40">        final String finalEmail = email;</span>
 
-<span class="nc" id="L42">        return new UserPrincipal(</span>
-<span class="nc" id="L43">                user.getUserId(),</span>
-<span class="nc" id="L44">                user.getEmail(),</span>
-<span class="nc" id="L45">                user.getRole()</span>
-        );
+<span class="pc" id="L42">        return userRepository.findByEmail(finalEmail)</span>
+<span class="nc" id="L43">                .orElseGet(() -&gt; {</span>
+<span class="fc" id="L44">                    User u = new User();</span>
+<span class="fc" id="L45">                    u.setEmail(finalEmail);</span>
+<span class="fc" id="L46">                    u.setName(jwt.getClaimAsString(&quot;name&quot;));</span>
+<span class="fc" id="L47">                    u.setRole(Role.USER);</span>
+<span class="nc" id="L48">                    return userRepository.save(u);</span>
+                });
     }
 }
+
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

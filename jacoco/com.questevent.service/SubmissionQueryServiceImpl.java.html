@@ -2,9 +2,9 @@
 
 import com.questevent.dto.SubmissionDetailsResponseDTO;
 import com.questevent.dto.SubmissionStatusResponseDTO;
-import com.questevent.dto.UserPrincipal;
 import com.questevent.dto.UserSubmissionSummaryDTO;
 import com.questevent.entity.ActivitySubmission;
+import com.questevent.entity.User;
 import com.questevent.exception.ResourceNotFoundException;
 import com.questevent.repository.ActivitySubmissionRepository;
 import com.questevent.utils.SecurityUserResolver;
@@ -23,35 +23,34 @@ import java.util.UUID;
 public class SubmissionQueryServiceImpl implements SubmissionQueryService {
 
     private final ActivitySubmissionRepository submissionRepository;
-    private final SecurityUserResolver securityUserResolver; // ✅ added
+    private final SecurityUserResolver securityUserResolver;
 
     @Override
     public SubmissionDetailsResponseDTO getSubmissionDetails(
             UUID activityId,
             Authentication ignored
     ) {
-<span class="nc" id="L33">        UserPrincipal principal =</span>
-<span class="nc" id="L34">                securityUserResolver.getCurrentUserPrincipal();</span>
+<span class="nc" id="L33">        User user = securityUserResolver.getCurrentUser();</span>
 
-<span class="nc" id="L36">        ActivitySubmission submission =</span>
+<span class="nc" id="L35">        ActivitySubmission submission =</span>
                 submissionRepository
-<span class="nc" id="L38">                        .findByActivityRegistrationActivityActivityIdAndActivityRegistrationUserUserId(</span>
+<span class="nc" id="L37">                        .findByActivityRegistrationActivityActivityIdAndActivityRegistrationUserUserId(</span>
                                 activityId,
-<span class="nc" id="L40">                                principal.userId()</span>
+<span class="nc" id="L39">                                user.getUserId()</span>
                         )
-<span class="nc" id="L42">                        .orElseThrow(() -&gt;</span>
-<span class="nc" id="L43">                                new ResourceNotFoundException(</span>
+<span class="nc" id="L41">                        .orElseThrow(() -&gt;</span>
+<span class="nc" id="L42">                                new ResourceNotFoundException(</span>
                                         &quot;Submission not found for this activity&quot;
                                 )
                         );
 
-<span class="nc" id="L48">        return new SubmissionDetailsResponseDTO(</span>
-<span class="nc" id="L49">                submission.getSubmissionId(),</span>
+<span class="nc" id="L47">        return new SubmissionDetailsResponseDTO(</span>
+<span class="nc" id="L48">                submission.getSubmissionId(),</span>
                 activityId,
-<span class="nc" id="L51">                submission.getSubmissionUrl(),</span>
-<span class="nc" id="L52">                submission.getReviewStatus(),</span>
-<span class="nc" id="L53">                submission.getAwardedGems(),</span>
-<span class="nc" id="L54">                submission.getReviewedAt()</span>
+<span class="nc" id="L50">                submission.getSubmissionUrl(),</span>
+<span class="nc" id="L51">                submission.getReviewStatus(),</span>
+<span class="nc" id="L52">                submission.getAwardedGems(),</span>
+<span class="nc" id="L53">                submission.getReviewedAt()</span>
         );
     }
 
@@ -60,60 +59,58 @@ public class SubmissionQueryServiceImpl implements SubmissionQueryService {
     public List&lt;UserSubmissionSummaryDTO&gt; getMySubmissions(
             Authentication ignored
     ) {
-<span class="nc" id="L63">        UserPrincipal principal =</span>
-<span class="nc" id="L64">                securityUserResolver.getCurrentUserPrincipal();</span>
+<span class="nc" id="L62">        User user = securityUserResolver.getCurrentUser();</span>
 
-<span class="nc" id="L66">        List&lt;ActivitySubmission&gt; submissions =</span>
+<span class="nc" id="L64">        List&lt;ActivitySubmission&gt; submissions =</span>
                 submissionRepository
-<span class="nc" id="L68">                        .findAllByActivityRegistration_User_UserId(</span>
-<span class="nc" id="L69">                                principal.userId()</span>
+<span class="nc" id="L66">                        .findAllByActivityRegistration_User_UserId(</span>
+<span class="nc" id="L67">                                user.getUserId()</span>
                         );
 
-<span class="nc" id="L72">        return submissions.stream()</span>
-<span class="nc" id="L73">                .map(submission -&gt; new UserSubmissionSummaryDTO(</span>
-<span class="nc" id="L74">                        submission.getSubmissionId(),</span>
-<span class="nc" id="L75">                        submission.getActivityRegistration()</span>
-<span class="nc" id="L76">                                .getActivity()</span>
-<span class="nc" id="L77">                                .getActivityId(),</span>
-<span class="nc" id="L78">                        submission.getActivityRegistration()</span>
-<span class="nc" id="L79">                                .getActivity()</span>
-<span class="nc" id="L80">                                .getActivityName(),</span>
-<span class="nc" id="L81">                        submission.getReviewStatus(),</span>
-<span class="nc" id="L82">                        submission.getSubmittedAt(),</span>
-<span class="nc" id="L83">                        submission.getReviewedAt()</span>
+<span class="nc" id="L70">        return submissions.stream()</span>
+<span class="nc" id="L71">                .map(submission -&gt; new UserSubmissionSummaryDTO(</span>
+<span class="nc" id="L72">                        submission.getSubmissionId(),</span>
+<span class="nc" id="L73">                        submission.getActivityRegistration()</span>
+<span class="nc" id="L74">                                .getActivity()</span>
+<span class="nc" id="L75">                                .getActivityId(),</span>
+<span class="nc" id="L76">                        submission.getActivityRegistration()</span>
+<span class="nc" id="L77">                                .getActivity()</span>
+<span class="nc" id="L78">                                .getActivityName(),</span>
+<span class="nc" id="L79">                        submission.getReviewStatus(),</span>
+<span class="nc" id="L80">                        submission.getSubmittedAt(),</span>
+<span class="nc" id="L81">                        submission.getReviewedAt()</span>
                 ))
-<span class="nc" id="L85">                .toList();</span>
+<span class="nc" id="L83">                .toList();</span>
     }
 
     @Override
     @Transactional(readOnly = true)
     public SubmissionStatusResponseDTO getSubmissionStatus(UUID activityId) {
 
-<span class="nc" id="L92">        UserPrincipal principal =</span>
-<span class="nc" id="L93">                securityUserResolver.getCurrentUserPrincipal();</span>
+<span class="nc" id="L90">        User user = securityUserResolver.getCurrentUser();</span>
 
-<span class="nc" id="L95">        Long userId = principal.userId();</span>
+<span class="nc" id="L92">        Long userId = user.getUserId();</span>
 
-<span class="nc" id="L97">        log.debug(</span>
+<span class="nc" id="L94">        log.debug(</span>
                 &quot;Fetching submission status | activityId={} | userId={}&quot;,
                 activityId,
                 userId
         );
 
-<span class="nc" id="L103">        ActivitySubmission submission =</span>
+<span class="nc" id="L100">        ActivitySubmission submission =</span>
                 submissionRepository
-<span class="nc" id="L105">                        .findUserSubmissionForActivity(activityId, userId)</span>
-<span class="nc" id="L106">                        .orElseThrow(() -&gt;</span>
-<span class="nc" id="L107">                                new ResourceNotFoundException(&quot;Submission not found&quot;)</span>
+<span class="nc" id="L102">                        .findUserSubmissionForActivity(activityId, userId)</span>
+<span class="nc" id="L103">                        .orElseThrow(() -&gt;</span>
+<span class="nc" id="L104">                                new ResourceNotFoundException(&quot;Submission not found&quot;)</span>
                         );
 
-<span class="nc" id="L110">        return SubmissionStatusResponseDTO.builder()</span>
-<span class="nc" id="L111">                .submissionId(submission.getSubmissionId())</span>
-<span class="nc" id="L112">                .reviewStatus(submission.getReviewStatus())</span>
-<span class="nc" id="L113">                .submittedAt(submission.getSubmittedAt())</span>
-<span class="nc" id="L114">                .reviewedAt(submission.getReviewedAt())</span>
-<span class="nc" id="L115">                .awardedGems(submission.getAwardedGems())</span>
-<span class="nc" id="L116">                .build();</span>
+<span class="nc" id="L107">        return SubmissionStatusResponseDTO.builder()</span>
+<span class="nc" id="L108">                .submissionId(submission.getSubmissionId())</span>
+<span class="nc" id="L109">                .reviewStatus(submission.getReviewStatus())</span>
+<span class="nc" id="L110">                .submittedAt(submission.getSubmittedAt())</span>
+<span class="nc" id="L111">                .reviewedAt(submission.getReviewedAt())</span>
+<span class="nc" id="L112">                .awardedGems(submission.getAwardedGems())</span>
+<span class="nc" id="L113">                .build();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
