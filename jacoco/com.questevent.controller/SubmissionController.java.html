@@ -32,7 +32,7 @@ public class SubmissionController {
     private final SubmissionService submissionService;
     private final SubmissionQueryService submissionQueryService;
 
-    @PreAuthorize(&quot;@rbac.canSubmitActivity(authentication, #request.activityId, authentication.principal.userId)&quot;)
+    @PreAuthorize(&quot;@rbac.canSubmitActivity(authentication, #request.activityId)&quot;)
     @PostMapping
     @Operation(
             summary = &quot;Submit activity work&quot;,
