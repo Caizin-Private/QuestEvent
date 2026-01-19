@@ -3,7 +3,6 @@ package com.questevent.service;
 import com.questevent.dto.JudgeSubmissionDTO;
 import com.questevent.dto.JudgeSubmissionDetailsDTO;
 import com.questevent.dto.JudgeSubmissionStatsDTO;
-import com.questevent.dto.UserPrincipal;
 import com.questevent.entity.*;
 import com.questevent.enums.CompletionStatus;
 import com.questevent.enums.ReviewStatus;
