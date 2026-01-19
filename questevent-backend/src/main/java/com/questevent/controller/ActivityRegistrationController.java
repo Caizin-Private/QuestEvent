@@ -30,7 +30,7 @@ public class ActivityRegistrationController {
 
     private final ActivityRegistrationService activityRegistrationService;
 
-    @PreAuthorize("@rbac.canRegisterForActivity(authentication, #request.activityId, authentication.principal.userId)")
+    @PreAuthorize("@rbac.canRegisterForActivity(authentication, #request.activityId)")
     @PostMapping
     @Operation(
             summary = "Register participant for activity",
