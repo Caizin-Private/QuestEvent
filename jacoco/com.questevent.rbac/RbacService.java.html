@@ -117,147 +117,177 @@ public class RbacService {
 
     public boolean canRegisterForProgram(
             Authentication authentication,
-            UUID programId) {
-<span class="nc" id="L121">        User user = currentUser(authentication);</span>
-<span class="nc bnc" id="L122" title="All 2 branches missed.">        return user != null;</span>
+            UUID programId
+    ) {
+<span class="nc" id="L122">        User user = currentUser(authentication);</span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">        if (user == null) return false;</span>
+
+<span class="nc" id="L125">        Program program = programRepository.findById(programId).orElse(null);</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed.">        if (program == null) return false;</span>
+
+        // ❌ Judge of this program cannot register for it
+<span class="nc" id="L129">        Judge judge = program.getJudge();</span>
+<span class="nc bnc" id="L130" title="All 2 branches missed.">        if (judge != null &amp;&amp;</span>
+<span class="nc bnc" id="L131" title="All 2 branches missed.">                judge.getUser().getUserId().equals(user.getUserId())) {</span>
+<span class="nc" id="L132">            return false;</span>
+        }
+
+<span class="nc" id="L135">        return true;</span>
     }
+
 
     public boolean canAccessProgramRegistration(
             Authentication authentication,
             UUID registrationId
     ) {
-<span class="nc" id="L129">        User user = currentUser(authentication);</span>
-<span class="nc bnc" id="L130" title="All 2 branches missed.">        if (user == null) return false;</span>
-<span class="nc bnc" id="L131" title="All 2 branches missed.">        if (isOwner(user)) return true;</span>
+<span class="nc" id="L143">        User user = currentUser(authentication);</span>
+<span class="nc bnc" id="L144" title="All 2 branches missed.">        if (user == null) return false;</span>
+<span class="nc bnc" id="L145" title="All 2 branches missed.">        if (isOwner(user)) return true;</span>
 
-<span class="nc" id="L133">        return programRegistrationRepository.findById(registrationId)</span>
-<span class="nc" id="L134">                .map(reg -&gt;</span>
-<span class="nc bnc" id="L135" title="All 2 branches missed.">                        reg.getUser().getUserId().equals(user.getUserId()) ||</span>
-<span class="nc bnc" id="L136" title="All 2 branches missed.">                                reg.getProgram().getUser().getUserId().equals(user.getUserId()) ||</span>
-<span class="nc bnc" id="L137" title="All 2 branches missed.">                                (reg.getProgram().getJudge() != null &amp;&amp;</span>
-<span class="nc bnc" id="L138" title="All 2 branches missed.">                                        reg.getProgram().getJudge().getUser().getUserId().equals(user.getUserId()))</span>
+<span class="nc" id="L147">        return programRegistrationRepository.findById(registrationId)</span>
+<span class="nc" id="L148">                .map(reg -&gt;</span>
+<span class="nc bnc" id="L149" title="All 2 branches missed.">                        reg.getUser().getUserId().equals(user.getUserId()) ||</span>
+<span class="nc bnc" id="L150" title="All 2 branches missed.">                                reg.getProgram().getUser().getUserId().equals(user.getUserId()) ||</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">                                (reg.getProgram().getJudge() != null &amp;&amp;</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed.">                                        reg.getProgram().getJudge().getUser().getUserId().equals(user.getUserId()))</span>
                 )
-<span class="nc" id="L140">                .orElse(false);</span>
+<span class="nc" id="L154">                .orElse(false);</span>
     }
 
     public boolean canRegisterForActivity(
             Authentication authentication,
             UUID activityId
     ) {
-<span class="nc" id="L147">        User user = currentUser(authentication);</span>
-<span class="nc bnc" id="L148" title="All 2 branches missed.">        if (user == null) return false;</span>
+<span class="nc" id="L161">        User user = currentUser(authentication);</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">        if (user == null) return false;</span>
 
-        // User must be registered for the program
-<span class="nc" id="L151">        return activityRegistrationRepository</span>
-<span class="nc" id="L152">                .findByActivityActivityIdAndUserUserId(</span>
+<span class="nc" id="L164">        Activity activity =</span>
+<span class="nc" id="L165">                activityRepository.findById(activityId).orElse(null);</span>
+<span class="nc bnc" id="L166" title="All 2 branches missed.">        if (activity == null) return false;</span>
+
+<span class="nc" id="L168">        Program program = activity.getProgram();</span>
+<span class="nc bnc" id="L169" title="All 2 branches missed.">        if (program == null) return false;</span>
+
+        // ❌ Judge of this program cannot register for its activities
+<span class="nc" id="L172">        Judge judge = program.getJudge();</span>
+<span class="nc bnc" id="L173" title="All 2 branches missed.">        if (judge != null &amp;&amp;</span>
+<span class="nc bnc" id="L174" title="All 2 branches missed.">                judge.getUser().getUserId().equals(user.getUserId())) {</span>
+<span class="nc" id="L175">            return false;</span>
+        }
+
+        // User must not already be registered
+<span class="nc" id="L179">        return activityRegistrationRepository</span>
+<span class="nc" id="L180">                .findByActivityActivityIdAndUserUserId(</span>
                         activityId,
-<span class="nc" id="L154">                        user.getUserId()</span>
+<span class="nc" id="L182">                        user.getUserId()</span>
                 )
-<span class="nc" id="L156">                .isEmpty();</span>
+<span class="nc" id="L184">                .isEmpty();</span>
     }
+
 
     public boolean canAccessActivityRegistration(
             Authentication authentication,
             UUID registrationId
     ) {
-<span class="nc" id="L163">        User user = currentUser(authentication);</span>
-<span class="nc bnc" id="L164" title="All 2 branches missed.">        if (user == null) return false;</span>
-<span class="nc bnc" id="L165" title="All 2 branches missed.">        if (isOwner(user)) return true;</span>
+<span class="nc" id="L192">        User user = currentUser(authentication);</span>
+<span class="nc bnc" id="L193" title="All 2 branches missed.">        if (user == null) return false;</span>
+<span class="nc bnc" id="L194" title="All 2 branches missed.">        if (isOwner(user)) return true;</span>
 
-<span class="nc" id="L167">        return activityRegistrationRepository.findById(registrationId)</span>
-<span class="nc" id="L168">                .map(reg -&gt;</span>
-<span class="nc bnc" id="L169" title="All 2 branches missed.">                        reg.getUser().getUserId().equals(user.getUserId()) ||</span>
-<span class="nc" id="L170">                                reg.getActivity()</span>
-<span class="nc" id="L171">                                        .getProgram()</span>
-<span class="nc" id="L172">                                        .getUser()</span>
-<span class="nc" id="L173">                                        .getUserId()</span>
-<span class="nc bnc" id="L174" title="All 2 branches missed.">                                        .equals(user.getUserId()) ||</span>
+<span class="nc" id="L196">        return activityRegistrationRepository.findById(registrationId)</span>
+<span class="nc" id="L197">                .map(reg -&gt;</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">                        reg.getUser().getUserId().equals(user.getUserId()) ||</span>
+<span class="nc" id="L199">                                reg.getActivity()</span>
+<span class="nc" id="L200">                                        .getProgram()</span>
+<span class="nc" id="L201">                                        .getUser()</span>
+<span class="nc" id="L202">                                        .getUserId()</span>
+<span class="nc bnc" id="L203" title="All 2 branches missed.">                                        .equals(user.getUserId()) ||</span>
                                 (
-<span class="nc bnc" id="L176" title="All 2 branches missed.">                                        reg.getActivity().getProgram().getJudge() != null &amp;&amp;</span>
-<span class="nc" id="L177">                                                reg.getActivity()</span>
-<span class="nc" id="L178">                                                        .getProgram()</span>
-<span class="nc" id="L179">                                                        .getJudge()</span>
-<span class="nc" id="L180">                                                        .getUser()</span>
-<span class="nc" id="L181">                                                        .getUserId()</span>
-<span class="nc bnc" id="L182" title="All 2 branches missed.">                                                        .equals(user.getUserId())</span>
+<span class="nc bnc" id="L205" title="All 2 branches missed.">                                        reg.getActivity().getProgram().getJudge() != null &amp;&amp;</span>
+<span class="nc" id="L206">                                                reg.getActivity()</span>
+<span class="nc" id="L207">                                                        .getProgram()</span>
+<span class="nc" id="L208">                                                        .getJudge()</span>
+<span class="nc" id="L209">                                                        .getUser()</span>
+<span class="nc" id="L210">                                                        .getUserId()</span>
+<span class="nc bnc" id="L211" title="All 2 branches missed.">                                                        .equals(user.getUserId())</span>
                                 )
                 )
-<span class="nc" id="L185">                .orElse(false);</span>
+<span class="nc" id="L214">                .orElse(false);</span>
     }
 
     public boolean canSubmitActivity(
             Authentication authentication,
             UUID activityId)
     {
-<span class="fc" id="L192">        User user = currentUser(authentication);</span>
-<span class="pc bpc" id="L193" title="1 of 2 branches missed.">        if (user == null) return false;</span>
+<span class="fc" id="L221">        User user = currentUser(authentication);</span>
+<span class="pc bpc" id="L222" title="1 of 2 branches missed.">        if (user == null) return false;</span>
 
-<span class="fc" id="L195">        ActivityRegistration reg =</span>
+<span class="fc" id="L224">        ActivityRegistration reg =</span>
                 activityRegistrationRepository
-<span class="fc" id="L197">                        .findByActivityActivityIdAndUserUserId(activityId, user.getUserId())</span>
-<span class="fc" id="L198">                        .orElse(null);</span>
+<span class="fc" id="L226">                        .findByActivityActivityIdAndUserUserId(activityId, user.getUserId())</span>
+<span class="fc" id="L227">                        .orElse(null);</span>
 
-<span class="pc bpc" id="L200" title="1 of 2 branches missed.">        if (reg == null) return false;</span>
+<span class="pc bpc" id="L229" title="1 of 2 branches missed.">        if (reg == null) return false;</span>
 
-<span class="fc" id="L202">        return !submissionRepository</span>
-<span class="fc bfc" id="L203" title="All 2 branches covered.">                .existsByActivityRegistration_ActivityRegistrationId(</span>
-<span class="fc" id="L204">                        reg.getActivityRegistrationId());</span>
+<span class="fc" id="L231">        return !submissionRepository</span>
+<span class="fc bfc" id="L232" title="All 2 branches covered.">                .existsByActivityRegistration_ActivityRegistrationId(</span>
+<span class="fc" id="L233">                        reg.getActivityRegistrationId());</span>
     }
 
     public boolean canJudgeAccessSubmission(
             Authentication authentication,
             UUID submissionId
     ) {
-<span class="nc" id="L211">        User user = currentUser(authentication);</span>
-<span class="nc bnc" id="L212" title="All 2 branches missed.">        if (user == null) return false;</span>
-<span class="nc bnc" id="L213" title="All 2 branches missed.">        if (isOwner(user)) return true;</span>
+<span class="nc" id="L240">        User user = currentUser(authentication);</span>
+<span class="nc bnc" id="L241" title="All 2 branches missed.">        if (user == null) return false;</span>
+<span class="nc bnc" id="L242" title="All 2 branches missed.">        if (isOwner(user)) return true;</span>
 
-<span class="nc" id="L215">        return submissionRepository.findById(submissionId)</span>
-<span class="nc" id="L216">                .map(sub -&gt; {</span>
-<span class="nc" id="L217">                    Program program =</span>
-<span class="nc" id="L218">                            sub.getActivityRegistration()</span>
-<span class="nc" id="L219">                                    .getActivity()</span>
-<span class="nc" id="L220">                                    .getProgram();</span>
+<span class="nc" id="L244">        return submissionRepository.findById(submissionId)</span>
+<span class="nc" id="L245">                .map(sub -&gt; {</span>
+<span class="nc" id="L246">                    Program program =</span>
+<span class="nc" id="L247">                            sub.getActivityRegistration()</span>
+<span class="nc" id="L248">                                    .getActivity()</span>
+<span class="nc" id="L249">                                    .getProgram();</span>
 
-<span class="nc" id="L222">                    Judge judge = program.getJudge();</span>
-<span class="nc bnc" id="L223" title="All 2 branches missed.">                    return judge != null &amp;&amp;</span>
-<span class="nc bnc" id="L224" title="All 2 branches missed.">                            judge.getUser().getUserId().equals(user.getUserId());</span>
+<span class="nc" id="L251">                    Judge judge = program.getJudge();</span>
+<span class="nc bnc" id="L252" title="All 2 branches missed.">                    return judge != null &amp;&amp;</span>
+<span class="nc bnc" id="L253" title="All 2 branches missed.">                            judge.getUser().getUserId().equals(user.getUserId());</span>
                 })
-<span class="nc" id="L226">                .orElse(false);</span>
+<span class="nc" id="L255">                .orElse(false);</span>
     }
+
     public boolean canAccessProgramWallet(
             Authentication authentication,
             UUID programWalletId
     ) {
-<span class="fc" id="L232">        User user = currentUser(authentication);</span>
-<span class="pc bpc" id="L233" title="1 of 2 branches missed.">        if (user == null) return false;</span>
-<span class="fc bfc" id="L234" title="All 2 branches covered.">        if (isOwner(user)) return true;</span>
+<span class="fc" id="L262">        User user = currentUser(authentication);</span>
+<span class="pc bpc" id="L263" title="1 of 2 branches missed.">        if (user == null) return false;</span>
+<span class="fc bfc" id="L264" title="All 2 branches covered.">        if (isOwner(user)) return true;</span>
 
-<span class="fc" id="L236">        return programWalletRepository.findById(programWalletId)</span>
-<span class="fc" id="L237">                .map(w -&gt;</span>
-<span class="pc bpc" id="L238" title="1 of 2 branches missed.">                        w.getUser().getUserId().equals(user.getUserId()) ||</span>
-<span class="pc bnc" id="L239" title="All 2 branches missed.">                                w.getProgram().getUser().getUserId().equals(user.getUserId()))</span>
-<span class="fc" id="L240">                .orElse(false);</span>
+<span class="fc" id="L266">        return programWalletRepository.findById(programWalletId)</span>
+<span class="fc" id="L267">                .map(w -&gt;</span>
+<span class="pc bpc" id="L268" title="1 of 2 branches missed.">                        w.getUser().getUserId().equals(user.getUserId()) ||</span>
+<span class="pc bnc" id="L269" title="All 2 branches missed.">                                w.getProgram().getUser().getUserId().equals(user.getUserId()))</span>
+<span class="fc" id="L270">                .orElse(false);</span>
     }
 
     public boolean canAccessMyProgramWallet(
             Authentication authentication,
             UUID programId
     ) {
-<span class="nc bnc" id="L247" title="All 2 branches missed.">        return currentUser(authentication) != null;</span>
+<span class="nc bnc" id="L277" title="All 2 branches missed.">        return currentUser(authentication) != null;</span>
     }
 
     public boolean canAccessProgramWalletsByProgram(
             Authentication authentication,
             UUID programId
     ) {
-<span class="nc" id="L254">        User user = currentUser(authentication);</span>
-<span class="nc bnc" id="L255" title="All 2 branches missed.">        if (user == null) return false;</span>
-<span class="nc bnc" id="L256" title="All 2 branches missed.">        if (isOwner(user)) return true;</span>
+<span class="nc" id="L284">        User user = currentUser(authentication);</span>
+<span class="nc bnc" id="L285" title="All 2 branches missed.">        if (user == null) return false;</span>
+<span class="nc bnc" id="L286" title="All 2 branches missed.">        if (isOwner(user)) return true;</span>
 
-<span class="nc" id="L258">        return programRepository.findById(programId)</span>
-<span class="nc" id="L259">                .map(p -&gt; p.getUser().getUserId().equals(user.getUserId()))</span>
-<span class="nc" id="L260">                .orElse(false);</span>
+<span class="nc" id="L288">        return programRepository.findById(programId)</span>
+<span class="nc" id="L289">                .map(p -&gt; p.getUser().getUserId().equals(user.getUserId()))</span>
+<span class="nc" id="L290">                .orElse(false);</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

@@ -49,7 +49,7 @@ public class UserController {
 <span class="fc" id="L49">                .body(userService.convertToDto(savedUser));</span>
     }
 
-    @PreAuthorize(&quot;@rbac.isPlatformOwner(authentication)&quot;)
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
     @GetMapping
     @Operation(
             summary = &quot;Get all users&quot;,
