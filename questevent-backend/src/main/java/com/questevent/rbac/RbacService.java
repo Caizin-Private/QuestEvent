@@ -39,8 +39,6 @@ public class RbacService {
         this.programWalletRepository = programWalletRepository;
     }
 
-    /* ===================== Core user resolution ===================== */
-
     private User currentUser(Authentication authentication) {
         if (!(authentication instanceof JwtAuthenticationToken jwtAuth)) {
             return null;
@@ -60,21 +58,15 @@ public class RbacService {
         return user != null && user.getRole() == Role.OWNER;
     }
 
-    /* ===================== Platform ===================== */
-
     public boolean isPlatformOwner(Authentication authentication) {
         return isOwner(currentUser(authentication));
     }
-
-    /* ===================== User ===================== */
 
     public boolean canAccessUserProfile(Authentication authentication, Long userId) {
         User user = currentUser(authentication);
         return user != null &&
                 (isOwner(user) || user.getUserId().equals(userId));
     }
-
-    /* ===================== Program ===================== */
 
     public boolean canManageProgram(Authentication authentication, UUID programId) {
         User user = currentUser(authentication);
@@ -91,7 +83,20 @@ public class RbacService {
         return currentUser(authentication) != null;
     }
 
-    public boolean canJudgeAccessProgram(Authentication authentication, UUID programId) {
+    public boolean canJudgeAccessAnyProgram(Authentication authentication) {
+        User user = currentUser(authentication);
+        if (user == null) return false;
+        if (isOwner(user)) return true;
+
+        return !programRepository
+                .findByJudgeUserId(user.getUserId())
+                .isEmpty();
+    }
+
+    public boolean canJudgeAccessProgram(
+            Authentication authentication,
+            UUID programId
+    ) {
         User user = currentUser(authentication);
         if (user == null) return false;
         if (isOwner(user)) return true;
@@ -99,11 +104,16 @@ public class RbacService {
         return programRepository.findById(programId)
                 .map(p ->
                         p.getJudge() != null &&
-                                p.getJudge().getUser().getUserId().equals(user.getUserId()))
+                                p.getJudge().getUser().getUserId().equals(user.getUserId())
+                )
                 .orElse(false);
     }
 
-    /* ===================== Program Registration ===================== */
+    public UUID getProgramIdByActivityId(UUID activityId) {
+        return activityRepository.findById(activityId)
+                .map(a -> a.getProgram().getProgramId())
+                .orElse(null);
+    }
 
     public boolean canRegisterForProgram(
             Authentication authentication,
@@ -130,8 +140,6 @@ public class RbacService {
                 .orElse(false);
     }
 
-    /* ===================== Activity Submission ===================== */
-
     public boolean canSubmitActivity(
             Authentication authentication,
             UUID activityId,
@@ -152,7 +160,7 @@ public class RbacService {
                         reg.getActivityRegistrationId());
     }
 
-    public boolean canVerifySubmission(
+    public boolean canJudgeAccessSubmission(
             Authentication authentication,
             UUID submissionId
     ) {
@@ -161,19 +169,18 @@ public class RbacService {
         if (isOwner(user)) return true;
 
         return submissionRepository.findById(submissionId)
-                .map(sub ->
-                        sub.getActivityRegistration()
-                                .getActivity()
-                                .getProgram()
-                                .getJudge()
-                                .getUser()
-                                .getUserId()
-                                .equals(user.getUserId()))
+                .map(sub -> {
+                    Program program =
+                            sub.getActivityRegistration()
+                                    .getActivity()
+                                    .getProgram();
+
+                    Judge judge = program.getJudge();
+                    return judge != null &&
+                            judge.getUser().getUserId().equals(user.getUserId());
+                })
                 .orElse(false);
     }
-
-    /* ===================== Wallet ===================== */
-
     public boolean canAccessProgramWallet(
             Authentication authentication,
             UUID programWalletId
