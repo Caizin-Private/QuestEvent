@@ -1,7 +1,6 @@
 package com.questevent.service;
 
 import com.questevent.dto.ProgramWalletBalanceDTO;
-import com.questevent.dto.UserPrincipal;
 import com.questevent.entity.Program;
 import com.questevent.entity.ProgramWallet;
 import com.questevent.entity.User;
@@ -111,14 +110,12 @@ public class ProgramWalletService {
 
         log.debug("Fetching my program wallet | programId={}", programId);
 
-        // ✅ SINGLE SOURCE OF TRUTH
-        UserPrincipal principal =
-                securityUserResolver.getCurrentUserPrincipal();
+        User user = securityUserResolver.getCurrentUser();
 
         ProgramWallet wallet =
                 programWalletRepository
                         .findByUserUserIdAndProgramProgramId(
-                                principal.userId(),
+                                user.getUserId(),
                                 programId
                         )
                         .orElseThrow(() ->

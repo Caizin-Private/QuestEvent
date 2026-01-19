@@ -1,155 +1,139 @@
 package com.questevent.controller;
 
 import com.questevent.dto.JudgeSubmissionDTO;
-import com.questevent.enums.ReviewStatus;
+import com.questevent.dto.JudgeSubmissionDetailsDTO;
+import com.questevent.dto.JudgeSubmissionStatsDTO;
+import com.questevent.rbac.RbacService;
 import com.questevent.service.JudgeService;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ExtendWith(MockitoExtension.class)
+@WebMvcTest(JudgeController.class)
 class JudgeControllerTest {
 
-    @Mock
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
     private JudgeService judgeService;
 
-    @Mock
-    private Authentication authentication;
-
-    @InjectMocks
-    private JudgeController judgeController;
+    @MockBean
+    private RbacService rbacService;
 
     @Test
-    void getPendingSubmissions_shouldReturnList() {
+    @WithMockUser
+    void getPendingSubmissions_ownerAllowed_returns200() throws Exception {
+        when(rbacService.isPlatformOwner(any())).thenReturn(true);
+        when(judgeService.getPendingSubmissionsForJudge(any()))
+                .thenReturn(List.of(mock(JudgeSubmissionDTO.class)));
 
-        JudgeSubmissionDTO dto = new JudgeSubmissionDTO(
-                UUID.randomUUID(),          // submissionId
-                UUID.randomUUID(),          // activityId
-                "Code Challenge",
-                3L,                         // userId
-                "Abhinash",
-                "https://github.com/solution",
-                null,
-                Instant.now(),
-                null,
-                ReviewStatus.PENDING
-        );
-
-        when(judgeService.getPendingSubmissionsForJudge(authentication))
-                .thenReturn(List.of(dto));
-
-        ResponseEntity<List<JudgeSubmissionDTO>> response =
-                judgeController.getPendingSubmissions(authentication);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals(1, response.getBody().size());
-        assertEquals(ReviewStatus.PENDING, response.getBody().get(0).reviewStatus());
+        mockMvc.perform(get("/api/judge/submissions/pending"))
+                .andExpect(status().isOk());
     }
 
     @Test
-    void getPendingSubmissionsForActivity_shouldReturnSubmissions() {
-
+    @WithMockUser
+    void getPendingSubmissionsForActivity_ownerAllowed_returns200() throws Exception {
         UUID activityId = UUID.randomUUID();
 
-        JudgeSubmissionDTO dto = new JudgeSubmissionDTO(
-                UUID.randomUUID(),          // submissionId
-                activityId,
-                "Hackathon",
-                4L,                         // userId
-                "User A",
-                "https://drive.link",
-                null,
-                Instant.now(),
-                null,
-                ReviewStatus.PENDING
-        );
+        when(rbacService.isPlatformOwner(any())).thenReturn(true);
+        when(judgeService.getPendingSubmissionsForActivity(eq(activityId), any()))
+                .thenReturn(List.of(mock(JudgeSubmissionDTO.class)));
 
-        when(judgeService.getPendingSubmissionsForActivity(activityId, authentication))
-                .thenReturn(List.of(dto));
-
-        ResponseEntity<List<JudgeSubmissionDTO>> response =
-                judgeController.getPendingSubmissionsForActivity(activityId, authentication);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals(1, response.getBody().size());
-        assertEquals(activityId, response.getBody().get(0).activityId());
+        mockMvc.perform(
+                        get("/api/judge/submissions/pending/activity/{activityId}", activityId)
+                )
+                .andExpect(status().isOk());
     }
 
     @Test
-    void getPendingSubmissionsForActivity_shouldThrowException_whenActivityNotFound() {
+    @WithMockUser
+    void getAllSubmissions_ownerAllowed_returns200() throws Exception {
+        when(rbacService.isPlatformOwner(any())).thenReturn(true);
+        when(judgeService.getAllSubmissionsForJudge(any()))
+                .thenReturn(List.of(mock(JudgeSubmissionDTO.class)));
 
-        UUID activityId = UUID.randomUUID();
-
-        when(judgeService.getPendingSubmissionsForActivity(activityId, authentication))
-                .thenThrow(new RuntimeException("Activity not found"));
-
-        RuntimeException exception = assertThrows(
-                RuntimeException.class,
-                () -> judgeController.getPendingSubmissionsForActivity(activityId, authentication)
-        );
-
-        assertEquals("Activity not found", exception.getMessage());
+        mockMvc.perform(get("/api/judge/submissions"))
+                .andExpect(status().isOk());
     }
 
     @Test
-    void getAllSubmissions_shouldReturnList() {
-
-        when(judgeService.getAllSubmissionsForJudge(authentication))
-                .thenReturn(List.of());
-
-        ResponseEntity<List<JudgeSubmissionDTO>> response =
-                judgeController.getAllSubmissions(authentication);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-    }
-
-    @Test
-    void reviewSubmission_shouldReturnOk() {
-
+    @WithMockUser
+    void reviewSubmission_ownerAllowed_returns200() throws Exception {
         UUID submissionId = UUID.randomUUID();
 
-        doNothing().when(judgeService)
-                .reviewSubmission(submissionId);
+        when(rbacService.isPlatformOwner(any())).thenReturn(true);
 
-        ResponseEntity<Void> response =
-                judgeController.reviewSubmission(submissionId);
+        mockMvc.perform(
+                        patch("/api/judge/submissions/{submissionId}/review", submissionId)
+                                .with(csrf())
+                )
+                .andExpect(status().isOk());
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNull(response.getBody());
-
-        verify(judgeService, times(1))
-                .reviewSubmission(submissionId);
+        verify(judgeService).reviewSubmission(submissionId);
     }
 
     @Test
-    void reviewSubmission_shouldThrowException_whenAlreadyReviewed() {
-
+    @WithMockUser
+    void rejectSubmission_ownerAllowed_returns200() throws Exception {
         UUID submissionId = UUID.randomUUID();
 
-        doThrow(new RuntimeException("Submission already reviewed"))
-                .when(judgeService)
-                .reviewSubmission(submissionId);
+        when(rbacService.isPlatformOwner(any())).thenReturn(true);
 
-        RuntimeException exception = assertThrows(
-                RuntimeException.class,
-                () -> judgeController.reviewSubmission(submissionId)
-        );
+        mockMvc.perform(
+                        patch("/api/judge/submissions/{submissionId}/reject", submissionId)
+                                .with(csrf())
+                )
+                .andExpect(status().isOk());
 
-        assertEquals("Submission already reviewed", exception.getMessage());
+        verify(judgeService).rejectSubmission(eq(submissionId), any());
+    }
+
+    @Test
+    @WithMockUser
+    void getSubmissionDetails_ownerAllowed_returns200() throws Exception {
+        UUID submissionId = UUID.randomUUID();
+
+        when(rbacService.isPlatformOwner(any())).thenReturn(true);
+        when(judgeService.getSubmissionDetails(eq(submissionId), any()))
+                .thenReturn(mock(JudgeSubmissionDetailsDTO.class));
+
+        mockMvc.perform(
+                        get("/api/judge/submissions/{submissionId}", submissionId)
+                )
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser
+    void getSubmissionStats_ownerAllowed_returns200() throws Exception {
+        when(rbacService.isPlatformOwner(any())).thenReturn(true);
+        when(judgeService.getSubmissionStats(any()))
+                .thenReturn(mock(JudgeSubmissionStatsDTO.class));
+
+        mockMvc.perform(get("/api/judge/submissions/stats"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void unauthenticated_accessDenied() throws Exception {
+        mockMvc.perform(get("/api/judge/submissions"))
+                .andExpect(status().isUnauthorized());
     }
 }

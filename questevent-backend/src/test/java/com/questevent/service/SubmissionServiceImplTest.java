@@ -1,18 +1,16 @@
 package com.questevent.service;
 
-import com.questevent.dto.UserPrincipal;
-import com.questevent.entity.Activity;
 import com.questevent.entity.ActivityRegistration;
 import com.questevent.entity.ActivitySubmission;
 import com.questevent.entity.User;
 import com.questevent.enums.CompletionStatus;
 import com.questevent.enums.ReviewStatus;
-import com.questevent.enums.Role;
 import com.questevent.exception.InvalidOperationException;
 import com.questevent.exception.ResourceNotFoundException;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
 import com.questevent.utils.SecurityUserResolver;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,7 +20,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,162 +34,158 @@ class SubmissionServiceImplTest {
     private ActivitySubmissionRepository submissionRepository;
 
     @Mock
-    private SecurityUserResolver securityUserResolver; // ✅ REQUIRED
+    private SecurityUserResolver securityUserResolver;
 
     @InjectMocks
-    private SubmissionServiceImpl submissionService;
+    private SubmissionServiceImpl service;
 
-    private static final Long USER_ID = 1L;
+    private User user;
+    private ActivityRegistration registration;
+    private ActivitySubmission submission;
+    private UUID activityId;
 
-    private void mockAuthenticatedUser() {
-        when(securityUserResolver.getCurrentUserPrincipal())
-                .thenReturn(
-                        new UserPrincipal(
-                                USER_ID,
-                                "test@example.com",
-                                Role.USER
-                        )
-                );
+    @BeforeEach
+    void setUp() {
+        activityId = UUID.randomUUID();
+
+        user = new User();
+        user.setUserId(1L);
+
+        registration = new ActivityRegistration();
+        registration.setActivityRegistrationId(UUID.randomUUID());
+        registration.setUser(user);
+
+        submission = new ActivitySubmission();
+        submission.setActivityRegistration(registration);
+        submission.setReviewStatus(ReviewStatus.PENDING);
     }
 
     @Test
-    void submitActivity_shouldCreateNewSubmissionSuccessfully() {
-
-        mockAuthenticatedUser();
-
-        UUID activityId = UUID.randomUUID();
-        UUID registrationId = UUID.randomUUID();
-
-        ActivityRegistration registration =
-                mockRegistration(activityId, USER_ID, registrationId);
-
+    void submitActivity_success_newSubmission() {
+        when(securityUserResolver.getCurrentUser())
+                .thenReturn(user);
         when(registrationRepository
-                .findByActivityActivityIdAndUserUserId(activityId, USER_ID))
+                .findByActivityActivityIdAndUserUserId(activityId, user.getUserId()))
                 .thenReturn(Optional.of(registration));
-
         when(submissionRepository
-                .findByActivityRegistration_ActivityRegistrationId(registrationId))
+                .findByActivityRegistration_ActivityRegistrationId(
+                        registration.getActivityRegistrationId()))
                 .thenReturn(Optional.empty());
 
-        submissionService.submitActivity(activityId, "https://github.com/project");
+        service.submitActivity(activityId, "url");
 
         verify(submissionRepository).save(any(ActivitySubmission.class));
         verify(registrationRepository).save(registration);
-
-        assertEquals(
-                CompletionStatus.COMPLETED,
-                registration.getCompletionStatus()
-        );
+        assertThat(registration.getCompletionStatus())
+                .isEqualTo(CompletionStatus.COMPLETED);
     }
 
     @Test
-    void submitActivity_shouldResubmitIfSubmissionExistsAndNotApproved() {
-
-        mockAuthenticatedUser();
-
-        UUID activityId = UUID.randomUUID();
-        UUID registrationId = UUID.randomUUID();
-
-        ActivityRegistration registration =
-                mockRegistration(activityId, USER_ID, registrationId);
-
-        ActivitySubmission existingSubmission = new ActivitySubmission();
-        existingSubmission.setReviewStatus(ReviewStatus.REJECTED);
-
+    void submitActivity_success_existingPendingSubmission() {
+        when(securityUserResolver.getCurrentUser())
+                .thenReturn(user);
         when(registrationRepository
-                .findByActivityActivityIdAndUserUserId(activityId, USER_ID))
+                .findByActivityActivityIdAndUserUserId(activityId, user.getUserId()))
                 .thenReturn(Optional.of(registration));
-
         when(submissionRepository
-                .findByActivityRegistration_ActivityRegistrationId(registrationId))
-                .thenReturn(Optional.of(existingSubmission));
+                .findByActivityRegistration_ActivityRegistrationId(
+                        registration.getActivityRegistrationId()))
+                .thenReturn(Optional.of(submission));
 
-        submissionService.submitActivity(activityId, "new-url");
+        service.submitActivity(activityId, "new-url");
 
-        assertEquals(
-                ReviewStatus.PENDING,
-                existingSubmission.getReviewStatus()
-        );
-
-        verify(submissionRepository).save(existingSubmission);
+        assertThat(submission.getSubmissionUrl()).isEqualTo("new-url");
+        assertThat(submission.getReviewStatus()).isEqualTo(ReviewStatus.PENDING);
+        verify(submissionRepository).save(submission);
         verify(registrationRepository).save(registration);
     }
 
     @Test
-    void submitActivity_shouldThrowIfSubmissionAlreadyApproved() {
+    void submitActivity_fails_whenAlreadyApproved() {
+        submission.setReviewStatus(ReviewStatus.APPROVED);
 
-        mockAuthenticatedUser();
-
-        UUID activityId = UUID.randomUUID();
-        UUID registrationId = UUID.randomUUID();
-
-        ActivityRegistration registration =
-                mockRegistration(activityId, USER_ID, registrationId);
-
-        ActivitySubmission approvedSubmission = new ActivitySubmission();
-        approvedSubmission.setReviewStatus(ReviewStatus.APPROVED);
-
+        when(securityUserResolver.getCurrentUser())
+                .thenReturn(user);
         when(registrationRepository
-                .findByActivityActivityIdAndUserUserId(activityId, USER_ID))
+                .findByActivityActivityIdAndUserUserId(activityId, user.getUserId()))
                 .thenReturn(Optional.of(registration));
-
         when(submissionRepository
-                .findByActivityRegistration_ActivityRegistrationId(registrationId))
-                .thenReturn(Optional.of(approvedSubmission));
+                .findByActivityRegistration_ActivityRegistrationId(
+                        registration.getActivityRegistrationId()))
+                .thenReturn(Optional.of(submission));
 
-        InvalidOperationException ex = assertThrows(
-                InvalidOperationException.class,
-                () -> submissionService.submitActivity(activityId, "url")
-        );
-
-        assertEquals(
-                "Submission already approved. Resubmission not allowed.",
-                ex.getMessage()
-        );
-
-        verify(submissionRepository, never()).save(any());
+        assertThatThrownBy(() ->
+                service.submitActivity(activityId, "url"))
+                .isInstanceOf(InvalidOperationException.class);
     }
 
     @Test
-    void submitActivity_shouldThrowIfUserNotRegistered() {
-
-        mockAuthenticatedUser();
-
+    void submitActivity_fails_whenNotRegistered() {
+        when(securityUserResolver.getCurrentUser())
+                .thenReturn(user);
         when(registrationRepository
                 .findByActivityActivityIdAndUserUserId(any(), any()))
                 .thenReturn(Optional.empty());
 
-        ResourceNotFoundException ex = assertThrows(
-                ResourceNotFoundException.class,
-                () -> submissionService.submitActivity(
-                        UUID.randomUUID(),
-                        "url"
-                )
-        );
-
-        assertEquals(
-                "User is not registered for this activity",
-                ex.getMessage()
-        );
+        assertThatThrownBy(() ->
+                service.submitActivity(activityId, "url"))
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 
-    private ActivityRegistration mockRegistration(
-            UUID activityId,
-            Long userId,
-            UUID registrationId
-    ) {
+    @Test
+    void resubmitActivity_success() {
+        submission.setReviewStatus(ReviewStatus.REJECTED);
 
-        User user = new User();
-        user.setUserId(userId);
+        when(securityUserResolver.getCurrentUser())
+                .thenReturn(user);
+        when(registrationRepository
+                .findByActivityActivityIdAndUserUserId(activityId, user.getUserId()))
+                .thenReturn(Optional.of(registration));
+        when(submissionRepository
+                .findByActivityRegistration_ActivityRegistrationId(
+                        registration.getActivityRegistrationId()))
+                .thenReturn(Optional.of(submission));
 
-        Activity activity = new Activity();
-        activity.setActivityId(activityId);
+        service.resubmitActivity(activityId, "new-url", null);
 
-        ActivityRegistration registration = new ActivityRegistration();
-        registration.setActivityRegistrationId(registrationId);
-        registration.setUser(user);
-        registration.setActivity(activity);
+        assertThat(submission.getSubmissionUrl()).isEqualTo("new-url");
+        assertThat(submission.getReviewStatus()).isEqualTo(ReviewStatus.PENDING);
+        verify(submissionRepository).save(submission);
+        verify(registrationRepository).save(registration);
+    }
 
-        return registration;
+    @Test
+    void resubmitActivity_fails_whenSubmissionNotFound() {
+        when(securityUserResolver.getCurrentUser())
+                .thenReturn(user);
+        when(registrationRepository
+                .findByActivityActivityIdAndUserUserId(activityId, user.getUserId()))
+                .thenReturn(Optional.of(registration));
+        when(submissionRepository
+                .findByActivityRegistration_ActivityRegistrationId(any()))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() ->
+                service.resubmitActivity(activityId, "url", null))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void resubmitActivity_fails_whenNotRejected() {
+        submission.setReviewStatus(ReviewStatus.APPROVED);
+
+        when(securityUserResolver.getCurrentUser())
+                .thenReturn(user);
+        when(registrationRepository
+                .findByActivityActivityIdAndUserUserId(activityId, user.getUserId()))
+                .thenReturn(Optional.of(registration));
+        when(submissionRepository
+                .findByActivityRegistration_ActivityRegistrationId(
+                        registration.getActivityRegistrationId()))
+                .thenReturn(Optional.of(submission));
+
+        assertThatThrownBy(() ->
+                service.resubmitActivity(activityId, "url", null))
+                .isInstanceOf(InvalidOperationException.class);
     }
 }

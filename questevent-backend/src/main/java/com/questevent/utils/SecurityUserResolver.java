@@ -2,8 +2,8 @@ package com.questevent.utils;
 
 import com.questevent.dto.UserPrincipal;
 import com.questevent.entity.User;
+import com.questevent.enums.Role;
 import com.questevent.exception.UnauthorizedException;
-import com.questevent.exception.UserNotFoundException;
 import com.questevent.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -18,7 +18,7 @@ public class SecurityUserResolver {
 
     private final UserRepository userRepository;
 
-    public UserPrincipal getCurrentUserPrincipal() {
+    public User getCurrentUser() {
 
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
@@ -29,20 +29,24 @@ public class SecurityUserResolver {
 
         Jwt jwt = jwtAuth.getToken();
 
-        String email = jwt.getClaimAsString("email");
+        String email = jwt.getClaimAsString("preferred_username");
         if (email == null) {
-            throw new UnauthorizedException("Invalid token");
+            email = jwt.getClaimAsString("email");
+        }
+        if (email == null) {
+            throw new UnauthorizedException("No email in token");
         }
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new UserNotFoundException("User not found")
-                );
+        final String finalEmail = email;
 
-        return new UserPrincipal(
-                user.getUserId(),
-                user.getEmail(),
-                user.getRole()
-        );
+        return userRepository.findByEmail(finalEmail)
+                .orElseGet(() -> {
+                    User u = new User();
+                    u.setEmail(finalEmail);
+                    u.setName(jwt.getClaimAsString("name"));
+                    u.setRole(Role.USER);
+                    return userRepository.save(u);
+                });
     }
 }
+

@@ -1,7 +1,6 @@
 package com.questevent.service;
 
 import com.questevent.dto.ProgramWalletBalanceDTO;
-import com.questevent.dto.UserPrincipal;
 import com.questevent.entity.Program;
 import com.questevent.entity.ProgramWallet;
 import com.questevent.entity.User;
@@ -13,6 +12,7 @@ import com.questevent.repository.ProgramRepository;
 import com.questevent.repository.ProgramWalletRepository;
 import com.questevent.repository.UserRepository;
 import com.questevent.utils.SecurityUserResolver;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -40,204 +40,159 @@ class ProgramWalletServiceTest {
     private ProgramRepository programRepository;
 
     @Mock
-    private SecurityUserResolver securityUserResolver; // ✅ REQUIRED
+    private SecurityUserResolver securityUserResolver;
 
     @InjectMocks
-    private ProgramWalletService programWalletService;
+    private ProgramWalletService service;
 
-    /* ================= CREATE WALLET ================= */
+    private User user;
+    private Program program;
+    private ProgramWallet wallet;
+
+    @BeforeEach
+    void setUp() {
+        user = new User();
+        user.setUserId(1L);
+
+        program = new Program();
+        program.setProgramId(UUID.randomUUID());
+
+        wallet = new ProgramWallet();
+        wallet.setProgramWalletId(UUID.randomUUID());
+        wallet.setUser(user);
+        wallet.setProgram(program);
+        wallet.setGems(100L);
+    }
 
     @Test
-    void createWallet_shouldCreateWallet() {
-
-        Long userId = 1L;
-        UUID programId = UUID.randomUUID();
-
-        User user = new User();
-        user.setUserId(userId);
-
-        Program program = new Program();
-        program.setProgramId(programId);
-
-        when(userRepository.findById(userId))
+    void createWallet_success() {
+        when(userRepository.findById(user.getUserId()))
                 .thenReturn(Optional.of(user));
-        when(programRepository.findById(programId))
+        when(programRepository.findById(program.getProgramId()))
                 .thenReturn(Optional.of(program));
         when(programWalletRepository.findByUserAndProgram(user, program))
                 .thenReturn(Optional.empty());
         when(programWalletRepository.save(any()))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+                .thenAnswer(inv -> inv.getArgument(0));
 
-        ProgramWallet wallet =
-                programWalletService.createWallet(userId, programId);
+        ProgramWallet result =
+                service.createWallet(user.getUserId(), program.getProgramId());
 
-        assertNotNull(wallet);
-        assertEquals(0, wallet.getGems());
-        assertEquals(user, wallet.getUser());
-        assertEquals(program, wallet.getProgram());
+        assertThat(result.getUser()).isEqualTo(user);
+        assertThat(result.getProgram()).isEqualTo(program);
+        assertThat(result.getGems()).isZero();
     }
 
     @Test
-    void createWallet_shouldFail_whenUserNotFound() {
-
-        when(userRepository.findById(1L))
+    void createWallet_userNotFound() {
+        when(userRepository.findById(any()))
                 .thenReturn(Optional.empty());
 
-        UserNotFoundException ex = assertThrows(
-                UserNotFoundException.class,
-                () -> programWalletService.createWallet(1L, UUID.randomUUID())
-        );
-
-        assertEquals("User not found", ex.getMessage());
+        assertThatThrownBy(() ->
+                service.createWallet(1L, program.getProgramId()))
+                .isInstanceOf(UserNotFoundException.class);
     }
 
     @Test
-    void createWallet_shouldFail_whenProgramNotFound() {
-
-        User user = new User();
-        user.setUserId(1L);
-
-        when(userRepository.findById(1L))
+    void createWallet_programNotFound() {
+        when(userRepository.findById(user.getUserId()))
                 .thenReturn(Optional.of(user));
         when(programRepository.findById(any()))
                 .thenReturn(Optional.empty());
 
-        ProgramNotFoundException ex = assertThrows(
-                ProgramNotFoundException.class,
-                () -> programWalletService.createWallet(1L, UUID.randomUUID())
-        );
-
-        assertEquals("Program not found", ex.getMessage());
+        assertThatThrownBy(() ->
+                service.createWallet(user.getUserId(), UUID.randomUUID()))
+                .isInstanceOf(ProgramNotFoundException.class);
     }
 
     @Test
-    void createWallet_shouldFail_whenWalletAlreadyExists() {
-
-        User user = new User();
-        user.setUserId(1L);
-
-        Program program = new Program();
-
-        when(userRepository.findById(1L))
+    void createWallet_alreadyExists() {
+        when(userRepository.findById(user.getUserId()))
                 .thenReturn(Optional.of(user));
-        when(programRepository.findById(any()))
+        when(programRepository.findById(program.getProgramId()))
                 .thenReturn(Optional.of(program));
         when(programWalletRepository.findByUserAndProgram(user, program))
-                .thenReturn(Optional.of(new ProgramWallet()));
+                .thenReturn(Optional.of(wallet));
 
-        ResourceConflictException ex = assertThrows(
-                ResourceConflictException.class,
-                () -> programWalletService.createWallet(1L, UUID.randomUUID())
-        );
-
-        assertEquals("Program wallet already exists", ex.getMessage());
-        verify(programWalletRepository, never()).save(any());
+        assertThatThrownBy(() ->
+                service.createWallet(user.getUserId(), program.getProgramId()))
+                .isInstanceOf(ResourceConflictException.class);
     }
 
-    /* ================= FETCH ================= */
-
     @Test
-    void getWalletBalanceByWalletId_shouldReturnBalance() {
-
-        UUID walletId = UUID.randomUUID();
-
-        Program program = new Program();
-        program.setProgramId(UUID.randomUUID());
-
-        User user = new User();
-        user.setUserId(1L);
-
-        ProgramWallet wallet = new ProgramWallet();
-        wallet.setProgramWalletId(walletId);
-        wallet.setProgram(program);
-        wallet.setUser(user);
-        wallet.setGems(50L);
-
-        when(programWalletRepository.findById(walletId))
+    void getWalletBalanceByWalletId_success() {
+        when(programWalletRepository.findById(wallet.getProgramWalletId()))
                 .thenReturn(Optional.of(wallet));
 
         ProgramWalletBalanceDTO dto =
-                programWalletService.getWalletBalanceByWalletId(walletId);
+                service.getWalletBalanceByWalletId(wallet.getProgramWalletId());
 
-        assertEquals(50, dto.getGems());
-        assertEquals(user.getUserId(), dto.getUserId());
-        assertEquals(program.getProgramId(), dto.getProgramId());
+        assertThat(dto.getProgramWalletId()).isEqualTo(wallet.getProgramWalletId());
+        assertThat(dto.getUserId()).isEqualTo(user.getUserId());
+        assertThat(dto.getProgramId()).isEqualTo(program.getProgramId());
+        assertThat(dto.getGems()).isEqualTo(100L);
     }
 
     @Test
-    void getProgramWalletsByProgramId_shouldReturnWallets() {
+    void getWalletBalanceByWalletId_notFound() {
+        when(programWalletRepository.findById(any()))
+                .thenReturn(Optional.empty());
 
-        UUID programId = UUID.randomUUID();
+        assertThatThrownBy(() ->
+                service.getWalletBalanceByWalletId(UUID.randomUUID()))
+                .isInstanceOf(WalletNotFoundException.class);
+    }
 
-        Program program = new Program();
-        program.setProgramId(programId);
-
-        User user = new User();
-        user.setUserId(1L);
-
-        ProgramWallet wallet = new ProgramWallet();
-        wallet.setProgram(program);
-        wallet.setUser(user);
-        wallet.setGems(300L);
-
-        when(programWalletRepository.findByProgramProgramId(programId))
+    @Test
+    void getProgramWalletsByProgramId_success() {
+        when(programWalletRepository.findByProgramProgramId(program.getProgramId()))
                 .thenReturn(List.of(wallet));
 
         List<ProgramWalletBalanceDTO> result =
-                programWalletService.getProgramWalletsByProgramId(programId);
+                service.getProgramWalletsByProgramId(program.getProgramId());
 
-        assertEquals(1, result.size());
-        assertEquals(300, result.get(0).getGems());
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getGems()).isEqualTo(100L);
     }
 
-    /* ================= MY WALLET ================= */
+    @Test
+    void getProgramWalletsByProgramId_empty() {
+        when(programWalletRepository.findByProgramProgramId(any()))
+                .thenReturn(List.of());
+
+        assertThatThrownBy(() ->
+                service.getProgramWalletsByProgramId(UUID.randomUUID()))
+                .isInstanceOf(WalletNotFoundException.class);
+    }
 
     @Test
-    void getMyProgramWallet_shouldReturnWallet() {
-
-        Long userId = 1L;
-        UUID programId = UUID.randomUUID();
-
-        when(securityUserResolver.getCurrentUserPrincipal())
-                .thenReturn(new UserPrincipal(userId, "test@mail.com", null));
-
-        Program program = new Program();
-        program.setProgramId(programId);
-
-        User user = new User();
-        user.setUserId(userId);
-
-        ProgramWallet wallet = new ProgramWallet();
-        wallet.setProgram(program);
-        wallet.setUser(user);
-        wallet.setGems(80L);
-
+    void getMyProgramWallet_success() {
+        when(securityUserResolver.getCurrentUser())
+                .thenReturn(user);
         when(programWalletRepository
-                .findByUserUserIdAndProgramProgramId(userId, programId))
+                .findByUserUserIdAndProgramProgramId(
+                        user.getUserId(),
+                        program.getProgramId()))
                 .thenReturn(Optional.of(wallet));
 
         ProgramWalletBalanceDTO dto =
-                programWalletService.getMyProgramWallet(programId);
+                service.getMyProgramWallet(program.getProgramId());
 
-        assertEquals(80, dto.getGems());
-        assertEquals(userId, dto.getUserId());
+        assertThat(dto.getUserId()).isEqualTo(user.getUserId());
+        assertThat(dto.getProgramId()).isEqualTo(program.getProgramId());
+        assertThat(dto.getGems()).isEqualTo(100L);
     }
 
     @Test
-    void getMyProgramWallet_shouldThrow_whenWalletMissing() {
-
-        when(securityUserResolver.getCurrentUserPrincipal())
-                .thenReturn(new UserPrincipal(1L, "test@mail.com", null));
-
+    void getMyProgramWallet_notFound() {
+        when(securityUserResolver.getCurrentUser())
+                .thenReturn(user);
         when(programWalletRepository
                 .findByUserUserIdAndProgramProgramId(any(), any()))
                 .thenReturn(Optional.empty());
 
-        WalletNotFoundException ex = assertThrows(
-                WalletNotFoundException.class,
-                () -> programWalletService.getMyProgramWallet(UUID.randomUUID())
-        );
-
-        assertEquals("Program wallet not found", ex.getMessage());
+        assertThatThrownBy(() ->
+                service.getMyProgramWallet(program.getProgramId()))
+                .isInstanceOf(WalletNotFoundException.class);
     }
 }

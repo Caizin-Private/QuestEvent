@@ -2,9 +2,9 @@ package com.questevent.service;
 
 import com.questevent.dto.SubmissionDetailsResponseDTO;
 import com.questevent.dto.SubmissionStatusResponseDTO;
-import com.questevent.dto.UserPrincipal;
 import com.questevent.dto.UserSubmissionSummaryDTO;
 import com.questevent.entity.ActivitySubmission;
+import com.questevent.entity.User;
 import com.questevent.exception.ResourceNotFoundException;
 import com.questevent.repository.ActivitySubmissionRepository;
 import com.questevent.utils.SecurityUserResolver;
@@ -23,21 +23,20 @@ import java.util.UUID;
 public class SubmissionQueryServiceImpl implements SubmissionQueryService {
 
     private final ActivitySubmissionRepository submissionRepository;
-    private final SecurityUserResolver securityUserResolver; // ✅ added
+    private final SecurityUserResolver securityUserResolver;
 
     @Override
     public SubmissionDetailsResponseDTO getSubmissionDetails(
             UUID activityId,
             Authentication ignored
     ) {
-        UserPrincipal principal =
-                securityUserResolver.getCurrentUserPrincipal();
+        User user = securityUserResolver.getCurrentUser();
 
         ActivitySubmission submission =
                 submissionRepository
                         .findByActivityRegistrationActivityActivityIdAndActivityRegistrationUserUserId(
                                 activityId,
-                                principal.userId()
+                                user.getUserId()
                         )
                         .orElseThrow(() ->
                                 new ResourceNotFoundException(
@@ -60,13 +59,12 @@ public class SubmissionQueryServiceImpl implements SubmissionQueryService {
     public List<UserSubmissionSummaryDTO> getMySubmissions(
             Authentication ignored
     ) {
-        UserPrincipal principal =
-                securityUserResolver.getCurrentUserPrincipal();
+        User user = securityUserResolver.getCurrentUser();
 
         List<ActivitySubmission> submissions =
                 submissionRepository
                         .findAllByActivityRegistration_User_UserId(
-                                principal.userId()
+                                user.getUserId()
                         );
 
         return submissions.stream()
@@ -89,10 +87,9 @@ public class SubmissionQueryServiceImpl implements SubmissionQueryService {
     @Transactional(readOnly = true)
     public SubmissionStatusResponseDTO getSubmissionStatus(UUID activityId) {
 
-        UserPrincipal principal =
-                securityUserResolver.getCurrentUserPrincipal();
+        User user = securityUserResolver.getCurrentUser();
 
-        Long userId = principal.userId();
+        Long userId = user.getUserId();
 
         log.debug(
                 "Fetching submission status | activityId={} | userId={}",

@@ -52,13 +52,8 @@ public class ProgramService {
 
         log.debug("Create program requested");
 
-        UserPrincipal principal =
-                securityUserResolver.getCurrentUserPrincipal();
-
-        User hostUser = userRepository.findById(principal.userId())
-                .orElseThrow(() ->
-                        new UserNotFoundException("User not found")
-                );
+        User hostUser =
+                securityUserResolver.getCurrentUser();
 
         User judgeUser = userRepository.findById(dto.getJudgeUserId())
                 .orElseThrow(() ->
@@ -88,13 +83,7 @@ public class ProgramService {
     @Transactional
     public Program updateProgram(UUID programId, ProgramRequestDTO dto) {
 
-        UserPrincipal principal =
-                securityUserResolver.getCurrentUserPrincipal();
-
-        User hostUser = userRepository.findById(principal.userId())
-                .orElseThrow(() ->
-                        new UserNotFoundException("User not found")
-                );
+        User hostUser = securityUserResolver.getCurrentUser();
 
         Program existingProgram = programRepository.findById(programId)
                 .orElseThrow(() ->
@@ -145,7 +134,7 @@ public class ProgramService {
 
     public List<Program> getMyPrograms() {
         return programRepository.findByUser_UserId(
-                securityUserResolver.getCurrentUserPrincipal().userId()
+                securityUserResolver.getCurrentUser().getUserId()
         );
     }
 
@@ -162,15 +151,14 @@ public class ProgramService {
 
     public void deleteProgram(UUID programId) {
 
-        UserPrincipal principal =
-                securityUserResolver.getCurrentUserPrincipal();
+        User user = securityUserResolver.getCurrentUser();
 
         Program program = programRepository.findById(programId)
                 .orElseThrow(() ->
                         new ProgramNotFoundException(PROGRAM_NOT_FOUND_MESSAGE)
                 );
 
-        if (!program.getUser().getUserId().equals(principal.userId())) {
+        if (!program.getUser().getUserId().equals(user.getUserId())) {
             throw new AccessDeniedException(
                     "You do not have permission to delete this program"
             );
@@ -181,8 +169,7 @@ public class ProgramService {
 
     public List<Program> getCompletedProgramsForUser() {
 
-        Long userId =
-                securityUserResolver.getCurrentUserPrincipal().userId();
+        Long userId = securityUserResolver.getCurrentUser().getUserId();
 
         List<ProgramRegistration> registrations =
                 programRegistrationRepository.findByUserUserId(userId);
@@ -195,14 +182,14 @@ public class ProgramService {
 
     public List<Program> getProgramsWhereUserIsJudge() {
         return programRepository.findByJudgeUserId(
-                securityUserResolver.getCurrentUserPrincipal().userId()
+                securityUserResolver.getCurrentUser().getUserId()
         );
     }
 
     public List<Program> getActiveProgramsByUserDepartment() {
 
         User user = userRepository.findById(
-                securityUserResolver.getCurrentUserPrincipal().userId()
+                securityUserResolver.getCurrentUser().getUserId()
         ).orElseThrow(() ->
                 new UserNotFoundException("User not found")
         );
@@ -216,21 +203,19 @@ public class ProgramService {
     public List<Program> getDraftProgramsByHost() {
         return programRepository.findByStatusAndUser_UserId(
                 ProgramStatus.DRAFT,
-                securityUserResolver.getCurrentUserPrincipal().userId()
+                securityUserResolver.getCurrentUser().getUserId()
         );
     }
 
     public Program changeProgramStatusToActive(UUID programId) {
 
-        UserPrincipal principal =
-                securityUserResolver.getCurrentUserPrincipal();
-
+        User user = securityUserResolver.getCurrentUser();
         Program program = programRepository.findById(programId)
                 .orElseThrow(() ->
                         new ProgramNotFoundException(PROGRAM_NOT_FOUND_MESSAGE)
                 );
 
-        if (!program.getUser().getUserId().equals(principal.userId())) {
+        if (!program.getUser().getUserId().equals(user.getUserId())) {
             throw new AccessDeniedException(
                     "You do not have permission to change status of this program"
             );

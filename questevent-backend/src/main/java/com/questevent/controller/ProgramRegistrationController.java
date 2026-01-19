@@ -29,7 +29,7 @@ public class ProgramRegistrationController {
 
     private final ProgramRegistrationService programRegistrationService;
 
-    @PreAuthorize("@rbac.canRegisterForProgram(authentication, #request.programId, authentication.principal.userId)")
+    @PreAuthorize("@rbac.canRegisterForProgram(authentication, #request.programId)")
     @PostMapping
     @Operation(
             summary = "Register participant for program",

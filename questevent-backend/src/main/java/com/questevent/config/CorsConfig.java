@@ -17,7 +17,8 @@ public class CorsConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://localhost:8080",
                 "http://localhost:3000","http://localhost:3003",
-                "https://www.questevent.online", "https://questevent.online"
+                "https://www.questevent.online", "https://questevent.online",
+                "https://questevent.online/login/oauth2/code/azure"
 
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));

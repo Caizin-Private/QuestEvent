@@ -1,142 +1,223 @@
 package com.questevent.rbac;
 
-import com.questevent.entity.User;
+import com.questevent.entity.*;
 import com.questevent.enums.Role;
 import com.questevent.repository.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
-import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class RbacServiceTest {
 
-    @Mock private UserRepository userRepository;
-    @Mock private ProgramRepository programRepository;
-    @Mock private ActivityRepository activityRepository;
-    @Mock private ProgramRegistrationRepository programRegistrationRepository;
-    @Mock private ActivityRegistrationRepository activityRegistrationRepository;
-    @Mock private ActivitySubmissionRepository submissionRepository;
-    @Mock private ProgramWalletRepository programWalletRepository;
-    @Mock private JudgeRepository judgeRepository;
+    @Mock UserRepository userRepository;
+    @Mock ProgramRepository programRepository;
+    @Mock ActivityRepository activityRepository;
+    @Mock ProgramRegistrationRepository programRegistrationRepository;
+    @Mock ActivityRegistrationRepository activityRegistrationRepository;
+    @Mock ActivitySubmissionRepository submissionRepository;
+    @Mock ProgramWalletRepository programWalletRepository;
 
     @InjectMocks
-    private RbacService rbacService;
+    RbacService rbacService;
 
-    private User owner;
-    private User user;
+    private Authentication auth;
+    private User normalUser;
+    private User ownerUser;
 
     @BeforeEach
     void setup() {
-        MockitoAnnotations.openMocks(this);
+        normalUser = new User();
+        normalUser.setUserId(1L);
+        normalUser.setEmail("user@test.com");
+        normalUser.setRole(Role.USER);
 
-        owner = new User();
-        owner.setUserId(1L);
-        owner.setEmail("owner@company.com");
-        owner.setRole(Role.OWNER);
-
-        user = new User();
-        user.setUserId(2L);
-        user.setEmail("user@company.com");
-        user.setRole(Role.USER);
+        ownerUser = new User();
+        ownerUser.setUserId(99L);
+        ownerUser.setEmail("owner@test.com");
+        ownerUser.setRole(Role.OWNER);
     }
 
-    private Authentication auth(String email) {
-        Jwt jwt = new Jwt(
-                "token",
-                Instant.now(),
-                Instant.now().plusSeconds(3600),
-                Map.of("alg", "none"),
-                Map.of("email", email)
-        );
-
-        TestingAuthenticationToken authentication =
-                new TestingAuthenticationToken(jwt, null);
-
-        authentication.setAuthenticated(true);
-
-        return authentication;
+    private Authentication jwtAuth(String email) {
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .claims(c -> c.put("preferred_username", email))
+                .build();
+        return new JwtAuthenticationToken(jwt);
     }
 
     @Test
     void isPlatformOwner_true_forOwner() {
-        when(userRepository.findByEmail("owner@company.com"))
-                .thenReturn(Optional.of(owner));
+        auth = jwtAuth("owner@test.com");
+        when(userRepository.findByEmail("owner@test.com"))
+                .thenReturn(Optional.of(ownerUser));
 
-        assertThat(rbacService.isPlatformOwner(auth("owner@company.com")))
+        assertThat(rbacService.isPlatformOwner(auth)).isTrue();
+    }
+
+    @Test
+    void isPlatformOwner_false_forNormalUser() {
+        auth = jwtAuth("user@test.com");
+        when(userRepository.findByEmail("user@test.com"))
+                .thenReturn(Optional.of(normalUser));
+
+        assertThat(rbacService.isPlatformOwner(auth)).isFalse();
+    }
+
+    @Test
+    void canAccessUserProfile_selfAccess_allowed() {
+        auth = jwtAuth("user@test.com");
+        when(userRepository.findByEmail("user@test.com"))
+                .thenReturn(Optional.of(normalUser));
+
+        assertThat(rbacService.canAccessUserProfile(auth, 1L)).isTrue();
+    }
+
+    @Test
+    void canAccessUserProfile_otherUser_denied() {
+        auth = jwtAuth("user@test.com");
+        when(userRepository.findByEmail("user@test.com"))
+                .thenReturn(Optional.of(normalUser));
+
+        assertThat(rbacService.canAccessUserProfile(auth, 2L)).isFalse();
+    }
+
+    @Test
+    void canManageProgram_owner_allowed() {
+        auth = jwtAuth("owner@test.com");
+        when(userRepository.findByEmail("owner@test.com"))
+                .thenReturn(Optional.of(ownerUser));
+
+        assertThat(rbacService.canManageProgram(auth, UUID.randomUUID()))
                 .isTrue();
     }
 
     @Test
-    void isPlatformOwner_false_forUser() {
-        when(userRepository.findByEmail("user@company.com"))
-                .thenReturn(Optional.of(user));
+    void canManageProgram_programOwner_allowed() {
+        auth = jwtAuth("user@test.com");
+        when(userRepository.findByEmail("user@test.com"))
+                .thenReturn(Optional.of(normalUser));
 
-        assertThat(rbacService.isPlatformOwner(auth("user@company.com")))
+        Program program = new Program();
+        program.setUser(normalUser);
+
+        UUID programId = UUID.randomUUID();
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.of(program));
+
+        assertThat(rbacService.canManageProgram(auth, programId))
+                .isTrue();
+    }
+
+    @Test
+    void canManageProgram_notOwner_denied() {
+        auth = jwtAuth("user@test.com");
+        when(userRepository.findByEmail("user@test.com"))
+                .thenReturn(Optional.of(normalUser));
+
+        Program program = new Program();
+        User other = new User();
+        other.setUserId(2L);
+        program.setUser(other);
+
+        UUID programId = UUID.randomUUID();
+        when(programRepository.findById(programId))
+                .thenReturn(Optional.of(program));
+
+        assertThat(rbacService.canManageProgram(auth, programId))
                 .isFalse();
     }
 
     @Test
-    void canAccessUserProfile_owner_canAccessAnyUser() {
-        when(userRepository.findByEmail("owner@company.com"))
-                .thenReturn(Optional.of(owner));
+    void canSubmitActivity_allowed_whenRegistered_andNotSubmitted() {
+        auth = jwtAuth("user@test.com");
+        when(userRepository.findByEmail("user@test.com"))
+                .thenReturn(Optional.of(normalUser));
+
+        UUID activityId = UUID.randomUUID();
+        UUID activityRegistrationId = UUID.randomUUID();
+
+        ActivityRegistration reg = new ActivityRegistration();
+        reg.setActivityRegistrationId(activityRegistrationId);
+
+        when(activityRegistrationRepository
+                .findByActivityActivityIdAndUserUserId(activityId, 1L))
+                .thenReturn(Optional.of(reg));
+
+        when(submissionRepository
+                .existsByActivityRegistration_ActivityRegistrationId(activityRegistrationId))
+                .thenReturn(false);
 
         assertThat(
-                rbacService.canAccessUserProfile(auth("owner@company.com"), 999L)
+                rbacService.canSubmitActivity(auth, activityId, 1L)
         ).isTrue();
     }
 
-    @Test
-    void canAccessUserProfile_user_canAccessSelf() {
-        when(userRepository.findByEmail("user@company.com"))
-                .thenReturn(Optional.of(user));
-
-        assertThat(
-                rbacService.canAccessUserProfile(auth("user@company.com"), 2L)
-        ).isTrue();
-    }
 
     @Test
-    void canAccessUserProfile_user_cannotAccessOthers() {
-        when(userRepository.findByEmail("user@company.com"))
-                .thenReturn(Optional.of(user));
+    void canSubmitActivity_denied_ifAlreadySubmitted() {
+        auth = jwtAuth("user@test.com");
+        when(userRepository.findByEmail("user@test.com"))
+                .thenReturn(Optional.of(normalUser));
+
+        UUID activityId = UUID.randomUUID();
+        UUID activityRegistrationId = UUID.randomUUID();
+
+        ActivityRegistration reg = new ActivityRegistration();
+        reg.setActivityRegistrationId(activityRegistrationId);
+
+        when(activityRegistrationRepository
+                .findByActivityActivityIdAndUserUserId(activityId, 1L))
+                .thenReturn(Optional.of(reg));
+
+        when(submissionRepository
+                .existsByActivityRegistration_ActivityRegistrationId(activityRegistrationId))
+                .thenReturn(true);
 
         assertThat(
-                rbacService.canAccessUserProfile(auth("user@company.com"), 1L)
+                rbacService.canSubmitActivity(auth, activityId, 1L)
         ).isFalse();
     }
 
     @Test
-    void canAccessUserWallet_delegatesToProfileLogic() {
-        when(userRepository.findByEmail("user@company.com"))
-                .thenReturn(Optional.of(user));
+    void canAccessProgramWallet_owner_allowed() {
+        auth = jwtAuth("owner@test.com");
+        when(userRepository.findByEmail("owner@test.com"))
+                .thenReturn(Optional.of(ownerUser));
 
         assertThat(
-                rbacService.canAccessUserWallet(auth("user@company.com"), 2L)
+                rbacService.canAccessProgramWallet(auth, UUID.randomUUID())
         ).isTrue();
     }
 
     @Test
-    void returnsFalse_whenAuthenticationIsNull() {
-        assertThat(rbacService.isPlatformOwner(null)).isFalse();
-    }
+    void canAccessProgramWallet_walletOwner_allowed() {
+        auth = jwtAuth("user@test.com");
+        when(userRepository.findByEmail("user@test.com"))
+                .thenReturn(Optional.of(normalUser));
 
-    @Test
-    void returnsFalse_whenPrincipalIsNotJwt() {
-        TestingAuthenticationToken auth =
-                new TestingAuthenticationToken("user", null);
-        auth.setAuthenticated(true);
+        ProgramWallet wallet = new ProgramWallet();
+        wallet.setUser(normalUser);
 
-        assertThat(rbacService.isPlatformOwner(auth)).isFalse();
+        UUID walletId = UUID.randomUUID();
+        when(programWalletRepository.findById(walletId))
+                .thenReturn(Optional.of(wallet));
+
+        assertThat(
+                rbacService.canAccessProgramWallet(auth, walletId)
+        ).isTrue();
     }
 }

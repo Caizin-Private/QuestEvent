@@ -1,8 +1,8 @@
 package com.questevent.service;
 
-import com.questevent.dto.UserPrincipal;
 import com.questevent.entity.ActivityRegistration;
 import com.questevent.entity.ActivitySubmission;
+import com.questevent.entity.User;
 import com.questevent.enums.CompletionStatus;
 import com.questevent.enums.ReviewStatus;
 import com.questevent.exception.InvalidOperationException;
@@ -31,10 +31,8 @@ public class SubmissionServiceImpl implements SubmissionService {
     @Transactional
     public void submitActivity(UUID activityId, String submissionUrl) {
 
-        UserPrincipal principal =
-                securityUserResolver.getCurrentUserPrincipal();
-
-        Long userId = principal.userId();
+        User user = securityUserResolver.getCurrentUser();
+        Long userId = user.getUserId();
 
         log.debug(
                 "Submit activity requested | activityId={} | userId={}",
@@ -107,10 +105,8 @@ public class SubmissionServiceImpl implements SubmissionService {
             Authentication ignored
     ) {
 
-        UserPrincipal principal =
-                securityUserResolver.getCurrentUserPrincipal();
-
-        Long userId = principal.userId();
+        User user = securityUserResolver.getCurrentUser();
+        Long userId = user.getUserId();
 
         log.debug(
                 "Resubmit activity requested | activityId={} | userId={}",

@@ -2,16 +2,31 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>QuestEvent</title>
+    <title>QuestEvent (Local)</title>
+
     <style>
-        body { font-family: Arial, sans-serif; }
-        #user-section { display: none; }
-        pre { background: #f4f4f4; padding: 10px; }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        #user-section {
+            display: none;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 12px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        button {
+            margin-right: 8px;
+            padding: 8px 12px;
+        }
     </style>
 </head>
 <body>
 
-<h1>QuestEvent</h1>
+<h1>QuestEvent (Local)</h1>
 
 <div id="login-section">
     <button id="loginBtn">Login with Microsoft</button>
@@ -24,16 +39,19 @@
     <div id="api-result"></div>
 </div>
 
+<!-- MSAL -->
 <script src="/js/msal-browser.min.js"></script>
 
 <script>
-    /* ================= CONFIG ================= */
+    /* =========================================================
+       MSAL CONFIG
+       ========================================================= */
 
     const msalConfig = {
         auth: {
             clientId: "8dfa7db6-153c-4137-91c7-4262f361c8c6",
             authority: "https://login.microsoftonline.com/f7b92ef4-239a-49ad-aff6-679ec33dea08",
-            redirectUri: "https://questevent.online/login/oauth2/code/azure"
+            redirectUri: "http://localhost:8080"
         },
         cache: {
             cacheLocation: "sessionStorage",
@@ -41,12 +59,14 @@
         }
     };
 
+    // BACKEND SCOPE
     const API_SCOPE = "api://8dfa7db6-153c-4137-91c7-4262f361c8c6/access_as_user";
 
     const msalInstance = new msal.PublicClientApplication(msalConfig);
-    let accessToken = null;
 
-    /* ================= ELEMENTS ================= */
+    /* =========================================================
+       ELEMENTS
+       ========================================================= */
 
     const loginSection = document.getElementById("login-section");
     const userSection  = document.getElementById("user-section");
@@ -57,49 +77,38 @@
     const apiBtn    = document.getElementById("apiBtn");
     const logoutBtn = document.getElementById("logoutBtn");
 
-    /* ================= INIT ================= */
+    /* =========================================================
+       INIT
+       ========================================================= */
 
     async function init() {
         await msalInstance.initialize();
 
-        const response = await msalInstance.handleRedirectPromise();
+        const redirectResult = await msalInstance.handleRedirectPromise();
 
-        if (response?.account) {
-            msalInstance.setActiveAccount(response.account);
+        if (redirectResult?.account) {
+            msalInstance.setActiveAccount(redirectResult.account);
         }
 
-        let account = msalInstance.getActiveAccount();
-        if (!account) {
-            const accounts = msalInstance.getAllAccounts();
-            if (accounts.length > 0) {
-                account = accounts[0];
-                msalInstance.setActiveAccount(account);
-            }
+        const accounts = msalInstance.getAllAccounts();
+        if (accounts.length > 0 && !msalInstance.getActiveAccount()) {
+            msalInstance.setActiveAccount(accounts[0]);
         }
 
-        if (!account) {
-            showLoggedOut();
-            return;
-        }
-
-        showLoggedIn(account);
-
-        const tokenResponse = await msalInstance.acquireTokenSilent({
-            scopes: [API_SCOPE],
-            account
-        });
-
-        accessToken = tokenResponse.accessToken;
+        const account = msalInstance.getActiveAccount();
+        account ? showLoggedIn(account) : showLoggedOut();
     }
 
     init();
 
-    /* ================= UI ================= */
+    /* =========================================================
+       UI HELPERS
+       ========================================================= */
 
     function showLoggedIn(account) {
         loginSection.style.display = "none";
         userSection.style.display = "block";
-        userName.textContent = account.name;
+        userName.textContent = account.name || account.username;
     }
 
     function showLoggedOut() {
@@ -107,38 +116,74 @@
         userSection.style.display = "none";
     }
 
-    /* ================= ACTIONS ================= */
+    /* =========================================================
+       LOGIN
+       ========================================================= */
 
     loginBtn.onclick = () => {
         msalInstance.loginRedirect({
-            scopes: [API_SCOPE]
+            scopes: ["openid", "profile", API_SCOPE]
         });
     };
+
+    /* =========================================================
+       API CALL
+       ========================================================= */
 
     apiBtn.onclick = async () => {
         apiResult.innerHTML = "Calling API...";
 
-        const response = await fetch("http://localhost:8080/api/leaderboard/global", {
+        const account = msalInstance.getActiveAccount();
+        if (!account) {
+            apiResult.innerHTML = "Not logged in";
+            return;
+        }
+
+        let tokenResponse;
+
+        try {
+            tokenResponse = await msalInstance.acquireTokenSilent({
+                scopes: [API_SCOPE],
+                account
+            });
+        } catch (e) {
+            // Silent failed → redirect
+            await msalInstance.acquireTokenRedirect({
+                scopes: [API_SCOPE]
+            });
+            return;
+        }
+
+        console.log("ACCESS TOKEN:", tokenResponse.accessToken);
+
+        const response = await fetch("/api/program-registrations", {
+            method: "POST",
             headers: {
-                "Authorization": `Bearer ${accessToken}`
-            }
+                "Authorization": `Bearer ${tokenResponse.accessToken}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                programId: "b196ed04-b32f-47ae-825b-543410b8133a"
+            })
         });
 
         const text = await response.text();
 
-        if (!response.ok) {
-            apiResult.innerHTML = `<pre>HTTP ${response.status}\n${text}</pre>`;
-            return;
-        }
-
-        apiResult.innerHTML = `<pre>${text}</pre>`;
+        apiResult.innerHTML = response.ok
+            ? `<pre>${text}</pre>`
+            : `<pre>HTTP ${response.status}\n${text}</pre>`;
     };
+
+    /* =========================================================
+       LOGOUT
+       ========================================================= */
 
     logoutBtn.onclick = () => {
-        msalInstance.logoutRedirect();
+        msalInstance.logoutRedirect({
+            postLogoutRedirectUri: "http://localhost:8080"
+        });
     };
 </script>
-
 
 </body>
 </html>

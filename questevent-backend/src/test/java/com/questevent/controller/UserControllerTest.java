@@ -1,160 +1,182 @@
 package com.questevent.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.questevent.config.SecurityConfig;
+import com.questevent.dto.CompleteProfileRequest;
 import com.questevent.dto.UserResponseDto;
 import com.questevent.entity.User;
+import com.questevent.enums.Department;
+import com.questevent.enums.Role;
 import com.questevent.rbac.RbacService;
 import com.questevent.service.UserService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(UserController.class)
-@Import(SecurityConfig.class)
-@AutoConfigureMockMvc(addFilters = true)
 class UserControllerTest {
 
     @Autowired
-    MockMvc mockMvc;
+    private MockMvc mockMvc;
 
     @Autowired
-    ObjectMapper objectMapper;
+    private ObjectMapper objectMapper;
 
     @MockBean
-    UserService userService;
+    private UserService userService;
 
+    // REQUIRED for @PreAuthorize("@rbac...")
     @MockBean
-    RbacService rbac;
+    private RbacService rbacService;
 
-    @MockBean
-    JwtDecoder jwtDecoder;
+    /* ===================== Helpers ===================== */
 
-    Jwt jwtToken() {
-        return new Jwt(
-                "token",
-                Instant.now(),
-                Instant.now().plusSeconds(3600),
-                Map.of("alg", "none"),
-                Map.of("email", "test@company.com")
-        );
+    private User mockUser() {
+        User user = new User();
+        user.setUserId(1L);
+        user.setEmail("user@test.com");
+        user.setRole(Role.USER);
+        return user;
     }
 
-    User user() {
-        User u = new User();
-        u.setName("Test");
-        u.setEmail("test@company.com");
-        return u;
-    }
-
-    UserResponseDto dto() {
+    private UserResponseDto mockDto() {
         return new UserResponseDto(
                 1L,
-                "Test",
-                "test@company.com",
-                null,
-                null,
-                null
+                "Test User",
+                "user@test.com",
+                Department.IT,
+                "MALE",
+                Role.USER,
+                true
         );
     }
 
-    @BeforeEach
-    void setup() {
-        when(jwtDecoder.decode(anyString())).thenReturn(jwtToken());
-    }
+    /* ===================== CREATE USER ===================== */
 
     @Test
-    void getCurrentUser_success() throws Exception {
-        when(userService.getCurrentUser(any(Jwt.class))).thenReturn(dto());
+    @WithMockUser
+    void createUser_ownerAllowed_returns201() throws Exception {
+        when(rbacService.isPlatformOwner(any())).thenReturn(true);
+        when(userService.addUser(any())).thenReturn(mockUser());
+        when(userService.convertToDto(any())).thenReturn(mockDto());
 
-        mockMvc.perform(
-                        get("/api/users/me")
-                                .with(jwt().jwt(jwtToken()))
-                )
+        mockMvc.perform(post("/api/users")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(mockUser())))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.userId").value(1L));
+
+        verify(userService).addUser(any());
+    }
+
+    /* ===================== GET ALL USERS ===================== */
+
+    @Test
+    @WithMockUser
+    void getAllUsers_ownerAllowed_returns200() throws Exception {
+        when(rbacService.isPlatformOwner(any())).thenReturn(true);
+        when(userService.getAllUsers()).thenReturn(List.of(mockDto()));
+
+        mockMvc.perform(get("/api/users"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("test@company.com"));
+                .andExpect(jsonPath("$[0].userId").value(1L));
     }
 
-    @Test
-    void updateCurrentUser_success() throws Exception {
-        when(userService.updateCurrentUser(any(), any())).thenReturn(user());
-        when(userService.convertToDto(any())).thenReturn(dto());
+    /* ===================== GET USER BY ID ===================== */
 
-        mockMvc.perform(
-                        put("/api/users/me")
-                                .with(jwt().jwt(jwtToken()))
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(user()))
-                )
-                .andExpect(status().isOk());
+    @Test
+    @WithMockUser
+    void getUserById_ownerAllowed_returns200() throws Exception {
+        when(rbacService.isPlatformOwner(any())).thenReturn(true);
+        when(userService.getUserById(1L)).thenReturn(mockDto());
+
+        mockMvc.perform(get("/api/users/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(1L));
     }
 
-    @Test
-    void getAllUsers_success() throws Exception {
-        when(rbac.isPlatformOwner(any())).thenReturn(true);
-        when(userService.getAllUsers()).thenReturn(List.of(dto()));
+    /* ===================== GET CURRENT USER ===================== */
 
-        mockMvc.perform(
-                        get("/api/users")
-                                .with(jwt().jwt(jwtToken()))
-                )
-                .andExpect(status().isOk());
+    @Test
+    @WithMockUser
+    void getCurrentUser_authenticated_returns200() throws Exception {
+        when(userService.getCurrentUser()).thenReturn(mockDto());
+
+        mockMvc.perform(get("/api/users/me"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(1L));
     }
 
-    @Test
-    void getUserById_success() throws Exception {
-        when(rbac.isPlatformOwner(any())).thenReturn(true);
-        when(userService.getUserById(1L)).thenReturn(dto());
+    /* ===================== UPDATE CURRENT USER ===================== */
 
-        mockMvc.perform(
-                        get("/api/users/1")
-                                .with(jwt().jwt(jwtToken()))
-                )
-                .andExpect(status().isOk());
+    @Test
+    @WithMockUser
+    void updateCurrentUser_authenticated_returns200() throws Exception {
+        when(userService.updateCurrentUser(any())).thenReturn(mockUser());
+        when(userService.convertToDto(any())).thenReturn(mockDto());
+
+        mockMvc.perform(put("/api/users/me")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(mockUser())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(1L));
+
+        verify(userService).updateCurrentUser(any());
     }
 
-    @Test
-    void createUser_success() throws Exception {
-        when(rbac.isPlatformOwner(any())).thenReturn(true);
-        when(userService.addUser(any())).thenReturn(user());
-        when(userService.convertToDto(any())).thenReturn(dto());
+    /* ===================== COMPLETE PROFILE ===================== */
 
-        mockMvc.perform(
-                        post("/api/users")
-                                .with(jwt().jwt(jwtToken()))
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(user()))
-                )
-                .andExpect(status().isCreated());
+    @Test
+    @WithMockUser
+    void completeProfile_authenticated_returns200() throws Exception {
+        CompleteProfileRequest request =
+                new CompleteProfileRequest(Department.IT, "Male");
+
+        when(userService.completeProfile(any())).thenReturn(mockUser());
+        when(userService.convertToDto(any())).thenReturn(mockDto());
+
+        mockMvc.perform(post("/api/users/me/complete-profile")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(1L));
     }
 
-    @Test
-    void deleteUser_success() throws Exception {
-        when(rbac.isPlatformOwner(any())).thenReturn(true);
+    /* ===================== DELETE USER ===================== */
 
-        mockMvc.perform(
-                        delete("/api/users/1")
-                                .with(jwt().jwt(jwtToken()))
-                )
+    @Test
+    @WithMockUser
+    void deleteUser_ownerAllowed_returns204() throws Exception {
+        when(rbacService.isPlatformOwner(any())).thenReturn(true);
+
+        mockMvc.perform(delete("/api/users/1")
+                        .with(csrf()))
                 .andExpect(status().isNoContent());
+
+        verify(userService).deleteUser(1L);
+    }
+
+    /* ===================== SECURITY ===================== */
+
+    @Test
+    void unauthenticated_accessDenied() throws Exception {
+        mockMvc.perform(get("/api/users/me"))
+                .andExpect(status().isUnauthorized());
     }
 }

@@ -1,22 +1,23 @@
 package com.questevent.service;
 
+import com.questevent.dto.CompleteProfileRequest;
 import com.questevent.dto.UserResponseDto;
 import com.questevent.entity.User;
+import com.questevent.enums.Department;
 import com.questevent.exception.UserNotFoundException;
 import com.questevent.repository.UserRepository;
+import com.questevent.utils.SecurityUserResolver;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.oauth2.jwt.Jwt;
 
-import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -25,96 +26,131 @@ class UserServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private SecurityUserResolver securityUserResolver;
+
     @InjectMocks
     private UserService userService;
 
-    private Jwt jwt() {
-        return new Jwt(
-                "token",
-                Instant.now(),
-                Instant.now().plusSeconds(3600),
-                Map.of("alg", "none"),
-                Map.of("email", "test@company.com")
-        );
-    }
+    private User user;
 
-    private User user() {
-        User user = new User();
+    @BeforeEach
+    void setUp() {
+        user = new User();
         user.setUserId(1L);
+        user.setEmail("test@questevent.com");
         user.setName("Test User");
-        user.setEmail("test@company.com");
-        return user;
     }
 
     @Test
     void addUser_success() {
-        User user = user();
         when(userRepository.save(user)).thenReturn(user);
+
         User saved = userService.addUser(user);
-        assertEquals("Test User", saved.getName());
+
+        assertThat(saved).isEqualTo(user);
     }
 
     @Test
     void getAllUsers_success() {
-        when(userRepository.findAll()).thenReturn(List.of(user()));
-        List<UserResponseDto> users = userService.getAllUsers();
-        assertEquals(1, users.size());
+        when(userRepository.findAll()).thenReturn(List.of(user));
+
+        List<UserResponseDto> result = userService.getAllUsers();
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).userId()).isEqualTo(1L);
     }
 
     @Test
     void getUserById_success() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user()));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
         UserResponseDto dto = userService.getUserById(1L);
-        assertEquals("test@company.com", dto.email());
+
+        assertThat(dto.userId()).isEqualTo(1L);
+        assertThat(dto.email()).isEqualTo("test@questevent.com");
     }
 
     @Test
-    void getUserById_notFound() {
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
-        assertThrows(UserNotFoundException.class,
-                () -> userService.getUserById(1L));
+    void getUserById_fails_whenNotFound() {
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.getUserById(99L))
+                .isInstanceOf(UserNotFoundException.class);
     }
 
     @Test
     void getCurrentUser_success() {
-        when(userRepository.findByEmail("test@company.com"))
-                .thenReturn(Optional.of(user()));
-        UserResponseDto dto = userService.getCurrentUser(jwt());
-        assertEquals("Test User", dto.name());
+        when(securityUserResolver.getCurrentUser()).thenReturn(user);
+
+        UserResponseDto dto = userService.getCurrentUser();
+
+        assertThat(dto.userId()).isEqualTo(user.getUserId());
+        assertThat(dto.email()).isEqualTo(user.getEmail());
     }
 
     @Test
-    void getCurrentUser_notFound() {
-        when(userRepository.findByEmail("test@company.com"))
-                .thenReturn(Optional.empty());
-        assertThrows(UserNotFoundException.class,
-                () -> userService.getCurrentUser(jwt()));
-    }
+    void updateCurrentUser_updatesSafeFieldsOnly() {
+        User updated = new User();
+        updated.setName("Updated Name");
+        updated.setDepartment(Department.IT);
+        updated.setGender("F");
 
-    @Test
-    void updateCurrentUser_success() {
-        User existing = user();
-        User update = new User();
-        update.setName("Updated");
-        when(userRepository.findByEmail("test@company.com"))
-                .thenReturn(Optional.of(existing));
-        when(userRepository.save(any(User.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-        User updated = userService.updateCurrentUser(jwt(), update);
-        assertEquals("Updated", updated.getName());
+        when(securityUserResolver.getCurrentUser()).thenReturn(user);
+        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        User result = userService.updateCurrentUser(updated);
+
+        assertThat(result.getName()).isEqualTo("Updated Name");
+        assertThat(result.getDepartment()).isEqualTo(Department.IT);
+        assertThat(result.getGender()).isEqualTo("F");
     }
 
     @Test
     void deleteUser_success() {
         when(userRepository.existsById(1L)).thenReturn(true);
+
         userService.deleteUser(1L);
+
         verify(userRepository).deleteById(1L);
     }
 
     @Test
-    void deleteUser_notFound() {
-        when(userRepository.existsById(1L)).thenReturn(false);
-        assertThrows(UserNotFoundException.class,
-                () -> userService.deleteUser(1L));
+    void deleteUser_fails_whenNotFound() {
+        when(userRepository.existsById(99L)).thenReturn(false);
+
+        assertThatThrownBy(() -> userService.deleteUser(99L))
+                .isInstanceOf(UserNotFoundException.class);
+    }
+
+    @Test
+    void completeProfile_success() {
+        CompleteProfileRequest request =
+                new CompleteProfileRequest(Department.IT, "F");
+
+        when(securityUserResolver.getCurrentUser()).thenReturn(user);
+        when(userRepository.save(user)).thenReturn(user);
+
+        User result = userService.completeProfile(request);
+
+        assertThat(result.getDepartment()).isEqualTo(Department.IT);
+        assertThat(result.getGender()).isEqualTo("F");
+    }
+
+    @Test
+    void completeProfile_noOp_whenAlreadyCompleted() {
+        user.setDepartment(Department.IT);
+        user.setGender("F");
+
+        CompleteProfileRequest request =
+                new CompleteProfileRequest(Department.HR, "M");
+
+        when(securityUserResolver.getCurrentUser()).thenReturn(user);
+
+        User result = userService.completeProfile(request);
+
+        verify(userRepository, never()).save(any());
+        assertThat(result.getDepartment()).isEqualTo(Department.IT);
+        assertThat(result.getGender()).isEqualTo("F");
     }
 }

@@ -34,14 +34,8 @@ public class JudgeServiceImpl implements JudgeService {
     private final UserRepository userRepository;
     private final SecurityUserResolver securityUserResolver; // ✅ added
 
-    private User resolveCurrentUser() {
-        UserPrincipal principal =
-                securityUserResolver.getCurrentUserPrincipal();
-
-        return userRepository.findById(principal.userId())
-                .orElseThrow(() ->
-                        new UserNotFoundException("User not found")
-                );
+    private User currentUser() {
+        return securityUserResolver.getCurrentUser();
     }
 
     @Override
@@ -49,7 +43,7 @@ public class JudgeServiceImpl implements JudgeService {
     public List<JudgeSubmissionDTO> getPendingSubmissionsForJudge(
             Authentication ignored
     ) {
-        User user = resolveCurrentUser();
+        User user = currentUser();
 
         if (user.getRole() == Role.OWNER) {
             return submissionRepository
@@ -102,8 +96,7 @@ public class JudgeServiceImpl implements JudgeService {
 
     private void validateJudgeAssignment(ActivitySubmission submission) {
 
-        UserPrincipal principal =
-                securityUserResolver.getCurrentUserPrincipal();
+        User user = currentUser();
 
         Program program = submission
                 .getActivityRegistration()
@@ -117,7 +110,7 @@ public class JudgeServiceImpl implements JudgeService {
             );
         }
 
-        if (!judge.getUser().getUserId().equals(principal.userId())) {
+        if (!judge.getUser().getUserId().equals(user.getUserId())) {
             throw new AccessDeniedException(
                     "Only the assigned judge can reject this submission"
             );
@@ -130,8 +123,7 @@ public class JudgeServiceImpl implements JudgeService {
             UUID submissionId,
             Authentication ignored
     ) {
-        UserPrincipal principal =
-                securityUserResolver.getCurrentUserPrincipal();
+        User user = currentUser();
 
         ActivitySubmission submission =
                 submissionRepository.findById(submissionId)
@@ -148,7 +140,7 @@ public class JudgeServiceImpl implements JudgeService {
 
         Judge judge = program.getJudge();
         if (judge == null ||
-                !judge.getUser().getUserId().equals(principal.userId())) {
+                !judge.getUser().getUserId().equals(user.getUserId())) {
             throw new AccessDeniedException(
                     "Only the assigned judge can view this submission"
             );
@@ -171,10 +163,9 @@ public class JudgeServiceImpl implements JudgeService {
     public JudgeSubmissionStatsDTO getSubmissionStats(
             Authentication ignored
     ) {
-        UserPrincipal principal =
-                securityUserResolver.getCurrentUserPrincipal();
+        User user = currentUser();
+        Long judgeUserId = user.getUserId();
 
-        Long judgeUserId = principal.userId();
 
         long pending =
                 submissionRepository
@@ -210,7 +201,7 @@ public class JudgeServiceImpl implements JudgeService {
             UUID activityId,
             Authentication ignored
     ) {
-        User user = resolveCurrentUser();
+        User user = currentUser();
 
         if (user.getRole() == Role.OWNER) {
             return submissionRepository
@@ -239,7 +230,7 @@ public class JudgeServiceImpl implements JudgeService {
     public List<JudgeSubmissionDTO> getAllSubmissionsForJudge(
             Authentication ignored
     ) {
-        User user = resolveCurrentUser();
+        User user = currentUser();
 
         if (user.getRole() == Role.OWNER) {
             return submissionRepository.findAll()

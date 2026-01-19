@@ -38,17 +38,8 @@ public class ActivityRegistrationService {
                 request.getActivityId()
         );
 
-        // ✅ SINGLE LINE FIX
-        UserPrincipal principal =
-                securityUserResolver.getCurrentUserPrincipal();
-
-        Long userId = principal.userId();
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> {
-                    log.error("User not found | userId={}", userId);
-                    return new UserNotFoundException("User not found");
-                });
+        User user = securityUserResolver.getCurrentUser();
+        Long userId = user.getUserId();
 
         Activity activity = activityRepository.findById(request.getActivityId())
                 .orElseThrow(() -> {
