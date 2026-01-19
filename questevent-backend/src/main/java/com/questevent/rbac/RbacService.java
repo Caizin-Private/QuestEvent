@@ -117,10 +117,24 @@ public class RbacService {
 
     public boolean canRegisterForProgram(
             Authentication authentication,
-            UUID programId) {
+            UUID programId
+    ) {
         User user = currentUser(authentication);
-        return user != null;
+        if (user == null) return false;
+
+        Program program = programRepository.findById(programId).orElse(null);
+        if (program == null) return false;
+
+        // ❌ Judge of this program cannot register for it
+        Judge judge = program.getJudge();
+        if (judge != null &&
+                judge.getUser().getUserId().equals(user.getUserId())) {
+            return false;
+        }
+
+        return true;
     }
+
 
     public boolean canAccessProgramRegistration(
             Authentication authentication,
@@ -147,7 +161,21 @@ public class RbacService {
         User user = currentUser(authentication);
         if (user == null) return false;
 
-        // User must be registered for the program
+        Activity activity =
+                activityRepository.findById(activityId).orElse(null);
+        if (activity == null) return false;
+
+        Program program = activity.getProgram();
+        if (program == null) return false;
+
+        // ❌ Judge of this program cannot register for its activities
+        Judge judge = program.getJudge();
+        if (judge != null &&
+                judge.getUser().getUserId().equals(user.getUserId())) {
+            return false;
+        }
+
+        // User must not already be registered
         return activityRegistrationRepository
                 .findByActivityActivityIdAndUserUserId(
                         activityId,
@@ -155,6 +183,7 @@ public class RbacService {
                 )
                 .isEmpty();
     }
+
 
     public boolean canAccessActivityRegistration(
             Authentication authentication,
@@ -225,6 +254,7 @@ public class RbacService {
                 })
                 .orElse(false);
     }
+
     public boolean canAccessProgramWallet(
             Authentication authentication,
             UUID programWalletId
