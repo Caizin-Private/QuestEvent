@@ -54,7 +54,6 @@ class ActivityRegistrationControllerTest {
 
         ActivityRegistrationRequestDTO request = new ActivityRegistrationRequestDTO();
         request.setActivityId(activityId);
-        request.setCompletionStatus(CompletionStatus.NOT_COMPLETED);
 
         ActivityRegistrationResponseDTO response = new ActivityRegistrationResponseDTO();
         response.setActivityRegistrationId(UUID.randomUUID());

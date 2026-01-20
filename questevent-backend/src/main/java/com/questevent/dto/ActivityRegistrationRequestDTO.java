@@ -12,5 +12,4 @@ import java.util.UUID;
 @NoArgsConstructor
 public class ActivityRegistrationRequestDTO {
     private UUID activityId;
-    private CompletionStatus completionStatus;
 }

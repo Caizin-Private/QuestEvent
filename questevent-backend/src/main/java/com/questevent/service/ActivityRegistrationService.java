@@ -66,11 +66,7 @@ public class ActivityRegistrationService {
         ActivityRegistration registration = new ActivityRegistration();
         registration.setActivity(activity);
         registration.setUser(user);
-        registration.setCompletionStatus(
-                request.getCompletionStatus() != null
-                        ? request.getCompletionStatus()
-                        : CompletionStatus.NOT_COMPLETED
-        );
+        registration.setCompletionStatus(CompletionStatus.NOT_COMPLETED);
 
         ActivityRegistration saved =
                 activityRegistrationRepository.save(registration);

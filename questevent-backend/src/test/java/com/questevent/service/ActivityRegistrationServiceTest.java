@@ -65,7 +65,7 @@ class ActivityRegistrationServiceTest {
     @Test
     void registerParticipantForActivity_success() {
         ActivityRegistrationRequestDTO request =
-                new ActivityRegistrationRequestDTO(activity.getActivityId(), null);
+                new ActivityRegistrationRequestDTO(activity.getActivityId());
 
         when(securityUserResolver.getCurrentUser()).thenReturn(user);
         when(activityRepository.findById(activity.getActivityId()))
@@ -95,7 +95,7 @@ class ActivityRegistrationServiceTest {
 
         assertThatThrownBy(() ->
                 service.registerParticipantForActivity(
-                        new ActivityRegistrationRequestDTO(UUID.randomUUID(), null)
+                        new ActivityRegistrationRequestDTO(UUID.randomUUID())
                 ))
                 .isInstanceOf(ActivityNotFoundException.class);
     }
@@ -111,7 +111,7 @@ class ActivityRegistrationServiceTest {
 
         assertThatThrownBy(() ->
                 service.registerParticipantForActivity(
-                        new ActivityRegistrationRequestDTO(activity.getActivityId(), null)
+                        new ActivityRegistrationRequestDTO(activity.getActivityId())
                 ))
                 .isInstanceOf(ResourceConflictException.class);
     }
@@ -137,7 +137,7 @@ class ActivityRegistrationServiceTest {
 
         assertThatThrownBy(() ->
                 service.registerParticipantForActivity(
-                        new ActivityRegistrationRequestDTO(activity.getActivityId(), null)
+                        new ActivityRegistrationRequestDTO(activity.getActivityId())
                 ))
                 .isInstanceOf(InvalidOperationException.class);
     }
