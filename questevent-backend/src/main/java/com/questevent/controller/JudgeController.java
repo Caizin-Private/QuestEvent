@@ -17,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -57,15 +56,16 @@ public class JudgeController {
                     description = "Unauthorized – JWT missing or invalid"
             )
     })
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize(
+            "@rbac.isPlatformOwner(authentication) " +
+                    "or @rbac.canJudgeAccessAnyProgram(authentication)"
+    )
     @GetMapping("/submissions/pending")
-    public ResponseEntity<List<JudgeSubmissionDTO>> getPendingSubmissions(
-            Authentication authentication
-    ) {
+    public ResponseEntity<List<JudgeSubmissionDTO>> getPendingSubmissions() {
         log.info("Fetching pending submissions for judge");
 
         List<JudgeSubmissionDTO> submissions =
-                judgeService.getPendingSubmissionsForJudge(authentication);
+                judgeService.getPendingSubmissionsForJudge(null);
 
         log.debug("Pending submissions fetched, count={}", submissions.size());
         return ResponseEntity.ok(submissions);
@@ -90,7 +90,11 @@ public class JudgeController {
                     description = "Activity not found"
             )
     })
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize(
+            "@rbac.isPlatformOwner(authentication) " +
+                    "or @rbac.canJudgeAccessProgram(authentication, " +
+                    "@rbac.getProgramIdByActivityId(#activityId))"
+    )
     @GetMapping("/submissions/pending/activity/{activityId}")
     public ResponseEntity<List<JudgeSubmissionDTO>> getPendingSubmissionsForActivity(
             @Parameter(
@@ -99,13 +103,11 @@ public class JudgeController {
                     required = true,
                     in = ParameterIn.PATH
             )
-            @PathVariable UUID activityId,
-            Authentication authentication
-    ) {
+            @PathVariable UUID activityId) {
         log.info("Fetching pending submissions for activityId={}", activityId);
 
         List<JudgeSubmissionDTO> submissions =
-                judgeService.getPendingSubmissionsForActivity(activityId, authentication);
+                judgeService.getPendingSubmissionsForActivity(activityId, null);
 
         log.debug("Pending submissions fetched for activityId={}, count={}",
                 activityId, submissions.size());
@@ -129,15 +131,16 @@ public class JudgeController {
                     description = "Unauthorized"
             )
     })
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize(
+            "@rbac.isPlatformOwner(authentication) " +
+                    "or @rbac.canJudgeAccessAnyProgram(authentication)"
+    )
     @GetMapping("/submissions")
-    public ResponseEntity<List<JudgeSubmissionDTO>> getAllSubmissions(
-            Authentication authentication
-    ) {
+    public ResponseEntity<List<JudgeSubmissionDTO>> getAllSubmissions() {
         log.info("Fetching all submissions for judge");
 
         List<JudgeSubmissionDTO> submissions =
-                judgeService.getAllSubmissionsForJudge(authentication);
+                judgeService.getAllSubmissionsForJudge(null);
 
         log.debug("All submissions fetched, count={}", submissions.size());
         return ResponseEntity.ok(submissions);
@@ -168,7 +171,9 @@ public class JudgeController {
                     description = "Submission not found"
             )
     })
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize(
+            "@rbac.canJudgeAccessSubmission(authentication, #submissionId)"
+    )
     @PatchMapping("/submissions/{submissionId}/review")
     public ResponseEntity<Void> reviewSubmission(
             @Parameter(
@@ -211,22 +216,24 @@ public class JudgeController {
                     description = "Submission not found"
             )
     })
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize(
+            "@rbac.canJudgeAccessSubmission(authentication, #submissionId)"
+    )
     @PatchMapping("/submissions/{submissionId}/reject")
     public ResponseEntity<Void> rejectSubmission(
-            @PathVariable UUID submissionId,
-            Authentication authentication
-    ) {
+            @PathVariable UUID submissionId) {
         log.info("Rejecting submission submissionId={}", submissionId);
 
-        judgeService.rejectSubmission(submissionId,authentication);
+        judgeService.rejectSubmission(submissionId,null);
 
         log.info("Submission rejected successfully submissionId={}", submissionId);
         return ResponseEntity.ok().build();
     }
 
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize(
+            "@rbac.canJudgeAccessSubmission(authentication, #submissionId)"
+    )
     @GetMapping("/submissions/{submissionId}")
     @Operation(
             summary = "Get submission details for judge",
@@ -240,18 +247,19 @@ public class JudgeController {
             @ApiResponse(responseCode = "404", description = "Submission not found")
     })
     public ResponseEntity<JudgeSubmissionDetailsDTO> getSubmissionDetails(
-            @PathVariable UUID submissionId,
-            Authentication authentication
-    ) {
+            @PathVariable UUID submissionId) {
         log.info("Fetching submission details for judge | submissionId={}", submissionId);
 
         return ResponseEntity.ok(
-                judgeService.getSubmissionDetails(submissionId, authentication)
+                judgeService.getSubmissionDetails(submissionId, null)
         );
     }
 
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize(
+            "@rbac.isPlatformOwner(authentication) " +
+                    "or @rbac.canJudgeAccessAnyProgram(authentication)"
+    )
     @GetMapping("/submissions/stats")
     @Operation(
             summary = "Get submission statistics for judge",
@@ -262,17 +270,11 @@ public class JudgeController {
             @ApiResponse(responseCode = "200", description = "Submission stats fetched"),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
-    public ResponseEntity<JudgeSubmissionStatsDTO> getSubmissionStats(
-            Authentication authentication
-    ) {
+    public ResponseEntity<JudgeSubmissionStatsDTO> getSubmissionStats() {
         log.info("Fetching submission stats for judge");
 
         return ResponseEntity.ok(
-                judgeService.getSubmissionStats(authentication)
+                judgeService.getSubmissionStats(null)
         );
     }
-
-
-
-
 }

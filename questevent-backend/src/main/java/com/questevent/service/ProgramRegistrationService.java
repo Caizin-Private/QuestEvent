@@ -8,17 +8,15 @@ import com.questevent.exception.*;
 import com.questevent.repository.ProgramRegistrationRepository;
 import com.questevent.repository.ProgramRepository;
 import com.questevent.repository.UserRepository;
+import com.questevent.utils.SecurityUserResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -29,6 +27,7 @@ public class ProgramRegistrationService {
     private final ProgramRepository programRepository;
     private final UserRepository userRepository;
     private final ProgramWalletService programWalletService;
+    private final SecurityUserResolver securityUserResolver;
 
     @Transactional
     public ProgramRegistrationResponseDTO registerParticipantForProgram(
@@ -39,21 +38,8 @@ public class ProgramRegistrationService {
                 request.getProgramId()
         );
 
-        Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || !authentication.isAuthenticated()
-                || !(authentication.getPrincipal() instanceof UserPrincipal principal)) {
-            throw new UnauthorizedException("Unauthorized");
-        }
-
-        Long userId = principal.userId();
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> {
-                    log.error("User not found during self-registration | userId={}", userId);
-                    return new UserNotFoundException("User not found");
-                });
+        User user = securityUserResolver.getCurrentUser();
+        Long userId = user.getUserId();
 
         Program program = programRepository.findById(request.getProgramId())
                 .orElseThrow(() -> {

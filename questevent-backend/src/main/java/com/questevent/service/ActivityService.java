@@ -1,10 +1,13 @@
 package com.questevent.service;
 
 import com.questevent.dto.ActivityRequestDTO;
+import com.questevent.dto.ActivityWithRegistrationStatusDTO;
 import com.questevent.entity.Activity;
 import com.questevent.entity.Program;
+import com.questevent.entity.User;
 import com.questevent.repository.ActivityRepository;
 import com.questevent.repository.ProgramRepository;
+import com.questevent.utils.SecurityUserResolver;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import com.questevent.exception.ActivityNotFoundException;
@@ -21,13 +24,15 @@ public class ActivityService {
 
     private final ActivityRepository activityRepository;
     private final ProgramRepository programRepository;
+    private final SecurityUserResolver securityUserResolver;
 
     public ActivityService(
             ActivityRepository activityRepository,
-            ProgramRepository programRepository
+            ProgramRepository programRepository, SecurityUserResolver securityUserResolver
     ) {
         this.activityRepository = activityRepository;
         this.programRepository = programRepository;
+        this.securityUserResolver = securityUserResolver;
     }
 
     public Activity createActivity(UUID programId, ActivityRequestDTO dto) {
@@ -172,6 +177,20 @@ public class ActivityService {
         );
 
         return activities;
+    }
+
+    public List<ActivityWithRegistrationStatusDTO> getActivitiesForUser(UUID programId) {
+
+        if (!programRepository.existsById(programId)) {
+            throw new ProgramNotFoundException("Program not found");
+        }
+
+        User currentUser = securityUserResolver.getCurrentUser();
+
+        return activityRepository.findActivitiesForUser(
+                programId,
+                currentUser.getUserId()
+        );
     }
 
     private void mapDtoToEntity(ActivityRequestDTO dto, Activity activity) {

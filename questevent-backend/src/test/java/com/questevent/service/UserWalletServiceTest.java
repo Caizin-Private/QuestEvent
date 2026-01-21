@@ -1,10 +1,8 @@
 package com.questevent.service;
 
-import com.questevent.dto.UserPrincipal;
 import com.questevent.dto.UserWalletBalanceDTO;
 import com.questevent.entity.User;
 import com.questevent.entity.UserWallet;
-import com.questevent.enums.Role;
 import com.questevent.exception.ResourceConflictException;
 import com.questevent.exception.UnauthorizedException;
 import com.questevent.exception.UserNotFoundException;
@@ -12,18 +10,23 @@ import com.questevent.exception.WalletNotFoundException;
 import com.questevent.repository.UserRepository;
 import com.questevent.repository.UserWalletRepository;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,144 +41,158 @@ class UserWalletServiceTest {
     @InjectMocks
     private UserWalletService userWalletService;
 
+    private User user;
+    private UserWallet wallet;
+
+    @BeforeEach
+    void setUp() {
+        user = new User();
+        user.setUserId(1L);
+        user.setEmail("test@example.com");
+
+        wallet = new UserWallet();
+        wallet.setWalletId(UUID.randomUUID());
+        wallet.setGems(50L);
+        wallet.setUser(user);
+        wallet.setCreatedAt(Instant.now());
+        wallet.setUpdatedAt(Instant.now());
+
+        user.setWallet(wallet);
+    }
+
     @AfterEach
-    void tearDown() {
+    void clearSecurityContext() {
         SecurityContextHolder.clearContext();
     }
 
+    // ----------------------------------------------------------------
+    // createWalletForUser
+    // ----------------------------------------------------------------
+
     @Test
     void createWalletForUser_success() {
-
-        Long userId = 1L;
-
-        User user = new User();
-        user.setUserId(userId);
-
-        when(userWalletRepository.findByUserUserId(userId))
+        when(userWalletRepository.findByUserUserId(user.getUserId()))
                 .thenReturn(Optional.empty());
 
         userWalletService.createWalletForUser(user);
 
-        verify(userWalletRepository, times(1))
-                .save(any(UserWallet.class));
+        verify(userWalletRepository).save(any(UserWallet.class));
     }
 
     @Test
-    void createWalletForUser_walletAlreadyExists() {
+    void createWalletForUser_nullUser_throwsIllegalArgumentException() {
+        assertThatThrownBy(() -> userWalletService.createWalletForUser(null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Invalid user");
+    }
 
-        Long userId = 1L;
+    @Test
+    void createWalletForUser_nullUserId_throwsIllegalArgumentException() {
+        user.setUserId(null);
 
-        User user = new User();
-        user.setUserId(userId);
+        assertThatThrownBy(() -> userWalletService.createWalletForUser(user))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Invalid user");
+    }
 
-        when(userWalletRepository.findByUserUserId(userId))
-                .thenReturn(Optional.of(new UserWallet()));
+    @Test
+    void createWalletForUser_walletAlreadyExists_throwsResourceConflictException() {
+        when(userWalletRepository.findByUserUserId(user.getUserId()))
+                .thenReturn(Optional.of(wallet));
 
-        ResourceConflictException exception = assertThrows(
-                ResourceConflictException.class,
-                () -> userWalletService.createWalletForUser(user)
-        );
+        assertThatThrownBy(() -> userWalletService.createWalletForUser(user))
+                .isInstanceOf(ResourceConflictException.class)
+                .hasMessage("Wallet already exists for user");
 
-        assertEquals("Wallet already exists for user", exception.getMessage());
         verify(userWalletRepository, never()).save(any());
     }
 
+    // ----------------------------------------------------------------
+    // getMyWalletBalance
+    // ----------------------------------------------------------------
+
     @Test
     void getMyWalletBalance_success() {
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .claim("email", user.getEmail())
+                .build();
 
-        Long userId = 1L;
+        Authentication auth = new JwtAuthenticationToken(jwt);
+        SecurityContextHolder.getContext().setAuthentication(auth);
 
-        UserPrincipal principal =
-                new UserPrincipal(userId, "test@example.com", Role.USER);
-
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(principal, null, null);
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        User user = new User();
-        user.setUserId(userId);
-
-        UUID walletId = UUID.randomUUID();
-        UserWallet wallet = new UserWallet();
-        wallet.setWalletId(walletId);
-        wallet.setGems(100L);
-
-        user.setWallet(wallet);
-
-        when(userRepository.findById(userId))
+        when(userRepository.findByEmail(user.getEmail()))
                 .thenReturn(Optional.of(user));
 
-        UserWalletBalanceDTO dto =
-                userWalletService.getMyWalletBalance();
+        UserWalletBalanceDTO dto = userWalletService.getMyWalletBalance();
 
-        assertNotNull(dto);
-        assertEquals(walletId, dto.getWalletId());
-        assertEquals(100L, dto.getGems());
+        assertThat(dto.getWalletId()).isEqualTo(wallet.getWalletId());
+        assertThat(dto.getGems()).isEqualTo(wallet.getGems());
+        assertThat(dto.getCreatedAt()).isEqualTo(wallet.getCreatedAt());
+        assertThat(dto.getUpdatedAt()).isEqualTo(wallet.getUpdatedAt());
     }
 
     @Test
-    void getMyWalletBalance_userNotFound() {
+    void getMyWalletBalance_invalidAuthentication_throwsUnauthorizedException() {
+        Authentication auth = mock(Authentication.class);
+        SecurityContextHolder.getContext().setAuthentication(auth);
 
-        Long userId = 1L;
+        assertThatThrownBy(() -> userWalletService.getMyWalletBalance())
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessage("Invalid authentication");
+    }
 
-        UserPrincipal principal =
-                new UserPrincipal(userId, "test@example.com", Role.USER);
+    @Test
+    void getMyWalletBalance_missingEmailClaim_throwsUnauthorizedException() {
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .claim("sub", "123456") // ✅ required non-empty claim
+                .build();
 
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(principal, null, null);
+        Authentication auth = new JwtAuthenticationToken(jwt);
+        SecurityContextHolder.getContext().setAuthentication(auth);
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        assertThatThrownBy(() -> userWalletService.getMyWalletBalance())
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessage("Invalid token");
+    }
 
-        when(userRepository.findById(userId))
+
+    @Test
+    void getMyWalletBalance_userNotFound_throwsUserNotFoundException() {
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .claim("email", user.getEmail())
+                .build();
+
+        Authentication auth = new JwtAuthenticationToken(jwt);
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        when(userRepository.findByEmail(user.getEmail()))
                 .thenReturn(Optional.empty());
 
-        UserNotFoundException exception = assertThrows(
-                UserNotFoundException.class,
-                () -> userWalletService.getMyWalletBalance()
-        );
-
-        assertEquals("User not found", exception.getMessage());
+        assertThatThrownBy(() -> userWalletService.getMyWalletBalance())
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessage("User not found");
     }
 
     @Test
-    void getMyWalletBalance_walletNotFound() {
-
-        Long userId = 1L;
-
-        UserPrincipal principal =
-                new UserPrincipal(userId, "test@example.com", Role.USER);
-
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(principal, null, null);
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        User user = new User();
-        user.setUserId(userId);
+    void getMyWalletBalance_walletNotFound_throwsWalletNotFoundException() {
         user.setWallet(null);
 
-        when(userRepository.findById(userId))
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .claim("email", user.getEmail())
+                .build();
+
+        Authentication auth = new JwtAuthenticationToken(jwt);
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        when(userRepository.findByEmail(user.getEmail()))
                 .thenReturn(Optional.of(user));
 
-        WalletNotFoundException exception = assertThrows(
-                WalletNotFoundException.class,
-                () -> userWalletService.getMyWalletBalance()
-        );
-
-        assertEquals("Wallet not found", exception.getMessage());
-    }
-
-    @Test
-    void getMyWalletBalance_unauthenticated() {
-
-        SecurityContextHolder.clearContext();
-
-        UnauthorizedException exception = assertThrows(
-                UnauthorizedException.class,
-                () -> userWalletService.getMyWalletBalance()
-        );
-
-        assertEquals("Unauthenticated request", exception.getMessage());
+        assertThatThrownBy(() -> userWalletService.getMyWalletBalance())
+                .isInstanceOf(WalletNotFoundException.class)
+                .hasMessage("Wallet not found");
     }
 }

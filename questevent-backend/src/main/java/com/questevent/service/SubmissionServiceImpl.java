@@ -1,21 +1,21 @@
 package com.questevent.service;
 
-import com.questevent.dto.UserPrincipal;
 import com.questevent.entity.ActivityRegistration;
 import com.questevent.entity.ActivitySubmission;
+import com.questevent.entity.User;
 import com.questevent.enums.CompletionStatus;
 import com.questevent.enums.ReviewStatus;
 import com.questevent.exception.InvalidOperationException;
-import com.questevent.exception.ResourceConflictException;
 import com.questevent.exception.ResourceNotFoundException;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
+import com.questevent.utils.SecurityUserResolver;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
 import java.util.UUID;
 
 @Slf4j
@@ -25,22 +25,14 @@ public class SubmissionServiceImpl implements SubmissionService {
 
     private final ActivityRegistrationRepository registrationRepository;
     private final ActivitySubmissionRepository submissionRepository;
+    private final SecurityUserResolver securityUserResolver; // ✅ added
 
     @Override
     @Transactional
     public void submitActivity(UUID activityId, String submissionUrl) {
 
-        Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || !authentication.isAuthenticated()
-                || !(authentication.getPrincipal() instanceof UserPrincipal principal)) {
-
-            log.warn("Authenticated user not found while submitting activity");
-            throw new ResourceNotFoundException("User not found");
-        }
-
-        Long userId = principal.userId();
+        User user = securityUserResolver.getCurrentUser();
+        Long userId = user.getUserId();
 
         log.debug(
                 "Submit activity requested | activityId={} | userId={}",
@@ -48,18 +40,17 @@ public class SubmissionServiceImpl implements SubmissionService {
                 userId
         );
 
-        ActivityRegistration registration = registrationRepository
-                .findByActivityActivityIdAndUserUserId(activityId, userId)
-                .orElseThrow(() -> {
-                    log.error(
-                            "User not registered for activity | activityId={} | userId={}",
-                            activityId,
-                            userId
-                    );
-                    return new ResourceNotFoundException(
-                            "User is not registered for this activity"
-                    );
-                });
+        ActivityRegistration registration =
+                registrationRepository
+                        .findByActivityActivityIdAndUserUserId(
+                                activityId,
+                                userId
+                        )
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "User is not registered for this activity"
+                                )
+                        );
 
         ActivitySubmission existingSubmission =
                 submissionRepository
@@ -68,15 +59,8 @@ public class SubmissionServiceImpl implements SubmissionService {
                         )
                         .orElse(null);
 
-
         if (existingSubmission != null &&
                 existingSubmission.getReviewStatus() == ReviewStatus.APPROVED) {
-
-            log.warn(
-                    "Resubmission blocked (already approved) | activityId={} | userId={}",
-                    activityId,
-                    userId
-            );
 
             throw new InvalidOperationException(
                     "Submission already approved. Resubmission not allowed."
@@ -84,13 +68,6 @@ public class SubmissionServiceImpl implements SubmissionService {
         }
 
         if (existingSubmission != null) {
-
-            log.info(
-                    "Resubmitting activity | activityId={} | userId={} | submissionId={}",
-                    activityId,
-                    userId,
-                    existingSubmission.getSubmissionId()
-            );
 
             existingSubmission.setSubmissionUrl(submissionUrl);
             existingSubmission.setReviewStatus(ReviewStatus.PENDING);
@@ -113,22 +90,23 @@ public class SubmissionServiceImpl implements SubmissionService {
         registrationRepository.save(registration);
 
         log.info(
-                "Activity submitted successfully | activityId={} | userId={} | registrationId={} | submissionId={}",
+                "Activity submitted successfully | activityId={} | userId={} | submissionId={}",
                 activityId,
                 userId,
-                registration.getActivityRegistrationId(),
                 submission.getSubmissionId()
         );
     }
 
-
     @Override
     @Transactional
-    public void resubmitActivity(UUID activityId, String submissionUrl, Authentication authentication) {
-        UserPrincipal principal =
-                (UserPrincipal) authentication.getPrincipal();
+    public void resubmitActivity(
+            UUID activityId,
+            String submissionUrl,
+            Authentication ignored
+    ) {
 
-        Long userId = principal.userId();
+        User user = securityUserResolver.getCurrentUser();
+        Long userId = user.getUserId();
 
         log.debug(
                 "Resubmit activity requested | activityId={} | userId={}",
@@ -165,11 +143,9 @@ public class SubmissionServiceImpl implements SubmissionService {
             );
         }
 
-
         submission.setSubmissionUrl(submissionUrl);
         submission.setReviewStatus(ReviewStatus.PENDING);
         submission.setReviewedAt(null);
-
 
         registration.setCompletionStatus(CompletionStatus.COMPLETED);
 
@@ -183,6 +159,4 @@ public class SubmissionServiceImpl implements SubmissionService {
                 submission.getSubmissionId()
         );
     }
-
-
 }

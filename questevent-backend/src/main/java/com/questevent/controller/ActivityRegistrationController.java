@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,7 +30,7 @@ public class ActivityRegistrationController {
 
     private final ActivityRegistrationService activityRegistrationService;
 
-    @PreAuthorize("@rbac.canRegisterForActivity(authentication, #request.activityId, authentication.principal.userId)")
+    @PreAuthorize("@rbac.canRegisterForActivity(authentication, #request.activityId)")
     @PostMapping
     @Operation(
             summary = "Register participant for activity",
@@ -56,7 +55,7 @@ public class ActivityRegistrationController {
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PreAuthorize("@rbac.canRegisterForActivity(authentication, #activityId, #request.userId)")
+    @PreAuthorize("@rbac.canRegisterForActivity(authentication, #activityId)")
     @PostMapping("/activities/{activityId}/participants")
     @Operation(
             summary = "Add participant to activity (Host only)",

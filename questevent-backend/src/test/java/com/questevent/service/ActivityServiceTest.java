@@ -1,13 +1,17 @@
 package com.questevent.service;
 
 import com.questevent.dto.ActivityRequestDTO;
+import com.questevent.dto.ActivityWithRegistrationStatusDTO;
 import com.questevent.entity.Activity;
 import com.questevent.entity.Program;
+import com.questevent.entity.User;
+import com.questevent.enums.CompletionStatus;
 import com.questevent.exception.ActivityNotFoundException;
 import com.questevent.exception.ProgramNotFoundException;
 import com.questevent.exception.ResourceConflictException;
 import com.questevent.repository.ActivityRepository;
 import com.questevent.repository.ProgramRepository;
+import com.questevent.utils.SecurityUserResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -32,6 +36,10 @@ class ActivityServiceTest {
 
     @InjectMocks
     private ActivityService activityService;
+
+    @Mock
+    private SecurityUserResolver securityUserResolver;
+
 
     @BeforeEach
     void setUp() {
@@ -266,5 +274,52 @@ class ActivityServiceTest {
                 exception.getMessage()
         );
         verify(activityRepository, never()).delete(any());
+    }
+
+    @Test
+    void getActivitiesForUser_success() {
+        UUID programId = UUID.randomUUID();
+        Long userId = 1L;
+
+        User user = new User();
+        user.setUserId(userId);
+
+        ActivityWithRegistrationStatusDTO dto =
+                new ActivityWithRegistrationStatusDTO(
+                        UUID.randomUUID(),
+                        "Quiz",
+                        true,
+                        CompletionStatus.NOT_COMPLETED
+                );
+
+        when(programRepository.existsById(programId)).thenReturn(true);
+        when(securityUserResolver.getCurrentUser()).thenReturn(user);
+        when(activityRepository.findActivitiesForUser(programId, userId))
+                .thenReturn(List.of(dto));
+
+        List<ActivityWithRegistrationStatusDTO> result =
+                activityService.getActivitiesForUser(programId);
+
+        assertEquals(1, result.size());
+        assertTrue(result.get(0).getIsRegistered());
+        assertEquals("Quiz", result.get(0).getActivityName());
+
+        verify(activityRepository)
+                .findActivitiesForUser(programId, userId);
+    }
+
+    @Test
+    void getActivitiesForUser_programNotFound() {
+        UUID programId = UUID.randomUUID();
+
+        when(programRepository.existsById(programId)).thenReturn(false);
+
+        assertThrows(
+                ProgramNotFoundException.class,
+                () -> activityService.getActivitiesForUser(programId)
+        );
+
+        verify(activityRepository, never())
+                .findActivitiesForUser(any(), any());
     }
 }

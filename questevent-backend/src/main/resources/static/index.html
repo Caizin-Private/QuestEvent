@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>QuestEvent</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        #user-section { display: none; }
+        pre { background: #f4f4f4; padding: 12px; }
+
+        table.leaderboard {
+    border-collapse: collapse;
+    margin-top: 16px;
+    min-width: 500px;
+    font-size: 14px;
+}
+
+table.leaderboard th {
+    background: #1f2937;
+    color: #ffffff;
+    padding: 10px;
+    text-align: left;
+}
+
+table.leaderboard td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+table.leaderboard tr:nth-child(even) {
+    background: #f9fafb;
+}
+
+table.leaderboard tr:hover {
+    background: #eef2ff;
+}
+
+    </style>
+</head>
+<body>
+
+<h1>QuestEvent</h1>
+
+<div id="login-section">
+    <button id="loginBtn">Login with Microsoft</button>
+</div>
+
+<div id="user-section">
+    <h2>Welcome, <span id="user-name"></span>!</h2>
+    <button id="apiBtn">Check Leaderboard</button>
+    <button id="logoutBtn">Logout</button>
+    <div id="api-result"></div>
+</div>
+
+<script src="/js/msal-browser.min.js"></script>
+
+<script>
+    /* ================= MSAL CONFIG ================= */
+
+    const msalConfig = {
+        auth: {
+            clientId: "8dfa7db6-153c-4137-91c7-4262f361c8c6",
+            authority: "https://login.microsoftonline.com/f7b92ef4-239a-49ad-aff6-679ec33dea08",
+            redirectUri: "https://questevent.online"
+
+        },
+        cache: {
+            cacheLocation: "sessionStorage"
+        }
+    };
+
+    const API_SCOPE = "api://8dfa7db6-153c-4137-91c7-4262f361c8c6/access_as_user";
+
+    const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+    /* ================= INIT (CRITICAL) ================= */
+
+    (async () => {
+        console.log("INITIALIZING MSAL");
+        await msalInstance.initialize();
+
+        console.log("HANDLING REDIRECT");
+        const result = await msalInstance.handleRedirectPromise();
+        console.log("REDIRECT RESULT:", result);
+
+        if (result?.account) {
+            msalInstance.setActiveAccount(result.account);
+        } else {
+            const accounts = msalInstance.getAllAccounts();
+            if (accounts.length > 0) {
+                msalInstance.setActiveAccount(accounts[0]);
+            }
+        }
+
+        updateUI();
+    })();
+
+    /* ================= UI ================= */
+
+    const loginSection = document.getElementById("login-section");
+    const userSection  = document.getElementById("user-section");
+    const userName     = document.getElementById("user-name");
+    const apiResult    = document.getElementById("api-result");
+
+    function updateUI() {
+        const account = msalInstance.getActiveAccount();
+        console.log("ACTIVE ACCOUNT:", account);
+
+        if (account) {
+            loginSection.style.display = "none";
+            userSection.style.display = "block";
+            userName.textContent = account.name || account.username;
+        } else {
+            loginSection.style.display = "block";
+            userSection.style.display = "none";
+        }
+    }
+
+    /* ================= LOGIN ================= */
+
+    loginBtn.onclick = () => {
+        msalInstance.loginRedirect({
+            scopes: ["openid", "profile", API_SCOPE]
+        });
+    };
+
+    /* ================= API ================= */
+
+    apiBtn.onclick = async () => {
+    apiResult.textContent = "Loading Leaderboard...";
+
+    const account = msalInstance.getActiveAccount();
+    if (!account) {
+        apiResult.textContent = "Not logged in";
+        return;
+    }
+
+    const token = await msalInstance.acquireTokenSilent({
+        scopes: [API_SCOPE],
+        account
+    });
+
+    const res = await fetch("/api/leaderboard/global", {
+        headers: {
+            Authorization: `Bearer ${token.accessToken}`
+        }
+    });
+
+    if (!res.ok) {
+        apiResult.textContent = `Error ${res.status}`;
+        return;
+    }
+
+    const leaderboard = await res.json();
+    apiResult.innerHTML = renderLeaderboardTable(leaderboard);
+};
+
+    function renderLeaderboardTable(data) {
+    if (!Array.isArray(data) || data.length === 0) {
+        return "<p>No leaderboard data available</p>";
+    }
+
+    let html = `
+        <table class="leaderboard">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Name</th>
+                    <th>Activities</th>
+                    <th>Gems</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    data.forEach((user, index) => {
+        const rank = index + 1;
+        const medal =
+            rank === 1 ? "🥇" :
+            rank === 2 ? "🥈" :
+            rank === 3 ? "🥉" : rank;
+
+        html += `
+            <tr>
+                <td>${medal}</td>
+                <td>${user.userName}</td>
+                <td>${user.completedActivitiesCount}</td>
+                <td>${user.gems}</td>
+                <td>${user.score.toFixed(2)}</td>
+            </tr>
+        `;
+    });
+
+    html += `
+            </tbody>
+        </table>
+    `;
+
+    return html;
+}
+
+    /* ================= LOGOUT ================= */
+
+    logoutBtn.onclick = () => {
+        msalInstance.logoutRedirect({
+            postLogoutRedirectUri: "http://localhost:8080"
+        });
+    };
+</script>
+
+</body>
+</html>

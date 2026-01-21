@@ -2,6 +2,7 @@ package com.questevent.controller;
 
 import com.questevent.dto.ActivityRequestDTO;
 import com.questevent.dto.ActivityResponseDTO;
+import com.questevent.dto.ActivityWithRegistrationStatusDTO;
 import com.questevent.entity.Activity;
 import com.questevent.service.ActivityService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -166,6 +167,32 @@ public class ActivityController {
                         .toList();
 
         log.debug("Compulsory activities fetched for programId={}, count={}",
+                programId, response.size());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("@rbac.canViewProgram(authentication, #programId)")
+    @GetMapping("/user-view")
+    @Operation(
+            summary = "Get activities with user registration status",
+            description = "Retrieves activities along with whether the logged-in user has registered"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved activities"),
+            @ApiResponse(responseCode = "404", description = "Program not found")
+    })
+    public ResponseEntity<List<ActivityWithRegistrationStatusDTO>> getActivitiesForUser(
+            @Parameter(description = "Program ID", required = true)
+            @PathVariable UUID programId
+    ) {
+
+        log.info("Fetching activities with registration status for programId={}", programId);
+
+        List<ActivityWithRegistrationStatusDTO> response =
+                activityService.getActivitiesForUser(programId);
+
+        log.debug("User activities fetched for programId={}, count={}",
                 programId, response.size());
 
         return ResponseEntity.ok(response);

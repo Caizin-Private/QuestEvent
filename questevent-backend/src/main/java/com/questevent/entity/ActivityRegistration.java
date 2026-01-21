@@ -36,7 +36,7 @@ public class ActivityRegistration {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "completion_status", nullable = false)
-    private CompletionStatus completionStatus;
+    private CompletionStatus completionStatus = CompletionStatus.NOT_COMPLETED;
 
     @OneToOne(mappedBy = "activityRegistration", cascade = CascadeType.ALL, orphanRemoval = true)
     private ActivitySubmission activitySubmission;

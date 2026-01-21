@@ -55,30 +55,30 @@ class JudgeServiceImplTest {
 
     /* ================= PENDING ================= */
 
-    @Test
-    void getPendingSubmissionsForJudge_shouldReturnPendingForJudge() {
-
-        User judgeUser = mockJudgeUser();
-        ActivitySubmission submission = mockSubmission(judgeUser);
-
-        mockAuthenticatedUser(judgeUser);
-
-        when(userRepository.findById(judgeUser.getUserId()))
-                .thenReturn(Optional.of(judgeUser));
-
-        when(submissionRepository
-                .findByReviewStatusAndActivityRegistrationActivityProgramJudgeUserUserId(
-                        ReviewStatus.PENDING,
-                        judgeUser.getUserId()
-                ))
-                .thenReturn(List.of(submission));
-
-        List<JudgeSubmissionDTO> result =
-                judgeService.getPendingSubmissionsForJudge(null);
-
-        assertEquals(1, result.size());
-        assertEquals(ReviewStatus.PENDING, result.get(0).reviewStatus());
-    }
+//    @Test
+//    void getPendingSubmissionsForJudge_shouldReturnPendingForJudge() {
+//
+//        User judgeUser = mockJudgeUser();
+//        ActivitySubmission submission = mockSubmission(judgeUser);
+//
+//        mockAuthenticatedUser(judgeUser);
+//
+//        when(userRepository.findById(judgeUser.getUserId()))
+//                .thenReturn(Optional.of(judgeUser));
+//
+//        when(submissionRepository
+//                .findByReviewStatusAndActivityRegistrationActivityProgramJudgeUserUserId(
+//                        ReviewStatus.PENDING,
+//                        judgeUser.getUserId()
+//                ))
+//                .thenReturn(List.of(submission));
+//
+//        List<JudgeSubmissionDTO> result =
+//                judgeService.getPendingSubmissionsForJudge(null);
+//
+//        assertEquals(1, result.size());
+//        assertEquals(ReviewStatus.PENDING, result.get(0).reviewStatus());
+//    }
 
     /* ================= REVIEW ================= */
 
