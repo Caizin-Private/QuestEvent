@@ -3,6 +3,7 @@ package com.questevent.service;
 import com.questevent.dto.CompleteProfileRequest;
 import com.questevent.dto.UserResponseDto;
 import com.questevent.entity.User;
+import com.questevent.enums.Role;
 import com.questevent.exception.UserNotFoundException;
 import com.questevent.repository.UserRepository;
 import com.questevent.utils.SecurityUserResolver;
@@ -18,10 +19,21 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserWalletService userWalletService;
     private final SecurityUserResolver securityUserResolver;
 
     public User addUser(User user) {
-        return userRepository.save(user);
+        log.debug( "Adding new user | email={} | role={}",
+                user.getEmail(),
+                user.getRole() );
+
+        userRepository.save(user);
+        userWalletService.createWalletForUser(user);
+
+        log.info( "User created successfully | userId={}",
+                user.getUserId() );
+
+        return user;
     }
 
     public List<UserResponseDto> getAllUsers() {
@@ -91,25 +103,29 @@ public class UserService {
     public User completeProfile(
             @Valid CompleteProfileRequest request) {
 
-        User user = securityUserResolver.getCurrentUser();
+        String email = securityUserResolver.getCurrentUserEmail();
+        String name  = securityUserResolver.getCurrentUserName();
 
-        log.info(
-                "Completing profile | userId={} | email={}",
-                user.getUserId(),
-                user.getEmail()
-        );
+        User user = userRepository.findByEmail(email)
+                .orElseGet(() -> {
+                    User u = new User();
+                    u.setEmail(email);
+                    u.setName(name);
+                    u.setRole(Role.USER);
+                    return u;
+                });
 
         if (user.getDepartment() != null && user.getGender() != null) {
-            log.warn(
-                    "User profile already completed | userId={}",
-                    user.getUserId()
-            );
             return user;
         }
 
         user.setDepartment(request.department());
         user.setGender(request.gender());
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        userWalletService.createWalletForUser(savedUser);
+
+        return savedUser;
     }
 }

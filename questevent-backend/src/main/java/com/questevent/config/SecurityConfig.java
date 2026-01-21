@@ -44,6 +44,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/",
                                 "/index.html",
+                                "/complete-profile.html",
                                 "/favicon.ico",
                                 "/css/**",
                                 "/js/**",
@@ -57,7 +58,7 @@ public class SecurityConfig {
                                 "/v3/api-docs/**"
                         ).permitAll()
 
-                        .requestMatchers("/api/**").authenticated()
+                        .requestMatchers("/api/**", "/api/users/me/complete-profile").authenticated()
                         .anyRequest().denyAll()
                 )
 
