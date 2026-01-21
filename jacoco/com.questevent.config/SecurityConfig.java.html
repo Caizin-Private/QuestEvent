@@ -44,31 +44,30 @@ import java.util.List;
 <span class="fc" id="L44">                        .requestMatchers(</span>
                                 &quot;/&quot;,
                                 &quot;/index.html&quot;,
-                                &quot;/complete-profile.html&quot;,
                                 &quot;/favicon.ico&quot;,
                                 &quot;/css/**&quot;,
                                 &quot;/js/**&quot;,
                                 &quot;/images/**&quot;
-<span class="fc" id="L52">                        ).permitAll()</span>
+<span class="fc" id="L51">                        ).permitAll()</span>
 
-<span class="fc" id="L54">                        .requestMatchers(</span>
+<span class="fc" id="L53">                        .requestMatchers(</span>
                                 &quot;/swagger-ui.html&quot;,
                                 &quot;/swagger-ui/**&quot;,
                                 &quot;/v3/api-docs&quot;,
                                 &quot;/v3/api-docs/**&quot;
-<span class="fc" id="L59">                        ).permitAll()</span>
+<span class="fc" id="L58">                        ).permitAll()</span>
 
-<span class="fc" id="L61">                        .requestMatchers(&quot;/api/**&quot;, &quot;/api/users/me/complete-profile&quot;).authenticated()</span>
-<span class="fc" id="L62">                        .anyRequest().denyAll()</span>
+<span class="fc" id="L60">                        .requestMatchers(&quot;/api/**&quot;).authenticated()</span>
+<span class="fc" id="L61">                        .anyRequest().denyAll()</span>
                 )
 
-<span class="fc" id="L65">                .oauth2ResourceServer(oauth2 -&gt;</span>
-<span class="fc" id="L66">                        oauth2.jwt(jwt -&gt;</span>
-<span class="fc" id="L67">                                jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)</span>
+<span class="fc" id="L64">                .oauth2ResourceServer(oauth2 -&gt;</span>
+<span class="fc" id="L65">                        oauth2.jwt(jwt -&gt;</span>
+<span class="fc" id="L66">                                jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)</span>
                         )
                 );
 
-<span class="fc" id="L71">        return http.build();</span>
+<span class="fc" id="L70">        return http.build();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
