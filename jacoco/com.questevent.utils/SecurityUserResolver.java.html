@@ -26,9 +26,9 @@ public class SecurityUserResolver {
 <span class="fc" id="L26">        Jwt jwt = jwtAuth.getToken();</span>
 <span class="fc" id="L27">        String email = extractEmail(jwt);</span>
 
-<span class="nc" id="L29">        return userRepository.findByEmail(email)</span>
+<span class="pc" id="L29">        return userRepository.findByEmail(email)</span>
 <span class="nc" id="L30">                .orElseThrow(() -&gt;</span>
-<span class="nc" id="L31">                        new UserNotFoundException(&quot;User not registered&quot;)</span>
+<span class="fc" id="L31">                        new UserNotFoundException(&quot;User not registered&quot;)</span>
                 );
     }
 
