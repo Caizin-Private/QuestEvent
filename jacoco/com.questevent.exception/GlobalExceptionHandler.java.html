@@ -19,7 +19,7 @@ import java.util.Map;
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleUserNotFound(UserNotFoundException ex) {
-<span class="fc" id="L22">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
+<span class="nc" id="L22">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
     }
 
     @ExceptionHandler(UnauthorizedException.class)
@@ -108,7 +108,7 @@ import java.util.Map;
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleRuntime(RuntimeException ex) {
-<span class="nc" id="L111">        return build(HttpStatus.INTERNAL_SERVER_ERROR, &quot;Something went wrong&quot;);</span>
+<span class="fc" id="L111">        return build(HttpStatus.INTERNAL_SERVER_ERROR, &quot;Something went wrong&quot;);</span>
     }
     @ExceptionHandler(SubmissionNotFoundException.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleSubmissionNotFound(SubmissionNotFoundException ex) {
