@@ -175,7 +175,17 @@ public class RbacService {
             return false;
         }
 
-        // User must not already be registered
+        // User must be registered for the program first
+        boolean isRegisteredForProgram = programRegistrationRepository
+                .existsByProgram_ProgramIdAndUser_UserId(
+                        program.getProgramId(),
+                        user.getUserId()
+                );
+        if (!isRegisteredForProgram) {
+            return false;
+        }
+
+        // User must not already be registered for this activity
         return activityRegistrationRepository
                 .findByActivityActivityIdAndUserUserId(
                         activityId,
@@ -290,3 +300,4 @@ public class RbacService {
                 .orElse(false);
     }
 }
+

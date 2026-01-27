@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Complete Profile | QuestEvent</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            max-width: 480px;
+            margin: auto;
+        }
+
+        h1 {
+            margin-bottom: 8px;
+        }
+
+        p {
+            color: #555;
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            margin-top: 16px;
+            font-weight: bold;
+        }
+
+        select, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        button {
+            margin-top: 24px;
+            background-color: #1f2937;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        #error {
+            margin-top: 16px;
+            color: #b91c1c;
+        }
+
+        #loading {
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Complete Your Profile</h1>
+<p>Please complete your profile to continue to QuestEvent.</p>
+
+<div id="loading">Checking login status…</div>
+
+<form id="profile-form" style="display:none;">
+    <label for="department">Department</label>
+    <select id="department" required>
+        <option value="">Select department</option>
+        <option value="GENERAL">GENERAL</option>
+        <option value="TECH">TECH</option>
+        <option value="IT">IT</option>
+        <option value="HR">HR</option>
+    </select>
+
+    <label for="gender">Gender</label>
+    <select id="gender" required>
+        <option value="">Select gender</option>
+        <option value="MALE">Male</option>
+        <option value="FEMALE">Female</option>
+        <option value="OTHER">Other</option>
+    </select>
+
+    <button type="submit" id="submitBtn">Submit Profile</button>
+</form>
+
+<div id="error"></div>
+
+<script src="/js/msal-browser.min.js"></script>
+
+<script>
+    /* ================= MSAL CONFIG ================= */
+
+    const msalConfig = {
+        auth: {
+            clientId: "8dfa7db6-153c-4137-91c7-4262f361c8c6",
+            authority: "https://login.microsoftonline.com/f7b92ef4-239a-49ad-aff6-679ec33dea08",
+            redirectUri: "http://localhost:8080/complete-profile.html"
+        },
+        cache: {
+            cacheLocation: "sessionStorage"
+        }
+    };
+
+    const API_SCOPE = "api://8dfa7db6-153c-4137-91c7-4262f361c8c6/access_as_user";
+    const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+    /* ================= INIT ================= */
+
+    (async () => {
+        await msalInstance.initialize();
+        const result = await msalInstance.handleRedirectPromise();
+
+        if (result?.account) {
+            msalInstance.setActiveAccount(result.account);
+        } else {
+            const accounts = msalInstance.getAllAccounts();
+            if (accounts.length > 0) {
+                msalInstance.setActiveAccount(accounts[0]);
+            }
+        }
+
+        const account = msalInstance.getActiveAccount();
+
+        if (!account) {
+            msalInstance.loginRedirect({
+                scopes: ["openid", "profile", API_SCOPE]
+            });
+            return;
+        }
+
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("profile-form").style.display = "block";
+    })();
+
+    /* ================= SUBMIT PROFILE ================= */
+
+    document.getElementById("profile-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const errorDiv = document.getElementById("error");
+        errorDiv.textContent = "";
+
+        const department = document.getElementById("department").value;
+        const gender = document.getElementById("gender").value;
+
+        if (!department || !gender) {
+            errorDiv.textContent = "Please fill all fields.";
+            return;
+        }
+
+        try {
+            const account = msalInstance.getActiveAccount();
+
+            const token = await msalInstance.acquireTokenSilent({
+                scopes: [API_SCOPE],
+                account
+            });
+
+            const res = await fetch("/api/users/me/complete-profile", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token.accessToken}`
+                },
+                body: JSON.stringify({
+                    department,
+                    gender
+                })
+            });
+
+            if (!res.ok) {
+                throw new Error("Failed to complete profile");
+            }
+
+            // ✅ Profile completed → go to welcome page
+            window.location.replace("/");
+
+        } catch (err) {
+            console.error(err);
+            errorDiv.textContent =
+                "Something went wrong. Please try again.";
+        }
+    });
+</script>
+
+</body>
+</html>

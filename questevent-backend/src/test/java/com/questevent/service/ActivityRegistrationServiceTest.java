@@ -3,12 +3,15 @@ package com.questevent.service;
 import com.questevent.dto.*;
 import com.questevent.entity.Activity;
 import com.questevent.entity.ActivityRegistration;
+import com.questevent.entity.ActivitySubmission;
 import com.questevent.entity.Program;
 import com.questevent.entity.User;
 import com.questevent.enums.CompletionStatus;
+import com.questevent.enums.ReviewStatus;
 import com.questevent.exception.*;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivityRepository;
+import com.questevent.repository.ActivitySubmissionRepository;
 import com.questevent.repository.UserRepository;
 import com.questevent.utils.SecurityUserResolver;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +33,9 @@ class ActivityRegistrationServiceTest {
 
     @Mock
     private ActivityRepository activityRepository;
+
+    @Mock
+    private ActivitySubmissionRepository activitySubmissionRepository;
 
     @Mock
     private UserRepository userRepository;
@@ -117,6 +123,33 @@ class ActivityRegistrationServiceTest {
     }
 
     @Test
+    void compulsoryActivityNotRegistered_throwsException() {
+        activity.setIsCompulsory(false);
+
+        Activity compulsory = new Activity();
+        compulsory.setActivityId(UUID.randomUUID());
+        compulsory.setActivityName("Mandatory Task");
+
+        when(securityUserResolver.getCurrentUser()).thenReturn(user);
+        when(activityRepository.findById(activity.getActivityId()))
+                .thenReturn(Optional.of(activity));
+        when(activityRepository
+                .findByProgram_ProgramIdAndIsCompulsoryTrue(program.getProgramId()))
+                .thenReturn(List.of(compulsory));
+        when(activityRegistrationRepository
+                .existsByActivity_ActivityIdAndUser_UserId(
+                        compulsory.getActivityId(), user.getUserId()))
+                .thenReturn(false);
+
+        assertThatThrownBy(() ->
+                service.registerParticipantForActivity(
+                        new ActivityRegistrationRequestDTO(activity.getActivityId())
+                ))
+                .isInstanceOf(InvalidOperationException.class)
+                .hasMessageContaining("Register for compulsory activity");
+    }
+
+    @Test
     void compulsoryActivityNotCompleted_throwsException() {
         activity.setIsCompulsory(false);
 
@@ -131,6 +164,10 @@ class ActivityRegistrationServiceTest {
                 .findByProgram_ProgramIdAndIsCompulsoryTrue(program.getProgramId()))
                 .thenReturn(List.of(compulsory));
         when(activityRegistrationRepository
+                .existsByActivity_ActivityIdAndUser_UserId(
+                        compulsory.getActivityId(), user.getUserId()))
+                .thenReturn(true);
+        when(activityRegistrationRepository
                 .existsByActivity_ActivityIdAndUser_UserIdAndCompletionStatus(
                         compulsory.getActivityId(), user.getUserId(), CompletionStatus.COMPLETED))
                 .thenReturn(false);
@@ -139,7 +176,125 @@ class ActivityRegistrationServiceTest {
                 service.registerParticipantForActivity(
                         new ActivityRegistrationRequestDTO(activity.getActivityId())
                 ))
-                .isInstanceOf(InvalidOperationException.class);
+                .isInstanceOf(InvalidOperationException.class)
+                .hasMessageContaining("Complete compulsory activity");
+    }
+
+    @Test
+    void compulsoryActivityNotApproved_throwsException() {
+        activity.setIsCompulsory(false);
+
+        Activity compulsory = new Activity();
+        compulsory.setActivityId(UUID.randomUUID());
+        compulsory.setActivityName("Mandatory Task");
+
+        when(securityUserResolver.getCurrentUser()).thenReturn(user);
+        when(activityRepository.findById(activity.getActivityId()))
+                .thenReturn(Optional.of(activity));
+        when(activityRepository
+                .findByProgram_ProgramIdAndIsCompulsoryTrue(program.getProgramId()))
+                .thenReturn(List.of(compulsory));
+        when(activityRegistrationRepository
+                .existsByActivity_ActivityIdAndUser_UserId(
+                        compulsory.getActivityId(), user.getUserId()))
+                .thenReturn(true);
+        when(activityRegistrationRepository
+                .existsByActivity_ActivityIdAndUser_UserIdAndCompletionStatus(
+                        compulsory.getActivityId(), user.getUserId(), CompletionStatus.COMPLETED))
+                .thenReturn(true);
+        when(activitySubmissionRepository
+                .findUserSubmissionForActivity(
+                        compulsory.getActivityId(), user.getUserId()))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() ->
+                service.registerParticipantForActivity(
+                        new ActivityRegistrationRequestDTO(activity.getActivityId())
+                ))
+                .isInstanceOf(InvalidOperationException.class)
+                .hasMessageContaining("must be approved by a judge");
+    }
+
+    @Test
+    void compulsoryActivitySubmissionPending_throwsException() {
+        activity.setIsCompulsory(false);
+
+        Activity compulsory = new Activity();
+        compulsory.setActivityId(UUID.randomUUID());
+        compulsory.setActivityName("Mandatory Task");
+
+        ActivitySubmission submission = new ActivitySubmission();
+        submission.setReviewStatus(ReviewStatus.PENDING);
+
+        when(securityUserResolver.getCurrentUser()).thenReturn(user);
+        when(activityRepository.findById(activity.getActivityId()))
+                .thenReturn(Optional.of(activity));
+        when(activityRepository
+                .findByProgram_ProgramIdAndIsCompulsoryTrue(program.getProgramId()))
+                .thenReturn(List.of(compulsory));
+        when(activityRegistrationRepository
+                .existsByActivity_ActivityIdAndUser_UserId(
+                        compulsory.getActivityId(), user.getUserId()))
+                .thenReturn(true);
+        when(activityRegistrationRepository
+                .existsByActivity_ActivityIdAndUser_UserIdAndCompletionStatus(
+                        compulsory.getActivityId(), user.getUserId(), CompletionStatus.COMPLETED))
+                .thenReturn(true);
+        when(activitySubmissionRepository
+                .findUserSubmissionForActivity(
+                        compulsory.getActivityId(), user.getUserId()))
+                .thenReturn(Optional.of(submission));
+
+        assertThatThrownBy(() ->
+                service.registerParticipantForActivity(
+                        new ActivityRegistrationRequestDTO(activity.getActivityId())
+                ))
+                .isInstanceOf(InvalidOperationException.class)
+                .hasMessageContaining("must be approved by a judge");
+    }
+
+    @Test
+    void compulsoryActivityApproved_allowsRegistration() {
+        activity.setIsCompulsory(false);
+
+        Activity compulsory = new Activity();
+        compulsory.setActivityId(UUID.randomUUID());
+        compulsory.setActivityName("Mandatory Task");
+
+        ActivitySubmission submission = new ActivitySubmission();
+        submission.setReviewStatus(ReviewStatus.APPROVED);
+
+        when(securityUserResolver.getCurrentUser()).thenReturn(user);
+        when(activityRepository.findById(activity.getActivityId()))
+                .thenReturn(Optional.of(activity));
+        when(activityRepository
+                .findByProgram_ProgramIdAndIsCompulsoryTrue(program.getProgramId()))
+                .thenReturn(List.of(compulsory));
+        when(activityRegistrationRepository
+                .existsByActivity_ActivityIdAndUser_UserId(
+                        compulsory.getActivityId(), user.getUserId()))
+                .thenReturn(true);
+        when(activityRegistrationRepository
+                .existsByActivity_ActivityIdAndUser_UserIdAndCompletionStatus(
+                        compulsory.getActivityId(), user.getUserId(), CompletionStatus.COMPLETED))
+                .thenReturn(true);
+        when(activitySubmissionRepository
+                .findUserSubmissionForActivity(
+                        compulsory.getActivityId(), user.getUserId()))
+                .thenReturn(Optional.of(submission));
+        when(activityRegistrationRepository
+                .existsByActivity_ActivityIdAndUser_UserId(activity.getActivityId(), user.getUserId()))
+                .thenReturn(false);
+        when(activityRegistrationRepository.save(any()))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        ActivityRegistrationResponseDTO response =
+                service.registerParticipantForActivity(
+                        new ActivityRegistrationRequestDTO(activity.getActivityId())
+                );
+
+        assertThat(response.getActivityId()).isEqualTo(activity.getActivityId());
+        assertThat(response.getUserId()).isEqualTo(user.getUserId());
     }
 
     @Test
@@ -264,3 +419,4 @@ class ActivityRegistrationServiceTest {
     }
 
 }
+

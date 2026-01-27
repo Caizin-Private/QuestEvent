@@ -3,43 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <title>QuestEvent</title>
+
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
         #user-section { display: none; }
-        pre { background: #f4f4f4; padding: 12px; }
+        #loading { display: none; font-size: 14px; }
 
         table.leaderboard {
-    border-collapse: collapse;
-    margin-top: 16px;
-    min-width: 500px;
-    font-size: 14px;
-}
+            border-collapse: collapse;
+            margin-top: 16px;
+            min-width: 500px;
+            font-size: 14px;
+        }
 
-table.leaderboard th {
-    background: #1f2937;
-    color: #ffffff;
-    padding: 10px;
-    text-align: left;
-}
+        table.leaderboard th {
+            background: #1f2937;
+            color: #ffffff;
+            padding: 10px;
+            text-align: left;
+        }
 
-table.leaderboard td {
-    padding: 8px 10px;
-    border-bottom: 1px solid #e5e7eb;
-}
+        table.leaderboard td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #e5e7eb;
+        }
 
-table.leaderboard tr:nth-child(even) {
-    background: #f9fafb;
-}
+        table.leaderboard tr:nth-child(even) {
+            background: #f9fafb;
+        }
 
-table.leaderboard tr:hover {
-    background: #eef2ff;
-}
-
+        table.leaderboard tr:hover {
+            background: #eef2ff;
+        }
     </style>
 </head>
 <body>
 
 <h1>QuestEvent</h1>
+
+<div id="loading">Checking profile...</div>
 
 <div id="login-section">
     <button id="loginBtn">Login with Microsoft</button>
@@ -55,14 +57,11 @@ table.leaderboard tr:hover {
 <script src="/js/msal-browser.min.js"></script>
 
 <script>
-    /* ================= MSAL CONFIG ================= */
-
     const msalConfig = {
         auth: {
             clientId: "8dfa7db6-153c-4137-91c7-4262f361c8c6",
             authority: "https://login.microsoftonline.com/f7b92ef4-239a-49ad-aff6-679ec33dea08",
             redirectUri: "https://questevent.online"
-
         },
         cache: {
             cacheLocation: "sessionStorage"
@@ -70,18 +69,19 @@ table.leaderboard tr:hover {
     };
 
     const API_SCOPE = "api://8dfa7db6-153c-4137-91c7-4262f361c8c6/access_as_user";
-
     const msalInstance = new msal.PublicClientApplication(msalConfig);
 
-    /* ================= INIT (CRITICAL) ================= */
+    const loginSection = document.getElementById("login-section");
+    const userSection  = document.getElementById("user-section");
+    const userName     = document.getElementById("user-name");
+    const apiResult    = document.getElementById("api-result"); //
+    const loadingDiv   = document.getElementById("loading");
 
     (async () => {
-        console.log("INITIALIZING MSAL");
-        await msalInstance.initialize();
+        loadingDiv.style.display = "block";
 
-        console.log("HANDLING REDIRECT");
+        await msalInstance.initialize();
         const result = await msalInstance.handleRedirectPromise();
-        console.log("REDIRECT RESULT:", result);
 
         if (result?.account) {
             msalInstance.setActiveAccount(result.account);
@@ -92,31 +92,61 @@ table.leaderboard tr:hover {
             }
         }
 
-        updateUI();
+        const account = msalInstance.getActiveAccount();
+
+        if (!account) {
+            showLogin();
+            return;
+        }
+
+        await enforceProfileCompletion(account);
     })();
 
-    /* ================= UI ================= */
+    async function enforceProfileCompletion(account) {
 
-    const loginSection = document.getElementById("login-section");
-    const userSection  = document.getElementById("user-section");
-    const userName     = document.getElementById("user-name");
-    const apiResult    = document.getElementById("api-result");
+        const token = await msalInstance.acquireTokenSilent({
+            scopes: [API_SCOPE],
+            account
+        });
 
-    function updateUI() {
-        const account = msalInstance.getActiveAccount();
-        console.log("ACTIVE ACCOUNT:", account);
+        const res = await fetch("/api/users/me", {
+            headers: {
+                Authorization: `Bearer ${token.accessToken}`
+            }
+        });
 
-        if (account) {
-            loginSection.style.display = "none";
-            userSection.style.display = "block";
-            userName.textContent = account.name || account.username;
-        } else {
-            loginSection.style.display = "block";
-            userSection.style.display = "none";
+        if (res.status === 404) {
+            window.location.replace("/complete-profile.html");
+            return;
         }
+
+        if (!res.ok) {
+            showLogin();
+            return;
+        }
+
+        const user = await res.json();
+
+        if (!user.profileCompleted) {
+            window.location.replace("/complete-profile.html");
+            return;
+        }
+
+        showWelcome(user);
     }
 
-    /* ================= LOGIN ================= */
+    function showLogin() {
+        loadingDiv.style.display = "none";
+        loginSection.style.display = "block";
+        userSection.style.display = "none";
+    }
+
+    function showWelcome(user) {
+        loadingDiv.style.display = "none";
+        loginSection.style.display = "none";
+        userSection.style.display = "block";
+        userName.textContent = user.name || user.email;
+    }
 
     loginBtn.onclick = () => {
         msalInstance.loginRedirect({
@@ -124,87 +154,82 @@ table.leaderboard tr:hover {
         });
     };
 
-    /* ================= API ================= */
-
     apiBtn.onclick = async () => {
-    apiResult.textContent = "Loading Leaderboard...";
 
-    const account = msalInstance.getActiveAccount();
-    if (!account) {
-        apiResult.textContent = "Not logged in";
-        return;
-    }
+        apiResult.textContent = "Loading Leaderboard...";
 
-    const token = await msalInstance.acquireTokenSilent({
-        scopes: [API_SCOPE],
-        account
-    });
+        const account = msalInstance.getActiveAccount();
+        if (!account) return;
 
-    const res = await fetch("/api/leaderboard/global", {
-        headers: {
-            Authorization: `Bearer ${token.accessToken}`
+        const token = await msalInstance.acquireTokenSilent({
+            scopes: [API_SCOPE],
+            account
+        });
+
+        const res = await fetch("/api/leaderboard/global", {
+            headers: {
+                Authorization: `Bearer ${token.accessToken}`
+            }
+        });
+
+        if (!res.ok) {
+            apiResult.textContent = `Error ${res.status}`;
+            return;
         }
-    });
 
-    if (!res.ok) {
-        apiResult.textContent = `Error ${res.status}`;
-        return;
-    }
-
-    const leaderboard = await res.json();
-    apiResult.innerHTML = renderLeaderboardTable(leaderboard);
-};
+        const leaderboard = await res.json();
+        apiResult.innerHTML = renderLeaderboardTable(leaderboard);
+    };
 
     function renderLeaderboardTable(data) {
-    if (!Array.isArray(data) || data.length === 0) {
-        return "<p>No leaderboard data available</p>";
-    }
 
-    let html = `
-        <table class="leaderboard">
-            <thead>
+        if (!Array.isArray(data) || data.length === 0) {
+            return "<p>No leaderboard data available</p>";
+        }
+
+        let html = `
+            <table class="leaderboard">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Name</th>
+                        <th>Activities</th>
+                        <th>Gems</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        data.forEach((user, index) => {
+            const rank = index + 1;
+            const medal =
+                rank === 1 ? "🥇" :
+                rank === 2 ? "🥈" :
+                rank === 3 ? "🥉" : rank;
+
+            html += `
                 <tr>
-                    <th>Rank</th>
-                    <th>Name</th>
-                    <th>Activities</th>
-                    <th>Gems</th>
-                    <th>Score</th>
+                    <td>${medal}</td>
+                    <td>${user.userName}</td>
+                    <td>${user.completedActivitiesCount}</td>
+                    <td>${user.gems}</td>
+                    <td>${user.score.toFixed(2)}</td>
                 </tr>
-            </thead>
-            <tbody>
-    `;
-
-    data.forEach((user, index) => {
-        const rank = index + 1;
-        const medal =
-            rank === 1 ? "🥇" :
-            rank === 2 ? "🥈" :
-            rank === 3 ? "🥉" : rank;
+            `;
+        });
 
         html += `
-            <tr>
-                <td>${medal}</td>
-                <td>${user.userName}</td>
-                <td>${user.completedActivitiesCount}</td>
-                <td>${user.gems}</td>
-                <td>${user.score.toFixed(2)}</td>
-            </tr>
+                </tbody>
+            </table>
         `;
-    });
 
-    html += `
-            </tbody>
-        </table>
-    `;
-
-    return html;
-}
-
-    /* ================= LOGOUT ================= */
+        return html;
+    }
 
     logoutBtn.onclick = () => {
         msalInstance.logoutRedirect({
-            postLogoutRedirectUri: "http://localhost:8080"
+            postLogoutRedirectUri: "https://questevent.online"
         });
     };
 </script>

@@ -3,12 +3,15 @@ package com.questevent.service;
 import com.questevent.dto.*;
 import com.questevent.entity.Activity;
 import com.questevent.entity.ActivityRegistration;
+import com.questevent.entity.ActivitySubmission;
 import com.questevent.entity.Program;
 import com.questevent.entity.User;
 import com.questevent.enums.CompletionStatus;
+import com.questevent.enums.ReviewStatus;
 import com.questevent.exception.*;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivityRepository;
+import com.questevent.repository.ActivitySubmissionRepository;
 import com.questevent.repository.UserRepository;
 import com.questevent.utils.SecurityUserResolver;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +29,7 @@ public class ActivityRegistrationService {
 
     private final ActivityRegistrationRepository activityRegistrationRepository;
     private final ActivityRepository activityRepository;
+    private final ActivitySubmissionRepository activitySubmissionRepository;
     private final UserRepository userRepository;
     private final SecurityUserResolver securityUserResolver; // ✅ added
 
@@ -197,6 +201,23 @@ public class ActivityRegistrationService {
 
         for (Activity compulsory : compulsoryActivities) {
 
+            // Check if user has registered for the compulsory activity
+            boolean registered =
+                    activityRegistrationRepository
+                            .existsByActivity_ActivityIdAndUser_UserId(
+                                    compulsory.getActivityId(),
+                                    userId
+                            );
+
+            if (!registered) {
+                throw new InvalidOperationException(
+                        "Register for compulsory activity '"
+                                + compulsory.getActivityName()
+                                + "' before registering for this activity"
+                );
+            }
+
+            // Check if the registration is completed
             boolean completed =
                     activityRegistrationRepository
                             .existsByActivity_ActivityIdAndUser_UserIdAndCompletionStatus(
@@ -210,6 +231,21 @@ public class ActivityRegistrationService {
                         "Complete compulsory activity '"
                                 + compulsory.getActivityName()
                                 + "' before registering for this activity"
+                );
+            }
+
+            // Check if the submission exists and is approved by judge
+            ActivitySubmission submission =
+                    activitySubmissionRepository
+                            .findUserSubmissionForActivity(
+                                    compulsory.getActivityId(),
+                                    userId
+                            )
+                            .orElse(null);
+
+            if (submission == null || submission.getReviewStatus() != ReviewStatus.APPROVED) {
+                throw new InvalidOperationException(
+                        "Compulsory activity must be approved by a judge before registering for this activity"
                 );
             }
         }
@@ -295,3 +331,4 @@ public class ActivityRegistrationService {
         return dto;
     }
 }
+

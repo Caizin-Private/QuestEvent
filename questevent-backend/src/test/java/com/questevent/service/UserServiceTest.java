@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -25,6 +26,9 @@ class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private UserWalletService userWalletService;
 
     @Mock
     private SecurityUserResolver securityUserResolver;
@@ -43,12 +47,20 @@ class UserServiceTest {
     }
 
     @Test
-    void addUser_success() {
+    void addUser_shouldSaveUserAndCreateWallet() {
+        // Arrange
         when(userRepository.save(user)).thenReturn(user);
 
-        User saved = userService.addUser(user);
+        // Act
+        User savedUser = userService.addUser(user);
 
-        assertThat(saved).isEqualTo(user);
+        // Assert
+        assertEquals(user, savedUser);
+
+        verify(userRepository, times(1)).save(user);
+        verify(userWalletService, times(1)).createWalletForUser(user);
+
+        verifyNoMoreInteractions(userRepository, userWalletService);
     }
 
     @Test
@@ -124,33 +136,83 @@ class UserServiceTest {
     }
 
     @Test
-    void completeProfile_success() {
+    void completeProfile_createsUserAndWallet_whenUserDoesNotExist() {
+
         CompleteProfileRequest request =
                 new CompleteProfileRequest(Department.IT, "F");
 
-        when(securityUserResolver.getCurrentUser()).thenReturn(user);
-        when(userRepository.save(user)).thenReturn(user);
+        when(securityUserResolver.getCurrentUserEmail())
+                .thenReturn("test@questevent.com");
+        when(securityUserResolver.getCurrentUserName())
+                .thenReturn("Test User");
+
+        when(userRepository.findByEmail("test@questevent.com"))
+                .thenReturn(Optional.empty());
+
+        when(userRepository.save(any(User.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         User result = userService.completeProfile(request);
 
+        assertThat(result.getEmail()).isEqualTo("test@questevent.com");
+        assertThat(result.getName()).isEqualTo("Test User");
         assertThat(result.getDepartment()).isEqualTo(Department.IT);
         assertThat(result.getGender()).isEqualTo("F");
+
+        verify(userRepository).save(any(User.class));
+        verify(userWalletService).createWalletForUser(result);
+    }
+
+    @Test
+    void completeProfile_updatesExistingUser_whenProfileIncomplete() {
+
+        CompleteProfileRequest request =
+                new CompleteProfileRequest(Department.HR, "M");
+
+        when(securityUserResolver.getCurrentUserEmail())
+                .thenReturn(user.getEmail());
+        when(securityUserResolver.getCurrentUserName())
+                .thenReturn(user.getName());
+
+        when(userRepository.findByEmail(user.getEmail()))
+                .thenReturn(Optional.of(user));
+
+        when(userRepository.save(any(User.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        User result = userService.completeProfile(request);
+
+        assertThat(result.getDepartment()).isEqualTo(Department.HR);
+        assertThat(result.getGender()).isEqualTo("M");
+
+        verify(userRepository).save(user);
+        verify(userWalletService).createWalletForUser(user);
     }
 
     @Test
     void completeProfile_noOp_whenAlreadyCompleted() {
+
         user.setDepartment(Department.IT);
         user.setGender("F");
 
         CompleteProfileRequest request =
                 new CompleteProfileRequest(Department.HR, "M");
 
-        when(securityUserResolver.getCurrentUser()).thenReturn(user);
+        when(securityUserResolver.getCurrentUserEmail())
+                .thenReturn(user.getEmail());
+        when(securityUserResolver.getCurrentUserName())
+                .thenReturn(user.getName());
+
+        when(userRepository.findByEmail(user.getEmail()))
+                .thenReturn(Optional.of(user));
 
         User result = userService.completeProfile(request);
 
-        verify(userRepository, never()).save(any());
         assertThat(result.getDepartment()).isEqualTo(Department.IT);
         assertThat(result.getGender()).isEqualTo("F");
+
+        verify(userRepository, never()).save(any());
+        verify(userWalletService, never()).createWalletForUser(any());
     }
+
 }
