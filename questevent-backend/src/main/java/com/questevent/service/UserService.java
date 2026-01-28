@@ -104,11 +104,6 @@ public class UserService {
 
         User user = securityUserResolver.getCurrentUser();
 
-        // already completed → no-op
-        if (user.getDepartment() != null && user.getGender() != null) {
-            return user;
-        }
-
         user.setDepartment(request.department());
         user.setGender(request.gender());
 
