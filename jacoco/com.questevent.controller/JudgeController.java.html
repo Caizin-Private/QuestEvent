@@ -131,19 +131,15 @@ public class JudgeController {
                     description = &quot;Unauthorized&quot;
             )
     })
-    @PreAuthorize(
-            &quot;@rbac.isPlatformOwner(authentication) &quot; +
-                    &quot;or @rbac.canJudgeAccessAnyProgram(authentication)&quot;
-    )
     @GetMapping(&quot;/submissions&quot;)
     public ResponseEntity&lt;List&lt;JudgeSubmissionDTO&gt;&gt; getAllSubmissions() {
-<span class="fc" id="L140">        log.info(&quot;Fetching all submissions for judge&quot;);</span>
+<span class="fc" id="L136">        log.info(&quot;Fetching all submissions for judge&quot;);</span>
 
-<span class="fc" id="L142">        List&lt;JudgeSubmissionDTO&gt; submissions =</span>
-<span class="fc" id="L143">                judgeService.getAllSubmissionsForJudge(null);</span>
+<span class="fc" id="L138">        List&lt;JudgeSubmissionDTO&gt; submissions =</span>
+<span class="fc" id="L139">                judgeService.getAllSubmissionsForJudge(null);</span>
 
-<span class="fc" id="L145">        log.debug(&quot;All submissions fetched, count={}&quot;, submissions.size());</span>
-<span class="fc" id="L146">        return ResponseEntity.ok(submissions);</span>
+<span class="fc" id="L141">        log.debug(&quot;All submissions fetched, count={}&quot;, submissions.size());</span>
+<span class="fc" id="L142">        return ResponseEntity.ok(submissions);</span>
     }
 
     @Operation(
@@ -184,12 +180,12 @@ public class JudgeController {
             )
             @PathVariable UUID submissionId
     ) {
-<span class="fc" id="L187">        log.info(&quot;Reviewing submission submissionId={}&quot;, submissionId);</span>
+<span class="fc" id="L183">        log.info(&quot;Reviewing submission submissionId={}&quot;, submissionId);</span>
 
-<span class="fc" id="L189">        judgeService.reviewSubmission(submissionId);</span>
+<span class="fc" id="L185">        judgeService.reviewSubmission(submissionId);</span>
 
-<span class="fc" id="L191">        log.info(&quot;Submission reviewed successfully submissionId={}&quot;, submissionId);</span>
-<span class="fc" id="L192">        return ResponseEntity.ok().build();</span>
+<span class="fc" id="L187">        log.info(&quot;Submission reviewed successfully submissionId={}&quot;, submissionId);</span>
+<span class="fc" id="L188">        return ResponseEntity.ok().build();</span>
     }
 
 
@@ -222,12 +218,12 @@ public class JudgeController {
     @PatchMapping(&quot;/submissions/{submissionId}/reject&quot;)
     public ResponseEntity&lt;Void&gt; rejectSubmission(
             @PathVariable UUID submissionId) {
-<span class="fc" id="L225">        log.info(&quot;Rejecting submission submissionId={}&quot;, submissionId);</span>
+<span class="fc" id="L221">        log.info(&quot;Rejecting submission submissionId={}&quot;, submissionId);</span>
 
-<span class="fc" id="L227">        judgeService.rejectSubmission(submissionId,null);</span>
+<span class="fc" id="L223">        judgeService.rejectSubmission(submissionId,null);</span>
 
-<span class="fc" id="L229">        log.info(&quot;Submission rejected successfully submissionId={}&quot;, submissionId);</span>
-<span class="fc" id="L230">        return ResponseEntity.ok().build();</span>
+<span class="fc" id="L225">        log.info(&quot;Submission rejected successfully submissionId={}&quot;, submissionId);</span>
+<span class="fc" id="L226">        return ResponseEntity.ok().build();</span>
     }
 
 
@@ -248,10 +244,10 @@ public class JudgeController {
     })
     public ResponseEntity&lt;JudgeSubmissionDetailsDTO&gt; getSubmissionDetails(
             @PathVariable UUID submissionId) {
-<span class="fc" id="L251">        log.info(&quot;Fetching submission details for judge | submissionId={}&quot;, submissionId);</span>
+<span class="fc" id="L247">        log.info(&quot;Fetching submission details for judge | submissionId={}&quot;, submissionId);</span>
 
-<span class="fc" id="L253">        return ResponseEntity.ok(</span>
-<span class="fc" id="L254">                judgeService.getSubmissionDetails(submissionId, null)</span>
+<span class="fc" id="L249">        return ResponseEntity.ok(</span>
+<span class="fc" id="L250">                judgeService.getSubmissionDetails(submissionId, null)</span>
         );
     }
 
@@ -271,10 +267,10 @@ public class JudgeController {
             @ApiResponse(responseCode = &quot;401&quot;, description = &quot;Unauthorized&quot;)
     })
     public ResponseEntity&lt;JudgeSubmissionStatsDTO&gt; getSubmissionStats() {
-<span class="fc" id="L274">        log.info(&quot;Fetching submission stats for judge&quot;);</span>
+<span class="fc" id="L270">        log.info(&quot;Fetching submission stats for judge&quot;);</span>
 
-<span class="fc" id="L276">        return ResponseEntity.ok(</span>
-<span class="fc" id="L277">                judgeService.getSubmissionStats(null)</span>
+<span class="fc" id="L272">        return ResponseEntity.ok(</span>
+<span class="fc" id="L273">                judgeService.getSubmissionStats(null)</span>
         );
     }
 }
