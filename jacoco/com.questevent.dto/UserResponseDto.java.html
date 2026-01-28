@@ -10,25 +10,17 @@ import com.questevent.enums.Role;
         String email,
         Department department,
         String gender,
-        Role role,
-        boolean profileCompleted
+        Role role
 ) {
     public static UserResponseDto from(User user) {
-<span class="fc" id="L17">        return new UserResponseDto(</span>
-<span class="fc" id="L18">                user.getUserId(),</span>
-<span class="fc" id="L19">                user.getName(),</span>
-<span class="fc" id="L20">                user.getEmail(),</span>
-<span class="fc" id="L21">                user.getDepartment(),</span>
-<span class="fc" id="L22">                user.getGender(),</span>
-<span class="fc" id="L23">                user.getRole(),</span>
-<span class="fc" id="L24">                isProfileCompleted(user)</span>
+<span class="fc" id="L16">        return new UserResponseDto(</span>
+<span class="fc" id="L17">                user.getUserId(),</span>
+<span class="fc" id="L18">                user.getName(),</span>
+<span class="fc" id="L19">                user.getEmail(),</span>
+<span class="fc" id="L20">                user.getDepartment(),</span>
+<span class="fc" id="L21">                user.getGender(),</span>
+<span class="fc" id="L22">                user.getRole()</span>
         );
-    }
-
-    private static boolean isProfileCompleted(User user) {
-<span class="pc bpc" id="L29" title="1 of 2 branches missed.">        return user.getDepartment() != null &amp;&amp;</span>
-<span class="nc bnc" id="L30" title="All 2 branches missed.">               user.getGender() != null &amp;&amp;</span>
-<span class="pc bnc" id="L31" title="All 2 branches missed.">               !user.getGender().isBlank();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

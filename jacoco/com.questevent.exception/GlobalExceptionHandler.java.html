@@ -19,7 +19,7 @@ import java.util.Map;
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleUserNotFound(UserNotFoundException ex) {
-<span class="fc" id="L22">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
+<span class="nc" id="L22">        return build(HttpStatus.NOT_FOUND, ex.getMessage());</span>
     }
 
     @ExceptionHandler(UnauthorizedException.class)
@@ -57,7 +57,7 @@ import java.util.Map;
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleDatabaseError(DataIntegrityViolationException ex) {
-<span class="nc" id="L60">        return build(HttpStatus.BAD_REQUEST, &quot;Database constraint violation&quot;);</span>
+<span class="fc" id="L60">        return build(HttpStatus.BAD_REQUEST, &quot;Database constraint violation&quot;);</span>
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

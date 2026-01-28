@@ -27,106 +27,92 @@ public class UserService {
 <span class="fc" id="L27">                user.getEmail(),</span>
 <span class="fc" id="L28">                user.getRole() );</span>
 
-<span class="fc" id="L30">        userRepository.save(user);</span>
-<span class="fc" id="L31">        userWalletService.createWalletForUser(user);</span>
+<span class="fc" id="L30">        User savedUser = userRepository.save(user);</span>
 
-<span class="fc" id="L33">        log.info( &quot;User created successfully | userId={}&quot;,</span>
-<span class="fc" id="L34">                user.getUserId() );</span>
+<span class="fc" id="L32">        log.info( &quot;User created successfully | userId={}&quot;,</span>
+<span class="fc" id="L33">                user.getUserId() );</span>
 
-<span class="fc" id="L36">        return user;</span>
+<span class="fc" id="L35">        return savedUser;</span>
     }
 
     public List&lt;UserResponseDto&gt; getAllUsers() {
-<span class="fc" id="L40">        return userRepository.findAll()</span>
-<span class="fc" id="L41">                .stream()</span>
-<span class="fc" id="L42">                .map(this::convertToDto)</span>
-<span class="fc" id="L43">                .toList();</span>
+<span class="fc" id="L39">        return userRepository.findAll()</span>
+<span class="fc" id="L40">                .stream()</span>
+<span class="fc" id="L41">                .map(this::convertToDto)</span>
+<span class="fc" id="L42">                .toList();</span>
     }
 
     public UserResponseDto getUserById(Long userId) {
-<span class="fc" id="L47">        User user = userRepository.findById(userId)</span>
-<span class="fc" id="L48">                .orElseThrow(() -&gt;</span>
-<span class="fc" id="L49">                        new UserNotFoundException(&quot;User not found with id: &quot; + userId)</span>
+<span class="fc" id="L46">        User user = userRepository.findById(userId)</span>
+<span class="fc" id="L47">                .orElseThrow(() -&gt;</span>
+<span class="fc" id="L48">                        new UserNotFoundException(&quot;User not found with id: &quot; + userId)</span>
                 );
 
-<span class="fc" id="L52">        return convertToDto(user);</span>
+<span class="fc" id="L51">        return convertToDto(user);</span>
     }
 
     public UserResponseDto getCurrentUser() {
 
-<span class="fc" id="L57">        User user = securityUserResolver.getCurrentUser();</span>
+<span class="fc" id="L56">        User user = securityUserResolver.getCurrentUser();</span>
 
-<span class="fc" id="L59">        log.info(</span>
+<span class="fc" id="L58">        log.info(</span>
                 &quot;Fetching current user | userId={} | email={}&quot;,
-<span class="fc" id="L61">                user.getUserId(),</span>
-<span class="fc" id="L62">                user.getEmail()</span>
+<span class="fc" id="L60">                user.getUserId(),</span>
+<span class="fc" id="L61">                user.getEmail()</span>
         );
 
-<span class="fc" id="L65">        return convertToDto(user);</span>
+<span class="fc" id="L64">        return convertToDto(user);</span>
     }
     public User updateCurrentUser(User updatedData) {
 
-<span class="fc" id="L69">        User existingUser = securityUserResolver.getCurrentUser();</span>
+<span class="fc" id="L68">        User existingUser = securityUserResolver.getCurrentUser();</span>
 
-<span class="fc" id="L71">        log.info(</span>
+<span class="fc" id="L70">        log.info(</span>
                 &quot;Updating user profile | userId={} | email={}&quot;,
-<span class="fc" id="L73">                existingUser.getUserId(),</span>
-<span class="fc" id="L74">                existingUser.getEmail()</span>
+<span class="fc" id="L72">                existingUser.getUserId(),</span>
+<span class="fc" id="L73">                existingUser.getEmail()</span>
         );
 
 
         // ✅ SAFE FIELDS ONLY
-<span class="fc" id="L79">        existingUser.setName(updatedData.getName());</span>
-<span class="fc" id="L80">        existingUser.setDepartment(updatedData.getDepartment());</span>
-<span class="fc" id="L81">        existingUser.setGender(updatedData.getGender());</span>
+<span class="fc" id="L78">        existingUser.setName(updatedData.getName());</span>
+<span class="fc" id="L79">        existingUser.setDepartment(updatedData.getDepartment());</span>
+<span class="fc" id="L80">        existingUser.setGender(updatedData.getGender());</span>
 
-<span class="fc" id="L83">        return userRepository.save(existingUser);</span>
+<span class="fc" id="L82">        return userRepository.save(existingUser);</span>
     }
 
     public void deleteUser(Long userId) {
 
-<span class="fc bfc" id="L88" title="All 2 branches covered.">        if (!userRepository.existsById(userId)) {</span>
-<span class="fc" id="L89">            throw new UserNotFoundException(</span>
+<span class="fc bfc" id="L87" title="All 2 branches covered.">        if (!userRepository.existsById(userId)) {</span>
+<span class="fc" id="L88">            throw new UserNotFoundException(</span>
                     &quot;User not found with id: &quot; + userId
             );
         }
 
-<span class="fc" id="L94">        userRepository.deleteById(userId);</span>
-<span class="fc" id="L95">    }</span>
+<span class="fc" id="L93">        userRepository.deleteById(userId);</span>
+<span class="fc" id="L94">    }</span>
 
     public UserResponseDto convertToDto(User user) {
 
-<span class="fc" id="L99">        return UserResponseDto.from(user);</span>
+<span class="fc" id="L98">        return UserResponseDto.from(user);</span>
 
     }
 
     public User completeProfile(
             @Valid CompleteProfileRequest request) {
 
-<span class="fc" id="L106">        String email = securityUserResolver.getCurrentUserEmail();</span>
-<span class="fc" id="L107">        String name  = securityUserResolver.getCurrentUserName();</span>
+<span class="fc" id="L105">        User user = securityUserResolver.getCurrentUser();</span>
 
-<span class="fc" id="L109">        User user = userRepository.findByEmail(email)</span>
-<span class="fc" id="L110">                .orElseGet(() -&gt; {</span>
-<span class="fc" id="L111">                    User u = new User();</span>
-<span class="fc" id="L112">                    u.setEmail(email);</span>
-<span class="fc" id="L113">                    u.setName(name);</span>
-<span class="fc" id="L114">                    u.setRole(Role.USER);</span>
-<span class="fc" id="L115">                    return u;</span>
-                });
-
-<span class="pc bpc" id="L118" title="1 of 4 branches missed.">        if (user.getDepartment() != null &amp;&amp; user.getGender() != null) {</span>
-<span class="fc" id="L119">            return user;</span>
+        // already completed → no-op
+<span class="pc bpc" id="L108" title="1 of 4 branches missed.">        if (user.getDepartment() != null &amp;&amp; user.getGender() != null) {</span>
+<span class="fc" id="L109">            return user;</span>
         }
 
-<span class="fc" id="L122">        user.setDepartment(request.department());</span>
-<span class="fc" id="L123">        user.setGender(request.gender());</span>
+<span class="fc" id="L112">        user.setDepartment(request.department());</span>
+<span class="fc" id="L113">        user.setGender(request.gender());</span>
 
-<span class="fc" id="L125">        User savedUser = userRepository.save(user);</span>
-
-<span class="fc" id="L127">        userWalletService.createWalletForUser(savedUser);</span>
-
-<span class="fc" id="L129">        return savedUser;</span>
+<span class="fc" id="L115">        return userRepository.save(user);</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
