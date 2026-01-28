@@ -63,31 +63,6 @@ public class SubmissionController {
                 .body("Submission successful");
     }
 
-
-    @PreAuthorize("isAuthenticated()")
-    @GetMapping("/{activityId}/status")
-    @Operation(
-            summary = "Get submission status",
-            description = "Allows a user to check whether their submission is pending, approved, or rejected"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Submission status fetched"),
-            @ApiResponse(responseCode = "404", description = "Submission not found"),
-            @ApiResponse(responseCode = "403", description = "Access denied")
-    })
-    public ResponseEntity<SubmissionStatusResponseDTO> getSubmissionStatus(
-            @PathVariable UUID activityId
-    ) {
-        log.info("Fetching submission status: activityId={}", activityId);
-
-        return ResponseEntity.ok(
-                submissionQueryService.getSubmissionStatus(activityId)
-        );
-    }
-
-
-
-
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/{activityId}/submission-details")
     @Operation(
