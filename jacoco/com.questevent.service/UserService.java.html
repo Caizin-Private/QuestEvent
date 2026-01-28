@@ -104,15 +104,10 @@ public class UserService {
 
 <span class="fc" id="L105">        User user = securityUserResolver.getCurrentUser();</span>
 
-        // already completed → no-op
-<span class="pc bpc" id="L108" title="1 of 4 branches missed.">        if (user.getDepartment() != null &amp;&amp; user.getGender() != null) {</span>
-<span class="fc" id="L109">            return user;</span>
-        }
+<span class="fc" id="L107">        user.setDepartment(request.department());</span>
+<span class="fc" id="L108">        user.setGender(request.gender());</span>
 
-<span class="fc" id="L112">        user.setDepartment(request.department());</span>
-<span class="fc" id="L113">        user.setGender(request.gender());</span>
-
-<span class="fc" id="L115">        return userRepository.save(user);</span>
+<span class="fc" id="L110">        return userRepository.save(user);</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
