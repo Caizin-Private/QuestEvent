@@ -10,6 +10,7 @@ import com.questevent.enums.Role;
 import com.questevent.exception.*;
 import com.questevent.repository.ActivityRegistrationRepository;
 import com.questevent.repository.ActivitySubmissionRepository;
+import com.questevent.repository.JudgeRepository;
 import com.questevent.repository.UserRepository;
 import com.questevent.utils.SecurityUserResolver;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +32,8 @@ public class JudgeServiceImpl implements JudgeService {
     private final ActivityRegistrationRepository registrationRepository;
     private final ProgramWalletTransactionService programWalletTransactionService;
     private final UserRepository userRepository;
-    private final SecurityUserResolver securityUserResolver; // ✅ added
+    private final SecurityUserResolver securityUserResolver;
+    private final JudgeRepository judgeRepository; // ✅ added
 
     private User currentUser() {
         return securityUserResolver.getCurrentUser();
@@ -226,11 +228,11 @@ public class JudgeServiceImpl implements JudgeService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<JudgeSubmissionDTO> getAllSubmissionsForJudge(
-            Authentication ignored
-    ) {
+    public List<JudgeSubmissionDTO> getAllSubmissionsForJudge(Authentication ignored) {
+
         User user = currentUser();
 
+        // OWNER sees everything
         if (user.getRole() == Role.OWNER) {
             return submissionRepository.findAll()
                     .stream()
@@ -238,6 +240,15 @@ public class JudgeServiceImpl implements JudgeService {
                     .toList();
         }
 
+        // Not a judge → return empty list (NO error)
+        boolean isJudge =
+                judgeRepository.existsByUserUserId(user.getUserId());
+
+        if (!isJudge) {
+            return List.of(); // ✅ []
+        }
+
+        // Judge → ONLY their assigned programs
         return submissionRepository
                 .findByActivityRegistrationActivityProgramJudgeUserUserId(
                         user.getUserId()
