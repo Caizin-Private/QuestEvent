@@ -155,7 +155,7 @@ class UserServiceTest {
     }
 
     @Test
-    void completeProfile_noOp_whenAlreadyCompleted() {
+    void completeProfile_overwritesExistingProfile_whenAlreadyCompleted() {
 
         user.setDepartment(Department.IT);
         user.setGender("F");
@@ -166,12 +166,15 @@ class UserServiceTest {
         when(securityUserResolver.getCurrentUser())
                 .thenReturn(user);
 
+        when(userRepository.save(any(User.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
         User result = userService.completeProfile(request);
 
-        assertThat(result.getDepartment()).isEqualTo(Department.IT);
-        assertThat(result.getGender()).isEqualTo("F");
+        assertThat(result.getDepartment()).isEqualTo(Department.HR);
+        assertThat(result.getGender()).isEqualTo("M");
 
-        verifyNoInteractions(userRepository);
+        verify(userRepository).save(user);
         verifyNoInteractions(userWalletService);
     }
 }

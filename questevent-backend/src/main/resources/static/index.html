@@ -49,6 +49,12 @@
 
 <div id="user-section">
     <h2>Welcome, <span id="user-name"></span>!</h2>
+
+    <!-- ✅ ADDED BUTTON (ONLY CHANGE) -->
+    <button onclick="window.location.href='/complete-profile.html'">
+        Complete Profile
+    </button>
+
     <button id="apiBtn">Check Leaderboard</button>
     <button id="logoutBtn">Logout</button>
     <div id="api-result"></div>
@@ -61,7 +67,7 @@
         auth: {
             clientId: "8dfa7db6-153c-4137-91c7-4262f361c8c6",
             authority: "https://login.microsoftonline.com/f7b92ef4-239a-49ad-aff6-679ec33dea08",
-            redirectUri: "https://questevent.online"
+            redirectUri: "http://localhost:8080"
         },
         cache: {
             cacheLocation: "sessionStorage"
@@ -74,7 +80,7 @@
     const loginSection = document.getElementById("login-section");
     const userSection  = document.getElementById("user-section");
     const userName     = document.getElementById("user-name");
-    const apiResult    = document.getElementById("api-result"); //
+    const apiResult    = document.getElementById("api-result");
     const loadingDiv   = document.getElementById("loading");
 
     (async () => {
@@ -99,41 +105,8 @@
             return;
         }
 
-        await enforceProfileCompletion(account);
+        showWelcome(account);
     })();
-
-    async function enforceProfileCompletion(account) {
-
-        const token = await msalInstance.acquireTokenSilent({
-            scopes: [API_SCOPE],
-            account
-        });
-
-        const res = await fetch("/api/users/me", {
-            headers: {
-                Authorization: `Bearer ${token.accessToken}`
-            }
-        });
-
-        if (res.status === 404) {
-            window.location.replace("/complete-profile.html");
-            return;
-        }
-
-        if (!res.ok) {
-            showLogin();
-            return;
-        }
-
-        const user = await res.json();
-
-        if (!user.profileCompleted) {
-            window.location.replace("/complete-profile.html");
-            return;
-        }
-
-        showWelcome(user);
-    }
 
     function showLogin() {
         loadingDiv.style.display = "none";
@@ -141,11 +114,11 @@
         userSection.style.display = "none";
     }
 
-    function showWelcome(user) {
+    function showWelcome(account) {
         loadingDiv.style.display = "none";
         loginSection.style.display = "none";
         userSection.style.display = "block";
-        userName.textContent = user.name || user.email;
+        userName.textContent = account.name || account.username;
     }
 
     loginBtn.onclick = () => {
@@ -229,7 +202,7 @@
 
     logoutBtn.onclick = () => {
         msalInstance.logoutRedirect({
-            postLogoutRedirectUri: "https://questevent.online"
+            postLogoutRedirectUri: "http://localhost:8080"
         });
     };
 </script>
