@@ -59,8 +59,7 @@ class UserControllerTest {
                 "user@test.com",
                 Department.IT,
                 "MALE",
-                Role.USER,
-                true
+                Role.USER
         );
     }
 

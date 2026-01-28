@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://trolley.proxy.rlwy.net:50091/railway
+    url: jdbc:postgresql://ballast.proxy.rlwy.net:22206/railway
     username: postgres
-    password: DXWzjkShsEIUdlwQnEMjrRfvPKjDEmsg
+    password: xiNsaYfRgrTekrokjykMgWxWOeTENsyK
 
     hikari:
       pool-name: HikariPool

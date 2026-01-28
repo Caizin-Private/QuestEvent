@@ -58,9 +58,7 @@ class UserServiceTest {
         assertEquals(user, savedUser);
 
         verify(userRepository, times(1)).save(user);
-        verify(userWalletService, times(1)).createWalletForUser(user);
-
-        verifyNoMoreInteractions(userRepository, userWalletService);
+        verifyNoInteractions(userWalletService);
     }
 
     @Test
@@ -136,46 +134,13 @@ class UserServiceTest {
     }
 
     @Test
-    void completeProfile_createsUserAndWallet_whenUserDoesNotExist() {
-
-        CompleteProfileRequest request =
-                new CompleteProfileRequest(Department.IT, "F");
-
-        when(securityUserResolver.getCurrentUserEmail())
-                .thenReturn("test@questevent.com");
-        when(securityUserResolver.getCurrentUserName())
-                .thenReturn("Test User");
-
-        when(userRepository.findByEmail("test@questevent.com"))
-                .thenReturn(Optional.empty());
-
-        when(userRepository.save(any(User.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
-        User result = userService.completeProfile(request);
-
-        assertThat(result.getEmail()).isEqualTo("test@questevent.com");
-        assertThat(result.getName()).isEqualTo("Test User");
-        assertThat(result.getDepartment()).isEqualTo(Department.IT);
-        assertThat(result.getGender()).isEqualTo("F");
-
-        verify(userRepository).save(any(User.class));
-        verify(userWalletService).createWalletForUser(result);
-    }
-
-    @Test
     void completeProfile_updatesExistingUser_whenProfileIncomplete() {
 
         CompleteProfileRequest request =
                 new CompleteProfileRequest(Department.HR, "M");
 
-        when(securityUserResolver.getCurrentUserEmail())
-                .thenReturn(user.getEmail());
-        when(securityUserResolver.getCurrentUserName())
-                .thenReturn(user.getName());
-
-        when(userRepository.findByEmail(user.getEmail()))
-                .thenReturn(Optional.of(user));
+        when(securityUserResolver.getCurrentUser())
+                .thenReturn(user);
 
         when(userRepository.save(any(User.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -186,7 +151,7 @@ class UserServiceTest {
         assertThat(result.getGender()).isEqualTo("M");
 
         verify(userRepository).save(user);
-        verify(userWalletService).createWalletForUser(user);
+        verifyNoInteractions(userWalletService);
     }
 
     @Test
@@ -198,21 +163,15 @@ class UserServiceTest {
         CompleteProfileRequest request =
                 new CompleteProfileRequest(Department.HR, "M");
 
-        when(securityUserResolver.getCurrentUserEmail())
-                .thenReturn(user.getEmail());
-        when(securityUserResolver.getCurrentUserName())
-                .thenReturn(user.getName());
-
-        when(userRepository.findByEmail(user.getEmail()))
-                .thenReturn(Optional.of(user));
+        when(securityUserResolver.getCurrentUser())
+                .thenReturn(user);
 
         User result = userService.completeProfile(request);
 
         assertThat(result.getDepartment()).isEqualTo(Department.IT);
         assertThat(result.getGender()).isEqualTo("F");
 
-        verify(userRepository, never()).save(any());
-        verify(userWalletService, never()).createWalletForUser(any());
+        verifyNoInteractions(userRepository);
+        verifyNoInteractions(userWalletService);
     }
-
 }

@@ -10,8 +10,7 @@ public record UserResponseDto(
         String email,
         Department department,
         String gender,
-        Role role,
-        boolean profileCompleted
+        Role role
 ) {
     public static UserResponseDto from(User user) {
         return new UserResponseDto(
@@ -20,14 +19,7 @@ public record UserResponseDto(
                 user.getEmail(),
                 user.getDepartment(),
                 user.getGender(),
-                user.getRole(),
-                isProfileCompleted(user)
+                user.getRole()
         );
-    }
-
-    private static boolean isProfileCompleted(User user) {
-        return user.getDepartment() != null &&
-               user.getGender() != null &&
-               !user.getGender().isBlank();
     }
 }
