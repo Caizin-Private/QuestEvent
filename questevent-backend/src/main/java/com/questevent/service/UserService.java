@@ -27,13 +27,12 @@ public class UserService {
                 user.getEmail(),
                 user.getRole() );
 
-        userRepository.save(user);
-        userWalletService.createWalletForUser(user);
+        User savedUser = userRepository.save(user);
 
         log.info( "User created successfully | userId={}",
                 user.getUserId() );
 
-        return user;
+        return savedUser;
     }
 
     public List<UserResponseDto> getAllUsers() {
@@ -103,18 +102,9 @@ public class UserService {
     public User completeProfile(
             @Valid CompleteProfileRequest request) {
 
-        String email = securityUserResolver.getCurrentUserEmail();
-        String name  = securityUserResolver.getCurrentUserName();
+        User user = securityUserResolver.getCurrentUser();
 
-        User user = userRepository.findByEmail(email)
-                .orElseGet(() -> {
-                    User u = new User();
-                    u.setEmail(email);
-                    u.setName(name);
-                    u.setRole(Role.USER);
-                    return u;
-                });
-
+        // already completed → no-op
         if (user.getDepartment() != null && user.getGender() != null) {
             return user;
         }
@@ -122,10 +112,6 @@ public class UserService {
         user.setDepartment(request.department());
         user.setGender(request.gender());
 
-        User savedUser = userRepository.save(user);
-
-        userWalletService.createWalletForUser(savedUser);
-
-        return savedUser;
+        return userRepository.save(user);
     }
 }

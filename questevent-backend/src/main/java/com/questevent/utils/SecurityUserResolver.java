@@ -1,9 +1,11 @@
 package com.questevent.utils;
 
 import com.questevent.entity.User;
+import com.questevent.enums.Department;
+import com.questevent.enums.Role;
 import com.questevent.exception.UnauthorizedException;
-import com.questevent.exception.UserNotFoundException;
 import com.questevent.repository.UserRepository;
+import com.questevent.service.UserWalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Component;
 public class SecurityUserResolver {
 
     private final UserRepository userRepository;
+    private final UserWalletService userWalletService;
 
     public User resolveUser(Authentication authentication) {
 
@@ -24,12 +27,26 @@ public class SecurityUserResolver {
         }
 
         Jwt jwt = jwtAuth.getToken();
+
         String email = extractEmail(jwt);
+        String name  = jwt.getClaimAsString("name");
 
         return userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new UserNotFoundException("User not registered")
-                );
+                .orElseGet(() -> {
+
+                    User user = new User();
+                    user.setEmail(email);
+                    user.setName(name);
+                    user.setRole(Role.USER);
+
+                    user.setDepartment(Department.GENERAL);
+                    user.setGender("Not Specified");
+
+                    User savedUser = userRepository.save(user);
+                    userWalletService.createWalletForUser(savedUser);
+
+                    return savedUser;
+                });
     }
 
     public User getCurrentUser() {
