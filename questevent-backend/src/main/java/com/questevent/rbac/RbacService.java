@@ -1,6 +1,7 @@
 package com.questevent.rbac;
 
 import com.questevent.entity.*;
+import com.questevent.enums.ReviewStatus;
 import com.questevent.enums.Role;
 import com.questevent.repository.*;
 import org.springframework.security.core.Authentication;
@@ -241,6 +242,39 @@ public class RbacService {
         return !submissionRepository
                 .existsByActivityRegistration_ActivityRegistrationId(
                         reg.getActivityRegistrationId());
+    }
+
+    public boolean canViewOwnSubmissionByActivity(
+            Authentication authentication,
+            UUID activityId
+    ) {
+        User user = currentUser(authentication);
+        if (user == null) return false;
+
+        return submissionRepository
+                .findByActivityRegistrationActivityActivityIdAndActivityRegistrationUserUserId(
+                        activityId,
+                        user.getUserId()
+                )
+                .isPresent();
+    }
+
+    public boolean canResubmitSubmission(
+            Authentication authentication,
+            UUID activityId
+    ) {
+        User user = currentUser(authentication);
+        if (user == null) return false;
+
+        return submissionRepository
+                .findByActivityRegistrationActivityActivityIdAndActivityRegistrationUserUserId(
+                        activityId,
+                        user.getUserId()
+                )
+                .map(submission ->
+                        submission.getReviewStatus() == ReviewStatus.REJECTED
+                )
+                .orElse(false);
     }
 
     public boolean canJudgeAccessSubmission(

@@ -1,6 +1,7 @@
 package com.questevent.rbac;
 
 import com.questevent.entity.*;
+import com.questevent.enums.ReviewStatus;
 import com.questevent.enums.Role;
 import com.questevent.repository.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+
 import java.util.Optional;
 import java.util.UUID;
 
@@ -146,24 +148,21 @@ class RbacServiceTest {
                 .thenReturn(Optional.of(normalUser));
 
         UUID activityId = UUID.randomUUID();
-        UUID activityRegistrationId = UUID.randomUUID();
+        UUID regId = UUID.randomUUID();
 
         ActivityRegistration reg = new ActivityRegistration();
-        reg.setActivityRegistrationId(activityRegistrationId);
+        reg.setActivityRegistrationId(regId);
 
         when(activityRegistrationRepository
                 .findByActivityActivityIdAndUserUserId(activityId, 1L))
                 .thenReturn(Optional.of(reg));
 
         when(submissionRepository
-                .existsByActivityRegistration_ActivityRegistrationId(activityRegistrationId))
+                .existsByActivityRegistration_ActivityRegistrationId(regId))
                 .thenReturn(false);
 
-        assertThat(
-                rbacService.canSubmitActivity(auth, activityId)
-        ).isTrue();
+        assertThat(rbacService.canSubmitActivity(auth, activityId)).isTrue();
     }
-
 
     @Test
     void canSubmitActivity_denied_ifAlreadySubmitted() {
@@ -172,22 +171,110 @@ class RbacServiceTest {
                 .thenReturn(Optional.of(normalUser));
 
         UUID activityId = UUID.randomUUID();
-        UUID activityRegistrationId = UUID.randomUUID();
+        UUID regId = UUID.randomUUID();
 
         ActivityRegistration reg = new ActivityRegistration();
-        reg.setActivityRegistrationId(activityRegistrationId);
+        reg.setActivityRegistrationId(regId);
 
         when(activityRegistrationRepository
                 .findByActivityActivityIdAndUserUserId(activityId, 1L))
                 .thenReturn(Optional.of(reg));
 
         when(submissionRepository
-                .existsByActivityRegistration_ActivityRegistrationId(activityRegistrationId))
+                .existsByActivityRegistration_ActivityRegistrationId(regId))
                 .thenReturn(true);
 
+        assertThat(rbacService.canSubmitActivity(auth, activityId)).isFalse();
+    }
+
+    @Test
+    void canViewOwnSubmissionByActivity_allowed() {
+        auth = jwtAuth("user@test.com");
+        when(userRepository.findByEmail("user@test.com"))
+                .thenReturn(Optional.of(normalUser));
+
+        UUID activityId = UUID.randomUUID();
+
+        ActivitySubmission submission = new ActivitySubmission();
+        when(submissionRepository
+                .findByActivityRegistrationActivityActivityIdAndActivityRegistrationUserUserId(
+                        activityId, 1L))
+                .thenReturn(Optional.of(submission));
+
         assertThat(
-                rbacService.canSubmitActivity(auth, activityId)
+                rbacService.canViewOwnSubmissionByActivity(auth, activityId)
+        ).isTrue();
+    }
+
+    @Test
+    void canResubmitSubmission_allowed_onlyWhenRejected() {
+        auth = jwtAuth("user@test.com");
+        when(userRepository.findByEmail("user@test.com"))
+                .thenReturn(Optional.of(normalUser));
+
+        UUID activityId = UUID.randomUUID();
+
+        ActivitySubmission submission = new ActivitySubmission();
+        submission.setReviewStatus(ReviewStatus.REJECTED);
+
+        when(submissionRepository
+                .findByActivityRegistrationActivityActivityIdAndActivityRegistrationUserUserId(
+                        activityId, 1L))
+                .thenReturn(Optional.of(submission));
+
+        assertThat(
+                rbacService.canResubmitSubmission(auth, activityId)
+        ).isTrue();
+    }
+
+    @Test
+    void canResubmitSubmission_denied_ifNotRejected() {
+        auth = jwtAuth("user@test.com");
+        when(userRepository.findByEmail("user@test.com"))
+                .thenReturn(Optional.of(normalUser));
+
+        UUID activityId = UUID.randomUUID();
+
+        ActivitySubmission submission = new ActivitySubmission();
+        submission.setReviewStatus(ReviewStatus.APPROVED);
+
+        when(submissionRepository
+                .findByActivityRegistrationActivityActivityIdAndActivityRegistrationUserUserId(
+                        activityId, 1L))
+                .thenReturn(Optional.of(submission));
+
+        assertThat(
+                rbacService.canResubmitSubmission(auth, activityId)
         ).isFalse();
+    }
+
+    @Test
+    void canJudgeAccessSubmission_allowed_forAssignedJudge() {
+        auth = jwtAuth("user@test.com");
+        when(userRepository.findByEmail("user@test.com"))
+                .thenReturn(Optional.of(normalUser));
+
+        Program program = new Program();
+        Judge judge = new Judge();
+        judge.setUser(normalUser);
+        program.setJudge(judge);
+
+        Activity activity = new Activity();
+        activity.setProgram(program);
+
+        ActivityRegistration reg = new ActivityRegistration();
+        reg.setActivity(activity);
+
+        ActivitySubmission submission = new ActivitySubmission();
+        submission.setActivityRegistration(reg);
+
+        UUID submissionId = UUID.randomUUID();
+        when(submissionRepository.findById(submissionId))
+                .thenReturn(Optional.of(submission));
+
+        assertThat(
+                rbacService.canJudgeAccessSubmission(auth, submissionId)
+        ).isTrue();
     }
 
     @Test

@@ -131,6 +131,10 @@ public class JudgeController {
                     description = "Unauthorized"
             )
     })
+    @PreAuthorize(
+            "@rbac.isPlatformOwner(authentication) " +
+                    "or @rbac.canJudgeAccessAnyProgram(authentication)"
+    )
     @GetMapping("/submissions")
     public ResponseEntity<List<JudgeSubmissionDTO>> getAllSubmissions() {
         log.info("Fetching all submissions for judge");

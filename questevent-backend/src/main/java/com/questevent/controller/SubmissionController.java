@@ -2,7 +2,6 @@ package com.questevent.controller;
 
 import com.questevent.dto.ActivitySubmissionRequestDTO;
 import com.questevent.dto.SubmissionDetailsResponseDTO;
-import com.questevent.dto.SubmissionStatusResponseDTO;
 import com.questevent.service.SubmissionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -63,7 +62,7 @@ public class SubmissionController {
                 .body("Submission successful");
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@rbac.canViewOwnSubmissionByActivity(authentication, #activityId)")
     @GetMapping("/{activityId}/submission-details")
     @Operation(
             summary = "Get submission details",
@@ -86,7 +85,7 @@ public class SubmissionController {
         return ResponseEntity.ok(response);
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@rbac.canResubmitSubmission(authentication, #activityId)")
     @PatchMapping("/{activityId}/resubmit")
     @Operation(
             summary = "Resubmit activity work",
