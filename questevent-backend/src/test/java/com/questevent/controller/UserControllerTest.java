@@ -125,10 +125,11 @@ class UserControllerTest {
     @Test
     @WithMockUser
     void updateCurrentUser_authenticated_returns200() throws Exception {
+
         when(userService.updateCurrentUser(any())).thenReturn(mockUser());
         when(userService.convertToDto(any())).thenReturn(mockDto());
 
-        mockMvc.perform(put("/api/users/me")
+        mockMvc.perform(patch("/api/users/me")   // PUT ➜ PATCH
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(mockUser())))
@@ -137,6 +138,7 @@ class UserControllerTest {
 
         verify(userService).updateCurrentUser(any());
     }
+
 
     /* ===================== COMPLETE PROFILE ===================== */
 

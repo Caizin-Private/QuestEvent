@@ -102,7 +102,6 @@ class UserServiceTest {
     @Test
     void updateCurrentUser_updatesSafeFieldsOnly() {
         User updated = new User();
-        updated.setName("Updated Name");
         updated.setDepartment(Department.IT);
         updated.setGender("F");
 
@@ -111,7 +110,6 @@ class UserServiceTest {
 
         User result = userService.updateCurrentUser(updated);
 
-        assertThat(result.getName()).isEqualTo("Updated Name");
         assertThat(result.getDepartment()).isEqualTo(Department.IT);
         assertThat(result.getGender()).isEqualTo("F");
     }

@@ -73,9 +73,6 @@ public class UserService {
                 existingUser.getEmail()
         );
 
-
-        // ✅ SAFE FIELDS ONLY
-        existingUser.setName(updatedData.getName());
         existingUser.setDepartment(updatedData.getDepartment());
         existingUser.setGender(updatedData.getGender());
 
