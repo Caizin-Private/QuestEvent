@@ -89,7 +89,7 @@ public class UserController {
     }
 
     @PreAuthorize(&quot;isAuthenticated()&quot;)
-    @PutMapping(&quot;/me&quot;)
+    @PatchMapping(&quot;/me&quot;)
     @Operation(
             summary = &quot;Update current user&quot;,
             description = &quot;Updates logged-in user's profile&quot;
