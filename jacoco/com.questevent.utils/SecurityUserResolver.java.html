@@ -31,16 +31,16 @@ public class SecurityUserResolver {
 <span class="fc" id="L31">        String email = extractEmail(jwt);</span>
 <span class="fc" id="L32">        String name  = jwt.getClaimAsString(&quot;name&quot;);</span>
 
-<span class="pc" id="L34">        return userRepository.findByEmail(email)</span>
+<span class="nc" id="L34">        return userRepository.findByEmail(email)</span>
 <span class="nc" id="L35">                .orElseGet(() -&gt; {</span>
 
-<span class="fc" id="L37">                    User user = new User();</span>
-<span class="fc" id="L38">                    user.setEmail(email);</span>
-<span class="fc" id="L39">                    user.setName(name);</span>
-<span class="fc" id="L40">                    user.setRole(Role.USER);</span>
+<span class="nc" id="L37">                    User user = new User();</span>
+<span class="nc" id="L38">                    user.setEmail(email);</span>
+<span class="nc" id="L39">                    user.setName(name);</span>
+<span class="nc" id="L40">                    user.setRole(Role.USER);</span>
 
-<span class="fc" id="L42">                    user.setDepartment(Department.GENERAL);</span>
-<span class="fc" id="L43">                    user.setGender(&quot;Not Specified&quot;);</span>
+<span class="nc" id="L42">                    user.setDepartment(Department.GENERAL);</span>
+<span class="nc" id="L43">                    user.setGender(&quot;Not Specified&quot;);</span>
 
 <span class="nc" id="L45">                    User savedUser = userRepository.save(user);</span>
 <span class="nc" id="L46">                    userWalletService.createWalletForUser(savedUser);</span>

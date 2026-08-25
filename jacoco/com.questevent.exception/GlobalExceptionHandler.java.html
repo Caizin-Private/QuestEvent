@@ -57,7 +57,7 @@ import java.util.Map;
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleDatabaseError(DataIntegrityViolationException ex) {
-<span class="fc" id="L60">        return build(HttpStatus.BAD_REQUEST, &quot;Database constraint violation&quot;);</span>
+<span class="nc" id="L60">        return build(HttpStatus.BAD_REQUEST, &quot;Database constraint violation&quot;);</span>
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -108,7 +108,7 @@ import java.util.Map;
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleRuntime(RuntimeException ex) {
-<span class="nc" id="L111">        return build(HttpStatus.INTERNAL_SERVER_ERROR, &quot;Something went wrong&quot;);</span>
+<span class="fc" id="L111">        return build(HttpStatus.INTERNAL_SERVER_ERROR, &quot;Something went wrong&quot;);</span>
     }
     @ExceptionHandler(SubmissionNotFoundException.class)
     public ResponseEntity&lt;ApiErrorDTO&gt; handleSubmissionNotFound(SubmissionNotFoundException ex) {
