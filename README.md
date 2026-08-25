@@ -107,7 +107,7 @@ This structure ensures clarity, testability, and long-term maintainability.
 ### Run Locally
 
 ```bash
-git clone https://github.com/your-organization/QuestEvent.git
+git clone git@github.com:Caizin-Private/QuestEvent.git
 cd QuestEvent/questevent-backend
 mvn clean install
 mvn spring-boot:run
